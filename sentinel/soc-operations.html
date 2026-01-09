@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="sentinel">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Operations - Daily Workflows & Procedures | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-step { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 8px; margin: 0.5rem 0; border-left: 4px solid #0078d4; }
+        .workflow-number { background: #0078d4; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .metric-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; text-align: center; }
+        .metric-value { font-size: 2.5rem; font-weight: 700; color: #0078d4; }
+        .metric-label { font-size: 0.9rem; color: var(--text-secondary); }
+        .severity-high { border-left-color: #c01c28 !important; }
+        .severity-medium { border-left-color: #f5a623 !important; }
+        .severity-low { border-left-color: #26a269 !important; }
+        .playbook-card { background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.05)); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel active"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Deep Dive</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub Integration</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion & Cost</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced KQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Content & Intelligence</div>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-cube"></i> Content Hub & ASIM</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="soc-operations.html" class="nav-link active"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Sentinel</a>
+                    <span class="separator">/</span>
+                    <span class="current">SOC Operations</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-users-cog"></i> SOC Operations Guide</h1>
+                    <p class="lead">Daily workflows, triage procedures, escalation paths, and operational metrics for running an effective SOC with Microsoft Sentinel</p>
+                </div>
+
+                <!-- SOC Tiers -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> SOC Tier Model</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <div class="card" style="border-top: 4px solid #26a269;">
+                            <div class="card-header">
+                                <h3>Tier 1 - Alert Triage</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Focus:</strong> Initial alert review and classification</p>
+                                <ul>
+                                    <li>Monitor incident queue</li>
+                                    <li>Initial true/false positive determination</li>
+                                    <li>Gather basic context</li>
+                                    <li>Assign severity and priority</li>
+                                    <li>Escalate to Tier 2 if confirmed</li>
+                                </ul>
+                                <p><strong>Target:</strong> 15 min per alert initial triage</p>
+                                <p><strong>Tools:</strong> Incident queue, Entity pages, Hunting queries</p>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border-top: 4px solid #f5a623;">
+                            <div class="card-header">
+                                <h3>Tier 2 - Investigation</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Focus:</strong> Deep investigation and response</p>
+                                <ul>
+                                    <li>Full incident investigation</li>
+                                    <li>Root cause analysis</li>
+                                    <li>Containment actions</li>
+                                    <li>Evidence collection</li>
+                                    <li>Coordinate with IT teams</li>
+                                </ul>
+                                <p><strong>Target:</strong> 4 hours for high severity</p>
+                                <p><strong>Tools:</strong> Investigation graph, Notebooks, MDE portal</p>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border-top: 4px solid #c01c28;">
+                            <div class="card-header">
+                                <h3>Tier 3 - Hunt & Engineer</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Focus:</strong> Proactive hunting and improvement</p>
+                                <ul>
+                                    <li>Threat hunting campaigns</li>
+                                    <li>Detection engineering</li>
+                                    <li>Playbook development</li>
+                                    <li>Threat intelligence analysis</li>
+                                    <li>SOC metrics and optimization</li>
+                                </ul>
+                                <p><strong>Target:</strong> Continuous improvement</p>
+                                <p><strong>Tools:</strong> Notebooks, MITRE coverage, TI platforms</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Daily Operations Workflow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clock"></i> Daily Operations Workflow</h2>
+
+                    <h3>Shift Start Checklist</h3>
+                    <div class="workflow-step">
+                        <div class="workflow-number">1</div>
+                        <div>
+                            <strong>Review Shift Handover</strong><br>
+                            Check handover notes, open incidents, pending actions from previous shift
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="workflow-number">2</div>
+                        <div>
+                            <strong>Check Platform Health</strong><br>
+                            Verify data connectors are ingesting, check for ingestion delays or gaps
+                            <div class="code-block" style="margin-top: 0.5rem;">
+                                <pre><code>// Check connector health
+SentinelHealth
+| where TimeGenerated > ago(24h)
+| where Status != "Success"
+| summarize count() by SentinelResourceName, Status</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="workflow-number">3</div>
+                        <div>
+                            <strong>Review Threat Intel Updates</strong><br>
+                            Check for new IOCs, threat actor reports, vulnerability disclosures
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="workflow-number">4</div>
+                        <div>
+                            <strong>Prioritize Incident Queue</strong><br>
+                            Sort by severity, age, and business impact. Assign to analysts.
+                        </div>
+                    </div>
+
+                    <h3>Incident Triage Workflow</h3>
+                    <div class="workflow-step severity-high">
+                        <div class="workflow-number">1</div>
+                        <div>
+                            <strong>Initial Assessment (5 min)</strong><br>
+                            Read alert title, description, affected entities. Is this actionable?
+                        </div>
+                    </div>
+                    <div class="workflow-step severity-high">
+                        <div class="workflow-number">2</div>
+                        <div>
+                            <strong>Context Gathering (10 min)</strong><br>
+                            Check entity pages for user/device. Review recent activity. Check if known good.
+                            <div class="code-block" style="margin-top: 0.5rem;">
+                                <pre><code>// Get user context
+let targetUser = "jsmith@company.com";
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserPrincipalName == targetUser
+| summarize 
+    TotalSignins = count(),
+    UniqueIPs = dcount(IPAddress),
+    UniqueLocations = dcount(Location),
+    FailedSignins = countif(ResultType != 0)
+| extend RiskIndicators = case(
+    UniqueLocations > 5, "Multiple Locations",
+    FailedSignins > 10, "High Failures",
+    "Normal"
+)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="workflow-step severity-medium">
+                        <div class="workflow-number">3</div>
+                        <div>
+                            <strong>Determine True/False Positive</strong><br>
+                            Is this legitimate activity? Check with user/manager if needed. Document reasoning.
+                        </div>
+                    </div>
+                    <div class="workflow-step severity-medium">
+                        <div class="workflow-number">4</div>
+                        <div>
+                            <strong>Take Action</strong><br>
+                            <ul>
+                                <li><strong>False Positive:</strong> Close incident, update rule tuning if recurring</li>
+                                <li><strong>True Positive:</strong> Escalate, initiate containment, document findings</li>
+                                <li><strong>Needs More Info:</strong> Add tasks, reach out to stakeholders</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Incident Severity Matrix -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Incident Severity Matrix</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>Criteria</th>
+                                <th>Response Time</th>
+                                <th>Escalation</th>
+                                <th>Examples</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: rgba(192,28,40,0.1);">
+                                <td><strong style="color: #c01c28;">Critical</strong></td>
+                                <td>Active breach, data exfil, ransomware</td>
+                                <td>Immediate (15 min)</td>
+                                <td>CISO, IR Team, Management</td>
+                                <td>Ransomware execution, Domain Admin compromise</td>
+                            </tr>
+                            <tr style="background: rgba(245,166,35,0.1);">
+                                <td><strong style="color: #f5a623;">High</strong></td>
+                                <td>Confirmed malicious, privileged user affected</td>
+                                <td>1 hour</td>
+                                <td>Tier 2, Security Lead</td>
+                                <td>Phishing success, malware on endpoint</td>
+                            </tr>
+                            <tr style="background: rgba(0,120,212,0.1);">
+                                <td><strong style="color: #0078d4;">Medium</strong></td>
+                                <td>Suspicious activity, potential threat</td>
+                                <td>4 hours</td>
+                                <td>Tier 2</td>
+                                <td>Brute force attempts, policy violations</td>
+                            </tr>
+                            <tr style="background: rgba(38,162,105,0.1);">
+                                <td><strong style="color: #26a269;">Low</strong></td>
+                                <td>Informational, minor policy violation</td>
+                                <td>24 hours</td>
+                                <td>Handle at Tier 1</td>
+                                <td>Password spray blocked, low-risk alerts</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Common Playbooks -->
+                <section class="content-section">
+                    <h2><i class="fas fa-book"></i> Common Investigation Playbooks</h2>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-user-secret"></i> Compromised Account Investigation</h3>
+                        <ol>
+                            <li><strong>Confirm compromise:</strong> Review sign-in logs for impossible travel, new device, unusual location</li>
+                            <li><strong>Scope impact:</strong> What did the attacker access? Check audit logs, email rules, file access</li>
+                            <li><strong>Contain:</strong> Reset password, revoke sessions, block sign-ins if needed</li>
+                            <li><strong>Investigate persistence:</strong> Check for MFA changes, app consents, inbox rules</li>
+                            <li><strong>Remediate:</strong> Remove malicious rules, re-enable account with MFA</li>
+                            <li><strong>Document:</strong> Timeline, impact assessment, lessons learned</li>
+                        </ol>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">KQL</span>
+                                <span class="code-title">Account Compromise Investigation Query</span>
+                            </div>
+                            <pre><code>let suspectUser = "jsmith@company.com";
+let investigationWindow = 7d;
+// Sign-in analysis
+SigninLogs
+| where TimeGenerated > ago(investigationWindow)
+| where UserPrincipalName == suspectUser
+| summarize 
+    SigninCount = count(),
+    UniqueIPs = make_set(IPAddress),
+    UniqueLocations = make_set(Location),
+    UniqueDevices = make_set(DeviceDetail.displayName),
+    RiskySignins = countif(RiskLevelDuringSignIn != "none")
+by bin(TimeGenerated, 1d)
+| order by TimeGenerated desc</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-virus"></i> Malware Detection Investigation</h3>
+                        <ol>
+                            <li><strong>Confirm detection:</strong> Is the file truly malicious? Check hash in VirusTotal, sandbox</li>
+                            <li><strong>Isolate if needed:</strong> Use MDE to isolate host if active threat</li>
+                            <li><strong>Determine entry:</strong> How did malware arrive? Email, web, USB?</li>
+                            <li><strong>Check lateral movement:</strong> Any connections to other hosts?</li>
+                            <li><strong>Remediate:</strong> Remove malware, patch vulnerability if exploited</li>
+                            <li><strong>Hunt:</strong> Search for same IOCs across environment</li>
+                        </ol>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">KQL</span>
+                                <span class="code-title">Malware IOC Hunt</span>
+                            </div>
+                            <pre><code>let maliciousHash = "abc123...";
+let maliciousDomain = "evil.com";
+let maliciousIP = "1.2.3.4";
+// Search across data sources
+union 
+(DeviceFileEvents | where SHA256 == maliciousHash | extend Source = "FileEvent"),
+(DeviceNetworkEvents | where RemoteUrl contains maliciousDomain | extend Source = "Network"),
+(DeviceNetworkEvents | where RemoteIP == maliciousIP | extend Source = "Network"),
+(CommonSecurityLog | where DestinationIP == maliciousIP | extend Source = "Firewall")
+| project TimeGenerated, Source, DeviceName, AccountName, FileName, RemoteUrl, RemoteIP</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-envelope"></i> Phishing Investigation</h3>
+                        <ol>
+                            <li><strong>Analyze email:</strong> Check sender, links, attachments in Defender for Office</li>
+                            <li><strong>Identify recipients:</strong> Who else received this email?</li>
+                            <li><strong>Check for clicks:</strong> Did anyone click the link or open attachment?</li>
+                            <li><strong>If clicked:</strong> Initiate compromised account playbook</li>
+                            <li><strong>Block IOCs:</strong> Add URLs/domains to block lists</li>
+                            <li><strong>Notify users:</strong> Security awareness if widespread campaign</li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- KQL Queries for SOC -->
+                <section class="content-section">
+                    <h2><i class="fas fa-terminal"></i> Essential SOC Queries</h2>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">SOC Dashboard - Incident Overview</span>
+                        </div>
+                        <pre><code>// Incident volume by severity (last 24h)
+SecurityIncident
+| where TimeGenerated > ago(24h)
+| summarize 
+    Total = count(),
+    Critical = countif(Severity == "High"),
+    Medium = countif(Severity == "Medium"),
+    Low = countif(Severity == "Low")
+
+// Mean time to respond (MTTR)
+SecurityIncident
+| where TimeGenerated > ago(7d)
+| where Status == "Closed"
+| extend ResponseTime = datetime_diff('minute', ClosedTime, CreatedTime)
+| summarize MTTR_Minutes = avg(ResponseTime) by Severity
+
+// Top triggered rules
+SecurityIncident
+| where TimeGenerated > ago(7d)
+| summarize Count = count() by Title
+| top 10 by Count</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Health Monitoring Queries</span>
+                        </div>
+                        <pre><code>// Data ingestion lag by table
+union withsource=TableName *
+| where TimeGenerated > ago(1h)
+| summarize 
+    LatestEvent = max(TimeGenerated),
+    AvgLag = avg(datetime_diff('second', ingestion_time(), TimeGenerated))
+by TableName
+| where AvgLag > 300 // Flag tables with >5 min lag
+| order by AvgLag desc
+
+// Connector health
+SentinelHealth
+| where TimeGenerated > ago(24h)
+| where SentinelResourceType == "Data connector"
+| summarize 
+    LastStatus = arg_max(TimeGenerated, Status),
+    FailureCount = countif(Status != "Success")
+by SentinelResourceName
+| where FailureCount > 0 or LastStatus != "Success"</code></pre>
+                    </div>
+                </section>
+
+                <!-- SOC Metrics -->
+                <section class="content-section">
+                    <h2><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                        <div class="metric-card">
+                            <div class="metric-value">&lt;15m</div>
+                            <div class="metric-label">Target MTTA (Mean Time to Acknowledge)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">&lt;4h</div>
+                            <div class="metric-label">Target MTTR (Critical)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">&lt;10%</div>
+                            <div class="metric-label">False Positive Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">80%</div>
+                            <div class="metric-label">MITRE Coverage Target</div>
+                        </div>
+                    </div>
+
+                    <h3>Key Metrics to Track</h3>
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Definition</th>
+                                <th>Target</th>
+                                <th>How to Measure</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>MTTA</td>
+                                <td>Time from alert to analyst assignment</td>
+                                <td>&lt;15 min (Critical)</td>
+                                <td>Incident FirstModifiedTime - CreatedTime</td>
+                            </tr>
+                            <tr>
+                                <td>MTTR</td>
+                                <td>Time from alert to resolution</td>
+                                <td>&lt;4h (Critical)</td>
+                                <td>Incident ClosedTime - CreatedTime</td>
+                            </tr>
+                            <tr>
+                                <td>False Positive Rate</td>
+                                <td>% of alerts that are benign</td>
+                                <td>&lt;10%</td>
+                                <td>Count FP closures / Total closures</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Coverage</td>
+                                <td>MITRE techniques with active detections</td>
+                                <td>&gt;80%</td>
+                                <td>MITRE ATT&CK page in Sentinel</td>
+                            </tr>
+                            <tr>
+                                <td>Incident Volume</td>
+                                <td>Daily incident count by severity</td>
+                                <td>Trend analysis</td>
+                                <td>SecurityIncident count by day</td>
+                            </tr>
+                            <tr>
+                                <td>Automation Rate</td>
+                                <td>% of incidents with automated response</td>
+                                <td>&gt;50%</td>
+                                <td>Playbook execution count / Incident count</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Automation Recommendations -->
+                <section class="content-section">
+                    <h2><i class="fas fa-robot"></i> Automation Opportunities</h2>
+
+                    <h3>High-Value Automations</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <div class="card">
+                            <div class="card-header"><h4>Enrichment Playbooks</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>IP reputation lookup (VirusTotal, AbuseIPDB)</li>
+                                    <li>File hash reputation check</li>
+                                    <li>User risk score from Azure AD</li>
+                                    <li>Geo-location of IPs</li>
+                                    <li>WHOIS lookup for domains</li>
+                                </ul>
+                                <p><strong>Trigger:</strong> On incident creation</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h4>Containment Playbooks</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Isolate device (MDE)</li>
+                                    <li>Disable user account (Azure AD)</li>
+                                    <li>Block IP on firewall</li>
+                                    <li>Revoke user sessions</li>
+                                    <li>Quarantine email (Defender for Office)</li>
+                                </ul>
+                                <p><strong>Trigger:</strong> Manual or high-confidence detection</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h4>Notification Playbooks</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Teams/Slack alert to SOC channel</li>
+                                    <li>Email to incident owner</li>
+                                    <li>Page on-call for critical</li>
+                                    <li>Create ServiceNow ticket</li>
+                                    <li>Post to Sentinel incident comments</li>
+                                </ul>
+                                <p><strong>Trigger:</strong> On incident creation/escalation</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(255,107,0,0.1)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through how you would triage a high-severity alert in Sentinel.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>My triage process follows a structured approach:</p>
+                            <p><strong>First 5 minutes - Initial Assessment:</strong></p>
+                            <p>I read the alert title and description to understand what triggered it. I check the entities involved - user, device, IP address. I look at the alert severity and confidence. The key question: is this actionable or informational?</p>
+                            <p><strong>Next 10 minutes - Context Gathering:</strong></p>
+                            <p>I use entity pages to get historical context. For a user, I check their sign-in patterns, group memberships, and recent activity. For a device, I look at security posture and recent events. I check if this user or device has had similar alerts before.</p>
+                            <p><strong>True/False Positive Decision:</strong></p>
+                            <p>Based on the context, I determine if this is legitimate behavior. For example, an impossible travel alert might be false positive if the user has a VPN or cloud proxy. If unsure, I reach out to the user's manager or IT contact.</p>
+                            <p><strong>Action:</strong></p>
+                            <p>If false positive: I close the incident with detailed notes on why, and consider tuning the rule if it's a recurring pattern.</p>
+                            <p>If true positive: I escalate to Tier 2, initiate containment if needed (disable account, isolate device), and document findings in the incident.</p>
+                            <p>If needs more info: I add investigation tasks, set a follow-up time, and move to next priority incident.</p>
+                            <p>The goal is to spend no more than 15 minutes on initial triage - enough to make a decision but not so much that the queue backs up.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you measure SOC effectiveness and what metrics would you track?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>I focus on metrics that drive improvement across efficiency, quality, and coverage:</p>
+                            <p><strong>Efficiency Metrics:</strong></p>
+                            <p>MTTA (Mean Time to Acknowledge) - how quickly analysts pick up incidents. Target under 15 minutes for critical. MTTR (Mean Time to Resolve) - end-to-end time from alert to closure. Target varies by severity - 4 hours for critical, 24 hours for high.</p>
+                            <p><strong>Quality Metrics:</strong></p>
+                            <p>False Positive Rate - percentage of incidents closed as benign. If over 10-15%, we need to tune detections. Reopened Incident Rate - if incidents keep being reopened, investigation quality is an issue. Escalation Rate - too high means Tier 1 isn't empowered enough, too low might mean things are being missed.</p>
+                            <p><strong>Coverage Metrics:</strong></p>
+                            <p>MITRE ATT&CK coverage - what techniques do we have detections for? I use Sentinel's MITRE page to track this. Data source coverage - are all critical systems sending logs? Detection-to-incident ratio - are alerts actually generating incidents or being filtered out?</p>
+                            <p><strong>Business Metrics:</strong></p>
+                            <p>Security incidents with business impact - true measure of effectiveness. Dwell time for confirmed breaches - how long was an attacker in the environment before detection?</p>
+                            <p>I report these weekly to the team and monthly to leadership, with trends over time to show improvement. The key is not just measuring but acting on the data - if MTTR is high, we look at automation opportunities.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Describe how you would handle a suspected ransomware incident.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Ransomware requires immediate, coordinated response:</p>
+                            <p><strong>Immediate Actions (first 15 minutes):</strong></p>
+                            <p>First, I'd verify the alert is legitimate - check if files are actually being encrypted, look for ransom notes, check for known ransomware process names. Simultaneously, I'd escalate to incident response and management - ransomware is always critical.</p>
+                            <p>If confirmed, containment is priority one: isolate the affected device using MDE's network isolation. This stops lateral movement while keeping the device on for forensics. If multiple devices are affected, I'd work with network team to segment the affected subnet.</p>
+                            <p><strong>Scope Assessment (next hour):</strong></p>
+                            <p>Run hunting queries to find all affected devices - look for the same file hashes, process names, or network connections. Check authentication logs for the initial compromised account. Determine the initial access vector - usually phishing or exposed RDP.</p>
+                            <p><strong>Containment Expansion:</strong></p>
+                            <p>Disable any compromised accounts. Block identified malicious IPs and domains on the firewall. If there's a C2 channel, work with network team to sinkhole it.</p>
+                            <p><strong>Recovery Planning:</strong></p>
+                            <p>Work with backup team to assess recovery options. Don't pay the ransom - coordinate with legal and management on that decision. Preserve evidence for potential law enforcement involvement.</p>
+                            <p><strong>Post-Incident:</strong></p>
+                            <p>Full root cause analysis. Implement controls to prevent recurrence - often this means better email filtering, MFA enforcement, and endpoint hardening. Update detection rules based on lessons learned.</p>
+                            <p>The key is speed and coordination - I'd be on a bridge call with IT, management, and other stakeholders throughout the incident.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - SOC Operations</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

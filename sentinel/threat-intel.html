@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="sentinel">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intelligence - TI Platforms & Integration | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .ti-flow { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .ti-source { display: inline-block; padding: 0.5rem 1rem; background: rgba(0,120,212,0.2); border-radius: 20px; margin: 0.25rem; font-size: 0.85rem; }
+        .ioc-type { border-left: 4px solid #0078d4; padding: 0.75rem 1rem; background: var(--card-bg); margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel active"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Deep Dive</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub Integration</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion & Cost</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced KQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Content & Intelligence</div>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-cube"></i> Content Hub & ASIM</a>
+                    <a href="threat-intel.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Sentinel</a>
+                    <span class="separator">/</span>
+                    <span class="current">Threat Intelligence</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-crosshairs"></i> Threat Intelligence Integration</h1>
+                    <p class="lead">Complete guide to integrating threat intelligence feeds, platforms, and IOC management in Microsoft Sentinel for proactive threat detection</p>
+                </div>
+
+                <!-- TI Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-brain"></i> Understanding Threat Intelligence in SOC</h2>
+                    
+                    <div class="info-box">
+                        <h4>What is Threat Intelligence?</h4>
+                        <p>Threat Intelligence (TI) is evidence-based knowledge about threats that helps organizations make informed decisions. In a SOC context, TI typically includes:</p>
+                        <ul>
+                            <li><strong>IOCs (Indicators of Compromise):</strong> IPs, domains, file hashes, URLs linked to malicious activity</li>
+                            <li><strong>TTPs (Tactics, Techniques, Procedures):</strong> How threat actors operate, mapped to MITRE ATT&CK</li>
+                            <li><strong>Threat Actor Profiles:</strong> Information about adversary groups, their targets, and methods</li>
+                            <li><strong>Vulnerability Intelligence:</strong> Actively exploited CVEs and exploit availability</li>
+                        </ul>
+                    </div>
+
+                    <h3>TI Pyramid of Pain</h3>
+                    <div class="ti-flow" style="text-align: center;">
+<pre style="font-size: 0.8rem;">
+                    ┌─────────────┐
+                    │    TTPs     │  ← Hardest to change, most valuable
+                    ├─────────────┤
+                    │   Tools     │
+                    ├─────────────┤
+                    │  Network/   │
+                    │   Host      │
+                    │  Artifacts  │
+                    ├─────────────┤
+                    │   Domain    │
+                    │   Names     │
+                    ├─────────────┤
+                    │ IP Addresses│
+                    ├─────────────┤
+                    │ Hash Values │  ← Easiest to change, least valuable
+                    └─────────────┘
+</pre>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Focus on higher levels for more durable detections</p>
+                    </div>
+                </section>
+
+                <!-- Sentinel TI Architecture -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Sentinel Threat Intelligence Architecture</h2>
+
+                    <div class="ti-flow">
+<pre style="font-size: 0.75rem;">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                    SENTINEL THREAT INTELLIGENCE ARCHITECTURE                            │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│   TI SOURCES                         SENTINEL TI                    DETECTION           │
+│                                                                                          │
+│   ┌─────────────┐                 ┌──────────────────┐                                  │
+│   │ Microsoft   │────────────────▶│                  │                                  │
+│   │ Defender TI │   Native        │  ThreatIntelli-  │      ┌──────────────────┐       │
+│   └─────────────┘                 │  genceIndicator  │      │ Analytics Rules  │       │
+│                                   │       Table      │─────▶│ (TI Map rules)   │       │
+│   ┌─────────────┐                 │                  │      └──────────────────┘       │
+│   │ TAXII Feeds │────────────────▶│  Stores:         │                                  │
+│   │ (STIX 2.x)  │   Data          │  • IP addresses  │      ┌──────────────────┐       │
+│   └─────────────┘   Connector     │  • Domains       │      │ Hunting Queries  │       │
+│                                   │  • URLs          │─────▶│ (IOC lookups)    │       │
+│   ┌─────────────┐                 │  • File hashes   │      └──────────────────┘       │
+│   │ TIP Platform│────────────────▶│  • Email addrs   │                                  │
+│   │ (MISP, etc) │   Graph API     │                  │      ┌──────────────────┐       │
+│   └─────────────┘                 │  + Metadata:     │      │ Workbooks        │       │
+│                                   │  • Confidence    │─────▶│ (TI Dashboard)   │       │
+│   ┌─────────────┐                 │  • Valid dates   │      └──────────────────┘       │
+│   │ Custom/File │────────────────▶│  • Description   │                                  │
+│   │ Upload      │   Manual/API    │  • Threat type   │                                  │
+│   └─────────────┘                 └──────────────────┘                                  │
+│                                            │                                            │
+│                                            ▼                                            │
+│                                   ┌──────────────────┐                                  │
+│                                   │ TI Matching      │                                  │
+│                                   │ (Built-in rules) │                                  │
+│                                   │                  │                                  │
+│                                   │ Matches against: │                                  │
+│                                   │ • CommonSecurity │                                  │
+│                                   │   Log            │                                  │
+│                                   │ • DNS Events     │                                  │
+│                                   │ • Syslog         │                                  │
+│                                   │ • Sign-in Logs   │                                  │
+│                                   └──────────────────┘                                  │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- TI Data Sources -->
+                <section class="content-section">
+                    <h2><i class="fas fa-plug"></i> Connecting TI Sources</h2>
+
+                    <h3>Method 1: Microsoft Defender Threat Intelligence (MDTI)</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>What it is:</strong> Microsoft's native TI platform with curated IOCs and threat actor intelligence</p>
+                            <p><strong>Cost:</strong> Included with Sentinel (basic), Premium license for full features</p>
+                            <p><strong>Setup:</strong></p>
+                            <ol>
+                                <li>Go to Sentinel → Content Hub → Search "Microsoft Defender Threat Intelligence"</li>
+                                <li>Install the solution</li>
+                                <li>Configure the data connector with your MDTI license</li>
+                                <li>IOCs automatically flow to ThreatIntelligenceIndicator table</li>
+                            </ol>
+                            <p><strong>Best for:</strong> Out-of-box integration, Microsoft ecosystem, enterprise threat intel</p>
+                        </div>
+                    </div>
+
+                    <h3>Method 2: TAXII Feeds (STIX 2.x)</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>What it is:</strong> Industry standard protocol for sharing TI. Many providers offer TAXII endpoints.</p>
+                            <p><strong>Common TAXII Sources:</strong></p>
+                            <div style="margin: 1rem 0;">
+                                <span class="ti-source">AlienVault OTX</span>
+                                <span class="ti-source">Anomali Limo</span>
+                                <span class="ti-source">CISA AIS</span>
+                                <span class="ti-source">FS-ISAC</span>
+                                <span class="ti-source">Mandiant</span>
+                                <span class="ti-source">Recorded Future</span>
+                            </div>
+                            <p><strong>Setup:</strong></p>
+                            <ol>
+                                <li>Sentinel → Data Connectors → "Threat Intelligence - TAXII"</li>
+                                <li>Enter TAXII server URL, collection ID, API credentials</li>
+                                <li>Set polling frequency (hourly recommended)</li>
+                            </ol>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">Config</span>
+                                    <span class="code-title">Example TAXII Configuration</span>
+                                </div>
+                                <pre><code># AlienVault OTX TAXII 2.1
+Server: https://otx.alienvault.com/taxii/
+Collection: /feeds/pulse/
+API Key: Your OTX API key
+
+# Anomali Limo (Free community feed)
+Server: https://limo.anomali.com/api/v1/taxii2/feeds/
+Collection: Check Anomali for available collections
+Authentication: API Key</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Method 3: TIP Integration via Graph API</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>What it is:</strong> Push IOCs from your Threat Intelligence Platform via Microsoft Graph Security API</p>
+                            <p><strong>Supported TIPs:</strong></p>
+                            <div style="margin: 1rem 0;">
+                                <span class="ti-source">MISP</span>
+                                <span class="ti-source">ThreatConnect</span>
+                                <span class="ti-source">Anomali ThreatStream</span>
+                                <span class="ti-source">Palo Alto MineMeld</span>
+                                <span class="ti-source">IBM X-Force</span>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">Python</span>
+                                    <span class="code-title">Push IOC via Graph API</span>
+                                </div>
+                                <pre><code>import requests
+from datetime import datetime, timedelta
+
+# Get OAuth token
+token_url = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+token_data = {
+    "client_id": "{app_id}",
+    "client_secret": "{secret}",
+    "scope": "https://graph.microsoft.com/.default",
+    "grant_type": "client_credentials"
+}
+token_response = requests.post(token_url, data=token_data)
+access_token = token_response.json()["access_token"]
+
+# Create threat indicator
+graph_url = "https://graph.microsoft.com/beta/security/tiIndicators"
+indicator = {
+    "action": "alert",
+    "activityGroupNames": ["APT29"],
+    "confidence": 85,
+    "description": "C2 IP from recent campaign",
+    "expirationDateTime": (datetime.utcnow() + timedelta(days=30)).isoformat() + "Z",
+    "externalId": "IOC-12345",
+    "killChain": ["C2"],
+    "malwareFamilyNames": ["Cobalt Strike"],
+    "networkDestinationIPv4": "185.234.72.123",
+    "severity": 3,
+    "tags": ["APT", "nation-state"],
+    "targetProduct": "Azure Sentinel",
+    "threatType": "C2",
+    "tlpLevel": "amber"
+}
+
+headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+response = requests.post(graph_url, json=indicator, headers=headers)
+print(f"Created indicator: {response.json()}")</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Method 4: File/CSV Upload</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>What it is:</strong> Manual upload of IOCs via flat file or Logic App automation</p>
+                            <p><strong>Use cases:</strong> Internal investigations, incident-specific IOCs, adhoc threat reports</p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">CSV</span>
+                                    <span class="code-title">IOC Upload Format</span>
+                                </div>
+                                <pre><code>IndicatorType,IndicatorValue,ExpirationDateTime,Action,Confidence,Description
+ipv4-addr,185.234.72.123,2025-03-01T00:00:00Z,alert,90,APT29 C2 server
+domain-name,evil-domain.com,2025-03-01T00:00:00Z,alert,85,Phishing domain
+file:hashes.SHA256,abc123...,2025-03-01T00:00:00Z,alert,95,Ransomware payload</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TI Matching -->
+                <section class="content-section">
+                    <h2><i class="fas fa-search"></i> How TI Matching Works</h2>
+
+                    <h3>Built-in TI Map Analytics Rules</h3>
+                    <p>Sentinel provides pre-built analytics rules that automatically match IOCs against your log data:</p>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>IOC Type</th>
+                                <th>Data Sources Checked</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TI map IP entity to CommonSecurityLog</td>
+                                <td>IP Address</td>
+                                <td>CommonSecurityLog (CEF firewalls)</td>
+                            </tr>
+                            <tr>
+                                <td>TI map IP entity to AzureActivity</td>
+                                <td>IP Address</td>
+                                <td>Azure Activity logs</td>
+                            </tr>
+                            <tr>
+                                <td>TI map IP entity to SigninLogs</td>
+                                <td>IP Address</td>
+                                <td>Azure AD Sign-in logs</td>
+                            </tr>
+                            <tr>
+                                <td>TI map Domain entity to DNS Events</td>
+                                <td>Domain</td>
+                                <td>DNS query logs</td>
+                            </tr>
+                            <tr>
+                                <td>TI map URL entity to Syslog</td>
+                                <td>URL</td>
+                                <td>Proxy logs in Syslog</td>
+                            </tr>
+                            <tr>
+                                <td>TI map File Hash to Security Events</td>
+                                <td>SHA256/MD5</td>
+                                <td>Process creation events</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="warning-box">
+                        <h4>Enable TI Map Rules!</h4>
+                        <p>These rules are NOT enabled by default. Go to Analytics → Rule Templates → Filter by "TI map" → Create rules for your data sources.</p>
+                    </div>
+
+                    <h3>Custom TI Matching Query</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Custom IOC Matching Against Multiple Sources</span>
+                        </div>
+                        <pre><code>// Get active threat indicators
+let TI_IPs = ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where isnotempty(NetworkIP) or isnotempty(NetworkDestinationIP) or isnotempty(NetworkSourceIP)
+| where ExpirationDateTime > now()
+| where ConfidenceScore >= 70
+| extend TI_IP = coalesce(NetworkIP, NetworkDestinationIP, NetworkSourceIP)
+| summarize LatestIndicator = arg_max(TimeGenerated, *) by TI_IP;
+
+// Match against firewall logs
+CommonSecurityLog
+| where TimeGenerated > ago(1d)
+| where isnotempty(DestinationIP)
+| join kind=inner (TI_IPs) on $left.DestinationIP == $right.TI_IP
+| project 
+    TimeGenerated,
+    SourceIP,
+    DestinationIP,
+    DeviceAction,
+    ThreatType,
+    ThreatDescription = Description,
+    Confidence = ConfidenceScore,
+    ThreatActor = ActivityGroupNames
+| extend AlertSeverity = case(Confidence >= 90, "High", Confidence >= 70, "Medium", "Low")</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Domain IOC Matching with DNS</span>
+                        </div>
+                        <pre><code>// Match malicious domains against DNS queries
+let TI_Domains = ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where isnotempty(DomainName)
+| where ExpirationDateTime > now()
+| project DomainName, ThreatType, Description, ConfidenceScore;
+
+DnsEvents
+| where TimeGenerated > ago(1d)
+| where isnotempty(Name)
+| join kind=inner (TI_Domains) on $left.Name == $right.DomainName
+| project 
+    TimeGenerated,
+    ClientIP,
+    QueriedDomain = Name,
+    ThreatType,
+    Description,
+    ConfidenceScore
+| summarize 
+    QueryCount = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+by ClientIP, QueriedDomain, ThreatType</code></pre>
+                    </div>
+                </section>
+
+                <!-- TI Best Practices -->
+                <section class="content-section">
+                    <h2><i class="fas fa-lightbulb"></i> TI Best Practices</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header"><h4>IOC Hygiene</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Set expiration dates on all IOCs (30-90 days typical)</li>
+                                    <li>Use confidence scores - don't alert on low confidence</li>
+                                    <li>Deduplicate IOCs from multiple feeds</li>
+                                    <li>Remove IOCs that generate too many false positives</li>
+                                    <li>Tag IOCs with threat actor/campaign names</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h4>Feed Selection</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Quality over quantity - 10K good IOCs > 1M noisy ones</li>
+                                    <li>Industry-specific feeds (FS-ISAC for finance, H-ISAC for healthcare)</li>
+                                    <li>Mix strategic (APT) and tactical (commodity malware) feeds</li>
+                                    <li>Consider geographic relevance</li>
+                                    <li>Evaluate feed freshness and update frequency</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h4>Operationalization</h4></div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Start with detection mode before blocking</li>
+                                    <li>Create TI dashboard for visibility</li>
+                                    <li>Automate enrichment in playbooks</li>
+                                    <li>Track TI match rate as a metric</li>
+                                    <li>Feed investigation findings back to TIP</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TI Workbook -->
+                <section class="content-section">
+                    <h2><i class="fas fa-chart-bar"></i> TI Dashboard Queries</h2>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Threat Intelligence Overview Dashboard</span>
+                        </div>
+                        <pre><code>// IOC counts by type
+ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where ExpirationDateTime > now()
+| summarize 
+    IPs = countif(isnotempty(NetworkIP) or isnotempty(NetworkDestinationIP)),
+    Domains = countif(isnotempty(DomainName)),
+    URLs = countif(isnotempty(Url)),
+    FileHashes = countif(isnotempty(FileHashValue)),
+    Emails = countif(isnotempty(EmailSenderAddress))
+
+// IOC matches over time
+SecurityAlert
+| where TimeGenerated > ago(30d)
+| where AlertName startswith "TI map"
+| summarize Matches = count() by bin(TimeGenerated, 1d), AlertName
+| render timechart
+
+// Top matched IOCs
+ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| join kind=inner (
+    SecurityAlert
+    | where AlertName startswith "TI map"
+    | extend IOC = tostring(parse_json(ExtendedProperties)["Indicator"])
+) on $left.IndicatorId == $right.IOC
+| summarize MatchCount = count() by 
+    IOC = coalesce(NetworkIP, DomainName, Url, FileHashValue),
+    ThreatType,
+    Description
+| top 10 by MatchCount
+
+// Feed health - IOCs by source
+ThreatIntelligenceIndicator
+| where TimeGenerated > ago(7d)
+| summarize 
+    Total = count(),
+    Active = countif(ExpirationDateTime > now()),
+    Expired = countif(ExpirationDateTime <= now())
+by SourceSystem
+| order by Total desc</code></pre>
+                    </div>
+                </section>
+
+                <!-- MISP Integration -->
+                <section class="content-section">
+                    <h2><i class="fas fa-server"></i> MISP Integration Deep Dive</h2>
+
+                    <p>MISP (Malware Information Sharing Platform) is a popular open-source TIP. Here's how to integrate it with Sentinel:</p>
+
+                    <h3>Architecture Options</h3>
+                    <table class="styled-table">
+                        <tr>
+                            <th>Method</th>
+                            <th>Pros</th>
+                            <th>Cons</th>
+                            <th>Best For</th>
+                        </tr>
+                        <tr>
+                            <td>MISP → Graph API</td>
+                            <td>Real-time push, native integration</td>
+                            <td>Requires custom scripting</td>
+                            <td>Automated pipelines</td>
+                        </tr>
+                        <tr>
+                            <td>MISP → TAXII Server → Sentinel</td>
+                            <td>Standard protocol, no custom code</td>
+                            <td>Additional component</td>
+                            <td>STIX-native environments</td>
+                        </tr>
+                        <tr>
+                            <td>MISP → Logic App → Sentinel</td>
+                            <td>No code, Azure-native</td>
+                            <td>Logic App costs</td>
+                            <td>Simple setups</td>
+                        </tr>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <span class="code-title">MISP to Sentinel via Graph API</span>
+                        </div>
+                        <pre><code>from pymisp import PyMISP
+import requests
+from datetime import datetime, timedelta
+
+# Connect to MISP
+misp = PyMISP('https://your-misp-instance', 'your-api-key', ssl=False)
+
+# Get recent events
+events = misp.search(
+    published=True,
+    publish_timestamp='7d',
+    pythonify=True
+)
+
+# Get Sentinel access token
+token = get_sentinel_token()  # Your OAuth implementation
+
+# Push each attribute as indicator
+for event in events:
+    for attribute in event.Attribute:
+        if attribute.type in ['ip-dst', 'ip-src']:
+            indicator = {
+                "networkDestinationIPv4": attribute.value,
+                "action": "alert",
+                "confidence": int(event.threat_level_id) * 25,  # Convert 1-4 to 25-100
+                "description": f"MISP: {event.info}",
+                "expirationDateTime": (datetime.utcnow() + timedelta(days=30)).isoformat() + "Z",
+                "externalId": f"MISP-{attribute.uuid}",
+                "targetProduct": "Azure Sentinel",
+                "threatType": attribute.category
+            }
+            push_to_sentinel(indicator, token)
+
+        elif attribute.type == 'domain':
+            indicator = {
+                "domainName": attribute.value,
+                "action": "alert",
+                # ... similar fields
+            }
+            push_to_sentinel(indicator, token)</code></pre>
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(255,107,0,0.1)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you set up a threat intelligence program using Sentinel?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>I'd approach this in phases:</p>
+                            <p><strong>Phase 1 - Foundation:</strong></p>
+                            <p>First, I'd enable Microsoft Defender Threat Intelligence since it's included with Sentinel and provides a baseline of quality IOCs. Install the solution from Content Hub and enable the data connector. Then enable the built-in TI Map analytics rules for the data sources we're ingesting - if we have firewall logs, enable TI map IP to CommonSecurityLog.</p>
+                            <p><strong>Phase 2 - Expand Sources:</strong></p>
+                            <p>Add TAXII feeds relevant to our industry. For financial services, FS-ISAC feeds. For general coverage, AlienVault OTX provides free community intelligence. Configure polling frequency - hourly for tactical feeds, daily for strategic.</p>
+                            <p><strong>Phase 3 - Operationalize:</strong></p>
+                            <p>Create a TI workbook to visualize IOC inventory, match rates, and feed health. Set up playbooks to enrich incidents with TI context automatically. Track metrics: how many IOCs are we ingesting, what percentage generate matches, what's the false positive rate?</p>
+                            <p><strong>Phase 4 - Mature:</strong></p>
+                            <p>If we have a TIP like MISP, integrate it via Graph API for two-way sharing - push IOCs from investigations back to the TIP. Build custom hunting queries that use TI alongside behavioral analytics. Create detection rules for TTPs, not just IOCs.</p>
+                            <p>The key success factor is measuring effectiveness - are TI matches leading to real incidents? If not, we need better feeds or better tuning.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>What's the difference between tactical, operational, and strategic threat intelligence?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>These represent different levels of the intelligence pyramid:</p>
+                            <p><strong>Tactical Intelligence</strong> is the most granular - specific IOCs like IP addresses, file hashes, and domains. It's immediately actionable but has a short shelf life (days to weeks). In Sentinel, this is what we store in ThreatIntelligenceIndicator and match against logs. Example: "Block IP 185.234.72.123 - active Cobalt Strike C2."</p>
+                            <p><strong>Operational Intelligence</strong> describes how threats operate - their techniques, tools, and infrastructure patterns. It's about TTPs mapped to MITRE ATT&CK. This has a medium lifespan (months). In Sentinel, this translates to analytics rules that detect behaviors, not just IOCs. Example: "APT29 uses credential dumping followed by lateral movement via WMI."</p>
+                            <p><strong>Strategic Intelligence</strong> is the big picture - threat actor motivations, geopolitical context, industry targeting trends. It's for executives and security leadership to make risk decisions. Long lifespan (years). Example: "State-sponsored actors are increasingly targeting healthcare organizations for COVID research data."</p>
+                            <p>A mature SOC uses all three: tactical for immediate detection, operational for behavior-based detection, and strategic for resource allocation and risk management. The challenge is that most organizations focus too heavily on tactical IOCs and miss the value of operational intelligence.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How do you handle false positives from threat intelligence feeds?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>False positives from TI are a common challenge. My approach:</p>
+                            <p><strong>Prevention:</strong></p>
+                            <p>First, be selective about feeds - quality over quantity. I evaluate feeds by their false positive rate before fully enabling them. Start with detection-only mode before blocking. Use confidence scores - only alert on IOCs with confidence above 70-80%.</p>
+                            <p><strong>Tuning:</strong></p>
+                            <p>Create allowlists for known-good infrastructure that frequently appears in feeds - major cloud providers, CDNs, legitimate services. Maintain these as watchlists in Sentinel and exclude from TI matching. For example, we had a feed flagging Cloudflare IPs as malicious because attackers use Cloudflare - I excluded the Cloudflare IP ranges from matching.</p>
+                            <p><strong>Feedback Loop:</strong></p>
+                            <p>Track false positive rate per feed. If a specific feed consistently generates FPs, reduce its confidence weight or disable specific IOC types from that feed. Report false positives back to feed providers - good TI providers want this feedback.</p>
+                            <p><strong>Context-Based Scoring:</strong></p>
+                            <p>Combine TI matches with other signals. An IP match alone might be low confidence, but an IP match combined with unusual user behavior is high confidence. Build analytics rules that require multiple indicators before alerting.</p>
+                            <p>The goal is maximizing detection value while keeping analyst workload manageable. I measure this as the "actionable alert rate" - what percentage of TI alerts lead to real investigations?</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Threat Intelligence</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

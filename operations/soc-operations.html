@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Operating Procedures - Triage, Escalation & Workflows | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.7rem; overflow-x: auto; line-height: 1.4; }
+        .decision-tree { background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); }
+        .escalation-matrix { background: linear-gradient(135deg, rgba(231,76,60,0.1), rgba(231,76,60,0.2)); }
+        .sla-box { background: linear-gradient(135deg, rgba(46,204,113,0.1), rgba(46,204,113,0.2)); }
+        .phase-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #0078d4; }
+        .phase-card.phase-2 { border-left-color: #f5a623; }
+        .phase-card.phase-3 { border-left-color: #e74c3c; }
+        .phase-card.phase-4 { border-left-color: #2ecc71; }
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li { padding: 0.5rem 0; padding-left: 2rem; position: relative; }
+        .checklist li:before { content: "☐"; position: absolute; left: 0; color: #0078d4; }
+        .sla-table td:nth-child(2), .sla-table td:nth-child(3), .sla-table td:nth-child(4) { text-align: center; }
+        .critical { color: #e74c3c; font-weight: bold; }
+        .high { color: #f5a623; font-weight: bold; }
+        .medium { color: #3498db; font-weight: bold; }
+        .low { color: #2ecc71; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link active"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                    <a href="shift-handoff.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Shift Handoff</a>
+                    <a href="soc-metrics.html" class="nav-link"><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Use Case Management</div>
+                    <a href="use-case-lifecycle.html" class="nav-link"><i class="fas fa-recycle"></i> Use Case Lifecycle</a>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cogs"></i> Detection Engineering</a>
+                    <a href="mitre-mapping.html" class="nav-link"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</a>
+                    <a href="tuning-optimization.html" class="nav-link"><i class="fas fa-sliders-h"></i> Tuning & Optimization</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Compliance & Governance</div>
+                    <a href="compliance-mapping.html" class="nav-link"><i class="fas fa-balance-scale"></i> Compliance Mapping</a>
+                    <a href="audit-preparation.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Audit Preparation</a>
+                    <a href="rbac-design.html" class="nav-link"><i class="fas fa-user-lock"></i> RBAC Design</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Project Planning</div>
+                    <a href="siem-project-planning.html" class="nav-link"><i class="fas fa-project-diagram"></i> Project Planning</a>
+                    <a href="data-source-priority.html" class="nav-link"><i class="fas fa-sort-amount-down"></i> Data Source Priority</a>
+                    <a href="sizing-calculator.html" class="nav-link"><i class="fas fa-calculator"></i> Sizing Calculator</a>
+                    <a href="migration-guide.html" class="nav-link"><i class="fas fa-truck-moving"></i> Migration Guide</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Incident Response</div>
+                    <a href="ir-integration.html" class="nav-link"><i class="fas fa-ambulance"></i> IR Integration</a>
+                    <a href="playbook-library.html" class="nav-link"><i class="fas fa-book"></i> Playbook Library</a>
+                    <a href="containment-procedures.html" class="nav-link"><i class="fas fa-lock"></i> Containment Procedures</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="soc-operations.html">Operations</a>
+                    <span class="separator">/</span>
+                    <span class="current">SOC Operating Procedures</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-users-cog"></i> SOC Operating Procedures</h1>
+                    <p class="lead">Complete standard operating procedures for Security Operations Center - from alert triage to incident closure</p>
+                </div>
+
+                <!-- SOC Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> SOC Operational Model</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    SOC OPERATIONAL MODEL                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                                    DETECTION LAYER                                           │   │
+│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │   │
+│   │  │    SIEM     │  │    EDR      │  │    NDR      │  │   Email     │  │   Cloud     │       │   │
+│   │  │  Sentinel   │  │    MDE      │  │  Zeek/Corelight│ │  Gateway   │  │   CASB      │       │   │
+│   │  │  Splunk ES  │  │ CrowdStrike │  │   Darktrace │  │  Proofpoint │  │  MCAS       │       │   │
+│   │  │   XSIAM     │  │ Carbon Black│  │             │  │             │  │             │       │   │
+│   │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘       │   │
+│   │         │                │                │                │                │              │   │
+│   │         └────────────────┴────────────────┴────────────────┴────────────────┘              │   │
+│   │                                           │                                                 │   │
+│   │                                           ▼                                                 │   │
+│   │                              ┌─────────────────────────┐                                    │   │
+│   │                              │     ALERT AGGREGATION   │                                    │   │
+│   │                              │    (SOAR / Alert Queue) │                                    │   │
+│   │                              └────────────┬────────────┘                                    │   │
+│   └──────────────────────────────────────────┼──────────────────────────────────────────────────┘   │
+│                                              │                                                      │
+│   ┌──────────────────────────────────────────┼──────────────────────────────────────────────────┐   │
+│   │                                 SOC ANALYST TIERS                                            │   │
+│   │                                              │                                               │   │
+│   │                                              ▼                                               │   │
+│   │   ┌──────────────────────────────────────────────────────────────────────────────────┐      │   │
+│   │   │  TIER 1 - ALERT TRIAGE (L1)                                                      │      │   │
+│   │   │  • Initial alert review (< 15 min)                                               │      │   │
+│   │   │  • True/False positive determination                                             │      │   │
+│   │   │  • Basic enrichment & context gathering                                          │      │   │
+│   │   │  • Escalate or close with documentation                                          │      │   │
+│   │   └─────────────────────────────────────────┬────────────────────────────────────────┘      │   │
+│   │                                             │                                                │   │
+│   │                          ┌──────────────────┼──────────────────┐                            │   │
+│   │                          ▼                  ▼                  ▼                            │   │
+│   │                    ┌──────────┐       ┌──────────┐       ┌──────────┐                       │   │
+│   │                    │  FALSE   │       │  TRUE    │       │ ESCALATE │                       │   │
+│   │                    │ POSITIVE │       │ POSITIVE │       │  TO T2   │                       │   │
+│   │                    │  Close   │       │ Low Sev  │       │          │                       │   │
+│   │                    └──────────┘       └────┬─────┘       └────┬─────┘                       │   │
+│   │                                            │                  │                             │   │
+│   │                                            ▼                  ▼                             │   │
+│   │   ┌────────────────────────────────────────────────────────────────────────────────────┐   │   │
+│   │   │  TIER 2 - INCIDENT INVESTIGATION (L2)                                              │   │   │
+│   │   │  • Deep-dive investigation                                                         │   │   │
+│   │   │  • Scope determination (affected systems, users, data)                             │   │   │
+│   │   │  • Root cause analysis                                                             │   │   │
+│   │   │  • Containment recommendations                                                     │   │   │
+│   │   │  • Escalate to T3 or IR team if needed                                             │   │   │
+│   │   └─────────────────────────────────────────┬──────────────────────────────────────────┘   │   │
+│   │                                             │                                               │   │
+│   │                                             ▼                                               │   │
+│   │   ┌────────────────────────────────────────────────────────────────────────────────────┐   │   │
+│   │   │  TIER 3 - ADVANCED ANALYSIS & INCIDENT RESPONSE (L3)                               │   │   │
+│   │   │  • Advanced threat hunting                                                         │   │   │
+│   │   │  • Malware analysis & reverse engineering                                          │   │   │
+│   │   │  • Incident commander role                                                         │   │   │
+│   │   │  • Coordinate with external parties (LE, vendors, CIRT)                            │   │   │
+│   │   │  • Post-incident review & lessons learned                                          │   │   │
+│   │   └────────────────────────────────────────────────────────────────────────────────────┘   │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Alert Triage Workflow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clipboard-check"></i> Alert Triage Workflow</h2>
+
+                    <div class="workflow-diagram decision-tree">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              ALERT TRIAGE DECISION TREE                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                      │
+│                                    ┌─────────────────┐                                               │
+│                                    │   NEW ALERT     │                                               │
+│                                    │   RECEIVED      │                                               │
+│                                    └────────┬────────┘                                               │
+│                                             │                                                        │
+│                                             ▼                                                        │
+│                              ┌──────────────────────────────┐                                        │
+│                              │ STEP 1: INITIAL ASSESSMENT   │                                        │
+│                              │ (Target: < 5 minutes)        │                                        │
+│                              │                              │                                        │
+│                              │ • Read alert title/desc      │                                        │
+│                              │ • Check severity level       │                                        │
+│                              │ • Identify affected asset    │                                        │
+│                              │ • Note source detection      │                                        │
+│                              └──────────────┬───────────────┘                                        │
+│                                             │                                                        │
+│                                             ▼                                                        │
+│                         ┌───────────────────────────────────────┐                                    │
+│                         │  Is this a DUPLICATE or KNOWN issue?  │                                    │
+│                         └───────────────────┬───────────────────┘                                    │
+│                                             │                                                        │
+│                              ┌──────────────┴──────────────┐                                         │
+│                              │                             │                                         │
+│                              ▼                             ▼                                         │
+│                         ┌────────┐                    ┌────────┐                                     │
+│                         │  YES   │                    │   NO   │                                     │
+│                         └───┬────┘                    └───┬────┘                                     │
+│                             │                             │                                          │
+│                             ▼                             ▼                                          │
+│                    ┌─────────────────┐      ┌──────────────────────────────┐                        │
+│                    │ Link to existing│      │ STEP 2: CONTEXT GATHERING    │                        │
+│                    │ incident/ticket │      │ (Target: < 10 minutes)       │                        │
+│                    │ Document & Close│      │                              │                        │
+│                    └─────────────────┘      │ • Asset lookup (criticality) │                        │
+│                                             │ • User lookup (role, history)│                        │
+│                                             │ • Recent activity on asset   │                        │
+│                                             │ • Related alerts (24h)       │                        │
+│                                             │ • Threat intel enrichment    │                        │
+│                                             └──────────────┬───────────────┘                        │
+│                                                            │                                         │
+│                                                            ▼                                         │
+│                         ┌───────────────────────────────────────────────────┐                       │
+│                         │  Does activity match KNOWN BENIGN pattern?        │                       │
+│                         │                                                   │                       │
+│                         │  Examples:                                        │                       │
+│                         │  • Scheduled task/maintenance window              │                       │
+│                         │  • IT admin performing documented change          │                       │
+│                         │  • Security tool/scanner activity                 │                       │
+│                         │  • Previously whitelisted behavior                │                       │
+│                         └───────────────────────┬───────────────────────────┘                       │
+│                                                 │                                                    │
+│                              ┌──────────────────┴──────────────────┐                                │
+│                              │                                     │                                │
+│                              ▼                                     ▼                                │
+│                         ┌────────┐                            ┌────────┐                            │
+│                         │  YES   │                            │   NO   │                            │
+│                         └───┬────┘                            └───┬────┘                            │
+│                             │                                     │                                 │
+│                             ▼                                     ▼                                 │
+│              ┌────────────────────────────┐     ┌───────────────────────────────────────┐           │
+│              │ FALSE POSITIVE             │     │ STEP 3: THREAT VALIDATION             │           │
+│              │                            │     │                                       │           │
+│              │ • Document reason          │     │ Does evidence support malicious       │           │
+│              │ • Consider tuning rule     │     │ activity?                             │           │
+│              │ • Close as FP              │     │                                       │           │
+│              │ • Update runbook if needed │     │ • Check IOCs against TI               │           │
+│              └────────────────────────────┘     │ • Review process tree/network conn    │           │
+│                                                 │ • Examine file hashes/signatures      │           │
+│                                                 │ • Correlate with other alerts         │           │
+│                                                 └───────────────────┬───────────────────┘           │
+│                                                                     │                               │
+│                                      ┌──────────────────────────────┼──────────────────┐            │
+│                                      │                              │                  │            │
+│                                      ▼                              ▼                  ▼            │
+│                               ┌────────────┐                 ┌────────────┐    ┌────────────┐       │
+│                               │ CONFIRMED  │                 │ SUSPICIOUS │    │ NOT ENOUGH │       │
+│                               │ MALICIOUS  │                 │ NEEDS MORE │    │  EVIDENCE  │       │
+│                               └─────┬──────┘                 └─────┬──────┘    └─────┬──────┘       │
+│                                     │                              │                 │              │
+│                                     ▼                              ▼                 ▼              │
+│                         ┌───────────────────┐          ┌─────────────────┐  ┌─────────────────┐    │
+│                         │ STEP 4: SEVERITY  │          │ ESCALATE TO T2  │  │ Close as        │    │
+│                         │ DETERMINATION     │          │ for deeper      │  │ Inconclusive    │    │
+│                         │                   │          │ investigation   │  │ Document gaps   │    │
+│                         │ See Severity      │          └─────────────────┘  └─────────────────┘    │
+│                         │ Matrix below      │                                                       │
+│                         └─────────┬─────────┘                                                       │
+│                                   │                                                                 │
+│                                   ▼                                                                 │
+│                    ┌──────────────────────────────┐                                                 │
+│                    │ STEP 5: RESPONSE ACTION      │                                                 │
+│                    │                              │                                                 │
+│                    │ CRITICAL/HIGH:               │                                                 │
+│                    │ • Immediate escalation       │                                                 │
+│                    │ • Begin containment          │                                                 │
+│                    │ • Notify management          │                                                 │
+│                    │                              │                                                 │
+│                    │ MEDIUM:                      │                                                 │
+│                    │ • Create incident ticket     │                                                 │
+│                    │ • Assign to T2               │                                                 │
+│                    │ • Continue monitoring        │                                                 │
+│                    │                              │                                                 │
+│                    │ LOW:                         │                                                 │
+│                    │ • Document findings          │                                                 │
+│                    │ • Schedule follow-up         │                                                 │
+│                    │ • Close with notes           │                                                 │
+│                    └──────────────────────────────┘                                                 │
+│                                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Severity Classification -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Severity Classification Matrix</h2>
+
+                    <table class="styled-table sla-table">
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>Response Time</th>
+                                <th>Resolution Target</th>
+                                <th>Escalation</th>
+                                <th>Examples</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="critical">CRITICAL (P1)</span></td>
+                                <td>< 15 min</td>
+                                <td>< 4 hours</td>
+                                <td>Immediate to T3 + Management</td>
+                                <td>
+                                    • Active ransomware<br>
+                                    • Confirmed data exfiltration<br>
+                                    • Compromised privileged account<br>
+                                    • Critical system breach
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="high">HIGH (P2)</span></td>
+                                <td>< 30 min</td>
+                                <td>< 8 hours</td>
+                                <td>T2 within 30 min</td>
+                                <td>
+                                    • Malware on endpoint<br>
+                                    • Successful phishing (creds used)<br>
+                                    • Lateral movement detected<br>
+                                    • C2 communication confirmed
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="medium">MEDIUM (P3)</span></td>
+                                <td>< 2 hours</td>
+                                <td>< 24 hours</td>
+                                <td>T2 if unresolved in 4h</td>
+                                <td>
+                                    • Suspicious PowerShell<br>
+                                    • Multiple failed logins<br>
+                                    • Policy violation<br>
+                                    • Anomalous network traffic
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="low">LOW (P4)</span></td>
+                                <td>< 8 hours</td>
+                                <td>< 72 hours</td>
+                                <td>As needed</td>
+                                <td>
+                                    • Informational alerts<br>
+                                    • Minor policy violations<br>
+                                    • Reconnaissance attempts<br>
+                                    • Software vulnerabilities
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="workflow-diagram sla-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           SEVERITY DETERMINATION DECISION TREE                           │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│   START: Confirmed True Positive                                                         │
+│          │                                                                               │
+│          ▼                                                                               │
+│   ┌──────────────────────────────────────────────────────┐                              │
+│   │  Q1: Is there ACTIVE threat actor presence?          │                              │
+│   │      (C2 callback, hands-on-keyboard, ransomware)    │                              │
+│   └───────────────────────┬──────────────────────────────┘                              │
+│                           │                                                              │
+│              ┌────────────┴────────────┐                                                │
+│              ▼                         ▼                                                │
+│           [YES]                      [NO]                                               │
+│              │                         │                                                │
+│              ▼                         ▼                                                │
+│   ┌──────────────────┐    ┌──────────────────────────────────────────┐                 │
+│   │ ██ CRITICAL ██   │    │ Q2: Is sensitive data at risk?           │                 │
+│   │                  │    │     (PII, financial, IP, credentials)    │                 │
+│   │ Immediate        │    └───────────────────┬──────────────────────┘                 │
+│   │ escalation       │                        │                                         │
+│   └──────────────────┘           ┌────────────┴────────────┐                           │
+│                                  ▼                         ▼                           │
+│                               [YES]                      [NO]                          │
+│                                  │                         │                           │
+│                                  ▼                         ▼                           │
+│                   ┌──────────────────────┐   ┌───────────────────────────────────┐    │
+│                   │ Q2a: Is data already │   │ Q3: Is a CRITICAL asset affected? │    │
+│                   │      exfiltrated?    │   │     (DC, CA, backup, crown jewels)│    │
+│                   └──────────┬───────────┘   └───────────────┬───────────────────┘    │
+│                              │                               │                         │
+│                 ┌────────────┴────────────┐     ┌────────────┴────────────┐           │
+│                 ▼                         ▼     ▼                         ▼           │
+│              [YES]                      [NO]  [YES]                      [NO]         │
+│                 │                         │     │                         │           │
+│                 ▼                         ▼     ▼                         ▼           │
+│      ┌──────────────────┐     ┌──────────────────┐     ┌─────────────────────────┐   │
+│      │ ██ CRITICAL ██   │     │ ██ HIGH ██       │     │ Q4: Impact scope?       │   │
+│      └──────────────────┘     └──────────────────┘     │                         │   │
+│                                                        │ • Single user → MEDIUM  │   │
+│                                                        │ • Multiple users → HIGH │   │
+│                                                        │ • Department → HIGH     │   │
+│                                                        │ • Enterprise → CRITICAL │   │
+│                                                        └─────────────────────────┘   │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- SLA Definitions -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clock"></i> SLA Definitions</h2>
+
+                    <div class="phase-card">
+                        <h3>Mean Time to Acknowledge (MTTA)</h3>
+                        <p>Time from alert creation to analyst assignment/first action</p>
+                        <table class="styled-table">
+                            <tr><th>Severity</th><th>Target</th><th>Breach Threshold</th></tr>
+                            <tr><td class="critical">Critical</td><td>5 minutes</td><td>15 minutes</td></tr>
+                            <tr><td class="high">High</td><td>15 minutes</td><td>30 minutes</td></tr>
+                            <tr><td class="medium">Medium</td><td>1 hour</td><td>2 hours</td></tr>
+                            <tr><td class="low">Low</td><td>4 hours</td><td>8 hours</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="phase-card phase-2">
+                        <h3>Mean Time to Resolve (MTTR)</h3>
+                        <p>Time from alert creation to incident closure (including remediation)</p>
+                        <table class="styled-table">
+                            <tr><th>Severity</th><th>Target</th><th>Breach Threshold</th></tr>
+                            <tr><td class="critical">Critical</td><td>4 hours</td><td>8 hours</td></tr>
+                            <tr><td class="high">High</td><td>8 hours</td><td>24 hours</td></tr>
+                            <tr><td class="medium">Medium</td><td>24 hours</td><td>72 hours</td></tr>
+                            <tr><td class="low">Low</td><td>72 hours</td><td>1 week</td></tr>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Documentation Requirements -->
+                <section class="content-section">
+                    <h2><i class="fas fa-file-alt"></i> Documentation Requirements</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      MINIMUM DOCUMENTATION PER ALERT STATUS                              │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ CLOSED - FALSE POSITIVE                                                          │    │
+│  │ ─────────────────────────                                                        │    │
+│  │ Required fields:                                                                 │    │
+│  │ • Reason for FP determination                                                    │    │
+│  │ • Evidence reviewed (logs, context)                                              │    │
+│  │ • Tuning recommendation (if applicable)                                          │    │
+│  │ • Time spent                                                                     │    │
+│  │                                                                                  │    │
+│  │ Example:                                                                         │    │
+│  │ "FP - Scheduled vulnerability scan from Qualys (10.0.50.100) triggered          │    │
+│  │  brute force detection. Verified against scan schedule. Recommend adding        │    │
+│  │  scanner IPs to allowlist for this rule. 10 min investigation."                 │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ CLOSED - TRUE POSITIVE (Handled)                                                 │    │
+│  │ ───────────────────────────────                                                  │    │
+│  │ Required fields:                                                                 │    │
+│  │ • Attack summary (what happened)                                                 │    │
+│  │ • Affected assets/users                                                          │    │
+│  │ • Timeline of events                                                             │    │
+│  │ • Containment actions taken                                                      │    │
+│  │ • Root cause (if determined)                                                     │    │
+│  │ • Remediation steps completed                                                    │    │
+│  │ • Follow-up actions required                                                     │    │
+│  │                                                                                  │    │
+│  │ Example:                                                                         │    │
+│  │ "TP - User jsmith clicked phishing link, entered credentials on fake O365       │    │
+│  │  page. Attacker accessed mailbox 14:32-14:58 UTC. Actions: Password reset,      │    │
+│  │  session revoked, MFA enforced, inbox rules checked (none malicious).           │    │
+│  │  User notified and received additional training. No data exfil detected."       │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ ESCALATED - TO TIER 2/3                                                          │    │
+│  │ ─────────────────────────                                                        │    │
+│  │ Required fields:                                                                 │    │
+│  │ • Summary of T1 investigation                                                    │    │
+│  │ • Reason for escalation                                                          │    │
+│  │ • Specific questions for T2/T3                                                   │    │
+│  │ • Relevant evidence/artifacts collected                                          │    │
+│  │ • Suggested next steps                                                           │    │
+│  │                                                                                  │    │
+│  │ Example:                                                                         │    │
+│  │ "Escalating - Encoded PowerShell on WKSTN-042. Initial analysis shows           │    │
+│  │  base64 decode to possible Cobalt Strike beacon. Need T2 to: 1) Confirm         │    │
+│  │  malware family, 2) Check for lateral movement, 3) Advise on containment.       │    │
+│  │  Artifacts: Process tree, network connections, decoded script attached."        │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Tier Responsibilities -->
+                <section class="content-section">
+                    <h2><i class="fas fa-users"></i> Tier Responsibilities Matrix</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Responsibility</th>
+                                <th>Tier 1</th>
+                                <th>Tier 2</th>
+                                <th>Tier 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Alert triage & initial analysis</td>
+                                <td>✓ Primary</td>
+                                <td>Backup</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>False positive identification</td>
+                                <td>✓ Primary</td>
+                                <td>Review</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Basic enrichment (TI, asset lookup)</td>
+                                <td>✓ Primary</td>
+                                <td>✓</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Deep investigation</td>
+                                <td>-</td>
+                                <td>✓ Primary</td>
+                                <td>Assist</td>
+                            </tr>
+                            <tr>
+                                <td>Malware analysis</td>
+                                <td>-</td>
+                                <td>Basic</td>
+                                <td>✓ Primary</td>
+                            </tr>
+                            <tr>
+                                <td>Incident response coordination</td>
+                                <td>-</td>
+                                <td>Support</td>
+                                <td>✓ Primary</td>
+                            </tr>
+                            <tr>
+                                <td>Threat hunting</td>
+                                <td>-</td>
+                                <td>Assist</td>
+                                <td>✓ Primary</td>
+                            </tr>
+                            <tr>
+                                <td>Detection rule development</td>
+                                <td>Suggest</td>
+                                <td>Draft</td>
+                                <td>✓ Primary</td>
+                            </tr>
+                            <tr>
+                                <td>Containment actions</td>
+                                <td>-</td>
+                                <td>✓ Execute</td>
+                                <td>✓ Approve</td>
+                            </tr>
+                            <tr>
+                                <td>Management communication</td>
+                                <td>-</td>
+                                <td>Updates</td>
+                                <td>✓ Primary</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through your alert triage process from start to finish.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>My triage process follows a structured 5-step approach:</strong></p>
+                            <p><strong>Step 1 - Initial Assessment (< 5 min):</strong> Read the alert title, check severity, identify the affected asset and user. I note which detection source triggered it (SIEM rule, EDR, etc.) to understand what we're looking at.</p>
+                            <p><strong>Step 2 - Context Gathering (< 10 min):</strong> I enrich the alert with context: asset criticality from CMDB, user role from identity systems, recent alerts on the same asset (last 24-48h), and threat intel on any IOCs. This tells me if this is a high-value target and if there's a pattern.</p>
+                            <p><strong>Step 3 - Benign Pattern Check:</strong> Before deep-diving, I check if this matches known benign activity: scheduled maintenance, IT admin tasks, security scanner activity, or previously whitelisted behavior. Many alerts are false positives from legitimate activity.</p>
+                            <p><strong>Step 4 - Threat Validation:</strong> If not benign, I validate the threat: check IOCs against threat intel, review process trees or network connections, examine file hashes, and correlate with other alerts. I'm looking for evidence of actual malicious behavior.</p>
+                            <p><strong>Step 5 - Action & Documentation:</strong> Based on findings, I either close as FP with tuning recommendations, escalate to T2 with my analysis and specific questions, or if it's a confirmed incident, classify severity and initiate response procedures. Every alert gets documented with findings and time spent.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How do you determine alert severity and when to escalate?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>I use a decision tree based on four factors:</strong></p>
+                            <p><strong>1. Active Threat Presence:</strong> Is there evidence of hands-on-keyboard activity, active C2, or ransomware execution? → Immediate CRITICAL, escalate now.</p>
+                            <p><strong>2. Data at Risk:</strong> Is sensitive data (PII, financial, credentials, IP) potentially exposed or exfiltrated? → HIGH or CRITICAL depending on whether exfil is confirmed.</p>
+                            <p><strong>3. Asset Criticality:</strong> Is this a crown jewel system (DC, CA, backup infrastructure, executive laptop)? → Bump severity up one level.</p>
+                            <p><strong>4. Scope of Impact:</strong> Single user = lower severity, multiple users or systems = higher, enterprise-wide = CRITICAL.</p>
+                            <p><strong>Escalation triggers:</strong> I escalate to T2 when: I need deeper forensic analysis, I suspect lateral movement, the attack technique is beyond my skillset, or I can't determine if it's malicious within 30 minutes. I escalate to T3/IR team for: confirmed active intrusion, any ransomware, data breach evidence, or when containment decisions need senior approval.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - SOC Operating Procedures</p>
+                    <p>Production-Ready Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="splunk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notable Events - Incident Review in Splunk ES | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+                        <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Pipeline</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders Deep Dive</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Buckets</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced SPL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Enterprise Security</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> ES Overview</a>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-search-plus"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link active"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">TI & Automation</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> Splunk SOAR</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-exclamation-triangle"></i> Notable Events</h1>
+                    <p class="lead">Security alerts requiring investigation - the core workflow in Splunk ES Incident Review</p>
+                </div>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-tasks"></i> Incident Review Workflow</h2>
+                    
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem;">
+<pre>
+┌─────────┐     ┌─────────────┐     ┌─────────┐     ┌──────────┐     ┌────────┐
+│   New   │────▶│ In Progress │────▶│ Pending │────▶│ Resolved │────▶│ Closed │
+│         │     │             │     │         │     │          │     │        │
+└─────────┘     └─────────────┘     └─────────┘     └──────────┘     └────────┘
+</pre>
+                    </div>
+
+                    <table class="styled-table">
+                        <tr><th>Status</th><th>Description</th></tr>
+                        <tr><td><strong>New</strong></td><td>Unassigned, awaiting triage</td></tr>
+                        <tr><td><strong>In Progress</strong></td><td>Analyst actively investigating</td></tr>
+                        <tr><td><strong>Pending</strong></td><td>Waiting on external action</td></tr>
+                        <tr><td><strong>Resolved</strong></td><td>Investigation complete</td></tr>
+                        <tr><td><strong>Closed</strong></td><td>Fully closed</td></tr>
+                    </table>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-search"></i> Querying Notable Events</h2>
+                    
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">SPL</span>
+                            <span class="code-title">Notable Event Queries</span>
+                        </div>
+                        <pre><code>// View all open notables
+\`notable\`
+| search status_label!="Resolved" AND status_label!="Closed"
+| table _time, rule_name, urgency, owner, status_label, src, dest, user
+
+// SOC metrics - alert volume by rule
+\`notable\`
+| stats count by rule_name
+| sort -count
+
+// MTTR calculation
+\`notable\`
+| where status_label="Resolved"
+| eval resolve_time = status_end - _time
+| stats avg(resolve_time) as avg_mttr by rule_name
+| eval avg_mttr_hours = round(avg_mttr/3600, 2)</code></pre>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-star"></i> Notable Event Fields</h2>
+                    
+                    <table class="styled-table">
+                        <tr><th>Field</th><th>Description</th></tr>
+                        <tr><td>rule_name</td><td>Correlation search that created the notable</td></tr>
+                        <tr><td>urgency</td><td>Severity: critical, high, medium, low, informational</td></tr>
+                        <tr><td>owner</td><td>Assigned analyst</td></tr>
+                        <tr><td>status_label</td><td>Current workflow status</td></tr>
+                        <tr><td>security_domain</td><td>Access, endpoint, network, threat, identity</td></tr>
+                        <tr><td>drilldown_search</td><td>SPL to investigate further</td></tr>
+                    </table>
+                </section>
+
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(101,166,55,0.1), rgba(101,166,55,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Describe the Notable Event workflow in Splunk ES.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Notable Events are the core alert mechanism in ES:</p>
+                            <p><strong>Creation:</strong> Correlation searches detect threats and create notables via action.notable=1. Each notable includes the detection context, affected entities (src, dest, user), severity, and drilldown search.</p>
+                            <p><strong>Incident Review:</strong> Analysts work from the Incident Review dashboard. They can filter by severity, security domain, status, and owner. The swimlane view shows notable trends over time.</p>
+                            <p><strong>Workflow:</strong> New → In Progress (assigned) → Pending (if waiting) → Resolved (investigated) → Closed. Analysts add comments, disposition (true/false positive), and document findings.</p>
+                            <p><strong>Metrics:</strong> The `notable` macro in searches lets you track MTTA (time to assign), MTTR (time to resolve), and false positive rates.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

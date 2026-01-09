@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="sentinel">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCR & DCE Deep Dive - Data Collection Architecture | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel active"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link active"><i class="fas fa-cogs"></i> DCR & DCE Deep Dive</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub Integration</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion & Cost</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced KQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Content & Intelligence</div>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-cube"></i> Content Hub & ASIM</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Sentinel</a>
+                    <span class="separator">/</span>
+                    <span class="current">DCR & DCE Deep Dive</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-cogs"></i> DCR & DCE Deep Dive</h1>
+                    <p class="lead">Complete guide to Data Collection Rules, Data Collection Endpoints, and Associations - the foundation of modern Azure Monitor data ingestion</p>
+                </div>
+
+                <!-- Why This Matters -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Why You Need to Understand This</h2>
+                    <div class="warning-box">
+                        <p><strong>MMA Deprecation (August 2024):</strong> The legacy Log Analytics Agent (MMA) is deprecated. All new deployments MUST use Azure Monitor Agent (AMA) with DCRs. Understanding DCR/DCE architecture is now essential for any Sentinel engineer.</p>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h4>What Changed from MMA to AMA</h4>
+                        <table class="comparison-table">
+                            <tr>
+                                <th>Aspect</th>
+                                <th>MMA (Legacy)</th>
+                                <th>AMA (Modern)</th>
+                            </tr>
+                            <tr>
+                                <td>Configuration</td>
+                                <td>Workspace-level settings</td>
+                                <td>DCR per resource/group</td>
+                            </tr>
+                            <tr>
+                                <td>Event Selection</td>
+                                <td>4 presets (All, Common, Minimal, None)</td>
+                                <td>XPath queries - any specific EventID</td>
+                            </tr>
+                            <tr>
+                                <td>Filtering</td>
+                                <td>Limited, after collection</td>
+                                <td>At source via DCR transformKql</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-homing</td>
+                                <td>Complex, multiple agents</td>
+                                <td>Single agent, multiple DCRs</td>
+                            </tr>
+                            <tr>
+                                <td>On-prem</td>
+                                <td>Direct install</td>
+                                <td>Requires Azure Arc</td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Core Concepts -->
+                <section class="content-section">
+                    <h2><i class="fas fa-cube"></i> Core Concepts Explained</h2>
+
+                    <div class="concept-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-file-code" style="color: #0078d4;"></i> DCR - Data Collection Rule</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>What it is:</strong> An Azure resource that defines the complete data collection pipeline - what to collect, how to transform, where to send.</p>
+                                <p><strong>Components:</strong></p>
+                                <ul>
+                                    <li><strong>Data Sources:</strong> Windows Events (XPath), Syslog (facility/severity), Performance Counters, Custom Logs</li>
+                                    <li><strong>Destinations:</strong> Log Analytics workspace(s), Azure Monitor Metrics</li>
+                                    <li><strong>Data Flows:</strong> Maps streams to destinations with optional transformKql</li>
+                                </ul>
+                                <p><strong>When created:</strong></p>
+                                <ul>
+                                    <li>Manually via Azure Portal</li>
+                                    <li>Auto-created by Sentinel data connectors</li>
+                                    <li>Via ARM/Bicep templates for IaC</li>
+                                    <li>Via Azure Policy for at-scale deployment</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-broadcast-tower" style="color: #0078d4;"></i> DCE - Data Collection Endpoint</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>What it is:</strong> A regional HTTP endpoint that receives data from the Logs Ingestion API and custom data sources.</p>
+                                <p><strong>When you need it:</strong></p>
+                                <ul>
+                                    <li>Custom log ingestion via REST API</li>
+                                    <li>Azure Functions sending custom data</li>
+                                    <li>IIS logs, custom text logs</li>
+                                    <li>Private link scenarios</li>
+                                </ul>
+                                <p><strong>Key properties:</strong></p>
+                                <ul>
+                                    <li>Regional resource (create in same region as sources)</li>
+                                    <li>Provides logs ingestion URI for API calls</li>
+                                    <li>Can be shared across multiple DCRs</li>
+                                </ul>
+                                <p><strong>NOT needed for:</strong> Standard AMA collection (Windows Events, Syslog) - AMA has built-in endpoints</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-link" style="color: #0078d4;"></i> DCRA - DCR Association</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>What it is:</strong> A link between a DCR and a target resource (VM, Arc-enabled server, VMSS).</p>
+                                <p><strong>Key characteristics:</strong></p>
+                                <ul>
+                                    <li><strong>Many-to-many:</strong> One DCR can associate with many VMs, one VM can have multiple DCRAs</li>
+                                    <li><strong>Limit:</strong> Up to 10 DCRs per resource (for different data types)</li>
+                                    <li>Resource ID format: <code>/subscriptions/.../providers/Microsoft.Insights/dataCollectionRuleAssociations/</code></li>
+                                </ul>
+                                <p><strong>How AMA uses it:</strong> When AMA starts, it queries Azure for DCRAs linked to its resource, downloads the DCR configs, and begins collection.</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-exchange-alt" style="color: #0078d4;"></i> Workspace Transformation DCR</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>What it is:</strong> A special DCR attached to the workspace that applies transformations to data NOT using standard DCRs.</p>
+                                <p><strong>Use cases:</strong></p>
+                                <ul>
+                                    <li>Transform data from diagnostic settings</li>
+                                    <li>Filter AADNonInteractiveSignInLogs</li>
+                                    <li>Enrich data from legacy connectors</li>
+                                </ul>
+                                <p><strong>Important:</strong></p>
+                                <ul>
+                                    <li>One workspace transformation DCR per workspace</li>
+                                    <li>Does NOT apply to data already using standard DCRs</li>
+                                    <li>Contains transformations per input stream</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Architecture Diagram -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Data Flow Architecture</h2>
+                    
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                         AZURE MONITOR DATA COLLECTION ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐            │
+│  │ AZURE VM        │         │ ON-PREM SERVER  │         │ CUSTOM APP      │            │
+│  │                 │         │                 │         │                 │            │
+│  │  ┌───────────┐  │         │  ┌───────────┐  │         │  HTTP POST      │            │
+│  │  │    AMA    │  │         │  │    AMA    │  │         │  to DCE         │            │
+│  │  └─────┬─────┘  │         │  └─────┬─────┘  │         │                 │            │
+│  └────────┼────────┘         └────────┼────────┘         └────────┬────────┘            │
+│           │                           │                           │                      │
+│           │ Queries DCRA              │ Requires                  │                      │
+│           │ at startup                │ Azure Arc                 │                      │
+│           │                           │                           │                      │
+│           ▼                           ▼                           ▼                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐        │
+│  │                              CONTROL PLANE                                    │        │
+│  │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐          │        │
+│  │  │     DCRA        │───▶│      DCR        │───▶│      DCE        │          │        │
+│  │  │  (Association)  │    │ (Collection     │    │  (Endpoint for  │          │        │
+│  │  │                 │    │   Rule)         │    │   API ingestion)│          │        │
+│  │  └─────────────────┘    └────────┬────────┘    └────────┬────────┘          │        │
+│  │                                  │                      │                    │        │
+│  │                                  │ Defines:             │ Provides:          │        │
+│  │                                  │ • Data sources       │ • Logs ingestion   │        │
+│  │                                  │ • transformKql       │   URI              │        │
+│  │                                  │ • Destinations       │ • Config endpoint  │        │
+│  │                                  │                      │                    │        │
+│  └──────────────────────────────────┼──────────────────────┼────────────────────┘        │
+│                                     │                      │                              │
+│                                     ▼                      ▼                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐        │
+│  │                              DATA PLANE                                       │        │
+│  │                                                                               │        │
+│  │    Raw Data ──▶ transformKql ──▶ Destination Table                           │        │
+│  │                                                                               │        │
+│  │    Example transformation:                                                    │        │
+│  │    source | where EventID != 4688 | project-away ConditionalAccessPolicies   │        │
+│  │                                                                               │        │
+│  └─────────────────────────────────────────────────────────────────────────────┘        │
+│                                     │                                                    │
+│                                     ▼                                                    │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐        │
+│  │                         LOG ANALYTICS WORKSPACE                              │        │
+│  │                                                                               │        │
+│  │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │        │
+│  │   │SecurityEvent │  │    Syslog    │  │ Custom_CL   │  │CommonSecurity│    │        │
+│  │   │              │  │              │  │              │  │    Log       │    │        │
+│  │   └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │        │
+│  │                                                                               │        │
+│  └─────────────────────────────────────────────────────────────────────────────┘        │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- DCR Types -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> Types of DCRs - When to Use Each</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>DCR Type</th>
+                                <th>Use Case</th>
+                                <th>Supports transformKql</th>
+                                <th>Requires DCE</th>
+                                <th>Example Scenarios</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Standard DCR (AMA)</strong></td>
+                                <td>Agent-based collection from VMs</td>
+                                <td>✅ Yes</td>
+                                <td>❌ No (AMA has built-in)</td>
+                                <td>Windows Security Events, Syslog, Performance Counters</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Custom Log DCR</strong></td>
+                                <td>Text files, IIS logs, custom formats</td>
+                                <td>✅ Yes</td>
+                                <td>✅ Yes</td>
+                                <td>Application logs, CSV files, custom JSON</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Logs Ingestion API DCR</strong></td>
+                                <td>REST API data submission</td>
+                                <td>✅ Yes</td>
+                                <td>✅ Yes</td>
+                                <td>Azure Functions, Logic Apps, custom apps</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Workspace Transformation DCR</strong></td>
+                                <td>Transform non-DCR data sources</td>
+                                <td>✅ Yes</td>
+                                <td>❌ No</td>
+                                <td>Diagnostic settings, AAD logs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- XPath Queries -->
+                <section class="content-section">
+                    <h2><i class="fas fa-filter"></i> XPath Queries for Windows Events</h2>
+                    
+                    <p>XPath is how you specify EXACTLY which Windows events to collect. This is the power feature over MMA's preset options.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">XPath</span>
+                            <span class="code-title">Common Security Event Patterns</span>
+                        </div>
+                        <pre><code># Basic format: LogName!*[System[(EventID=XXXX)]]
+
+# Single EventID - Successful logon
+Security!*[System[(EventID=4624)]]
+
+# Multiple EventIDs - Authentication events
+Security!*[System[(EventID=4624 or EventID=4625 or EventID=4648)]]
+
+# Range of EventIDs - Account management
+Security!*[System[(EventID &gt;= 4720 and EventID &lt;= 4735)]]
+
+# Specific provider
+Security!*[System[Provider[@Name='Microsoft-Windows-Security-Auditing']]]
+
+# By level (1=Critical, 2=Error, 3=Warning, 4=Info)
+Application!*[System[(Level=1 or Level=2)]]
+
+# Combined with EventData filtering (advanced)
+Security!*[System[(EventID=4624)] and EventData[Data[@Name='LogonType']='10']]
+
+# Exclude specific events
+Security!*[System[(EventID!=4688)]]</code></pre>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Essential Security EventIDs for Sentinel</h4>
+                        <table class="styled-table">
+                            <tr><th>Category</th><th>EventIDs</th><th>XPath Query</th></tr>
+                            <tr>
+                                <td>Authentication</td>
+                                <td>4624, 4625, 4648, 4634</td>
+                                <td><code>Security!*[System[(EventID=4624 or EventID=4625 or EventID=4648 or EventID=4634)]]</code></td>
+                            </tr>
+                            <tr>
+                                <td>Account Changes</td>
+                                <td>4720-4735, 4738, 4740</td>
+                                <td><code>Security!*[System[((EventID &gt;= 4720 and EventID &lt;= 4735) or EventID=4738 or EventID=4740)]]</code></td>
+                            </tr>
+                            <tr>
+                                <td>Privileged Use</td>
+                                <td>4672, 4673, 4674</td>
+                                <td><code>Security!*[System[(EventID=4672 or EventID=4673 or EventID=4674)]]</code></td>
+                            </tr>
+                            <tr>
+                                <td>Process Creation</td>
+                                <td>4688</td>
+                                <td><code>Security!*[System[(EventID=4688)]]</code></td>
+                            </tr>
+                            <tr>
+                                <td>PowerShell</td>
+                                <td>4103, 4104</td>
+                                <td><code>Microsoft-Windows-PowerShell/Operational!*[System[(EventID=4103 or EventID=4104)]]</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TransformKql -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exchange-alt"></i> transformKql - Ingest-Time Transformation</h2>
+                    
+                    <p>Transform data BEFORE it's stored - filter rows, remove columns, enrich, or normalize. This saves cost and improves query performance.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Transformation Examples</span>
+                        </div>
+                        <pre><code>// Basic: Filter out noisy events
+source
+| where EventID != 4688 or (ProcessName !contains "svchost" and ProcessName !contains "MsMpEng")
+
+// Remove large columns to reduce cost
+source
+| project-away ConditionalAccessPolicies, RawEventData, ExtendedProperties
+
+// Filter by IP range (only external)
+source
+| where not(ipv4_is_private(IpAddress))
+
+// Combine: Filter + Remove columns
+source
+| where Level <= 3  // Only Warning and above
+| project-away Computer, Channel, Task
+
+// Add computed column during ingestion
+source
+| extend 
+    IsLocalLogon = (LogonType == 2 or LogonType == 7),
+    IsRemoteLogon = (LogonType == 3 or LogonType == 10)
+
+// Normalize fields during ingestion
+source
+| extend 
+    SrcIpAddr = coalesce(SourceIP, ClientIP, IpAddress),
+    DstPort = toint(coalesce(DestinationPort, Port, "0"))</code></pre>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4>transformKql Limitations</h4>
+                        <ul>
+                            <li>Cannot reference other tables (no joins, no lookups)</li>
+                            <li>Cannot use functions that require external data</li>
+                            <li>Must start with <code>source</code> keyword</li>
+                            <li>Limited KQL operators available</li>
+                            <li>Errors cause data to be dropped (test carefully!)</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Complete DCR Example -->
+                <section class="content-section">
+                    <h2><i class="fas fa-file-code"></i> Complete DCR JSON Examples</h2>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">JSON</span>
+                            <span class="code-title">Windows Security Events DCR with Transformation</span>
+                        </div>
+                        <pre><code>{
+  "location": "eastus",
+  "properties": {
+    "description": "Security events DCR for domain controllers",
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "name": "SecurityEvents",
+          "streams": ["Microsoft-SecurityEvent"],
+          "xPathQueries": [
+            "Security!*[System[(EventID=4624 or EventID=4625 or EventID=4648)]]",
+            "Security!*[System[(EventID &gt;= 4720 and EventID &lt;= 4735)]]",
+            "Security!*[System[(EventID=4672 or EventID=4688)]]"
+          ]
+        },
+        {
+          "name": "PowerShellLogs",
+          "streams": ["Microsoft-Event"],
+          "xPathQueries": [
+            "Microsoft-Windows-PowerShell/Operational!*[System[(EventID=4103 or EventID=4104)]]"
+          ]
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/xxx/resourceGroups/rg-sentinel/providers/Microsoft.OperationalInsights/workspaces/sentinel-workspace",
+          "name": "SentinelWorkspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-SecurityEvent"],
+        "destinations": ["SentinelWorkspace"],
+        "transformKql": "source | where not(EventID == 4688 and ProcessName contains 'svchost')"
+      },
+      {
+        "streams": ["Microsoft-Event"],
+        "destinations": ["SentinelWorkspace"]
+      }
+    ]
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">JSON</span>
+                            <span class="code-title">Syslog DCR for Linux Servers</span>
+                        </div>
+                        <pre><code>{
+  "location": "eastus",
+  "properties": {
+    "description": "Syslog collection for Linux servers",
+    "dataSources": {
+      "syslog": [
+        {
+          "name": "AuthLogs",
+          "streams": ["Microsoft-Syslog"],
+          "facilityNames": ["auth", "authpriv"],
+          "logLevels": ["Debug", "Info", "Notice", "Warning", "Error", "Critical", "Alert", "Emergency"]
+        },
+        {
+          "name": "SecurityLogs",
+          "streams": ["Microsoft-Syslog"],
+          "facilityNames": ["syslog", "daemon", "kern"],
+          "logLevels": ["Warning", "Error", "Critical", "Alert", "Emergency"]
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/xxx/resourceGroups/rg-sentinel/providers/Microsoft.OperationalInsights/workspaces/sentinel-workspace",
+          "name": "SentinelWorkspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-Syslog"],
+        "destinations": ["SentinelWorkspace"],
+        "transformKql": "source | where ProcessName != 'CRON' or SeverityLevel != 'info'"
+      }
+    ]
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">JSON</span>
+                            <span class="code-title">Custom Log DCR with Logs Ingestion API</span>
+                        </div>
+                        <pre><code>{
+  "location": "eastus",
+  "properties": {
+    "description": "Custom application logs via API",
+    "streamDeclarations": {
+      "Custom-MyApp_CL": {
+        "columns": [
+          {"name": "TimeGenerated", "type": "datetime"},
+          {"name": "RawData", "type": "string"},
+          {"name": "Application", "type": "string"},
+          {"name": "Level", "type": "string"},
+          {"name": "Message", "type": "string"},
+          {"name": "UserId", "type": "string"},
+          {"name": "SourceIP", "type": "string"}
+        ]
+      }
+    },
+    "dataCollectionEndpointId": "/subscriptions/xxx/resourceGroups/rg-sentinel/providers/Microsoft.Insights/dataCollectionEndpoints/dce-customlogs",
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/xxx/resourceGroups/rg-sentinel/providers/Microsoft.OperationalInsights/workspaces/sentinel-workspace",
+          "name": "SentinelWorkspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Custom-MyApp_CL"],
+        "destinations": ["SentinelWorkspace"],
+        "transformKql": "source | extend TimeGenerated = now() | project-away RawData",
+        "outputStream": "Custom-MyApp_CL"
+      }
+    ]
+  }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Deployment Methods -->
+                <section class="content-section">
+                    <h2><i class="fas fa-rocket"></i> Deployment Methods</h2>
+
+                    <h3>Method 1: Azure Portal (Manual)</h3>
+                    <ol>
+                        <li>Azure Monitor → Data Collection Rules → Create</li>
+                        <li>Select subscription, resource group, name, region</li>
+                        <li>Add resources (VMs) on Resources tab</li>
+                        <li>Configure data sources on Collect tab</li>
+                        <li>Review and create</li>
+                    </ol>
+                    <p><strong>Best for:</strong> Learning, testing, small deployments</p>
+
+                    <h3>Method 2: ARM/Bicep Templates (IaC)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">Bicep</span>
+                            <span class="code-title">DCR Deployment with Bicep</span>
+                        </div>
+                        <pre><code>resource dcr 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
+  name: 'dcr-security-events'
+  location: location
+  properties: {
+    description: 'Security events for Sentinel'
+    dataSources: {
+      windowsEventLogs: [
+        {
+          name: 'SecurityEvents'
+          streams: ['Microsoft-SecurityEvent']
+          xPathQueries: [
+            'Security!*[System[(EventID=4624 or EventID=4625)]]'
+          ]
+        }
+      ]
+    }
+    destinations: {
+      logAnalytics: [
+        {
+          workspaceResourceId: workspaceId
+          name: 'sentinel'
+        }
+      ]
+    }
+    dataFlows: [
+      {
+        streams: ['Microsoft-SecurityEvent']
+        destinations: ['sentinel']
+      }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <p><strong>Best for:</strong> Repeatable deployments, GitOps, enterprise standards</p>
+
+                    <h3>Method 3: Azure Policy (At-Scale)</h3>
+                    <p>Use built-in or custom policies to automatically deploy AMA and associate DCRs.</p>
+                    <div class="info-box">
+                        <h4>Key Built-in Policies</h4>
+                        <ul>
+                            <li><code>Configure Windows machines to run Azure Monitor Agent</code></li>
+                            <li><code>Configure Linux machines to run Azure Monitor Agent</code></li>
+                            <li><code>Configure Windows machines to be associated with a Data Collection Rule</code></li>
+                        </ul>
+                    </div>
+                    <p><strong>Best for:</strong> Enterprise deployment, compliance, new VM auto-enrollment</p>
+                </section>
+
+                <!-- Troubleshooting -->
+                <section class="content-section">
+                    <h2><i class="fas fa-wrench"></i> Troubleshooting DCR Issues</h2>
+
+                    <h3>Common Issues & Solutions</h3>
+
+                    <div class="troubleshooting-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #f5a623;">
+                        <h4>❌ No data arriving in workspace</h4>
+                        <p><strong>Check:</strong></p>
+                        <ol>
+                            <li>Is AMA installed and running? <code>Get-Service AzureMonitorAgent</code></li>
+                            <li>Is DCRA created? Check VM → Extensions + applications</li>
+                            <li>Is DCR associated with the VM? Check DCR → Resources</li>
+                            <li>Are XPath queries valid? Test in Event Viewer</li>
+                            <li>Is the VM generating the events? Check local Event Viewer</li>
+                        </ol>
+                    </div>
+
+                    <div class="troubleshooting-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #f5a623;">
+                        <h4>❌ transformKql errors dropping data</h4>
+                        <p><strong>Check:</strong></p>
+                        <ol>
+                            <li>Test the KQL in Log Analytics first</li>
+                            <li>Ensure it starts with <code>source</code></li>
+                            <li>Check for typos in column names</li>
+                            <li>Avoid unsupported functions</li>
+                            <li>Check DCR metrics for ingestion errors</li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Check DCR Health</span>
+                        </div>
+                        <pre><code>// Check AMA heartbeat
+Heartbeat
+| where Category == "Azure Monitor Agent"
+| summarize LastHeartbeat = max(TimeGenerated) by Computer
+| where LastHeartbeat < ago(5m)
+
+// Check data ingestion lag
+SecurityEvent
+| summarize IngestionLag = avg(ingestion_time() - TimeGenerated) by bin(TimeGenerated, 1h)
+
+// Verify DCR is collecting expected events
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| summarize count() by EventID
+| order by count_ desc</code></pre>
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(255,107,0,0.1)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Explain the relationship between DCR, DCE, and DCRA. When do you need each?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>These three components form the modern Azure Monitor data collection architecture:</p>
+                            <p><strong>DCR (Data Collection Rule)</strong> is the core - it defines WHAT to collect (XPath queries for events, facilities for syslog), HOW to transform (transformKql to filter/modify), and WHERE to send (which workspace). It's an Azure resource you create once and reuse.</p>
+                            <p><strong>DCRA (Data Collection Rule Association)</strong> is the link between a DCR and a resource. When AMA starts on a VM, it queries Azure for DCRAs pointing to its resource ID, downloads those DCR configs, and begins collection. It's a many-to-many relationship - one DCR can serve thousands of VMs through individual DCRAs.</p>
+                            <p><strong>DCE (Data Collection Endpoint)</strong> is only needed for custom data - when you're using the Logs Ingestion API to POST data from Azure Functions, Logic Apps, or custom apps. It provides the HTTPS endpoint URL. For standard AMA collection of Windows Events or Syslog, you don't need a DCE because AMA has built-in endpoints.</p>
+                            <p>In practice: for 1000 Windows servers sending Security Events, I'd create one DCR with my XPath queries, then use Azure Policy to deploy AMA and create DCRAs automatically when VMs are created. No DCE needed. For custom application logs coming from an Azure Function, I'd create a DCE, a DCR with streamDeclarations defining my custom schema, and have the Function POST JSON to the DCE's logs ingestion URI.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you use DCR transformations to reduce Sentinel costs?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>DCR transformKql is powerful for cost optimization because it filters data BEFORE it's stored - you're not paying for data that gets dropped.</p>
+                            <p>My approach:</p>
+                            <p><strong>1. Identify high-volume tables:</strong> Use the Usage table to find what's costing most. Usually it's SecurityEvent, Syslog, or AADNonInteractiveSignInLogs.</p>
+                            <p><strong>2. Analyze value vs noise:</strong> For SecurityEvent, EventID 4688 (process creation) is often 60-70% of volume. Ask: do we need svchost.exe process creation? Usually no.</p>
+                            <p><strong>3. Create targeted transformations:</strong></p>
+                            <p><code>source | where not(EventID == 4688 and ProcessName contains 'svchost')</code></p>
+                            <p><strong>4. Remove unnecessary columns:</strong> AADNonInteractiveSignInLogs has a ConditionalAccessPolicies column that can be 80% of the record size:</p>
+                            <p><code>source | project-away ConditionalAccessPolicies</code></p>
+                            <p><strong>5. Test before deploying:</strong> Use Log Analytics to simulate the filter and calculate expected reduction.</p>
+                            <p>I've seen 40-60% cost reduction on Security Events by filtering process creation noise, and 70%+ on AAD sign-in logs by removing conditional access data we weren't using for detections.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through setting up custom log ingestion via the Logs Ingestion API.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Setting up custom log ingestion involves several steps:</p>
+                            <p><strong>1. Create the DCE:</strong> First, I need a Data Collection Endpoint in the same region as my data source. This gives me the logs ingestion URI like <code>https://dce-xxx.eastus-1.ingest.monitor.azure.com</code>.</p>
+                            <p><strong>2. Create a custom table:</strong> In Log Analytics, I create a table with _CL suffix (e.g., MyAppLogs_CL) defining the schema - TimeGenerated (required), and my custom columns.</p>
+                            <p><strong>3. Create the DCR:</strong> This DCR has streamDeclarations matching my schema, references the DCE, and defines the dataFlow from my custom stream to the custom table. I can add transformKql here to parse or enrich data.</p>
+                            <p><strong>4. Grant permissions:</strong> The app or managed identity sending data needs "Monitoring Metrics Publisher" role on the DCR.</p>
+                            <p><strong>5. Send data:</strong> POST JSON to <code>{DCE-URI}/dataCollectionRules/{DCR-immutableId}/streams/{streamName}?api-version=2023-01-01</code> with bearer token authentication.</p>
+                            <p>The key gotchas: TimeGenerated must be in ISO 8601 format, the stream name in the URL must match exactly what's in the DCR, and you need proper AAD authentication - usually via managed identity for Azure Functions.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - DCR & DCE Deep Dive</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

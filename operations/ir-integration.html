@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Response Integration - SIEM to IR Workflow | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.7rem; overflow-x: auto; line-height: 1.4; }
+        .phase-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Incident Response</div>
+                    <a href="ir-integration.html" class="nav-link active"><i class="fas fa-ambulance"></i> IR Integration</a>
+                    <a href="playbook-library.html" class="nav-link"><i class="fas fa-book"></i> Playbook Library</a>
+                    <a href="containment-procedures.html" class="nav-link"><i class="fas fa-lock"></i> Containment Procedures</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-ambulance"></i> Incident Response Integration</h1>
+                    <p class="lead">Connecting SIEM detection to incident response - from alert to containment</p>
+                </div>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-project-diagram"></i> SIEM-to-IR Workflow</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 SIEM TO INCIDENT RESPONSE FLOW                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│   DETECTION          TRIAGE           INVESTIGATION        CONTAINMENT        RECOVERY                  │
+│   ─────────          ──────           ─────────────        ───────────        ────────                  │
+│                                                                                                          │
+│   ┌─────────┐       ┌─────────┐       ┌─────────────┐      ┌───────────┐     ┌─────────┐               │
+│   │  SIEM   │──────▶│  SOC    │──────▶│    SOC      │─────▶│    IR     │────▶│   IT    │               │
+│   │  Alert  │       │  Tier 1 │       │   Tier 2    │      │   Team    │     │  Ops    │               │
+│   └─────────┘       └─────────┘       └─────────────┘      └───────────┘     └─────────┘               │
+│        │                 │                  │                    │                │                     │
+│        │                 │                  │                    │                │                     │
+│        ▼                 ▼                  ▼                    ▼                ▼                     │
+│   ┌─────────┐       ┌─────────┐       ┌─────────────┐      ┌───────────┐     ┌─────────┐               │
+│   │ Notable │       │ Initial │       │   Deep      │      │ Isolate   │     │ Restore │               │
+│   │ Event   │       │ Triage  │       │   Dive      │      │ Block     │     │ Rebuild │               │
+│   │ Created │       │ FP/TP?  │       │   Scope     │      │ Disable   │     │ Verify  │               │
+│   └─────────┘       └─────────┘       └─────────────┘      └───────────┘     └─────────┘               │
+│        │                 │                  │                    │                │                     │
+│        │                 │                  │                    │                │                     │
+│   ┌────┴────┐       ┌────┴────┐       ┌────┴────────┐      ┌────┴──────┐     ┌────┴────┐               │
+│   │ SOAR    │       │ Ticket  │       │ IR Ticket   │      │ Change    │     │ Lessons │               │
+│   │Enriches │       │ Created │       │ Escalation  │      │ Request   │     │ Learned │               │
+│   └─────────┘       └─────────┘       └─────────────┘      └───────────┘     └─────────┘               │
+│                                                                                                          │
+│   TIMEFRAMES:                                                                                            │
+│   ───────────                                                                                            │
+│   Detection → Triage:        < 15 min (Critical)                                                        │
+│   Triage → Investigation:    < 30 min (if escalated)                                                    │
+│   Investigation → Contain:   < 1 hour (Critical)                                                        │
+│   Contain → Recovery:        Variable (hours to days)                                                   │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-clipboard-list"></i> Incident Classification</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Examples</th>
+                                <th>Initial Response</th>
+                                <th>Escalation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Malware</strong></td>
+                                <td>Ransomware, Trojan, Worm, RAT</td>
+                                <td>Isolate endpoint, preserve evidence</td>
+                                <td>IR Team immediately for ransomware</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phishing</strong></td>
+                                <td>Credential theft, BEC, malware delivery</td>
+                                <td>Reset credentials, check for access</td>
+                                <td>IR Team if credentials used</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Unauthorized Access</strong></td>
+                                <td>Compromised account, privilege escalation</td>
+                                <td>Disable account, revoke sessions</td>
+                                <td>IR Team for privileged accounts</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Data Exfiltration</strong></td>
+                                <td>Data theft, insider threat</td>
+                                <td>Block transfer, preserve logs</td>
+                                <td>IR Team + Legal immediately</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Denial of Service</strong></td>
+                                <td>DDoS, resource exhaustion</td>
+                                <td>Activate DDoS mitigation</td>
+                                <td>Network team + IR</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-tasks"></i> IR Handoff Checklist</h2>
+
+                    <div class="phase-card">
+                        <h3>Information to Provide When Escalating to IR</h3>
+                        <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                         IR ESCALATION PACKAGE                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ☐ INCIDENT SUMMARY                                                                     │
+│    ├── What happened (brief description)                                                │
+│    ├── When it was detected (timestamp UTC)                                             │
+│    ├── How it was detected (which alert/rule)                                           │
+│    └── Current status (ongoing/contained/unknown)                                       │
+│                                                                                          │
+│  ☐ AFFECTED ASSETS                                                                      │
+│    ├── Hostnames and IPs                                                                │
+│    ├── Asset criticality (from CMDB)                                                    │
+│    ├── Business function                                                                │
+│    └── Data classification                                                              │
+│                                                                                          │
+│  ☐ AFFECTED USERS                                                                       │
+│    ├── Usernames/email addresses                                                        │
+│    ├── Role and department                                                              │
+│    ├── Privileged access? (admin, service account)                                      │
+│    └── Contact information                                                              │
+│                                                                                          │
+│  ☐ INDICATORS OF COMPROMISE                                                             │
+│    ├── IP addresses (src/dst)                                                           │
+│    ├── Domain names                                                                     │
+│    ├── File hashes (MD5, SHA256)                                                        │
+│    ├── File names/paths                                                                 │
+│    ├── Process names                                                                    │
+│    └── Registry keys (if applicable)                                                    │
+│                                                                                          │
+│  ☐ TIMELINE                                                                             │
+│    ├── First suspicious activity                                                        │
+│    ├── Key events in sequence                                                           │
+│    ├── Detection time                                                                   │
+│    └── Actions taken so far                                                             │
+│                                                                                          │
+│  ☐ EVIDENCE COLLECTED                                                                   │
+│    ├── SIEM query results (exported)                                                    │
+│    ├── Screenshots                                                                      │
+│    ├── Log excerpts                                                                     │
+│    └── EDR investigation links                                                          │
+│                                                                                          │
+│  ☐ INITIAL ASSESSMENT                                                                   │
+│    ├── Likely attack type                                                               │
+│    ├── Potential impact                                                                 │
+│    ├── Containment recommendations                                                      │
+│    └── Questions for IR team                                                            │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-lock"></i> Containment Quick Reference</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      CONTAINMENT DECISION TREE                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│                              CONFIRMED INCIDENT                                          │
+│                                     │                                                    │
+│                                     ▼                                                    │
+│                    ┌────────────────────────────────┐                                   │
+│                    │  Is there ACTIVE threat actor  │                                   │
+│                    │  presence (C2, hands-on)?      │                                   │
+│                    └───────────────┬────────────────┘                                   │
+│                                    │                                                     │
+│                    ┌───────────────┴───────────────┐                                    │
+│                    ▼                               ▼                                    │
+│                  [YES]                           [NO]                                   │
+│                    │                               │                                    │
+│                    ▼                               ▼                                    │
+│         ┌─────────────────────┐      ┌─────────────────────────────┐                   │
+│         │ IMMEDIATE CONTAIN   │      │ Is data at risk of exfil?  │                   │
+│         │                     │      └────────────┬────────────────┘                   │
+│         │ • Isolate endpoint  │                   │                                    │
+│         │ • Block C2 IPs      │      ┌────────────┴────────────┐                       │
+│         │ • Disable accounts  │      ▼                         ▼                       │
+│         │ • Notify IR NOW     │    [YES]                      [NO]                     │
+│         └─────────────────────┘      │                         │                       │
+│                                      ▼                         ▼                       │
+│                           ┌─────────────────┐     ┌─────────────────────────┐          │
+│                           │ URGENT CONTAIN  │     │ MEASURED RESPONSE       │          │
+│                           │                 │     │                         │          │
+│                           │ • Block exfil   │     │ • Monitor closely       │          │
+│                           │   channels      │     │ • Collect evidence      │          │
+│                           │ • Isolate data  │     │ • Plan containment      │          │
+│                           │   sources       │     │ • Schedule remediation  │          │
+│                           │ • Preserve logs │     │                         │          │
+│                           └─────────────────┘     └─────────────────────────┘          │
+│                                                                                          │
+│  CONTAINMENT ACTIONS BY TYPE:                                                           │
+│  ─────────────────────────────                                                           │
+│  ENDPOINT:     Isolate via EDR, disable network, pull from domain                       │
+│  ACCOUNT:      Disable account, reset password, revoke tokens/sessions                  │
+│  NETWORK:      Block IP/domain at firewall, sinkhole DNS, null route                   │
+│  APPLICATION:  Disable API keys, rotate secrets, suspend service                        │
+│  CLOUD:        Revoke IAM permissions, disable access keys, snapshot for forensics     │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(231,76,60,0.1), rgba(231,76,60,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through how you would handle a ransomware alert from your SIEM.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>This is a CRITICAL severity incident - my response would be:</strong></p>
+                            <p><strong>Immediate (0-5 min):</strong> Verify it's not a false positive - check EDR for ransomware indicators (mass file encryption, ransom note creation). If confirmed, immediately isolate the affected endpoint via EDR (network isolation) to stop spread. Do NOT power off - we need memory for forensics.</p>
+                            <p><strong>Escalation (5-15 min):</strong> Page the IR team and SOC manager. This is an all-hands situation. Begin documenting everything in the incident ticket with timestamps.</p>
+                            <p><strong>Scoping (15-60 min):</strong> Search SIEM for the ransomware IOCs across all endpoints - file hashes, process names, C2 IPs. Identify patient zero and all affected systems. Check for lateral movement indicators. Query AD for the affected user's access and recent authentications.</p>
+                            <p><strong>Containment (parallel):</strong> Block C2 domains/IPs at firewall. Disable compromised accounts. Isolate additional infected systems. Consider isolating entire network segment if spread is significant.</p>
+                            <p><strong>Communication:</strong> IR team handles executive communication and potential law enforcement notification. I provide technical updates and continue monitoring for new IOCs.</p>
+                            <p>The key is speed - ransomware spreads fast. Isolate first, investigate second.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="splunk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Architecture - Components & Data Flow | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .component-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #65a637; }
+        .component-card h3 { color: #65a637; margin-bottom: 1rem; }
+        .port-table { font-size: 0.85rem; }
+        .tier-distributed { border-color: #0078d4; }
+        .tier-distributed h3 { color: #0078d4; }
+        .tier-clustered { border-color: #f5a623; }
+        .tier-clustered h3 { color: #f5a623; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="index.html" class="platform-tab splunk active"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+                        <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link active"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Pipeline</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders Deep Dive</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Buckets</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced SPL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Enterprise Security</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> ES Overview</a>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-search-plus"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">TI & Automation</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> Splunk SOAR</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Splunk</a>
+                    <span class="separator">/</span>
+                    <span class="current">Architecture</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-sitemap"></i> Splunk Architecture</h1>
+                    <p class="lead">Understanding Splunk components, deployment topologies, and data flow from single-server to distributed enterprise clusters</p>
+                </div>
+
+                <!-- Core Components -->
+                <section class="content-section">
+                    <h2><i class="fas fa-cubes"></i> Core Components</h2>
+
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SPLUNK ENTERPRISE ARCHITECTURE                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│   DATA SOURCES              FORWARDERS              INDEXERS              SEARCH HEADS      │
+│   ────────────              ──────────              ────────              ────────────      │
+│                                                                                              │
+│   ┌─────────┐             ┌───────────┐           ┌───────────┐         ┌───────────┐      │
+│   │ Windows │────────────▶│ Universal │──────────▶│  Indexer  │◀────────│  Search   │      │
+│   │ Servers │             │ Forwarder │           │  Cluster  │         │   Head    │      │
+│   └─────────┘             └───────────┘           │           │         │  Cluster  │      │
+│                                                   │  ┌─────┐  │         │           │      │
+│   ┌─────────┐             ┌───────────┐           │  │ IDX │  │         │  ┌─────┐  │      │
+│   │  Linux  │────────────▶│   Heavy   │──────────▶│  │ IDX │  │         │  │ SH  │  │      │
+│   │ Servers │             │ Forwarder │           │  │ IDX │  │         │  │ SH  │  │      │
+│   └─────────┘             └───────────┘           │  └─────┘  │         │  │ SH  │  │      │
+│                                                   └───────────┘         │  └─────┘  │      │
+│   ┌─────────┐                   │                       │               └───────────┘      │
+│   │ Network │───────────────────┘                       │                     │            │
+│   │ Devices │                                           └─────────────────────┘            │
+│   └─────────┘                                                                               │
+│                                                                                              │
+│   MANAGEMENT LAYER:                                                                          │
+│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐ │
+│   │ Cluster Master  │    │  License Master │    │ Deployment      │    │ Monitoring      │ │
+│   │ (Manager Node)  │    │                 │    │ Server          │    │ Console         │ │
+│   └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘ │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <div class="component-card">
+                        <h3><i class="fas fa-share-alt"></i> Forwarders</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <h4>Universal Forwarder (UF)</h4>
+                                <ul>
+                                    <li>Lightweight agent (~50MB footprint)</li>
+                                    <li>Collects and forwards data only</li>
+                                    <li>No parsing, indexing, or searching</li>
+                                    <li>Minimal resource usage</li>
+                                    <li>Deployed on endpoints</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Heavy Forwarder (HF)</h4>
+                                <ul>
+                                    <li>Full Splunk instance with forwarding enabled</li>
+                                    <li>Can parse, filter, route data</li>
+                                    <li>Receives syslog, collects from APIs</li>
+                                    <li>Aggregation point for UFs</li>
+                                    <li>Higher resource requirements</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component-card tier-distributed">
+                        <h3><i class="fas fa-database"></i> Indexers</h3>
+                        <p>Core data storage and indexing layer:</p>
+                        <ul>
+                            <li><strong>Receive:</strong> Accept data from forwarders via receiving port (default 9997)</li>
+                            <li><strong>Parse:</strong> Apply props.conf/transforms.conf rules</li>
+                            <li><strong>Index:</strong> Store data in buckets (hot → warm → cold → frozen)</li>
+                            <li><strong>Search:</strong> Execute distributed searches from Search Heads</li>
+                        </ul>
+                        <p><strong>Indexer Cluster:</strong> Multiple indexers with replication for HA and disaster recovery.</p>
+                    </div>
+
+                    <div class="component-card tier-clustered">
+                        <h3><i class="fas fa-search"></i> Search Heads</h3>
+                        <p>User interface and search coordination:</p>
+                        <ul>
+                            <li><strong>UI:</strong> Splunk Web interface for users</li>
+                            <li><strong>Search Coordination:</strong> Distribute searches to indexers</li>
+                            <li><strong>Knowledge Objects:</strong> Store dashboards, saved searches, reports</li>
+                            <li><strong>Apps:</strong> Host Enterprise Security, ITSI, custom apps</li>
+                        </ul>
+                        <p><strong>Search Head Cluster:</strong> Multiple SHs with shared knowledge objects for HA.</p>
+                    </div>
+                </section>
+
+                <!-- Deployment Topologies -->
+                <section class="content-section">
+                    <h2><i class="fas fa-project-diagram"></i> Deployment Topologies</h2>
+
+                    <h3>1. Single-Server (All-in-One)</h3>
+                    <div class="info-box">
+                        <p><strong>Use Case:</strong> Lab, POC, small deployments (&lt;5GB/day)</p>
+                        <p><strong>Components:</strong> One server runs indexing, searching, and web UI</p>
+                        <p><strong>Limitations:</strong> No HA, limited scale, single point of failure</p>
+                    </div>
+
+                    <h3>2. Distributed (Non-Clustered)</h3>
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.65rem;">
+<pre>
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│   UFs    │────▶│ Indexer  │◀────│  Search  │
+│ (many)   │     │  (1-3)   │     │   Head   │
+└──────────┘     └──────────┘     └──────────┘
+</pre>
+                    </div>
+                    <p><strong>Use Case:</strong> 5-50GB/day, small teams</p>
+                    <p><strong>Pros:</strong> Simple setup, lower cost</p>
+                    <p><strong>Cons:</strong> No automatic failover, manual management</p>
+
+                    <h3>3. Clustered Enterprise</h3>
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.65rem;">
+<pre>
+                    ┌─────────────────┐
+                    │  Cluster Master │
+                    │  (Manager Node) │
+                    └────────┬────────┘
+                             │
+┌──────────┐     ┌───────────┴───────────┐     ┌─────────────────┐
+│   UFs    │────▶│    Indexer Cluster    │◀────│ Search Head     │
+│   HFs    │     │  [IDX1][IDX2][IDX3]   │     │ Cluster         │
+└──────────┘     │  RF=2, SF=2           │     │ [SH1][SH2][SH3] │
+                 └───────────────────────┘     └─────────────────┘
+</pre>
+                    </div>
+                    <p><strong>Use Case:</strong> 50GB+ /day, enterprise, compliance requirements</p>
+                    <p><strong>Key Concepts:</strong></p>
+                    <ul>
+                        <li><strong>Replication Factor (RF):</strong> Number of copies of raw data (typically 2-3)</li>
+                        <li><strong>Search Factor (SF):</strong> Number of searchable copies (typically 2)</li>
+                        <li><strong>Cluster Master:</strong> Coordinates cluster, manages bucket replication</li>
+                    </ul>
+                </section>
+
+                <!-- Network Ports -->
+                <section class="content-section">
+                    <h2><i class="fas fa-network-wired"></i> Network Ports</h2>
+
+                    <table class="styled-table port-table">
+                        <thead>
+                            <tr>
+                                <th>Port</th>
+                                <th>Protocol</th>
+                                <th>Service</th>
+                                <th>Direction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>8000</strong></td>
+                                <td>TCP</td>
+                                <td>Splunk Web (HTTP/HTTPS)</td>
+                                <td>Users → Search Head</td>
+                            </tr>
+                            <tr>
+                                <td><strong>8089</strong></td>
+                                <td>TCP</td>
+                                <td>Management/REST API (splunkd)</td>
+                                <td>Component ↔ Component</td>
+                            </tr>
+                            <tr>
+                                <td><strong>9997</strong></td>
+                                <td>TCP</td>
+                                <td>Data Forwarding (splunktcp)</td>
+                                <td>Forwarder → Indexer</td>
+                            </tr>
+                            <tr>
+                                <td><strong>514</strong></td>
+                                <td>UDP/TCP</td>
+                                <td>Syslog</td>
+                                <td>Devices → HF/Indexer</td>
+                            </tr>
+                            <tr>
+                                <td><strong>9887</strong></td>
+                                <td>TCP</td>
+                                <td>Indexer Cluster Replication</td>
+                                <td>Indexer ↔ Indexer</td>
+                            </tr>
+                            <tr>
+                                <td><strong>8191</strong></td>
+                                <td>TCP</td>
+                                <td>KV Store Replication</td>
+                                <td>SH ↔ SH (cluster)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Data Flow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-stream"></i> Data Flow Pipeline</h2>
+
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem;">
+<pre>
+DATA SOURCE → FORWARDER → INDEXER → SEARCH HEAD → USER
+
+1. INPUT PHASE (Forwarder)
+   ├── inputs.conf: What to collect
+   ├── Assign: source, sourcetype, host, index
+   └── Forward to indexer(s)
+
+2. PARSING PHASE (Indexer)
+   ├── props.conf: How to parse
+   ├── LINE_BREAKER: Event boundaries
+   ├── TIME_FORMAT: Timestamp extraction
+   └── transforms.conf: Field extraction, routing
+
+3. INDEXING PHASE (Indexer)
+   ├── Write to hot bucket
+   ├── Create .tsidx (time-series index)
+   └── Replicate to peers (if clustered)
+
+4. SEARCH PHASE (Search Head → Indexers)
+   ├── User submits SPL query
+   ├── SH distributes to indexers
+   ├── Each indexer searches local data
+   └── Results aggregated at SH
+</pre>
+                    </div>
+                </section>
+
+                <!-- Configuration Files -->
+                <section class="content-section">
+                    <h2><i class="fas fa-file-code"></i> Key Configuration Files</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Location</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>inputs.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/apps/*/local/</td>
+                                <td>Define data inputs (files, ports, scripts)</td>
+                            </tr>
+                            <tr>
+                                <td><code>outputs.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/system/local/</td>
+                                <td>Define forwarding targets</td>
+                            </tr>
+                            <tr>
+                                <td><code>props.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/apps/*/local/</td>
+                                <td>Parsing rules per sourcetype</td>
+                            </tr>
+                            <tr>
+                                <td><code>transforms.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/apps/*/local/</td>
+                                <td>Complex transforms, routing, lookups</td>
+                            </tr>
+                            <tr>
+                                <td><code>indexes.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/apps/*/local/</td>
+                                <td>Index definitions, retention policies</td>
+                            </tr>
+                            <tr>
+                                <td><code>server.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/system/local/</td>
+                                <td>Server settings, clustering, SSL</td>
+                            </tr>
+                            <tr>
+                                <td><code>deploymentclient.conf</code></td>
+                                <td>$SPLUNK_HOME/etc/system/local/</td>
+                                <td>Deployment server connection (forwarders)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">outputs.conf - Forwarder to Indexer Cluster</span>
+                        </div>
+                        <pre><code>[tcpout]
+defaultGroup = indexer_cluster
+
+[tcpout:indexer_cluster]
+server = idx1.company.com:9997, idx2.company.com:9997, idx3.company.com:9997
+# Load balancing
+autoLBFrequency = 30
+# SSL encryption
+sslCertPath = $SPLUNK_HOME/etc/auth/server.pem
+sslRootCAPath = $SPLUNK_HOME/etc/auth/cacert.pem
+sslPassword = password
+useSSL = true</code></pre>
+                    </div>
+                </section>
+
+                <!-- Splunk Cloud -->
+                <section class="content-section">
+                    <h2><i class="fas fa-cloud"></i> Splunk Cloud</h2>
+
+                    <p>Splunk Cloud is a fully managed SaaS offering where Splunk handles infrastructure:</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div class="component-card">
+                            <h4>What Splunk Manages</h4>
+                            <ul>
+                                <li>Indexer infrastructure</li>
+                                <li>Search Head infrastructure</li>
+                                <li>Upgrades and patches</li>
+                                <li>Availability and DR</li>
+                                <li>Storage and retention</li>
+                            </ul>
+                        </div>
+                        <div class="component-card">
+                            <h4>What You Manage</h4>
+                            <ul>
+                                <li>Forwarders (on-prem)</li>
+                                <li>Apps and TAs</li>
+                                <li>Knowledge objects</li>
+                                <li>Users and roles</li>
+                                <li>Data onboarding</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Data Ingestion to Splunk Cloud</h3>
+                    <ul>
+                        <li><strong>Universal Forwarder:</strong> Forward directly to cloud inputs</li>
+                        <li><strong>HTTP Event Collector (HEC):</strong> REST API for direct ingestion</li>
+                        <li><strong>Splunk Cloud Data Manager:</strong> Collect from cloud services (AWS, Azure, GCP)</li>
+                    </ul>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(101,166,55,0.1), rgba(101,166,55,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Explain the difference between Universal Forwarder and Heavy Forwarder. When would you use each?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>Universal Forwarder (UF):</strong> Lightweight agent with minimal footprint (~50MB). It only collects and forwards raw data - no parsing, indexing, or searching capability. Use UF when you need to collect logs from endpoints (Windows servers, Linux hosts) with minimal resource impact. It's designed for scale - you can deploy thousands of UFs.</p>
+                            <p><strong>Heavy Forwarder (HF):</strong> Full Splunk Enterprise instance configured to forward data. It can parse, filter, mask, route, and aggregate data before forwarding. Use HF when you need to: receive syslog from network devices (firewalls, switches), parse data before sending to indexers (reduce indexer load), aggregate data from multiple UFs, collect from APIs or databases, or mask sensitive data before indexing.</p>
+                            <p><strong>Typical deployment:</strong> UFs on all endpoints forwarding to 2-3 HFs per data center, which then forward to the indexer cluster. HFs handle syslog from network devices, and HFs provide a parsing layer before data hits indexers.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>What are Replication Factor and Search Factor in an indexer cluster? How do they affect availability?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>Replication Factor (RF):</strong> The number of copies of raw data maintained across the cluster. If RF=3, each bucket exists on 3 different indexers. This protects against data loss - you can lose (RF-1) indexers and still have all data.</p>
+                            <p><strong>Search Factor (SF):</strong> The number of searchable copies of data. Searchable means the bucket has its index files (.tsidx). If SF=2, at least 2 copies of each bucket are searchable. Non-searchable copies have only raw data and can become searchable if needed.</p>
+                            <p><strong>Example with RF=3, SF=2:</strong> Each bucket exists on 3 indexers, 2 of those copies are immediately searchable. If one indexer fails, searches continue with the remaining searchable copy. The cluster will automatically "fix up" by making another copy searchable.</p>
+                            <p><strong>Availability impact:</strong> With RF=3 and SF=2, you can lose 1 indexer with no impact. Losing 2 indexers means some data may be temporarily unsearchable (but not lost). The cluster is "complete" when all RF and SF requirements are met.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Splunk Architecture</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

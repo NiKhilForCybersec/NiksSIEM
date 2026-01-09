@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triage Handbook - Alert Analysis Guide | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.65rem; overflow-x: auto; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link active"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                    <a href="shift-handoff.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Shift Handoff</a>
+                    <a href="soc-metrics.html" class="nav-link"><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-clipboard-check"></i> Triage Handbook</h1>
+                    <p class="lead">Quick reference for common alert types and analysis techniques</p>
+                </div>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-list-ol"></i> Triage Quick Reference by Alert Type</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           ALERT TYPE: BRUTE FORCE / FAILED LOGINS                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│   FIRST CHECKS:                                                                                          │
+│   ☐ Is source IP internal or external?                                                                  │
+│   ☐ Is target a service account or user account?                                                        │
+│   ☐ Did any authentication SUCCEED after failures?                                                      │
+│   ☐ Is source IP a known scanner or security tool?                                                      │
+│                                                                                                          │
+│   COMMON FALSE POSITIVES:                                                                                │
+│   • Expired password / locked account (user retrying)                                                   │
+│   • Misconfigured service account                                                                       │
+│   • Vulnerability scanner / security tool                                                               │
+│   • Mobile device with old credentials                                                                  │
+│                                                                                                          │
+│   TRUE POSITIVE INDICATORS:                                                                              │
+│   • External IP targeting multiple accounts                                                             │
+│   • Success after many failures (compromised!)                                                          │
+│   • Targeting privileged accounts                                                                       │
+│   • Known malicious IP (TI match)                                                                       │
+│                                                                                                          │
+│   RESPONSE IF TRUE POSITIVE:                                                                             │
+│   → Block source IP at firewall                                                                         │
+│   → If success detected: Reset password, revoke sessions                                                │
+│   → Add IP to watchlist                                                                                 │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           ALERT TYPE: SUSPICIOUS POWERSHELL                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│   FIRST CHECKS:                                                                                          │
+│   ☐ Who is the user running PowerShell?                                                                 │
+│   ☐ What is the parent process? (Explorer = user, svchost = service)                                   │
+│   ☐ Is the command encoded (base64)?                                                                    │
+│   ☐ Are there network connections from PowerShell process?                                              │
+│                                                                                                          │
+│   COMMON FALSE POSITIVES:                                                                                │
+│   • IT admin running legitimate scripts                                                                 │
+│   • SCCM/Intune management commands                                                                     │
+│   • Scheduled tasks for maintenance                                                                     │
+│   • Software deployment tools                                                                           │
+│                                                                                                          │
+│   TRUE POSITIVE INDICATORS:                                                                              │
+│   • Encoded commands (bypassing logging)                                                                │
+│   • Download cradle patterns (IEX, Invoke-WebRequest)                                                   │
+│   • AMSI bypass attempts                                                                                │
+│   • Spawned by Office application (macro)                                                               │
+│   • Connecting to external IPs                                                                          │
+│                                                                                                          │
+│   DECODE BASE64:                                                                                         │
+│   PowerShell: [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String("encoded"))        │
+│   Linux: echo "encoded" | base64 -d                                                                     │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           ALERT TYPE: C2 / BEACONING                                                     │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│   FIRST CHECKS:                                                                                          │
+│   ☐ What is the destination domain/IP?                                                                  │
+│   ☐ Check domain registration date (recently registered = suspicious)                                   │
+│   ☐ What process is making the connection?                                                              │
+│   ☐ Is there regular interval (beaconing pattern)?                                                      │
+│   ☐ What's the data volume per connection?                                                              │
+│                                                                                                          │
+│   COMMON FALSE POSITIVES:                                                                                │
+│   • Software update checks (regular interval)                                                           │
+│   • Cloud sync services (OneDrive, Dropbox)                                                             │
+│   • Telemetry/analytics                                                                                 │
+│   • CDN domains                                                                                         │
+│                                                                                                          │
+│   TRUE POSITIVE INDICATORS:                                                                              │
+│   • Domain matches TI feed (known C2)                                                                   │
+│   • Recently registered domain (<30 days)                                                               │
+│   • DGA-like domain (random characters)                                                                 │
+│   • Non-standard port for protocol                                                                      │
+│   • Process normally doesn't make network calls                                                         │
+│   • JA3/JA3S hash matches known malware                                                                 │
+│                                                                                                          │
+│   RESPONSE IF TRUE POSITIVE:                                                                             │
+│   → Isolate endpoint IMMEDIATELY                                                                        │
+│   → Block domain/IP at firewall                                                                         │
+│   → Hunt for IOCs across environment                                                                    │
+│   → Escalate to IR team                                                                                 │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-search"></i> Enrichment Checklist</h2>
+                    <p>For every alert, gather this context:</p>
+                    
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Enrichment Type</th>
+                                <th>Source</th>
+                                <th>Why It Matters</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Asset Criticality</strong></td>
+                                <td>CMDB, Asset inventory</td>
+                                <td>DC vs workstation changes severity</td>
+                            </tr>
+                            <tr>
+                                <td><strong>User Role</strong></td>
+                                <td>AD groups, HR system</td>
+                                <td>Admin vs regular user</td>
+                            </tr>
+                            <tr>
+                                <td><strong>IP Reputation</strong></td>
+                                <td>VirusTotal, AbuseIPDB, TI feeds</td>
+                                <td>Known malicious?</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Domain Age</strong></td>
+                                <td>WHOIS lookup</td>
+                                <td>New domains are suspicious</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Hash</strong></td>
+                                <td>VirusTotal, internal TI</td>
+                                <td>Known malware?</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recent Activity</strong></td>
+                                <td>SIEM (last 24-48h)</td>
+                                <td>Pattern of suspicious behavior?</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How do you determine if a PowerShell alert is a true positive or false positive?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>I look at several factors:</strong></p>
+                            <p><strong>Context:</strong> Who ran it? IT admin running scripts is different from finance user. What's the parent process? If Word spawned PowerShell, that's suspicious (macro).</p>
+                            <p><strong>Content:</strong> Is it encoded? Encoded commands are evasion. Decode it and look for: download cradles (IEX, Invoke-WebRequest), AMSI bypass, credential harvesting (Mimikatz patterns).</p>
+                            <p><strong>Network:</strong> Did PowerShell make external connections? What destination? Check domain reputation.</p>
+                            <p><strong>Common FPs:</strong> SCCM deployments, Intune management, scheduled admin tasks - these usually have recognizable patterns and come from management systems.</p>
+                            <p>If it's encoded, spawned by Office, and making network connections - that's almost certainly malicious.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

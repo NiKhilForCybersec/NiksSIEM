@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="splunk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parsing Flows - End-to-End Log Processing in Splunk | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .raw-log { background: #1a1a2e; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; color: #00ff88; margin: 0.5rem 0; }
+        .parsed-output { background: #0d1b2a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; }
+        .field-highlight { color: #00d4ff; }
+        .value-highlight { color: #ffd700; }
+        .config-file { border-left: 4px solid #65a637; }
+        .flow-stage { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #65a637; }
+        .flow-stage h4 { color: #65a637; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk active"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Pipeline</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders Deep Dive</a>
+                    <a href="parsing-flows.html" class="nav-link active"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Buckets</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced SPL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Enterprise Security</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> ES Overview</a>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-search-plus"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">TI & Automation</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> Splunk SOAR</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Splunk</a>
+                    <span class="separator">/</span>
+                    <span class="current">Parsing Flows</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-stream"></i> Splunk Parsing Flows</h1>
+                    <p class="lead">Complete end-to-end data processing from raw logs to searchable events with props.conf, transforms.conf, and CIM mapping</p>
+                </div>
+
+                <!-- Parsing Pipeline Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Splunk Parsing Pipeline</h2>
+
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SPLUNK DATA PARSING PIPELINE                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│   DATA SOURCE         FORWARDER              HEAVY FORWARDER           INDEXER              │
+│   ───────────         ─────────              ───────────────           ───────              │
+│                                                                                              │
+│   ┌─────────┐       ┌─────────────┐        ┌─────────────────┐      ┌─────────────────┐    │
+│   │ Log     │──────▶│ Universal   │───────▶│ Heavy Forwarder │─────▶│    Indexer      │    │
+│   │ Source  │       │ Forwarder   │        │                 │      │                 │    │
+│   └─────────┘       └─────────────┘        └─────────────────┘      └─────────────────┘    │
+│                           │                        │                        │               │
+│                     inputs.conf               props.conf              props.conf            │
+│                     (what to                  transforms.conf         (index-time           │
+│                      collect)                 (parsing/routing)        extraction)          │
+│                                                                                              │
+│   PARSING STAGES:                                                                            │
+│   ──────────────                                                                             │
+│                                                                                              │
+│   1. INPUT          2. PARSING           3. INDEXING           4. SEARCH                    │
+│   ┌─────────┐       ┌─────────────┐      ┌─────────────┐       ┌─────────────┐             │
+│   │ Set     │──────▶│ Line Break │──────▶│ Store in   │──────▶│ Search-time │             │
+│   │ source  │       │ Timestamp   │      │ Index      │       │ Extraction  │             │
+│   │ type    │       │ Field       │      │            │       │             │             │
+│   │ host    │       │ Extraction  │      │            │       │             │             │
+│   │ index   │       │ Transforms  │      │            │       │             │             │
+│   └─────────┘       └─────────────┘      └─────────────┘       └─────────────┘             │
+│                                                                                              │
+│   CONFIG FILES:                                                                              │
+│   • inputs.conf    - What to collect, source/sourcetype/host/index                         │
+│   • props.conf     - How to parse (TIME_FORMAT, LINE_BREAKER, EXTRACT, REPORT)             │
+│   • transforms.conf - Complex transforms (regex extraction, routing, lookup)               │
+│   • fields.conf    - Field properties (indexed, searchable)                                 │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Example 1: Windows Security Events -->
+                <section class="content-section">
+                    <h2><i class="fab fa-windows"></i> Flow 1: Windows Security Events</h2>
+
+                    <div class="flow-stage">
+                        <h4>Stage 1: Raw Event on Windows Server</h4>
+                        <p>Windows generates XML event in Security.evtx:</p>
+                        <div class="raw-log">&lt;Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'&gt;&lt;System&gt;&lt;Provider Name='Microsoft-Windows-Security-Auditing' Guid='{54849625-5478-4994-A5BA-3E3B0328C30D}'/&gt;&lt;EventID&gt;4624&lt;/EventID&gt;&lt;Version&gt;2&lt;/Version&gt;&lt;Level&gt;0&lt;/Level&gt;&lt;Task&gt;12544&lt;/Task&gt;&lt;Opcode&gt;0&lt;/Opcode&gt;&lt;Keywords&gt;0x8020000000000000&lt;/Keywords&gt;&lt;TimeCreated SystemTime='2025-01-09T14:32:15.123456789Z'/&gt;&lt;EventRecordID&gt;987654&lt;/EventRecordID&gt;&lt;Correlation ActivityID='{12345678-1234-1234-1234-123456789012}'/&gt;&lt;Execution ProcessID='672' ThreadID='756'/&gt;&lt;Channel&gt;Security&lt;/Channel&gt;&lt;Computer&gt;DC01.contoso.com&lt;/Computer&gt;&lt;Security/&gt;&lt;/System&gt;&lt;EventData&gt;&lt;Data Name='SubjectUserSid'&gt;S-1-5-18&lt;/Data&gt;&lt;Data Name='SubjectUserName'&gt;DC01$&lt;/Data&gt;&lt;Data Name='SubjectDomainName'&gt;CONTOSO&lt;/Data&gt;&lt;Data Name='SubjectLogonId'&gt;0x3e7&lt;/Data&gt;&lt;Data Name='TargetUserSid'&gt;S-1-5-21-123456789-123456789-123456789-1001&lt;/Data&gt;&lt;Data Name='TargetUserName'&gt;jsmith&lt;/Data&gt;&lt;Data Name='TargetDomainName'&gt;CONTOSO&lt;/Data&gt;&lt;Data Name='TargetLogonId'&gt;0x12345678&lt;/Data&gt;&lt;Data Name='LogonType'&gt;3&lt;/Data&gt;&lt;Data Name='LogonProcessName'&gt;Kerberos&lt;/Data&gt;&lt;Data Name='AuthenticationPackageName'&gt;Kerberos&lt;/Data&gt;&lt;Data Name='WorkstationName'&gt;WORKSTATION01&lt;/Data&gt;&lt;Data Name='LogonGuid'&gt;{12345678-1234-1234-1234-123456789ABC}&lt;/Data&gt;&lt;Data Name='TransmittedServices'&gt;-&lt;/Data&gt;&lt;Data Name='LmPackageName'&gt;-&lt;/Data&gt;&lt;Data Name='KeyLength'&gt;0&lt;/Data&gt;&lt;Data Name='ProcessId'&gt;0x0&lt;/Data&gt;&lt;Data Name='ProcessName'&gt;-&lt;/Data&gt;&lt;Data Name='IpAddress'&gt;192.168.1.100&lt;/Data&gt;&lt;Data Name='IpPort'&gt;49521&lt;/Data&gt;&lt;Data Name='ImpersonationLevel'&gt;%%1833&lt;/Data&gt;&lt;Data Name='RestrictedAdminMode'&gt;-&lt;/Data&gt;&lt;Data Name='TargetOutboundUserName'&gt;-&lt;/Data&gt;&lt;Data Name='TargetOutboundDomainName'&gt;-&lt;/Data&gt;&lt;Data Name='VirtualAccount'&gt;%%1843&lt;/Data&gt;&lt;Data Name='TargetLinkedLogonId'&gt;0x0&lt;/Data&gt;&lt;Data Name='ElevatedToken'&gt;%%1842&lt;/Data&gt;&lt;/EventData&gt;&lt;/Event&gt;</div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 2: Universal Forwarder inputs.conf</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">inputs.conf on UF</span>
+                            </div>
+                            <pre><code># $SPLUNK_HOME/etc/apps/Splunk_TA_windows/local/inputs.conf
+
+[WinEventLog://Security]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Security
+# Whitelist specific EventCodes
+whitelist = 4624,4625,4648,4672,4688,4720,4722,4723,4724,4725,4726,4738,4740
+# Or use blacklist for exclusion
+# blacklist = 4688
+renderXml = true
+# Collect from beginning or from now
+start_from = oldest
+current_only = 0
+evt_resolve_ad_obj = 1</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 3: props.conf Parsing (from Splunk_TA_windows)</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">props.conf</span>
+                            </div>
+                            <pre><code>[WinEventLog:Security]
+# Timestamp extraction
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%9N%Z
+TIME_PREFIX = SystemTime='
+MAX_TIMESTAMP_LOOKAHEAD = 64
+
+# Line breaking - each XML event is one event
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)&lt;Event\s
+
+# Truncation
+TRUNCATE = 0
+
+# Field extractions - using REPORT for complex transforms
+REPORT-wineventlog_security = wineventlog_security_fields
+
+# Direct extractions
+EXTRACT-eventcode = &lt;EventID&gt;(?P&lt;EventCode&gt;\d+)&lt;/EventID&gt;
+EXTRACT-computer = &lt;Computer&gt;(?P&lt;ComputerName&gt;[^&lt;]+)&lt;/Computer&gt;
+
+# Field aliases for CIM
+FIELDALIAS-dest = ComputerName AS dest
+FIELDALIAS-user = TargetUserName AS user
+FIELDALIAS-src = IpAddress AS src
+
+# Lookups for human-readable values
+LOOKUP-action = wineventlog_action_lookup EventCode OUTPUT action
+LOOKUP-logon_type = logon_type_lookup LogonType OUTPUT logon_type_name
+
+# CIM tagging
+EVAL-vendor_product = "Microsoft Windows"
+EVAL-signature = EventCode
+EVAL-signature_id = EventCode</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 4: transforms.conf Field Extraction</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">transforms.conf</span>
+                            </div>
+                            <pre><code>[wineventlog_security_fields]
+REGEX = &lt;Data Name='TargetUserName'&gt;(?P&lt;TargetUserName&gt;[^&lt;]*)&lt;/Data&gt;.*&lt;Data Name='TargetDomainName'&gt;(?P&lt;TargetDomainName&gt;[^&lt;]*)&lt;/Data&gt;.*&lt;Data Name='LogonType'&gt;(?P&lt;LogonType&gt;\d+)&lt;/Data&gt;.*&lt;Data Name='IpAddress'&gt;(?P&lt;IpAddress&gt;[^&lt;]*)&lt;/Data&gt;
+FORMAT = TargetUserName::$1 TargetDomainName::$2 LogonType::$3 IpAddress::$4
+
+# Additional extraction for 4688 process creation
+[wineventlog_process_fields]
+REGEX = &lt;Data Name='NewProcessName'&gt;(?P&lt;process_path&gt;[^&lt;]+)&lt;/Data&gt;.*&lt;Data Name='CommandLine'&gt;(?P&lt;process_command_line&gt;[^&lt;]*)&lt;/Data&gt;
+FORMAT = process_path::$1 process_command_line::$2
+
+# Routing transform - send high-severity events to separate index
+[route_critical_security]
+REGEX = EventID&gt;(4624|4625|4672|4688)&lt;
+DEST_KEY = _MetaData:Index
+FORMAT = security_critical</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 5: Parsed Event in Splunk</h4>
+                        <div class="parsed-output">
+                            <table style="width: 100%; font-size: 0.85rem;">
+                                <tr><td class="field-highlight">_time</td><td class="value-highlight">2025-01-09 14:32:15.123</td></tr>
+                                <tr><td class="field-highlight">host</td><td class="value-highlight">DC01.contoso.com</td></tr>
+                                <tr><td class="field-highlight">source</td><td class="value-highlight">WinEventLog:Security</td></tr>
+                                <tr><td class="field-highlight">sourcetype</td><td class="value-highlight">WinEventLog:Security</td></tr>
+                                <tr><td class="field-highlight">index</td><td class="value-highlight">wineventlog</td></tr>
+                                <tr><td class="field-highlight">EventCode</td><td class="value-highlight">4624</td></tr>
+                                <tr><td class="field-highlight">ComputerName</td><td class="value-highlight">DC01.contoso.com</td></tr>
+                                <tr><td class="field-highlight">TargetUserName</td><td class="value-highlight">jsmith</td></tr>
+                                <tr><td class="field-highlight">TargetDomainName</td><td class="value-highlight">CONTOSO</td></tr>
+                                <tr><td class="field-highlight">LogonType</td><td class="value-highlight">3</td></tr>
+                                <tr><td class="field-highlight">logon_type_name</td><td class="value-highlight">Network</td></tr>
+                                <tr><td class="field-highlight">IpAddress</td><td class="value-highlight">192.168.1.100</td></tr>
+                                <tr><td class="field-highlight">AuthenticationPackageName</td><td class="value-highlight">Kerberos</td></tr>
+                                <tr><td class="field-highlight">user (CIM)</td><td class="value-highlight">jsmith</td></tr>
+                                <tr><td class="field-highlight">dest (CIM)</td><td class="value-highlight">DC01.contoso.com</td></tr>
+                                <tr><td class="field-highlight">src (CIM)</td><td class="value-highlight">192.168.1.100</td></tr>
+                                <tr><td class="field-highlight">action (CIM)</td><td class="value-highlight">success</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 6: SPL Search Examples</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">SPL</span>
+                                <span class="code-title">Security Event Searches</span>
+                            </div>
+                            <pre><code>// Basic search
+index=wineventlog sourcetype="WinEventLog:Security" EventCode=4624
+| stats count by TargetUserName, IpAddress, LogonType
+
+// CIM-compliant search using data model
+| tstats count from datamodel=Authentication 
+    where Authentication.action=success 
+    by Authentication.user, Authentication.src, Authentication.dest
+| rename Authentication.* AS *
+
+// Failed logon analysis
+index=wineventlog EventCode=4625
+| stats count as failed_attempts by TargetUserName, IpAddress
+| where failed_attempts > 5
+| sort -failed_attempts</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Example 2: Linux Syslog -->
+                <section class="content-section">
+                    <h2><i class="fab fa-linux"></i> Flow 2: Linux Syslog (SSH Authentication)</h2>
+
+                    <div class="flow-stage">
+                        <h4>Stage 1: Raw Syslog Message</h4>
+                        <div class="raw-log">Jan  9 14:32:15 webserver01 sshd[12345]: Accepted publickey for jsmith from 192.168.1.100 port 54321 ssh2: RSA SHA256:abc123def456ghi789jkl012mno345pqr678stu901</div>
+                        <div class="raw-log">Jan  9 14:33:22 webserver01 sshd[12346]: Failed password for invalid user admin from 10.0.0.50 port 49999 ssh2</div>
+                        <div class="raw-log">Jan  9 14:34:01 webserver01 sudo:   jsmith : TTY=pts/0 ; PWD=/home/jsmith ; USER=root ; COMMAND=/bin/systemctl restart nginx</div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 2: inputs.conf on Forwarder</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">inputs.conf</span>
+                            </div>
+                            <pre><code># File monitoring
+[monitor:///var/log/auth.log]
+disabled = 0
+index = linux_security
+sourcetype = linux_secure
+# Follow log rotation
+followTail = 0
+
+# Or receive via syslog
+[udp://514]
+connection_host = dns
+sourcetype = syslog
+index = syslog</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 3: props.conf for Linux Authentication</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">props.conf</span>
+                            </div>
+                            <pre><code>[linux_secure]
+# Timestamp - syslog format
+TIME_FORMAT = %b %d %H:%M:%S
+MAX_TIMESTAMP_LOOKAHEAD = 20
+
+# Line breaking
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+
+# Field extractions
+REPORT-ssh_auth = linux_ssh_success, linux_ssh_failed, linux_sudo
+
+# Direct regex extractions
+EXTRACT-host = ^[A-Za-z]{3}\s+\d+\s+\d+:\d+:\d+\s+(?P&lt;dest&gt;[\w\-\.]+)
+EXTRACT-process = ^[A-Za-z]{3}\s+\d+\s+\d+:\d+:\d+\s+[\w\-\.]+\s+(?P&lt;process&gt;\w+)\[(?P&lt;pid&gt;\d+)\]
+
+# CIM mapping
+FIELDALIAS-user = user AS src_user
+EVAL-vendor_product = "Linux"
+EVAL-app = "sshd"
+
+# Tagging for CIM
+LOOKUP-action = linux_auth_action_lookup action_raw OUTPUT action</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 4: transforms.conf</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">transforms.conf</span>
+                            </div>
+                            <pre><code># SSH successful authentication
+[linux_ssh_success]
+REGEX = sshd\[\d+\]:\s+Accepted\s+(?P&lt;auth_method&gt;\w+)\s+for\s+(?P&lt;user&gt;[\w\.\-]+)\s+from\s+(?P&lt;src_ip&gt;[\d\.]+)\s+port\s+(?P&lt;src_port&gt;\d+)
+FORMAT = auth_method::$1 user::$2 src_ip::$3 src_port::$4 action_raw::success
+
+# SSH failed authentication  
+[linux_ssh_failed]
+REGEX = sshd\[\d+\]:\s+Failed\s+(?P&lt;auth_method&gt;\w+)\s+for\s+(?:invalid user\s+)?(?P&lt;user&gt;[\w\.\-]+)\s+from\s+(?P&lt;src_ip&gt;[\d\.]+)\s+port\s+(?P&lt;src_port&gt;\d+)
+FORMAT = auth_method::$1 user::$2 src_ip::$3 src_port::$4 action_raw::failure
+
+# Sudo commands
+[linux_sudo]
+REGEX = sudo:\s+(?P&lt;user&gt;[\w\.\-]+)\s+:\s+TTY=(?P&lt;tty&gt;[^\s;]+)\s+;\s+PWD=(?P&lt;pwd&gt;[^\s;]+)\s+;\s+USER=(?P&lt;target_user&gt;\w+)\s+;\s+COMMAND=(?P&lt;command&gt;.+)$
+FORMAT = user::$1 tty::$2 pwd::$3 target_user::$4 command::$5</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 5: Parsed Output</h4>
+                        <div class="parsed-output">
+                            <p><strong>SSH Success Event:</strong></p>
+                            <table style="width: 100%; font-size: 0.85rem;">
+                                <tr><td class="field-highlight">_time</td><td class="value-highlight">2025-01-09 14:32:15</td></tr>
+                                <tr><td class="field-highlight">dest</td><td class="value-highlight">webserver01</td></tr>
+                                <tr><td class="field-highlight">process</td><td class="value-highlight">sshd</td></tr>
+                                <tr><td class="field-highlight">pid</td><td class="value-highlight">12345</td></tr>
+                                <tr><td class="field-highlight">user</td><td class="value-highlight">jsmith</td></tr>
+                                <tr><td class="field-highlight">src_ip</td><td class="value-highlight">192.168.1.100</td></tr>
+                                <tr><td class="field-highlight">src_port</td><td class="value-highlight">54321</td></tr>
+                                <tr><td class="field-highlight">auth_method</td><td class="value-highlight">publickey</td></tr>
+                                <tr><td class="field-highlight">action</td><td class="value-highlight">success</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Example 3: Custom JSON Application Log -->
+                <section class="content-section">
+                    <h2><i class="fas fa-code"></i> Flow 3: Custom JSON Application Logs</h2>
+
+                    <div class="flow-stage">
+                        <h4>Stage 1: Raw JSON Log</h4>
+                        <div class="raw-log">{"timestamp":"2025-01-09T14:32:15.123Z","level":"ERROR","service":"payment-api","trace_id":"abc123","span_id":"def456","user_id":"user_789","action":"process_payment","amount":150.00,"currency":"USD","card_last_four":"4242","status":"declined","error_code":"insufficient_funds","duration_ms":245,"client_ip":"192.168.1.100","user_agent":"Mozilla/5.0"}</div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 2: inputs.conf</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">inputs.conf</span>
+                            </div>
+                            <pre><code>[monitor:///var/log/payment-api/*.log]
+disabled = 0
+index = application_logs
+sourcetype = payment_api_json
+# Each line is one JSON event
+# Recursively monitor
+recursive = true</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 3: props.conf with KV_MODE</h4>
+                        <div class="code-block config-file">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">props.conf</span>
+                            </div>
+                            <pre><code>[payment_api_json]
+# Timestamp from JSON field
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%3N%Z
+TIME_PREFIX = "timestamp":"
+MAX_TIMESTAMP_LOOKAHEAD = 32
+
+# Automatic JSON parsing!
+KV_MODE = json
+
+# Line breaking - one JSON per line
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+TRUNCATE = 0
+
+# Field aliases for CIM
+FIELDALIAS-src = client_ip AS src
+FIELDALIAS-user = user_id AS user
+
+# Calculated fields
+EVAL-vendor_product = "PaymentAPI"
+EVAL-response_time_sec = duration_ms / 1000
+EVAL-transaction_result = case(status=="approved", "success", status=="declined", "failure", 1=1, "unknown")
+
+# Tagging for data model
+LOOKUP-severity = log_level_lookup level OUTPUT severity</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="flow-stage">
+                        <h4>Stage 4: Automatic JSON Parsing Result</h4>
+                        <p>With <code>KV_MODE = json</code>, Splunk automatically extracts all JSON fields:</p>
+                        <div class="parsed-output">
+                            <table style="width: 100%; font-size: 0.85rem;">
+                                <tr><td class="field-highlight">_time</td><td class="value-highlight">2025-01-09 14:32:15.123</td></tr>
+                                <tr><td class="field-highlight">level</td><td class="value-highlight">ERROR</td></tr>
+                                <tr><td class="field-highlight">service</td><td class="value-highlight">payment-api</td></tr>
+                                <tr><td class="field-highlight">trace_id</td><td class="value-highlight">abc123</td></tr>
+                                <tr><td class="field-highlight">user_id</td><td class="value-highlight">user_789</td></tr>
+                                <tr><td class="field-highlight">action</td><td class="value-highlight">process_payment</td></tr>
+                                <tr><td class="field-highlight">amount</td><td class="value-highlight">150.00</td></tr>
+                                <tr><td class="field-highlight">status</td><td class="value-highlight">declined</td></tr>
+                                <tr><td class="field-highlight">error_code</td><td class="value-highlight">insufficient_funds</td></tr>
+                                <tr><td class="field-highlight">duration_ms</td><td class="value-highlight">245</td></tr>
+                                <tr><td class="field-highlight">client_ip</td><td class="value-highlight">192.168.1.100</td></tr>
+                                <tr><td class="field-highlight">response_time_sec (calc)</td><td class="value-highlight">0.245</td></tr>
+                                <tr><td class="field-highlight">transaction_result (calc)</td><td class="value-highlight">failure</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Index-Time vs Search-Time -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clock"></i> Index-Time vs Search-Time Extraction</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>Index-Time</th>
+                                <th>Search-Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>When Executed</strong></td>
+                                <td>During indexing (before storage)</td>
+                                <td>During search (on-the-fly)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Storage Impact</strong></td>
+                                <td>Fields stored in index, increases size</td>
+                                <td>No storage impact</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Search Performance</strong></td>
+                                <td>Faster searches on extracted fields</td>
+                                <td>Slower (regex runs at search)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Flexibility</strong></td>
+                                <td>Cannot change after indexing</td>
+                                <td>Can modify anytime</td>
+                            </tr>
+                            <tr>
+                                <td><strong>props.conf Syntax</strong></td>
+                                <td>TRANSFORMS-* with WRITE_META</td>
+                                <td>EXTRACT-*, REPORT-*</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Use When</strong></td>
+                                <td>High-volume fields searched often</td>
+                                <td>Default choice, most fields</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">Index-Time vs Search-Time Example</span>
+                        </div>
+                        <pre><code># props.conf
+
+[my_sourcetype]
+# SEARCH-TIME extraction (default, recommended)
+EXTRACT-user = user=(?P&lt;user&gt;\w+)
+REPORT-fields = my_transform
+
+# INDEX-TIME extraction (use sparingly)
+TRANSFORMS-index_user = index_time_user_extract
+
+# -------------------------
+# transforms.conf
+
+[index_time_user_extract]
+REGEX = user=(?P&lt;user&gt;\w+)
+FORMAT = user::$1
+WRITE_META = true    # This makes it index-time!</code></pre>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4>⚠️ When to Use Index-Time Extraction</h4>
+                        <ul>
+                            <li>Fields used in high-volume searches</li>
+                            <li>Fields for data model acceleration</li>
+                            <li>Routing decisions (which index)</li>
+                            <li><strong>NOT for:</strong> Most fields - search-time is more flexible</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Null Queue Filtering -->
+                <section class="content-section">
+                    <h2><i class="fas fa-filter"></i> Filtering Data with Null Queue</h2>
+
+                    <p>Route unwanted events to <code>nullQueue</code> to drop them before indexing, saving license and storage.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">props.conf + transforms.conf for Filtering</span>
+                        </div>
+                        <pre><code># props.conf
+[WinEventLog:Security]
+# Filter out noisy EventCodes
+TRANSFORMS-filter_noise = null_event_4688_svchost, null_event_4689
+
+# -------------------------
+# transforms.conf
+
+# Drop 4688 events for svchost.exe
+[null_event_4688_svchost]
+REGEX = EventID&gt;4688&lt;.*NewProcessName&gt;.*\\svchost\.exe&lt;
+DEST_KEY = queue
+FORMAT = nullQueue
+
+# Drop all 4689 (process termination) events
+[null_event_4689]
+REGEX = EventID&gt;4689&lt;
+DEST_KEY = queue
+FORMAT = nullQueue</code></pre>
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(101,166,55,0.1), rgba(101,166,55,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Explain the Splunk data parsing pipeline and where different types of parsing occur.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Splunk's parsing pipeline has distinct stages:</p>
+                            <p><strong>1. Input Phase (inputs.conf):</strong> Data enters Splunk via Universal or Heavy Forwarder. Here we define source, sourcetype, host, and target index. This is where data gets its initial metadata.</p>
+                            <p><strong>2. Parsing Phase (props.conf/transforms.conf):</strong> This is where the magic happens. On the Heavy Forwarder or Indexer, props.conf defines how to parse each sourcetype - TIME_FORMAT for timestamp extraction, LINE_BREAKER for event boundaries, and EXTRACT/REPORT for field extractions.</p>
+                            <p><strong>3. Index Phase:</strong> Data is written to index buckets. Any TRANSFORMS with WRITE_META=true creates index-time fields that are stored with the raw data.</p>
+                            <p><strong>4. Search Phase:</strong> When users search, search-time extractions run. This includes most EXTRACT and REPORT stanzas, field aliases, calculated fields, and lookups.</p>
+                            <p>The key insight is that most extractions should be search-time (more flexible), while index-time should be reserved for high-value fields that are searched constantly or needed for routing decisions.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you create a custom Technology Add-on for a new log source?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>I'd follow this structured approach:</p>
+                            <p><strong>1. Analyze sample logs:</strong> Get representative samples covering all event types, edge cases, and formats. Understand the timestamp format and field structure.</p>
+                            <p><strong>2. Create the TA structure:</strong></p>
+                            <p>Create folder: TA-myvendor-product with subdirectories: default/, local/, metadata/, README/</p>
+                            <p><strong>3. Define sourcetype in props.conf:</strong></p>
+                            <p>Set TIME_FORMAT, TIME_PREFIX, LINE_BREAKER, SHOULD_LINEMERGE. Test with sample data to ensure events break correctly.</p>
+                            <p><strong>4. Build field extractions:</strong></p>
+                            <p>For structured logs (JSON/XML), use KV_MODE. For unstructured, write regex in EXTRACT or transforms.conf. Test each extraction thoroughly.</p>
+                            <p><strong>5. Add CIM compliance:</strong></p>
+                            <p>Map fields to CIM using FIELDALIAS. Add EVAL for calculated fields. Create eventtypes.conf and tags.conf for data model tagging.</p>
+                            <p><strong>6. Create inputs.conf.spec:</strong></p>
+                            <p>Document available inputs for users. Include README with setup instructions.</p>
+                            <p><strong>7. Test and validate:</strong></p>
+                            <p>Validate against CIM data models. Check that tstats queries return expected results. Performance test with production volume.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Splunk Parsing Flows</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSOAR Automation & Playbooks | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link active"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC Ops</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">XSOAR Playbooks</span>
+                </div>
+                <div class="top-actions">
+                    <button class="top-btn" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
+            </header>
+            <main class="main-content">
+<!-- XSOAR Overview Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>XSOAR in XSIAM Context</h2>
+                <p>Understanding how XSOAR integrates with the broader XSIAM platform</p>
+            </div>
+
+            <div class="card">
+                <h3>What is XSOAR?</h3>
+                <p>Cortex XSOAR (Security Orchestration, Automation, and Response) is the native SOAR capability within XSIAM that enables automated incident response through playbooks, integrations, and case management. Unlike standalone XSOAR, the XSIAM-embedded version has direct access to XDR data, analytics, and the unified data lake.</p>
+
+                <div class="diagram-box">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              XSOAR ARCHITECTURE IN XSIAM                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│     ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐                │
+│     │   DATA SOURCES   │    │    ANALYTICS     │    │    DETECTION     │                │
+│     │  ───────────────│    │  ───────────────│    │  ───────────────│                │
+│     │  • Endpoints     │    │  • Correlation   │    │  • BIOC Rules    │                │
+│     │  • Network       │───▶│  • ML Models     │───▶│  • XQL Queries   │                │
+│     │  • Cloud         │    │  • Baselines     │    │  • Analytics     │                │
+│     │  • Identity      │    │                  │    │                  │                │
+│     └──────────────────┘    └──────────────────┘    └────────┬─────────┘                │
+│                                                               │                          │
+│                                          ┌────────────────────▼────────────────────┐    │
+│                                          │            INCIDENT CREATION            │    │
+│                                          │  • Alert Grouping  • Severity Scoring   │    │
+│                                          └────────────────────┬────────────────────┘    │
+│                                                               │                          │
+│     ┌─────────────────────────────────────────────────────────▼─────────────────────┐   │
+│     │                            XSOAR AUTOMATION ENGINE                             │   │
+│     │  ┌─────────────────────────────────────────────────────────────────────────┐  │   │
+│     │  │                              PLAYBOOKS                                  │  │   │
+│     │  │   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐            │  │   │
+│     │  │   │ Trigger │───▶│  Task   │───▶│Condition│───▶│  Task   │───▶ ...    │  │   │
+│     │  │   └─────────┘    └─────────┘    └─────────┘    └─────────┘            │  │   │
+│     │  └─────────────────────────────────────────────────────────────────────────┘  │   │
+│     │                                       │                                        │   │
+│     │  ┌────────────────────────────────────┼────────────────────────────────────┐  │   │
+│     │  │                          INTEGRATIONS                                    │  │   │
+│     │  │   ┌──────────┐  ┌──────────┐  ┌───▼──────┐  ┌──────────┐  ┌──────────┐  │  │   │
+│     │  │   │Threat    │  │Endpoint  │  │ Network  │  │ Identity │  │ Ticketing│  │  │   │
+│     │  │   │  Intel   │  │  Tools   │  │  Tools   │  │Providers │  │ Systems  │  │  │   │
+│     │  │   └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │  │   │
+│     │  └─────────────────────────────────────────────────────────────────────────┘  │   │
+│     └───────────────────────────────────────────────────────────────────────────────┘   │
+│                                               │                                          │
+│     ┌─────────────────────────────────────────▼─────────────────────────────────────┐   │
+│     │                            RESPONSE ACTIONS                                    │   │
+│     │    ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐             │   │
+│     │    │  Isolate   │  │   Block    │  │  Disable   │  │   Create   │             │   │
+│     │    │  Endpoint  │  │    IOC     │  │   User     │  │   Ticket   │             │   │
+│     │    └────────────┘  └────────────┘  └────────────┘  └────────────┘             │   │
+│     └───────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h4>Key Capabilities</h4>
+                <div class="grid-4">
+                    <div class="feature-card">
+                        <div class="icon">🔄</div>
+                        <h4>Orchestration</h4>
+                        <p>Coordinate actions across 700+ integrations with security tools, IT systems, and cloud services</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">⚡</div>
+                        <h4>Automation</h4>
+                        <p>Execute playbooks automatically or on-demand to handle repetitive tasks and accelerate response</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📋</div>
+                        <h4>Case Management</h4>
+                        <p>Track incidents through their lifecycle with built-in collaboration and documentation</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📊</div>
+                        <h4>Threat Intel</h4>
+                        <p>Aggregate and manage threat intelligence from multiple sources for enrichment</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="memory-box">
+                <h4>🧠 Memory Trick: SOAR Components</h4>
+                <div class="mnemonic">"PACE" - Playbooks, Automation, Case management, Enrichment</div>
+                <p>Remember the four pillars of SOAR: <strong>P</strong>laybooks for workflows, <strong>A</strong>utomation for speed, <strong>C</strong>ase management for tracking, <strong>E</strong>nrichment for context.</p>
+            </div>
+        </section>
+
+        <!-- Playbook Fundamentals Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Playbook Fundamentals</h2>
+                <p>Understanding the building blocks of automated response</p>
+            </div>
+
+            <div class="card">
+                <h3>What is a Playbook?</h3>
+                <p>A playbook is a predefined, automated workflow that orchestrates actions across multiple tools in response to security incidents. Think of it as an executable runbook that codifies your incident response procedures.</p>
+
+                <h4>Playbook Components</h4>
+                <div class="grid-2">
+                    <div class="playbook-component">
+                        <h5>🎯 Trigger</h5>
+                        <p>The event that initiates the playbook: incident creation, manual execution, scheduled job, or API call. Each playbook has exactly one entry point.</p>
+                    </div>
+                    <div class="playbook-component">
+                        <h5>📦 Tasks</h5>
+                        <p>Individual actions that execute commands, scripts, or call integrations. Tasks can be automated (no human input) or manual (requires analyst action).</p>
+                    </div>
+                    <div class="playbook-component">
+                        <h5>🔀 Conditions</h5>
+                        <p>Decision points that branch the workflow based on data values, task results, or analyst input. Enable dynamic paths through the playbook.</p>
+                    </div>
+                    <div class="playbook-component">
+                        <h5>📥 Inputs</h5>
+                        <p>Data passed into the playbook from the incident context, previous tasks, or external sources. Available throughout the playbook execution.</p>
+                    </div>
+                    <div class="playbook-component">
+                        <h5>📤 Outputs</h5>
+                        <p>Data produced by tasks that can be used by subsequent tasks, stored in the incident, or returned to calling playbooks.</p>
+                    </div>
+                    <div class="playbook-component">
+                        <h5>🔗 Sub-playbooks</h5>
+                        <p>Reusable playbooks called from a parent playbook. Enable modular design and code reuse across response workflows.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Task Types</h3>
+                <p>Playbooks support different task types for various automation needs:</p>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div class="feature-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span class="task-type automated">⚡ Automated</span>
+                        </div>
+                        <h4>Automated Tasks</h4>
+                        <p>Execute without human intervention. Run integration commands, scripts, or built-in functions. Fastest execution path.</p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <code>!ip ip="8.8.8.8" using="VirusTotal"</code>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span class="task-type manual">👤 Manual</span>
+                        </div>
+                        <h4>Manual Tasks</h4>
+                        <p>Require analyst interaction. Used for approvals, decisions, or actions requiring human judgment. Block playbook until completed.</p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <code>"Review enrichment results and approve containment"</code>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span class="task-type conditional">🔀 Conditional</span>
+                        </div>
+                        <h4>Conditional Tasks</h4>
+                        <p>Evaluate conditions to determine workflow path. Support if/else logic, switch statements, and complex boolean expressions.</p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <code>${incident.severity} >= 3 AND ${VirusTotal.score} > 5</code>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span class="task-type subplaybook">📚 Sub-playbook</span>
+                        </div>
+                        <h4>Sub-playbook Tasks</h4>
+                        <p>Call another playbook as a module. Pass inputs and receive outputs. Enable playbook composition and reuse.</p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <code>Call: "Block Indicators - Generic v2"</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Visual Playbook Example: Phishing Response</h3>
+                <p>Here's how a phishing incident response playbook flows:</p>
+
+                <div class="diagram-box">
+                    <pre>
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                          PHISHING INCIDENT RESPONSE PLAYBOOK                             │
+├──────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌─────────────┐                                                                         │
+│  │   TRIGGER   │──────────────────────────────────────────────┐                          │
+│  │  Phishing   │                                              │                          │
+│  │  Incident   │                                              ▼                          │
+│  └─────────────┘                                    ┌───────────────────┐                │
+│                                                     │  Extract Email    │                │
+│                                                     │   Artifacts       │                │
+│                                                     │  ─────────────    │                │
+│                                                     │  • Sender         │                │
+│                                                     │  • Subject        │                │
+│                                                     │  • URLs           │                │
+│                                                     │  • Attachments    │                │
+│                                                     └─────────┬─────────┘                │
+│                                                               │                          │
+│                    ┌──────────────────────────────────────────┼──────────────────────┐   │
+│                    │                                          │                      │   │
+│                    ▼                                          ▼                      ▼   │
+│          ┌─────────────────┐                       ┌─────────────────┐   ┌─────────────┐│
+│          │ Analyze URLs    │                       │Check Attachments│   │Check Sender ││
+│          │ ─────────────   │                       │ ─────────────── │   │ ─────────── ││
+│          │ • URLhaus       │                       │ • VirusTotal    │   │ • WHOIS     ││
+│          │ • VirusTotal    │                       │ • WildFire      │   │ • SPF/DKIM  ││
+│          │ • URLScan       │                       │ • Joe Sandbox   │   │ • Reputation││
+│          └────────┬────────┘                       └────────┬────────┘   └──────┬──────┘│
+│                   │                                         │                    │       │
+│                   └─────────────────────┬───────────────────┴────────────────────┘       │
+│                                         │                                                │
+│                                         ▼                                                │
+│                               ┌─────────────────────┐                                    │
+│                               │  Aggregate Results  │                                    │
+│                               │  Calculate Score    │                                    │
+│                               └──────────┬──────────┘                                    │
+│                                          │                                               │
+│                                          ▼                                               │
+│                              ┌───────────────────────┐                                   │
+│                              │    MALICIOUS?         │                                   │
+│                              │   Score >= 7          │                                   │
+│                              └───────────┬───────────┘                                   │
+│                                    │           │                                         │
+│                              YES   │           │  NO                                     │
+│                    ┌───────────────┘           └───────────────┐                         │
+│                    ▼                                           ▼                         │
+│          ┌─────────────────┐                         ┌─────────────────┐                 │
+│          │ HIGH SEVERITY   │                         │  LOW SEVERITY   │                 │
+│          │ ─────────────── │                         │  ───────────────│                 │
+│          │ • Block IOCs    │                         │ • Log findings  │                 │
+│          │ • Quarantine    │                         │ • Close incident│                 │
+│          │ • Notify User   │                         │                 │                 │
+│          │ • Escalate      │                         └─────────────────┘                 │
+│          └────────┬────────┘                                                             │
+│                   │                                                                      │
+│                   ▼                                                                      │
+│          ┌─────────────────┐                                                             │
+│          │ Search Mailboxes│                                                             │
+│          │ for Similar     │                                                             │
+│          │ Emails          │                                                             │
+│          └────────┬────────┘                                                             │
+│                   │                                                                      │
+│                   ▼                                                                      │
+│          ┌─────────────────┐                                                             │
+│          │  Delete from    │                                                             │
+│          │  All Mailboxes  │                                                             │
+│          └────────┬────────┘                                                             │
+│                   │                                                                      │
+│                   ▼                                                                      │
+│          ┌─────────────────┐                                                             │
+│          │  Generate       │                                                             │
+│          │  Report         │                                                             │
+│          └─────────────────┘                                                             │
+│                                                                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </div>
+
+            <div class="interview-box">
+                <h4>💼 Interview Answer: Playbook Design Process</h4>
+                <p><strong>Question:</strong> "How would you design a playbook for a new use case?"</p>
+                <ul>
+                    <li><strong>Define the trigger:</strong> What incident type or condition starts this workflow?</li>
+                    <li><strong>Map the manual process:</strong> Document what analysts do today step-by-step</li>
+                    <li><strong>Identify automation opportunities:</strong> Which steps can be fully automated vs. require human judgment?</li>
+                    <li><strong>Select integrations:</strong> What tools are needed? Ensure they're available and configured</li>
+                    <li><strong>Define decision points:</strong> What conditions determine different paths?</li>
+                    <li><strong>Handle errors:</strong> What happens if an API fails or times out?</li>
+                    <li><strong>Test incrementally:</strong> Build and test in sections, not all at once</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Playbook Development Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Playbook Development</h2>
+                <p>Building and coding effective automation workflows</p>
+            </div>
+
+            <div class="card">
+                <h3>YAML Playbook Structure</h3>
+                <p>Playbooks can be defined in YAML for version control and programmatic management:</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Playbook Definition</span>
+                        <span class="code-type">YAML</span>
+                    </div>
+<pre>
+<span class="field">id</span>: <span class="string">phishing-response-playbook</span>
+<span class="field">version</span>: <span class="number">-1</span>
+<span class="field">name</span>: <span class="string">Phishing Response - Complete</span>
+<span class="field">description</span>: <span class="string">Automated phishing email analysis and response</span>
+<span class="field">starttaskid</span>: <span class="string">"0"</span>
+<span class="field">tasks</span>:
+  <span class="string">"0"</span>:
+    <span class="field">id</span>: <span class="string">"0"</span>
+    <span class="field">taskid</span>: <span class="string">start-task</span>
+    <span class="field">type</span>: <span class="keyword">start</span>
+    <span class="field">task</span>:
+      <span class="field">id</span>: <span class="string">start-task</span>
+      <span class="field">version</span>: <span class="number">1</span>
+      <span class="field">name</span>: <span class="string">""</span>
+      <span class="field">iscommand</span>: <span class="keyword">false</span>
+      <span class="field">brand</span>: <span class="string">""</span>
+    <span class="field">nexttasks</span>:
+      <span class="string">"#none#"</span>:
+        - <span class="string">"1"</span>
+    <span class="field">separatecontext</span>: <span class="keyword">false</span>
+    <span class="field">view</span>: <span class="string">|-
+      {"position":{"x":50,"y":50}}</span>
+  
+  <span class="string">"1"</span>:
+    <span class="field">id</span>: <span class="string">"1"</span>
+    <span class="field">taskid</span>: <span class="string">extract-indicators</span>
+    <span class="field">type</span>: <span class="keyword">regular</span>
+    <span class="field">task</span>:
+      <span class="field">id</span>: <span class="string">extract-indicators</span>
+      <span class="field">version</span>: <span class="number">1</span>
+      <span class="field">name</span>: <span class="string">Extract Indicators</span>
+      <span class="field">description</span>: <span class="string">Extract IOCs from email content</span>
+      <span class="field">script</span>: <span class="function">Builtin|||extractIndicators</span>
+      <span class="field">type</span>: <span class="keyword">regular</span>
+      <span class="field">iscommand</span>: <span class="keyword">true</span>
+      <span class="field">brand</span>: <span class="string">Builtin</span>
+    <span class="field">scriptarguments</span>:
+      <span class="field">text</span>:
+        <span class="field">complex</span>:
+          <span class="field">root</span>: <span class="variable">incident</span>
+          <span class="field">accessor</span>: <span class="string">emailbody</span>
+    <span class="field">nexttasks</span>:
+      <span class="string">"#none#"</span>:
+        - <span class="string">"2"</span>
+        - <span class="string">"3"</span>
+        - <span class="string">"4"</span>
+    <span class="field">separatecontext</span>: <span class="keyword">false</span>
+</pre>
+                </div>
+
+                <h4>Key YAML Fields</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Purpose</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique playbook identifier</td>
+                                <td><code>phishing-response-v2</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>type</code></td>
+                                <td>Task type (start, regular, condition, playbook, title)</td>
+                                <td><code>regular</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>script</code></td>
+                                <td>Command to execute (Integration|||Command format)</td>
+                                <td><code>VirusTotal|||ip</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>scriptarguments</code></td>
+                                <td>Parameters passed to the command</td>
+                                <td><code>ip: ${IP.Address}</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>nexttasks</code></td>
+                                <td>Next task IDs to execute</td>
+                                <td><code>"#none#": ["2", "3"]</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>conditions</code></td>
+                                <td>Branching logic for condition tasks</td>
+                                <td>Boolean expressions</td>
+                            </tr>
+                            <tr>
+                                <td><code>separatecontext</code></td>
+                                <td>Whether task runs in isolated context</td>
+                                <td><code>false</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Context and Variables</h3>
+                <p>XSOAR uses a context system to pass data between tasks. Understanding context paths is critical for playbook development.</p>
+
+                <h4>Context Path Syntax</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Context Reference Patterns</span>
+                        <span class="code-type">DT Syntax</span>
+                    </div>
+<pre>
+<span class="comment">// Basic incident field access</span>
+<span class="variable">${incident.name}</span>                    <span class="comment">// Incident name</span>
+<span class="variable">${incident.severity}</span>                <span class="comment">// Severity level (1-4)</span>
+<span class="variable">${incident.labels}</span>                  <span class="comment">// Incident labels array</span>
+<span class="variable">${incident.CustomFields.emailfrom}</span>  <span class="comment">// Custom field value</span>
+
+<span class="comment">// Integration output access</span>
+<span class="variable">${VirusTotal.IP.Address}</span>           <span class="comment">// IP from VirusTotal enrichment</span>
+<span class="variable">${VirusTotal.IP.Positives}</span>         <span class="comment">// Detection count</span>
+<span class="variable">${WildFire.Report.Verdict}</span>         <span class="comment">// Sandbox verdict</span>
+
+<span class="comment">// Array handling with DT (Demisto Transforms)</span>
+<span class="variable">${IP.Address}</span>                       <span class="comment">// All IP addresses</span>
+<span class="variable">${IP.Address.[0]}</span>                  <span class="comment">// First IP address</span>
+<span class="variable">${IP.(Address==8.8.8.8)}</span>           <span class="comment">// Filter by value</span>
+<span class="variable">${URL.Data.=val.Malicious}</span>         <span class="comment">// Filter malicious URLs</span>
+
+<span class="comment">// Nested object access</span>
+<span class="variable">${File.SHA256}</span>                      <span class="comment">// File hash</span>
+<span class="variable">${Account.Username}</span>                 <span class="comment">// Username from account context</span>
+<span class="variable">${Endpoint.Hostname}</span>                <span class="comment">// Endpoint hostname</span>
+
+<span class="comment">// Previous task output</span>
+<span class="variable">${lastRun.data}</span>                     <span class="comment">// Data from last run</span>
+<span class="variable">${.=val.length > 0}</span>                <span class="comment">// Check if array has items</span>
+</pre>
+                </div>
+
+                <h4>DT (Demisto Transform) Functions</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Common DT Operations</span>
+                        <span class="code-type">Transformers</span>
+                    </div>
+<pre>
+<span class="comment">// String operations</span>
+<span class="variable">${incident.name.=val.toLowerCase()}</span>            <span class="comment">// Lowercase</span>
+<span class="variable">${Email.Subject.=val.replace(/\s+/g, '_')}</span>     <span class="comment">// Replace spaces</span>
+<span class="variable">${URL.Data.=val.split('/')[2]}</span>                 <span class="comment">// Extract domain</span>
+
+<span class="comment">// Array operations</span>
+<span class="variable">${IP.Address.=val.join(',')}</span>                   <span class="comment">// Join array to string</span>
+<span class="variable">${File.=val.length}</span>                            <span class="comment">// Count items</span>
+<span class="variable">${IP.=val.filter(x => x.Malicious)}</span>            <span class="comment">// Filter malicious</span>
+<span class="variable">${Account.=val.map(x => x.Username)}</span>           <span class="comment">// Extract usernames</span>
+
+<span class="comment">// Conditional logic</span>
+<span class="variable">${incident.severity.=val >= 3 ? 'High' : 'Low'}</span><span class="comment">// Ternary</span>
+<span class="variable">${.=val || 'default'}</span>                          <span class="comment">// Default value</span>
+
+<span class="comment">// Object operations</span>
+<span class="variable">${.=Object.keys(val)}</span>                          <span class="comment">// Get keys</span>
+<span class="variable">${.=Object.values(val)}</span>                        <span class="comment">// Get values</span>
+<span class="variable">${.=JSON.stringify(val)}</span>                       <span class="comment">// Convert to JSON</span>
+</pre>
+                </div>
+
+                <div class="info-box tip">
+                    <span class="icon">💡</span>
+                    <div class="content">
+                        <h4>Context Best Practice</h4>
+                        <p>Always use <code>extend-context</code> in task outputs to avoid overwriting existing context. Use <code>outputs_key_field</code> to create unique entries when enriching multiple indicators of the same type.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Automation Scripts</h3>
+                <p>Custom scripts extend XSOAR capabilities beyond built-in commands. Scripts can be written in Python or JavaScript.</p>
+
+                <h4>Python Script Example: IOC Enrichment</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">enrich_ioc.py</span>
+                        <span class="code-type">Python</span>
+                    </div>
+<pre>
+<span class="keyword">import</span> demistomock <span class="keyword">as</span> demisto
+<span class="keyword">from</span> CommonServerPython <span class="keyword">import</span> *
+<span class="keyword">from</span> CommonServerUserPython <span class="keyword">import</span> *
+
+<span class="keyword">def</span> <span class="function">enrich_indicator</span>(indicator_value: <span class="type">str</span>, indicator_type: <span class="type">str</span>) -> <span class="type">dict</span>:
+    <span class="string">"""
+    Enrich an indicator using multiple sources and return aggregated results.
+    
+    Args:
+        indicator_value: The IOC value (IP, hash, domain, URL)
+        indicator_type: Type of indicator
+    
+    Returns:
+        Dictionary with enrichment results
+    """</span>
+    results = {
+        <span class="string">'indicator'</span>: indicator_value,
+        <span class="string">'type'</span>: indicator_type,
+        <span class="string">'sources'</span>: [],
+        <span class="string">'malicious'</span>: <span class="keyword">False</span>,
+        <span class="string">'score'</span>: <span class="number">0</span>
+    }
+    
+    <span class="comment"># Check VirusTotal</span>
+    <span class="keyword">try</span>:
+        vt_response = demisto.executeCommand(
+            <span class="string">'vt-ip-report'</span> <span class="keyword">if</span> indicator_type == <span class="string">'IP'</span> <span class="keyword">else</span> <span class="string">'vt-url-report'</span>,
+            {<span class="string">'resource'</span>: indicator_value}
+        )
+        <span class="keyword">if</span> vt_response <span class="keyword">and</span> <span class="keyword">not</span> isError(vt_response[<span class="number">0</span>]):
+            vt_data = vt_response[<span class="number">0</span>].get(<span class="string">'Contents'</span>, {})
+            positives = vt_data.get(<span class="string">'positives'</span>, <span class="number">0</span>)
+            results[<span class="string">'sources'</span>].append({
+                <span class="string">'name'</span>: <span class="string">'VirusTotal'</span>,
+                <span class="string">'positives'</span>: positives,
+                <span class="string">'total'</span>: vt_data.get(<span class="string">'total'</span>, <span class="number">0</span>)
+            })
+            <span class="keyword">if</span> positives > <span class="number">5</span>:
+                results[<span class="string">'malicious'</span>] = <span class="keyword">True</span>
+                results[<span class="string">'score'</span>] += positives
+    <span class="keyword">except</span> <span class="type">Exception</span> <span class="keyword">as</span> e:
+        demisto.debug(<span class="string">f'VirusTotal enrichment failed: </span>{<span class="type">str</span>(e)}<span class="string">'</span>)
+    
+    <span class="comment"># Check threat intel feeds</span>
+    ti_response = demisto.executeCommand(
+        <span class="string">'threatintel-check'</span>,
+        {<span class="string">'indicator'</span>: indicator_value}
+    )
+    <span class="keyword">if</span> ti_response <span class="keyword">and</span> <span class="keyword">not</span> isError(ti_response[<span class="number">0</span>]):
+        ti_data = ti_response[<span class="number">0</span>].get(<span class="string">'Contents'</span>, {})
+        <span class="keyword">if</span> ti_data.get(<span class="string">'found'</span>):
+            results[<span class="string">'sources'</span>].append({
+                <span class="string">'name'</span>: <span class="string">'ThreatIntel'</span>,
+                <span class="string">'feed'</span>: ti_data.get(<span class="string">'feed_name'</span>),
+                <span class="string">'confidence'</span>: ti_data.get(<span class="string">'confidence'</span>)
+            })
+            results[<span class="string">'malicious'</span>] = <span class="keyword">True</span>
+            results[<span class="string">'score'</span>] += ti_data.get(<span class="string">'confidence'</span>, <span class="number">50</span>)
+    
+    <span class="comment"># Calculate final verdict</span>
+    results[<span class="string">'verdict'</span>] = <span class="string">'Malicious'</span> <span class="keyword">if</span> results[<span class="string">'malicious'</span>] <span class="keyword">else</span> <span class="string">'Clean'</span>
+    
+    <span class="keyword">return</span> results
+
+
+<span class="keyword">def</span> <span class="function">main</span>():
+    args = demisto.args()
+    indicator = args.get(<span class="string">'indicator'</span>)
+    indicator_type = args.get(<span class="string">'type'</span>, <span class="string">'IP'</span>)
+    
+    <span class="keyword">try</span>:
+        result = enrich_indicator(indicator, indicator_type)
+        
+        <span class="comment"># Return results to context</span>
+        command_results = CommandResults(
+            outputs_prefix=<span class="string">'EnrichedIndicator'</span>,
+            outputs_key_field=<span class="string">'indicator'</span>,
+            outputs=result,
+            readable_output=tableToMarkdown(
+                <span class="string">f'Enrichment Results for </span>{indicator}<span class="string">'</span>,
+                result
+            )
+        )
+        <span class="keyword">return</span>_results(command_results)
+        
+    <span class="keyword">except</span> <span class="type">Exception</span> <span class="keyword">as</span> e:
+        <span class="keyword">return</span>_error(<span class="string">f'Failed to enrich indicator: </span>{<span class="type">str</span>(e)}<span class="string">'</span>)
+
+
+<span class="keyword">if</span> __name__ <span class="keyword">in</span> (<span class="string">'__main__'</span>, <span class="string">'__builtin__'</span>, <span class="string">'builtins'</span>):
+    main()
+</pre>
+                </div>
+
+                <h4>Script Metadata (YAML)</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Script Definition</span>
+                        <span class="code-type">YAML</span>
+                    </div>
+<pre>
+<span class="field">commonfields</span>:
+  <span class="field">id</span>: <span class="string">EnrichIOC</span>
+  <span class="field">version</span>: <span class="number">-1</span>
+<span class="field">name</span>: <span class="string">EnrichIOC</span>
+<span class="field">script</span>: <span class="string">''</span>
+<span class="field">type</span>: <span class="keyword">python</span>
+<span class="field">subtype</span>: <span class="keyword">python3</span>
+<span class="field">tags</span>:
+  - <span class="string">enrichment</span>
+  - <span class="string">threat-intel</span>
+<span class="field">comment</span>: <span class="string">Enriches IOCs using multiple threat intelligence sources</span>
+<span class="field">enabled</span>: <span class="keyword">true</span>
+<span class="field">args</span>:
+  - <span class="field">name</span>: <span class="string">indicator</span>
+    <span class="field">required</span>: <span class="keyword">true</span>
+    <span class="field">description</span>: <span class="string">The indicator value to enrich</span>
+  - <span class="field">name</span>: <span class="string">type</span>
+    <span class="field">required</span>: <span class="keyword">false</span>
+    <span class="field">default</span>: <span class="keyword">true</span>
+    <span class="field">description</span>: <span class="string">Type of indicator (IP, URL, Domain, Hash)</span>
+    <span class="field">predefined</span>:
+      - <span class="string">IP</span>
+      - <span class="string">URL</span>
+      - <span class="string">Domain</span>
+      - <span class="string">File</span>
+<span class="field">outputs</span>:
+  - <span class="field">contextPath</span>: <span class="string">EnrichedIndicator.indicator</span>
+    <span class="field">description</span>: <span class="string">The indicator value</span>
+    <span class="field">type</span>: <span class="keyword">String</span>
+  - <span class="field">contextPath</span>: <span class="string">EnrichedIndicator.malicious</span>
+    <span class="field">description</span>: <span class="string">Whether indicator is malicious</span>
+    <span class="field">type</span>: <span class="keyword">Boolean</span>
+  - <span class="field">contextPath</span>: <span class="string">EnrichedIndicator.score</span>
+    <span class="field">description</span>: <span class="string">Aggregate maliciousness score</span>
+    <span class="field">type</span>: <span class="keyword">Number</span>
+<span class="field">dockerimage</span>: <span class="string">demisto/python3:3.10.12.12345</span>
+<span class="field">runas</span>: <span class="keyword">DBotWeakRole</span>
+</pre>
+                </div>
+            </div>
+
+            <div class="memory-box">
+                <h4>🧠 Memory Trick: Script Output Pattern</h4>
+                <div class="mnemonic">"CRR" - CommandResults, return_results, return_error</div>
+                <p>Always use <strong>C</strong>ommandResults to format outputs, <strong>r</strong>eturn_results for success, <strong>r</strong>eturn_error for failures. This ensures proper context and War Room output.</p>
+            </div>
+        </section>
+
+        <!-- Integrations Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Integrations</h2>
+                <p>Connecting XSOAR to your security ecosystem</p>
+            </div>
+
+            <div class="card">
+                <h3>Integration Categories</h3>
+                <p>XSOAR supports 700+ integrations across major security tool categories:</p>
+
+                <div class="grid-3">
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">🔍</div>
+                            <div class="integration-info">
+                                <h4>Threat Intelligence</h4>
+                                <span class="category">Enrichment & Feeds</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">VirusTotal</span>
+                            <span class="command-tag">MISP</span>
+                            <span class="command-tag">AlienVault OTX</span>
+                            <span class="command-tag">Recorded Future</span>
+                            <span class="command-tag">ThreatConnect</span>
+                            <span class="command-tag">URLhaus</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">🖥️</div>
+                            <div class="integration-info">
+                                <h4>Endpoint Security</h4>
+                                <span class="category">Detection & Response</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">Cortex XDR</span>
+                            <span class="command-tag">CrowdStrike</span>
+                            <span class="command-tag">Microsoft Defender</span>
+                            <span class="command-tag">SentinelOne</span>
+                            <span class="command-tag">Carbon Black</span>
+                            <span class="command-tag">Symantec</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">🌐</div>
+                            <div class="integration-info">
+                                <h4>Network Security</h4>
+                                <span class="category">Firewalls & Proxies</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">Palo Alto NGFW</span>
+                            <span class="command-tag">Cisco ASA</span>
+                            <span class="command-tag">Fortinet</span>
+                            <span class="command-tag">Zscaler</span>
+                            <span class="command-tag">Check Point</span>
+                            <span class="command-tag">Cloudflare</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">📧</div>
+                            <div class="integration-info">
+                                <h4>Email Security</h4>
+                                <span class="category">Gateways & Analysis</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">Microsoft 365</span>
+                            <span class="command-tag">Proofpoint</span>
+                            <span class="command-tag">Mimecast</span>
+                            <span class="command-tag">Gmail API</span>
+                            <span class="command-tag">Exchange</span>
+                            <span class="command-tag">Cofense</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">👤</div>
+                            <div class="integration-info">
+                                <h4>Identity & Access</h4>
+                                <span class="category">IAM & Directory</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">Azure AD</span>
+                            <span class="command-tag">Okta</span>
+                            <span class="command-tag">Active Directory</span>
+                            <span class="command-tag">Duo</span>
+                            <span class="command-tag">CyberArk</span>
+                            <span class="command-tag">Ping Identity</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">☁️</div>
+                            <div class="integration-info">
+                                <h4>Cloud Security</h4>
+                                <span class="category">CSPM & Cloud APIs</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">AWS Security Hub</span>
+                            <span class="command-tag">Azure Sentinel</span>
+                            <span class="command-tag">GCP SCC</span>
+                            <span class="command-tag">Prisma Cloud</span>
+                            <span class="command-tag">Wiz</span>
+                            <span class="command-tag">Lacework</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">🎟️</div>
+                            <div class="integration-info">
+                                <h4>ITSM & Ticketing</h4>
+                                <span class="category">Workflows & Tracking</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">ServiceNow</span>
+                            <span class="command-tag">Jira</span>
+                            <span class="command-tag">PagerDuty</span>
+                            <span class="command-tag">Slack</span>
+                            <span class="command-tag">Teams</span>
+                            <span class="command-tag">Remedy</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">💣</div>
+                            <div class="integration-info">
+                                <h4>Sandbox & Analysis</h4>
+                                <span class="category">Dynamic Analysis</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">WildFire</span>
+                            <span class="command-tag">Joe Sandbox</span>
+                            <span class="command-tag">Cuckoo</span>
+                            <span class="command-tag">Any.Run</span>
+                            <span class="command-tag">Hybrid Analysis</span>
+                            <span class="command-tag">URLScan</span>
+                        </div>
+                    </div>
+                    <div class="integration-card">
+                        <div class="integration-header">
+                            <div class="integration-icon">🔐</div>
+                            <div class="integration-info">
+                                <h4>Vulnerability Mgmt</h4>
+                                <span class="category">Scanners & Assessment</span>
+                            </div>
+                        </div>
+                        <div class="integration-commands">
+                            <span class="command-tag">Tenable</span>
+                            <span class="command-tag">Qualys</span>
+                            <span class="command-tag">Rapid7</span>
+                            <span class="command-tag">Crowdstrike Spotlight</span>
+                            <span class="command-tag">Nessus</span>
+                            <span class="command-tag">Expanse</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Integration Configuration</h3>
+                <p>Setting up an integration involves configuring connection parameters and authentication:</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Integration Instance Configuration</span>
+                        <span class="code-type">YAML</span>
+                    </div>
+<pre>
+<span class="field">commonfields</span>:
+  <span class="field">id</span>: <span class="string">VirusTotal</span>
+<span class="field">name</span>: <span class="string">VirusTotal</span>
+<span class="field">display</span>: <span class="string">VirusTotal</span>
+<span class="field">category</span>: <span class="string">Data Enrichment & Threat Intelligence</span>
+<span class="field">description</span>: <span class="string">Analyze suspicious files, URLs, domains and IP addresses</span>
+
+<span class="field">configuration</span>:
+  - <span class="field">display</span>: <span class="string">API Key</span>
+    <span class="field">name</span>: <span class="string">apikey</span>
+    <span class="field">type</span>: <span class="number">4</span>  <span class="comment"># Type 4 = Encrypted credential</span>
+    <span class="field">required</span>: <span class="keyword">true</span>
+    <span class="field">hiddenusername</span>: <span class="keyword">true</span>
+    
+  - <span class="field">display</span>: <span class="string">Use Premium API</span>
+    <span class="field">name</span>: <span class="string">premium</span>
+    <span class="field">type</span>: <span class="number">8</span>  <span class="comment"># Type 8 = Boolean checkbox</span>
+    <span class="field">required</span>: <span class="keyword">false</span>
+    
+  - <span class="field">display</span>: <span class="string">Threshold for Malicious</span>
+    <span class="field">name</span>: <span class="string">threshold</span>
+    <span class="field">type</span>: <span class="number">0</span>  <span class="comment"># Type 0 = Text input</span>
+    <span class="field">required</span>: <span class="keyword">false</span>
+    <span class="field">defaultvalue</span>: <span class="string">"5"</span>
+    
+  - <span class="field">display</span>: <span class="string">Trust any certificate</span>
+    <span class="field">name</span>: <span class="string">insecure</span>
+    <span class="field">type</span>: <span class="number">8</span>
+    <span class="field">required</span>: <span class="keyword">false</span>
+    
+  - <span class="field">display</span>: <span class="string">Use system proxy</span>
+    <span class="field">name</span>: <span class="string">proxy</span>
+    <span class="field">type</span>: <span class="number">8</span>
+    <span class="field">required</span>: <span class="keyword">false</span>
+
+<span class="field">script</span>:
+  <span class="field">type</span>: <span class="keyword">python</span>
+  <span class="field">subtype</span>: <span class="keyword">python3</span>
+  <span class="field">dockerimage</span>: <span class="string">demisto/python3:3.10.12.12345</span>
+  
+  <span class="field">commands</span>:
+    - <span class="field">name</span>: <span class="string">ip</span>
+      <span class="field">description</span>: <span class="string">Check IP reputation</span>
+      <span class="field">arguments</span>:
+        - <span class="field">name</span>: <span class="string">ip</span>
+          <span class="field">description</span>: <span class="string">IP address to check</span>
+          <span class="field">required</span>: <span class="keyword">true</span>
+          <span class="field">isArray</span>: <span class="keyword">true</span>
+      <span class="field">outputs</span>:
+        - <span class="field">contextPath</span>: <span class="string">IP.Address</span>
+          <span class="field">description</span>: <span class="string">IP address</span>
+        - <span class="field">contextPath</span>: <span class="string">IP.Malicious</span>
+          <span class="field">description</span>: <span class="string">Whether IP is malicious</span>
+        - <span class="field">contextPath</span>: <span class="string">DBotScore.Score</span>
+          <span class="field">description</span>: <span class="string">Reputation score</span>
+</pre>
+                </div>
+
+                <h4>Integration Commands in Playbooks</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Using Integration Commands</span>
+                        <span class="code-type">War Room / CLI</span>
+                    </div>
+<pre>
+<span class="comment">// Basic command execution</span>
+<span class="action">!ip</span> <span class="param">ip</span>=<span class="string">"8.8.8.8"</span>
+
+<span class="comment">// Specify integration instance (if multiple configured)</span>
+<span class="action">!ip</span> <span class="param">ip</span>=<span class="string">"8.8.8.8"</span> <span class="param">using</span>=<span class="string">"VirusTotal_Premium"</span>
+
+<span class="comment">// Array input</span>
+<span class="action">!ip</span> <span class="param">ip</span>=<span class="string">"8.8.8.8,1.1.1.1,9.9.9.9"</span>
+
+<span class="comment">// Using context data</span>
+<span class="action">!ip</span> <span class="param">ip</span>=<span class="variable">${IP.Address}</span>
+
+<span class="comment">// File hash lookup</span>
+<span class="action">!file</span> <span class="param">file</span>=<span class="string">"abc123def456..."</span> <span class="param">using</span>=<span class="string">"VirusTotal"</span>
+
+<span class="comment">// URL analysis</span>
+<span class="action">!url</span> <span class="param">url</span>=<span class="string">"https://suspicious-site.com/malware.exe"</span>
+
+<span class="comment">// Endpoint isolation</span>
+<span class="action">!xdr-isolate-endpoint</span> <span class="param">endpoint_id</span>=<span class="variable">${Endpoint.ID}</span>
+
+<span class="comment">// Block indicator</span>
+<span class="action">!pan-os-block-ip</span> <span class="param">ip</span>=<span class="variable">${IP.Address}</span> <span class="param">tag</span>=<span class="string">"Malicious-IOC"</span>
+
+<span class="comment">// Create ticket</span>
+<span class="action">!servicenow-create-ticket</span> <span class="param">short_description</span>=<span class="string">"Security Incident: ${incident.name}"</span> \
+  <span class="param">description</span>=<span class="variable">${incident.details}</span> <span class="param">urgency</span>=<span class="string">"1"</span>
+</pre>
+                </div>
+            </div>
+
+            <div class="info-box note">
+                <span class="icon">📝</span>
+                <div class="content">
+                    <h4>Native vs External Integrations</h4>
+                    <p>In XSIAM, Cortex XDR, WildFire, and Palo Alto NGFW integrations are native - they have direct access to the data lake. External integrations connect via APIs and may require additional configuration.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Common Playbook Patterns Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Common Playbook Patterns</h2>
+                <p>Reusable automation patterns for typical security use cases</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="use-case-card">
+                    <h4>🎣 Phishing Investigation</h4>
+                    <p class="scenario">Automated analysis of reported phishing emails with user notification and mailbox remediation.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Extract URLs, attachments, sender from email</li>
+                            <li>Check URLs against threat intel (URLhaus, VirusTotal)</li>
+                            <li>Detonate attachments in sandbox (WildFire)</li>
+                            <li>Search organization for similar emails</li>
+                            <li>Delete malicious emails from all mailboxes</li>
+                            <li>Block sender/domain at email gateway</li>
+                            <li>Notify affected users</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="use-case-card">
+                    <h4>🦠 Malware Containment</h4>
+                    <p class="scenario">Rapid isolation and remediation when malware is detected on endpoints.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Isolate infected endpoint from network</li>
+                            <li>Collect file hash and submission to sandbox</li>
+                            <li>Query EDR for process tree and parent chain</li>
+                            <li>Search for IOCs across all endpoints</li>
+                            <li>Block file hash at endpoint protection</li>
+                            <li>Create firewall rules for C2 domains</li>
+                            <li>Generate incident report with timeline</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="use-case-card">
+                    <h4>🔑 Compromised Account</h4>
+                    <p class="scenario">Response to suspected credential theft or account takeover.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Disable user account in Active Directory</li>
+                            <li>Revoke active sessions and tokens</li>
+                            <li>Trigger MFA re-enrollment</li>
+                            <li>Query sign-in logs for suspicious activity</li>
+                            <li>Check for forwarding rules in mailbox</li>
+                            <li>Review OAuth app permissions</li>
+                            <li>Notify user and manager via Slack/email</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="use-case-card">
+                    <h4>⚡ Vulnerability Response</h4>
+                    <p class="scenario">Prioritized patching workflow for critical vulnerabilities.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Enrich CVE with exploit availability (Vulndb)</li>
+                            <li>Query asset inventory for affected systems</li>
+                            <li>Calculate risk score based on exposure</li>
+                            <li>Create ServiceNow tickets by priority</li>
+                            <li>Deploy compensating controls if patch delayed</li>
+                            <li>Schedule follow-up verification scan</li>
+                            <li>Generate executive summary report</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="use-case-card">
+                    <h4>📊 Threat Intel Management</h4>
+                    <p class="scenario">Automated ingestion and operationalization of threat intelligence.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Fetch indicators from STIX/TAXII feeds</li>
+                            <li>Deduplicate against existing IOC database</li>
+                            <li>Calculate indicator confidence scores</li>
+                            <li>Push high-confidence IOCs to NGFW block lists</li>
+                            <li>Create detection rules from TTPs</li>
+                            <li>Hunt for historical matches in SIEM</li>
+                            <li>Update indicator expiration dates</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="use-case-card">
+                    <h4>☁️ Cloud Security Response</h4>
+                    <p class="scenario">Respond to cloud misconfigurations and suspicious activity.</p>
+                    <div class="actions">
+                        <h5>Automated Actions</h5>
+                        <ul>
+                            <li>Query CloudTrail/Activity Log for context</li>
+                            <li>Identify affected resources and owners</li>
+                            <li>Revoke excessive IAM permissions</li>
+                            <li>Enable encryption on exposed storage</li>
+                            <li>Close exposed security groups/NSGs</li>
+                            <li>Snapshot instance for forensics</li>
+                            <li>Notify cloud team via PagerDuty</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Generic Sub-playbook Pattern</h3>
+                <p>Modular sub-playbooks that can be reused across multiple parent playbooks:</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Block Indicators - Generic v3</span>
+                        <span class="code-type">Sub-playbook</span>
+                    </div>
+<pre>
+<span class="comment">/* This sub-playbook blocks indicators across multiple security tools */</span>
+
+<span class="task">INPUTS</span>:
+  - <span class="field">IP</span>: <span class="type">Array</span>         <span class="comment">// IPs to block</span>
+  - <span class="field">Domain</span>: <span class="type">Array</span>     <span class="comment">// Domains to block</span>
+  - <span class="field">URL</span>: <span class="type">Array</span>        <span class="comment">// URLs to block</span>
+  - <span class="field">FileHash</span>: <span class="type">Array</span>   <span class="comment">// Hashes to block</span>
+  - <span class="field">AutoBlock</span>: <span class="type">Boolean</span> <span class="comment">// Skip approval if true</span>
+
+<span class="task">WORKFLOW</span>:
+  <span class="number">1.</span> <span class="action">Validate Inputs</span>
+     ├─ Check indicator format
+     └─ Remove duplicates
+
+  <span class="number">2.</span> <span class="condition">If AutoBlock = False</span>
+     └─ <span class="action">Manual Task</span>: Analyst approval required
+  
+  <span class="number">3.</span> <span class="action">Block IPs</span> (parallel)
+     ├─ <span class="function">pan-os-block-ip</span>          <span class="comment">// Palo Alto NGFW</span>
+     ├─ <span class="function">cisco-asa-block</span>          <span class="comment">// Cisco ASA</span>
+     └─ <span class="function">aws-sg-revoke</span>            <span class="comment">// AWS Security Groups</span>
+  
+  <span class="number">4.</span> <span class="action">Block Domains</span> (parallel)
+     ├─ <span class="function">pan-os-edl-update</span>        <span class="comment">// Add to EDL</span>
+     ├─ <span class="function">zscaler-block-url</span>        <span class="comment">// Zscaler proxy</span>
+     └─ <span class="function">umbrella-block</span>           <span class="comment">// Cisco Umbrella</span>
+  
+  <span class="number">5.</span> <span class="action">Block Hashes</span> (parallel)
+     ├─ <span class="function">xdr-blocklist-add</span>        <span class="comment">// Cortex XDR</span>
+     ├─ <span class="function">crowdstrike-ioc-create</span>   <span class="comment">// CrowdStrike</span>
+     └─ <span class="function">defender-indicator-add</span>   <span class="comment">// Microsoft Defender</span>
+
+  <span class="number">6.</span> <span class="action">Update Indicator DB</span>
+     └─ Mark indicators as blocked with timestamp
+
+<span class="task">OUTPUTS</span>:
+  - <span class="field">BlockedIndicators</span>: List of successfully blocked
+  - <span class="field">FailedBlocks</span>: List of failures with reason
+</pre>
+                </div>
+            </div>
+
+            <div class="interview-box">
+                <h4>💼 Interview Answer: MTTR Improvement</h4>
+                <p><strong>Question:</strong> "How does SOAR reduce Mean Time to Respond (MTTR)?"</p>
+                <ul>
+                    <li><strong>Eliminates manual enrichment:</strong> Automatic IOC lookups that took 10+ minutes now happen in seconds</li>
+                    <li><strong>Parallel execution:</strong> Tasks run simultaneously instead of sequentially</li>
+                    <li><strong>24/7 availability:</strong> Playbooks run immediately regardless of analyst availability</li>
+                    <li><strong>Consistent response:</strong> No variation in response quality between analysts or shifts</li>
+                    <li><strong>Reduced context switching:</strong> All data aggregated in one place</li>
+                    <li><strong>Pre-approved containment:</strong> Automatic isolation without waiting for approval chains</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Platform Comparison Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>SOAR Platform Comparison</h2>
+                <p>XSOAR vs Microsoft Sentinel (Logic Apps) vs Splunk SOAR</p>
+            </div>
+
+            <div class="card">
+                <h3>Feature Comparison</h3>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th style="color: var(--accent-orange);">XSOAR (XSIAM)</th>
+                                <th style="color: var(--accent-blue);">Sentinel (Logic Apps)</th>
+                                <th style="color: var(--accent-green);">Splunk SOAR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Playbook Builder</strong></td>
+                                <td>Visual + YAML + Python</td>
+                                <td>Visual + ARM templates</td>
+                                <td>Visual + Python</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Scripting Language</strong></td>
+                                <td>Python 3, JavaScript</td>
+                                <td>KQL, Azure Functions</td>
+                                <td>Python 2.7/3.x</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Integration Count</strong></td>
+                                <td>700+ (Content Hub)</td>
+                                <td>200+ (Azure connectors)</td>
+                                <td>350+ (Splunkbase)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Native SIEM</strong></td>
+                                <td>XSIAM Data Lake</td>
+                                <td>Microsoft Sentinel</td>
+                                <td>Splunk Enterprise</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Case Management</strong></td>
+                                <td>Built-in + War Room</td>
+                                <td>Basic (Incidents)</td>
+                                <td>Built-in + HUD</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Threat Intel Platform</strong></td>
+                                <td>TIM module included</td>
+                                <td>MDTI integration</td>
+                                <td>Separate product</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ML/Analytics</strong></td>
+                                <td>Native in XSIAM</td>
+                                <td>UEBA, Fusion rules</td>
+                                <td>MLTK add-on</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deployment</strong></td>
+                                <td>Cloud (SaaS)</td>
+                                <td>Cloud (Azure)</td>
+                                <td>On-prem or Cloud</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pricing Model</strong></td>
+                                <td>Per endpoint/GB</td>
+                                <td>Per Logic App run + Sentinel</td>
+                                <td>Per event/action</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Same Automation, Different Platforms</h3>
+                <p>Compare how the same IOC enrichment task is implemented across platforms:</p>
+
+                <div class="grid-3">
+                    <div style="background: var(--bg-tertiary); border: 2px solid var(--accent-orange); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: var(--accent-orange); margin-bottom: 1rem;">XSOAR</h4>
+                        <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.8rem;">
+<span class="comment"># Python automation script</span>
+<span class="keyword">def</span> <span class="function">enrich_ip</span>(ip):
+    result = demisto.executeCommand(
+        <span class="string">'ip'</span>,
+        {<span class="string">'ip'</span>: ip}
+    )
+    <span class="keyword">return</span> result
+
+<span class="comment"># Or in playbook YAML</span>
+<span class="field">script</span>: <span class="string">VirusTotal|||ip</span>
+<span class="field">scriptarguments</span>:
+  <span class="field">ip</span>: <span class="variable">${IP.Address}</span>
+</pre>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-tertiary); border: 2px solid var(--accent-blue); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">Sentinel Logic Apps</h4>
+                        <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.8rem;">
+<span class="comment">// ARM template action</span>
+{
+  <span class="string">"type"</span>: <span class="string">"ApiConnection"</span>,
+  <span class="string">"inputs"</span>: {
+    <span class="string">"host"</span>: {
+      <span class="string">"connection"</span>: {
+        <span class="string">"name"</span>: <span class="string">"virustotal"</span>
+      }
+    },
+    <span class="string">"method"</span>: <span class="string">"get"</span>,
+    <span class="string">"path"</span>: <span class="string">"/ip/@{IP}"</span>
+  }
+}
+</pre>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-tertiary); border: 2px solid var(--accent-green); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: var(--accent-green); margin-bottom: 1rem;">Splunk SOAR</h4>
+                        <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.8rem;">
+<span class="comment"># Python playbook action</span>
+<span class="keyword">def</span> <span class="function">ip_reputation</span>(action, ip):
+    phantom.act(
+        <span class="string">"ip reputation"</span>,
+        parameters=[{
+            <span class="string">"ip"</span>: ip
+        }],
+        assets=[<span class="string">"virustotal"</span>],
+        callback=process_result
+    )
+</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="memory-box">
+                <h4>🧠 Memory Trick: Platform Strengths</h4>
+                <div class="mnemonic">"XSM" - XSOAR = Scripts/Python, Sentinel = Microsoft ecosystem, SOAR = Splunk data</div>
+                <p><strong>XSOAR</strong> excels at custom Python automation. <strong>Sentinel</strong> is best for Microsoft-heavy environments. <strong>Splunk SOAR</strong> shines when you already have Splunk for SIEM.</p>
+            </div>
+        </section>
+
+        <!-- Best Practices Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Best Practices</h2>
+                <p>Guidelines for effective SOAR implementation</p>
+            </div>
+
+            <div class="card">
+                <h3>Playbook Development Guidelines</h3>
+
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Start Simple, Iterate</h4>
+                        <p>Begin with the 80/20 rule - automate the common case first. Add exception handling and edge cases in subsequent versions. A working simple playbook is better than an incomplete complex one.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Use Sub-playbooks for Reusability</h4>
+                        <p>Extract common patterns into sub-playbooks: IOC enrichment, indicator blocking, user notification. This reduces duplication and ensures consistent behavior across use cases.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Handle Errors Gracefully</h4>
+                        <p>Every integration call can fail. Use try/catch blocks, check for empty results, and define fallback paths. Never let a playbook fail silently.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Log Everything Important</h4>
+                        <p>Add debug logging at decision points and before/after critical actions. Use the War Room for visibility. Future you will thank present you when troubleshooting.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Version Control Your Content</h4>
+                        <p>Export playbooks and scripts to Git. Use Content Packs for packaging. Enable rollback capability and track changes over time.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Test in Dev Before Prod</h4>
+                        <p>Maintain separate development and production instances. Use test incidents and simulated data. Never test containment actions in production without safeguards.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Common Mistakes to Avoid</h3>
+
+                <div class="grid-2">
+                    <div class="info-box critical" style="margin: 0;">
+                        <span class="icon">❌</span>
+                        <div class="content">
+                            <h4>Unbounded Loops</h4>
+                            <p>Always set maximum iterations on loops. A playbook that processes "all matching indicators" could run forever if there are millions.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box critical" style="margin: 0;">
+                        <span class="icon">❌</span>
+                        <div class="content">
+                            <h4>Hardcoded Credentials</h4>
+                            <p>Never put API keys or passwords in scripts. Use integration credentials and the vault. Hardcoded creds get exposed in exports.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box critical" style="margin: 0;">
+                        <span class="icon">❌</span>
+                        <div class="content">
+                            <h4>Missing Context Checks</h4>
+                            <p>Always verify data exists before using it. <code>${IP.Address}</code> returns null if no IPs exist, which can break downstream tasks.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box critical" style="margin: 0;">
+                        <span class="icon">❌</span>
+                        <div class="content">
+                            <h4>Over-automation</h4>
+                            <p>Not everything should be automated. High-impact containment (isolate production server) should require human approval unless you're very confident.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Metrics to Track</h3>
+                <p>Measure SOAR effectiveness with these KPIs:</p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Description</th>
+                                <th>Target</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>MTTR (Mean Time to Respond)</strong></td>
+                                <td>Time from alert to containment action</td>
+                                <td>&lt; 15 minutes for critical</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Automation Rate</strong></td>
+                                <td>% of incidents handled without manual intervention</td>
+                                <td>&gt; 70% for Tier 1</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Playbook Success Rate</strong></td>
+                                <td>% of playbook runs completing without errors</td>
+                                <td>&gt; 95%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time Saved per Incident</strong></td>
+                                <td>Manual time replaced by automation</td>
+                                <td>&gt; 30 min average</td>
+                            </tr>
+                            <tr>
+                                <td><strong>False Positive Rate</strong></td>
+                                <td>% of automated actions on benign items</td>
+                                <td>&lt; 5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Integration Uptime</strong></td>
+                                <td>Availability of connected tools</td>
+                                <td>&gt; 99.5%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="interview-box">
+                <h4>💼 Interview Answer: SOAR ROI</h4>
+                <p><strong>Question:</strong> "How would you justify SOAR investment to leadership?"</p>
+                <ul>
+                    <li><strong>Quantify time savings:</strong> "We handle 500 phishing alerts/month. Manual triage = 20 min each = 167 hours. Automated = 5 min each = 42 hours. Saving 125 hours/month = 1.5 FTE."</li>
+                    <li><strong>Risk reduction:</strong> "Consistent, immediate response reduces dwell time from hours to minutes, limiting breach impact."</li>
+                    <li><strong>Scalability:</strong> "Alert volume increased 300% last year. Without SOAR, we'd need 3 more analysts."</li>
+                    <li><strong>Quality improvement:</strong> "Every incident gets the same thorough response, regardless of analyst experience or time of day."</li>
+                    <li><strong>Compliance:</strong> "Automated documentation satisfies audit requirements for incident response procedures."</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Navigation Cards -->
+        <div class="nav-cards">
+            <a href="xdr-overview.html" class="nav-card">
+                <span class="direction">← Previous</span>
+                <h4>XDR & Detection</h4>
+                <p>BIOC rules, analytics, endpoint detection</p>
+            </a>
+            <a href="marketplace.html" class="nav-card">
+                <span class="direction">Next →</span>
+                <h4>Marketplace & Content</h4>
+                <p>Content packs, community content, extensions</p>
+            </a>
+        </div>
+            </main>
+            <footer class="main-footer">
+                <p>Nik's SIEM - Security Operations Knowledge Base</p>
+                <p>Created for interview preparation and operational reference</p>
+            </footer>
+        </div>
+    </div>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced XQL Techniques | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link active"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC Ops</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Advanced XQL</span>
+                </div>
+                <div class="top-actions">
+                    <button class="top-btn" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
+            </header>
+            <main class="main-content">
+<header class="page-header">
+            <h1>Advanced XQL</h1>
+            <p class="subtitle">Joins, Subqueries, Correlation Rules & Complex Analytics</p>
+        </header>
+
+        <!-- Joins Section -->
+        <section class="content-section">
+            <h2 class="section-title">XQL Joins</h2>
+            
+            <p class="intro-text">
+                Joins allow you to combine data from multiple datasets or subqueries. This is essential for 
+                correlating events across different log sources, enriching data, or building complex detection logic.
+            </p>
+
+            <div class="diagram-box">
+                <div class="diagram-title">📊 XQL Join Types</div>
+                <div class="diagram-content">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              XQL JOIN TYPES                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  INNER JOIN (default)                    LEFT JOIN                           │
+│  ┌─────────────────────┐                 ┌─────────────────────┐            │
+│  │    Dataset A        │                 │    Dataset A        │            │
+│  │  ┌─────────────┐    │                 │  ┌─────────────┐    │            │
+│  │  │  ███████    │    │                 │  │  ███████████│    │            │
+│  │  │  ███████    │    │                 │  │  ███████    │    │            │
+│  │  └─────────────┘    │                 │  └─────────────┘    │            │
+│  │        Dataset B    │                 │        Dataset B    │            │
+│  └─────────────────────┘                 └─────────────────────┘            │
+│  Returns: Only matching rows             Returns: All A + matching B        │
+│                                          (nulls for non-matches)            │
+│                                                                              │
+│  RIGHT JOIN                              FULL/OUTER JOIN                     │
+│  ┌─────────────────────┐                 ┌─────────────────────┐            │
+│  │    Dataset A        │                 │    Dataset A        │            │
+│  │  ┌─────────────┐    │                 │  ┌─────────────────┐│            │
+│  │  │      ██████│    │                 │  │  ███████████████││            │
+│  │  │  ███████████│    │                 │  │  ███████████████││            │
+│  │  └─────────────┘    │                 │  └─────────────────┘│            │
+│  │        Dataset B    │                 │        Dataset B    │            │
+│  └─────────────────────┘                 └─────────────────────┘            │
+│  Returns: All B + matching A             Returns: All from both             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">Join Syntax</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">Basic Join Syntax</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Basic Join Structure</span>
+<span class="keyword">dataset</span> = <span class="dataset">primary_dataset</span>
+<span class="operator">|</span> <span class="function">join</span> <span class="keyword">type</span> = <span class="string">inner</span> (
+    <span class="keyword">dataset</span> = <span class="dataset">secondary_dataset</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">some_condition</span>
+    <span class="operator">|</span> <span class="function">fields</span> <span class="field">join_key</span>, <span class="field">enrichment_field</span>
+) <span class="keyword">as</span> <span class="field">joined_data</span> <span class="field">joined_data</span>.<span class="field">join_key</span> = <span class="field">primary_key</span>
+
+<span class="comment">// Available join types:</span>
+<span class="comment">// type = inner (default) - Only matching rows</span>
+<span class="comment">// type = left  - All from primary + matching secondary</span>
+<span class="comment">// type = right - All from secondary + matching primary</span>
+<span class="comment">// type = full  - All rows from both</span></pre>
+                    </div>
+                </div>
+
+                <div class="memory-trick">
+                    <div class="memory-trick-header">Memory Trick: Join Syntax Pattern</div>
+                    <p><strong>"JOT-A-K" = Join On Type, Alias, Key</strong></p>
+                    <p>• <code>join type=X</code> - Specify type (inner/left/right/full)</p>
+                    <p>• <code>(...) as alias</code> - Give subquery an alias</p>
+                    <p>• <code>alias.key = main.key</code> - Define join condition</p>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">Practical Join Examples</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">1. Enrich Process Events with Network Connections</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Find processes that made external connections</span>
+<span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">PROCESS</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">action_process_image_name</span> <span class="function">contains</span> <span class="string">"powershell"</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, <span class="field">actor_process_instance_id</span>, 
+        <span class="field">action_process_image_name</span>, <span class="field">actor_process_command_line</span>
+<span class="operator">|</span> <span class="function">join</span> <span class="keyword">type</span> = <span class="string">left</span> (
+    <span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">NETWORK</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">action_external_hostname</span> != <span class="keyword">null</span>
+    <span class="operator">|</span> <span class="function">fields</span> <span class="field">causality_actor_process_instance_id</span>, 
+            <span class="field">action_external_hostname</span>, <span class="field">dst_action_external_port</span>
+    <span class="operator">|</span> <span class="function">dedup</span> <span class="field">causality_actor_process_instance_id</span>, <span class="field">action_external_hostname</span>
+) <span class="keyword">as</span> <span class="field">network</span> <span class="field">network</span>.<span class="field">causality_actor_process_instance_id</span> = <span class="field">actor_process_instance_id</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">network</span>.<span class="field">action_external_hostname</span> != <span class="keyword">null</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, <span class="field">action_process_image_name</span>,
+        <span class="field">actor_process_command_line</span>, <span class="field">network</span>.<span class="field">action_external_hostname</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">2. Cross-Dataset: Login from New Device + High-Risk Country</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Correlate Azure AD logins with threat intel</span>
+<span class="keyword">dataset</span> = <span class="dataset">azure_ad_signin_raw</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">status_errorCode</span> = <span class="number">0</span> <span class="comment">// Successful login</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">deviceDetail_isManaged</span> = <span class="keyword">false</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">userPrincipalName</span>, <span class="field">ipAddress</span>, <span class="field">location_countryOrRegion</span>
+<span class="operator">|</span> <span class="function">join</span> <span class="keyword">type</span> = <span class="string">inner</span> (
+    <span class="comment">// High-risk countries lookup (could be from TIM)</span>
+    <span class="keyword">dataset</span> = <span class="dataset">threat_intel_indicators</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">indicator_type</span> = <span class="string">"geo_country"</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">risk_score</span> > <span class="number">80</span>
+    <span class="operator">|</span> <span class="function">fields</span> <span class="field">indicator_value</span> <span class="keyword">as</span> <span class="field">risky_country</span>
+) <span class="keyword">as</span> <span class="field">threat</span> <span class="field">threat</span>.<span class="field">risky_country</span> = <span class="field">location_countryOrRegion</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">userPrincipalName</span>, <span class="field">ipAddress</span>, <span class="field">location_countryOrRegion</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">3. Self-Join: Find Processes Spawned by Suspicious Parent</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Find child processes of suspicious parents</span>
+<span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">PROCESS</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, <span class="field">actor_process_instance_id</span>,
+        <span class="field">actor_process_image_name</span>, <span class="field">causality_actor_process_instance_id</span>,
+        <span class="field">action_process_image_name</span>, <span class="field">actor_process_command_line</span>
+<span class="operator">|</span> <span class="function">join</span> <span class="keyword">type</span> = <span class="string">inner</span> (
+    <span class="comment">// Find suspicious parent processes</span>
+    <span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">PROCESS</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">action_process_image_name</span> ~= <span class="string">".*\\\\(mshta|wscript|cscript|regsvr32)\.exe"</span>
+    <span class="operator">|</span> <span class="function">fields</span> <span class="field">actor_process_instance_id</span> <span class="keyword">as</span> <span class="field">parent_id</span>,
+            <span class="field">action_process_image_name</span> <span class="keyword">as</span> <span class="field">parent_name</span>
+) <span class="keyword">as</span> <span class="field">parent</span> <span class="field">parent</span>.<span class="field">parent_id</span> = <span class="field">causality_actor_process_instance_id</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, <span class="field">parent</span>.<span class="field">parent_name</span>,
+        <span class="field">action_process_image_name</span>, <span class="field">actor_process_command_line</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-box-title">⚠️ Join Performance Tips</div>
+                <ul style="color: var(--text-primary); margin-left: 1.5rem;">
+                    <li><strong>Filter early</strong> - Apply filters inside the subquery to reduce data</li>
+                    <li><strong>Limit fields</strong> - Only select fields you need in both sides</li>
+                    <li><strong>Use dedup</strong> - Remove duplicates before joining to avoid explosions</li>
+                    <li><strong>Time-bound</strong> - Always limit time range, especially for large datasets</li>
+                    <li><strong>Avoid full joins</strong> - They're expensive; use inner/left when possible</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Subqueries Section -->
+        <section class="content-section">
+            <h2 class="section-title">Subqueries</h2>
+
+            <p class="intro-text">
+                Subqueries let you use the results of one query as input to another. They're essential for 
+                complex filtering, dynamic thresholds, and multi-stage analysis.
+            </p>
+
+            <div class="subsection">
+                <h3 class="subsection-title">Subquery Patterns</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">Pattern 1: Filter Using Subquery Results</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Find all activity from hosts with critical alerts</span>
+<span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">agent_hostname</span> <span class="keyword">in</span> (
+    <span class="comment">// Subquery: Get hosts with critical alerts</span>
+    <span class="keyword">dataset</span> = <span class="dataset">xdr_alerts</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">severity</span> = <span class="string">"CRITICAL"</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">_time</span> > <span class="function">subtract_time</span>(<span class="function">current_time</span>(), <span class="string">"24h"</span>)
+    <span class="operator">|</span> <span class="function">comp</span> <span class="function">values</span>(<span class="field">agent_hostname</span>)
+)
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> <span class="keyword">in</span> (<span class="string">PROCESS</span>, <span class="string">NETWORK</span>, <span class="string">FILE</span>)
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, <span class="field">event_type</span>, <span class="field">action_process_image_name</span>
+<span class="operator">|</span> <span class="function">sort</span> <span class="keyword">desc</span> <span class="field">_time</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">Pattern 2: Dynamic Threshold (Baseline Comparison)</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Find users with login attempts above their normal baseline</span>
+<span class="keyword">dataset</span> = <span class="dataset">azure_ad_signin_raw</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">_time</span> > <span class="function">subtract_time</span>(<span class="function">current_time</span>(), <span class="string">"1h"</span>)
+<span class="operator">|</span> <span class="function">comp</span> <span class="function">count</span>() <span class="keyword">as</span> <span class="field">current_hour_logins</span> <span class="keyword">by</span> <span class="field">userPrincipalName</span>
+<span class="operator">|</span> <span class="function">join</span> <span class="keyword">type</span> = <span class="string">inner</span> (
+    <span class="comment">// Baseline: Average logins per hour over past week</span>
+    <span class="keyword">dataset</span> = <span class="dataset">azure_ad_signin_raw</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">_time</span> > <span class="function">subtract_time</span>(<span class="function">current_time</span>(), <span class="string">"7d"</span>)
+    <span class="operator">|</span> <span class="function">comp</span> <span class="function">count</span>() <span class="keyword">as</span> <span class="field">total_logins</span> <span class="keyword">by</span> <span class="field">userPrincipalName</span>
+    <span class="operator">|</span> <span class="function">alter</span> <span class="field">avg_hourly</span> = <span class="field">total_logins</span> / (<span class="number">7</span> * <span class="number">24</span>)
+    <span class="operator">|</span> <span class="function">fields</span> <span class="field">userPrincipalName</span>, <span class="field">avg_hourly</span>
+) <span class="keyword">as</span> <span class="field">baseline</span> <span class="field">baseline</span>.<span class="field">userPrincipalName</span> = <span class="field">userPrincipalName</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">threshold</span> = <span class="field">baseline</span>.<span class="field">avg_hourly</span> * <span class="number">3</span> <span class="comment">// 3x normal</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">current_hour_logins</span> > <span class="field">threshold</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">userPrincipalName</span>, <span class="field">current_hour_logins</span>, <span class="field">baseline</span>.<span class="field">avg_hourly</span>, <span class="field">threshold</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XQL</span>
+                        <span class="code-title">Pattern 3: Exclusion List (NOT IN)</span>
+                    </div>
+                    <div class="code-content">
+<pre><span class="comment">// Find processes NOT in the approved baseline</span>
+<span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">PROCESS</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">action_process_image_sha256</span> <span class="keyword">not in</span> (
+    <span class="comment">// Approved process hashes (from asset list or lookup)</span>
+    <span class="keyword">dataset</span> = <span class="dataset">xdr_assets_baseline</span>
+    <span class="operator">|</span> <span class="function">filter</span> <span class="field">approval_status</span> = <span class="string">"approved"</span>
+    <span class="operator">|</span> <span class="function">comp</span> <span class="function">values</span>(<span class="field">process_sha256</span>)
+)
+<span class="operator">|</span> <span class="function">comp</span> <span class="function">count</span>() <span class="keyword">as</span> <span class="field">execution_count</span>,
+      <span class="function">count_distinct</span>(<span class="field">agent_hostname</span>) <span class="keyword">as</span> <span class="field">host_count</span>
+      <span class="keyword">by</span> <span class="field">action_process_image_name</span>, <span class="field">action_process_image_sha256</span>
+<span class="operator">|</span> <span class="function">sort</span> <span class="keyword">desc</span> <span class="field">host_count</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="interview-box">
+                <div class="interview-header">Interview Answer: When to Use Subqueries vs Joins</div>
+                <p><strong>Q: When would you use a subquery versus a join in XQL?</strong></p>
+                <p>"The choice depends on what you're trying to accomplish:</p>
+                <p><strong>Use Subqueries when:</strong></p>
+                <p>• You need a simple IN/NOT IN filter against a list of values</p>
+                <p>• You're creating dynamic thresholds or baselines</p>
+                <p>• You don't need fields from both datasets in the final output</p>
+                <p><strong>Use Joins when:</strong></p>
+                <p>• You need to enrich data by adding fields from another dataset</p>
+                <p>• You need to correlate events with complex matching conditions</p>
+                <p>• You need fields from both datasets in your output</p>
+                <p>In XSIAM specifically, subqueries inside IN clauses are often more performant for simple filtering."</p>
+            </div>
+        </section>
+
+        <!-- Correlation Rules Section -->
+        <section class="content-section">
+            <h2 class="section-title">XQL Correlation Rules</h2>
+
+            <p class="intro-text">
+                Correlation rules are the heart of XSIAM's detection engine. They use XQL to identify threats by 
+                correlating events across multiple data sources and time windows.
+            </p>
+
+            <div class="diagram-box">
+                <div class="diagram-title">📊 Correlation Rule Architecture</div>
+                <div class="diagram-content">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       CORRELATION RULE EXECUTION FLOW                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────┐    ┌───────────────┐    ┌──────────────┐    ┌──────────┐ │
+│  │  XQL Query   │───▶│  Event Match  │───▶│  Alert Gen   │───▶│ Incident │ │
+│  │  (Detection) │    │  (Threshold)  │    │  (Severity)  │    │  Create  │ │
+│  └──────────────┘    └───────────────┘    └──────────────┘    └──────────┘ │
+│         │                    │                   │                          │
+│         ▼                    ▼                   ▼                          │
+│   • Multi-dataset     • Count threshold    • Alert name              XSOAR  │
+│   • Time window       • Distinct count     • Severity level          Playbook│
+│   • Joins/filters     • Within time        • MITRE mapping           trigger │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  RULE COMPONENTS:                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  1. DETECTION QUERY     │  XQL that identifies suspicious events    │    │
+│  │  2. AGGREGATION         │  How to group events (by host, user, etc) │    │
+│  │  3. THRESHOLD           │  Minimum count to trigger (e.g., > 5)     │    │
+│  │  4. TIME WINDOW         │  Period for aggregation (e.g., 5 minutes) │    │
+│  │  5. SEVERITY            │  Alert priority (Low/Medium/High/Critical)│    │
+│  │  6. MITRE MAPPING       │  Technique/Tactic IDs for context         │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">Correlation Rule Examples</h3>
+
+                <div class="use-case-grid">
+                    <div class="use-case-card">
+                        <div class="use-case-header">
+                            <div class="use-case-title">Brute Force Detection</div>
+                            <div class="use-case-desc">Multiple failed logins followed by success</div>
+                        </div>
+                        <div class="use-case-body">
+                            <span class="rule-type correlation">Correlation</span>
+                            <div class="code-block" style="margin-top: 1rem;">
+                                <div class="code-content">
+<pre><span class="comment">// Brute force: 10+ failures then success within 10 min</span>
+<span class="keyword">dataset</span> = <span class="dataset">azure_ad_signin_raw</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">login_status</span> = <span class="keyword">if</span>(<span class="field">status_errorCode</span> = <span class="number">0</span>, 
+    <span class="string">"success"</span>, <span class="string">"failure"</span>)
+<span class="operator">|</span> <span class="function">comp</span> 
+    <span class="function">count</span>(<span class="field">login_status</span> = <span class="string">"failure"</span>) <span class="keyword">as</span> <span class="field">failures</span>,
+    <span class="function">count</span>(<span class="field">login_status</span> = <span class="string">"success"</span>) <span class="keyword">as</span> <span class="field">successes</span>,
+    <span class="function">min</span>(<span class="field">_time</span>) <span class="keyword">as</span> <span class="field">first_attempt</span>,
+    <span class="function">max</span>(<span class="field">_time</span>) <span class="keyword">as</span> <span class="field">last_attempt</span>
+    <span class="keyword">by</span> <span class="field">userPrincipalName</span>, <span class="field">ipAddress</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">failures</span> >= <span class="number">10</span> <span class="keyword">and</span> <span class="field">successes</span> >= <span class="number">1</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="use-case-card">
+                        <div class="use-case-header">
+                            <div class="use-case-title">Lateral Movement Chain</div>
+                            <div class="use-case-desc">RDP/SMB to multiple hosts from single source</div>
+                        </div>
+                        <div class="use-case-body">
+                            <span class="rule-type correlation">Correlation</span>
+                            <div class="code-block" style="margin-top: 1rem;">
+                                <div class="code-content">
+<pre><span class="comment">// 5+ unique destinations via RDP/SMB in 30 min</span>
+<span class="keyword">dataset</span> = <span class="dataset">panw_ngfw_traffic_raw</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">app</span> <span class="keyword">in</span> (<span class="string">"ms-rdp"</span>, <span class="string">"ms-smb"</span>, <span class="string">"ms-wmi"</span>)
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">action</span> = <span class="string">"allow"</span>
+<span class="operator">|</span> <span class="function">comp</span> 
+    <span class="function">count_distinct</span>(<span class="field">dst_ip</span>) <span class="keyword">as</span> <span class="field">unique_targets</span>,
+    <span class="function">values</span>(<span class="field">dst_ip</span>) <span class="keyword">as</span> <span class="field">target_list</span>,
+    <span class="function">count</span>() <span class="keyword">as</span> <span class="field">total_connections</span>
+    <span class="keyword">by</span> <span class="field">src_ip</span>, <span class="field">src_user</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">unique_targets</span> >= <span class="number">5</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="use-case-card">
+                        <div class="use-case-header">
+                            <div class="use-case-title">Data Exfiltration Pattern</div>
+                            <div class="use-case-desc">Large data transfer to external destination</div>
+                        </div>
+                        <div class="use-case-body">
+                            <span class="rule-type analytics">Analytics</span>
+                            <div class="code-block" style="margin-top: 1rem;">
+                                <div class="code-content">
+<pre><span class="comment">// High outbound transfer to external IPs</span>
+<span class="keyword">dataset</span> = <span class="dataset">panw_ngfw_traffic_raw</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">direction</span> = <span class="string">"outbound"</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">dst_ip</span> !~= <span class="string">"^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"</span>
+<span class="operator">|</span> <span class="function">comp</span> 
+    <span class="function">sum</span>(<span class="field">bytes_sent</span>) <span class="keyword">as</span> <span class="field">total_bytes</span>
+    <span class="keyword">by</span> <span class="field">src_ip</span>, <span class="field">src_user</span>, <span class="field">dst_ip</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">total_mb</span> = <span class="field">total_bytes</span> / <span class="number">1048576</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">total_mb</span> > <span class="number">500</span> <span class="comment">// 500 MB threshold</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="use-case-card">
+                        <div class="use-case-header">
+                            <div class="use-case-title">Suspicious Process Chain</div>
+                            <div class="use-case-desc">Office app spawning cmd/powershell/wscript</div>
+                        </div>
+                        <div class="use-case-body">
+                            <span class="rule-type bioc">BIOC</span>
+                            <div class="code-block" style="margin-top: 1rem;">
+                                <div class="code-content">
+<pre><span class="comment">// Office app → suspicious child process</span>
+<span class="keyword">dataset</span> = <span class="dataset">xdr_data</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">event_type</span> = <span class="string">PROCESS</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">actor_process_image_name</span> ~= 
+    <span class="string">".*\\\\(winword|excel|powerpnt|outlook)\\.exe"</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">action_process_image_name</span> ~= 
+    <span class="string">".*\\\\(cmd|powershell|wscript|cscript|mshta)\\.exe"</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">_time</span>, <span class="field">agent_hostname</span>, 
+        <span class="field">actor_process_image_name</span>, 
+        <span class="field">action_process_image_name</span>,
+        <span class="field">actor_process_command_line</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="memory-trick">
+                <div class="memory-trick-header">Memory Trick: Rule Types in XSIAM</div>
+                <p><strong>"B.C.A." = BIOC, Correlation, Analytics</strong></p>
+                <p>• <strong>BIOC</strong> (Behavioral IOC) - Endpoint-focused, process/file/registry patterns, run by XDR agent</p>
+                <p>• <strong>Correlation</strong> - Cross-source, XQL-based, time-window aggregations, run centrally</p>
+                <p>• <strong>Analytics</strong> - ML-based anomaly detection, baseline comparisons, run by analytics engine</p>
+            </div>
+        </section>
+
+        <!-- Window Functions -->
+        <section class="content-section">
+            <h2 class="section-title">Time-Based Analytics</h2>
+
+            <p class="intro-text">
+                Time-based analytics are crucial for detecting patterns that unfold over time, such as 
+                beaconing, periodic data exfiltration, or slow credential stuffing attacks.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">XQL</span>
+                    <span class="code-title">Beaconing Detection (Regular Interval Connections)</span>
+                </div>
+                <div class="code-content">
+<pre><span class="comment">// Detect beaconing by analyzing connection intervals</span>
+<span class="keyword">dataset</span> = <span class="dataset">panw_ngfw_traffic_raw</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">_time</span> > <span class="function">subtract_time</span>(<span class="function">current_time</span>(), <span class="string">"24h"</span>)
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">direction</span> = <span class="string">"outbound"</span>
+<span class="operator">|</span> <span class="function">sort</span> <span class="keyword">asc</span> <span class="field">_time</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">prev_time</span> = <span class="function">prev</span>(<span class="field">_time</span>, <span class="field">src_ip</span>, <span class="field">dst_ip</span>)
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">interval_seconds</span> = <span class="function">timestamp_diff</span>(<span class="field">_time</span>, <span class="field">prev_time</span>, <span class="string">"SECOND"</span>)
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">interval_seconds</span> > <span class="number">0</span>
+<span class="operator">|</span> <span class="function">comp</span> 
+    <span class="function">avg</span>(<span class="field">interval_seconds</span>) <span class="keyword">as</span> <span class="field">avg_interval</span>,
+    <span class="function">stddev</span>(<span class="field">interval_seconds</span>) <span class="keyword">as</span> <span class="field">interval_stddev</span>,
+    <span class="function">count</span>() <span class="keyword">as</span> <span class="field">connection_count</span>
+    <span class="keyword">by</span> <span class="field">src_ip</span>, <span class="field">dst_ip</span>, <span class="field">dst_port</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">connection_count</span> > <span class="number">50</span> <span class="comment">// Enough samples</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">beacon_score</span> = <span class="field">avg_interval</span> / (<span class="field">interval_stddev</span> + <span class="number">1</span>)
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">beacon_score</span> > <span class="number">10</span> <span class="comment">// High regularity = likely beacon</span>
+<span class="operator">|</span> <span class="function">sort</span> <span class="keyword">desc</span> <span class="field">beacon_score</span></pre>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">XQL</span>
+                    <span class="code-title">Hourly Activity Baseline Comparison</span>
+                </div>
+                <div class="code-content">
+<pre><span class="comment">// Compare current hour to historical baseline per user</span>
+<span class="keyword">dataset</span> = <span class="dataset">azure_ad_signin_raw</span>
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">hour_of_day</span> = <span class="function">extract_time</span>(<span class="field">_time</span>, <span class="string">"HOUR"</span>)
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">day_of_week</span> = <span class="function">extract_time</span>(<span class="field">_time</span>, <span class="string">"DAYOFWEEK"</span>)
+<span class="operator">|</span> <span class="function">alter</span> <span class="field">is_today</span> = <span class="keyword">if</span>(
+    <span class="field">_time</span> > <span class="function">subtract_time</span>(<span class="function">current_time</span>(), <span class="string">"24h"</span>), 
+    <span class="number">1</span>, <span class="number">0</span>)
+<span class="operator">|</span> <span class="function">comp</span> 
+    <span class="function">sum</span>(<span class="field">is_today</span>) <span class="keyword">as</span> <span class="field">today_count</span>,
+    <span class="function">count</span>() <span class="keyword">as</span> <span class="field">total_historical</span>,
+    <span class="function">avg</span>(<span class="keyword">if</span>(<span class="field">is_today</span> = <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>)) <span class="keyword">as</span> <span class="field">historical_avg</span>
+    <span class="keyword">by</span> <span class="field">userPrincipalName</span>, <span class="field">hour_of_day</span>
+<span class="operator">|</span> <span class="function">filter</span> <span class="field">today_count</span> > <span class="field">historical_avg</span> * <span class="number">5</span> <span class="comment">// 5x normal</span>
+<span class="operator">|</span> <span class="function">fields</span> <span class="field">userPrincipalName</span>, <span class="field">hour_of_day</span>, <span class="field">today_count</span>, <span class="field">historical_avg</span></pre>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-box-title">💡 Pro Tip: prev() and next() Functions</div>
+                <p>The <code>prev()</code> and <code>next()</code> functions are powerful for time-series analysis:</p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem; color: var(--text-primary);">
+                    <li><code>prev(field, partition_by)</code> - Get previous row's value</li>
+                    <li><code>next(field, partition_by)</code> - Get next row's value</li>
+                    <li>Use with <code>sort</code> first to ensure proper ordering</li>
+                    <li>Partition fields ensure you compare within the same group</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Comparison with Other Platforms -->
+        <section class="content-section">
+            <h2 class="section-title">Advanced Operations: XQL vs KQL vs SPL</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th class="xsiam">XQL (XSIAM)</th>
+                        <th class="sentinel">KQL (Sentinel)</th>
+                        <th class="splunk">SPL (Splunk)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Inner Join</strong></td>
+                        <td><code>| join type=inner (...) as t t.k = k</code></td>
+                        <td><code>| join kind=inner (...) on k</code></td>
+                        <td><code>| join type=inner [...] </code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Left Join</strong></td>
+                        <td><code>| join type=left (...)</code></td>
+                        <td><code>| join kind=leftouter (...)</code></td>
+                        <td><code>| join type=left [...] </code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Subquery Filter</strong></td>
+                        <td><code>| filter f in (dataset...)</code></td>
+                        <td><code>| where f in (Table...)</code></td>
+                        <td><code>| where f IN [search...]</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Time Bucket</strong></td>
+                        <td><code>| alter hour = extract_time(_time, "HOUR")</code></td>
+                        <td><code>| bin TimeGenerated span=1h</code></td>
+                        <td><code>| bucket span=1h _time</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Previous Row</strong></td>
+                        <td><code>| alter prev = prev(field, partition)</code></td>
+                        <td><code>| serialize | extend prev = prev(field)</code></td>
+                        <td><code>| autoregress field p=1</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Standard Deviation</strong></td>
+                        <td><code>| comp stddev(field) by group</code></td>
+                        <td><code>| summarize stdev(field) by group</code></td>
+                        <td><code>| stats stdev(field) by group</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Percentile</strong></td>
+                        <td><code>| comp percentile(field, 95)</code></td>
+                        <td><code>| summarize percentile(field, 95)</code></td>
+                        <td><code>| stats perc95(field)</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Conditional Count</strong></td>
+                        <td><code>| comp count(condition) as c</code></td>
+                        <td><code>| summarize countif(condition)</code></td>
+                        <td><code>| stats count(eval(condition))</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Best Practices -->
+        <section class="content-section">
+            <h2 class="section-title">Best Practices for Complex Queries</h2>
+
+            <div class="concept-card">
+                <h4>1. Query Structure Pattern</h4>
+                <p>Follow this order for maintainable, performant queries:</p>
+                <ol style="margin-left: 1.5rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                    <li><strong>Dataset</strong> - Start with the primary data source</li>
+                    <li><strong>Time Filter</strong> - Limit time range immediately</li>
+                    <li><strong>Selective Filters</strong> - Most restrictive filters first</li>
+                    <li><strong>Field Selection</strong> - Reduce columns early</li>
+                    <li><strong>Joins</strong> - Add after primary filtering</li>
+                    <li><strong>Transforms</strong> - Create calculated fields</li>
+                    <li><strong>Aggregations</strong> - Group and summarize</li>
+                    <li><strong>Final Filters</strong> - Filter aggregated results</li>
+                    <li><strong>Sort & Limit</strong> - Order and cap output</li>
+                </ol>
+            </div>
+
+            <div class="concept-card">
+                <h4>2. Performance Optimization Checklist</h4>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li>✓ Always specify time range (preferably in first filter)</li>
+                    <li>✓ Filter on indexed XDM fields (event_type, action_process_image_name)</li>
+                    <li>✓ Use <code>contains</code> instead of regex when possible</li>
+                    <li>✓ Dedup before joins to prevent Cartesian explosions</li>
+                    <li>✓ Select only needed fields before expensive operations</li>
+                    <li>✓ Use <code>limit</code> during development, remove for production rules</li>
+                    <li>✓ Test with small time windows first, then expand</li>
+                </ul>
+            </div>
+
+            <div class="concept-card">
+                <h4>3. Correlation Rule Design</h4>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li>✓ Name rules clearly: <code>[MITRE Tactic] Description - Data Source</code></li>
+                    <li>✓ Include MITRE ATT&CK mappings for context</li>
+                    <li>✓ Set appropriate severity (don't make everything Critical)</li>
+                    <li>✓ Define clear aggregation keys (user, host, IP)</li>
+                    <li>✓ Use sensible thresholds based on environment baseline</li>
+                    <li>✓ Document expected false positive scenarios</li>
+                    <li>✓ Create suppression rules for known-good behaviors</li>
+                </ul>
+            </div>
+
+            <div class="interview-box">
+                <div class="interview-header">Interview Answer: Building Effective Detection Rules</div>
+                <p><strong>Q: Walk me through your process for creating a correlation rule in XSIAM.</strong></p>
+                <p>"My process follows these steps:</p>
+                <p><strong>1. Understand the Threat:</strong> Start with the MITRE technique or threat behavior I want to detect. Research what log sources would capture this activity.</p>
+                <p><strong>2. Data Discovery:</strong> Run exploratory queries to understand what the data looks like, field names, and normal patterns in our environment.</p>
+                <p><strong>3. Build the Detection Logic:</strong> Start simple, then add complexity. First get the basic filter working, then add aggregations and thresholds.</p>
+                <p><strong>4. Baseline and Tune:</strong> Run the query historically to see what would have triggered. Adjust thresholds to balance detection vs. false positives.</p>
+                <p><strong>5. Add Context:</strong> Include MITRE mappings, set appropriate severity, and write clear alert descriptions that help analysts understand the finding.</p>
+                <p><strong>6. Test and Monitor:</strong> Enable in detection-only mode first, review alerts, tune as needed before enabling automated response."</p>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <section class="content-section">
+            <h2 class="section-title">Continue Learning</h2>
+            
+            <div class="nav-cards">
+                <a href="xdr-overview.html" class="nav-card">
+                    <div class="nav-card-title">XDR & Detection →</div>
+                    <div class="nav-card-desc">BIOC rules, endpoint analytics, and investigation workflows</div>
+                </a>
+                <a href="xsoar-automation.html" class="nav-card">
+                    <div class="nav-card-title">XSOAR Automation →</div>
+                    <div class="nav-card-desc">Playbooks, integrations, and automated response</div>
+                </a>
+                <a href="xql-fundamentals.html" class="nav-card">
+                    <div class="nav-card-title">← XQL Basics</div>
+                    <div class="nav-card-desc">Review fundamental syntax and operators</div>
+                </a>
+                <a href="index.html" class="nav-card">
+                    <div class="nav-card-title">← XSIAM Home</div>
+                    <div class="nav-card-desc">Return to the main guide</div>
+                </a>
+            </div>
+        </section>
+            </main>
+            <footer class="main-footer">
+                <p>Nik's SIEM - Security Operations Knowledge Base</p>
+                <p>Created for interview preparation and operational reference</p>
+            </footer>
+        </div>
+    </div>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

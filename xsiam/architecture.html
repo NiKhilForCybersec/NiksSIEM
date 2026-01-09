@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSIAM Architecture Deep Dive | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link active"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC Ops</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Architecture</span>
+                </div>
+                <div class="top-actions">
+                    <button class="top-btn" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </header>
+            
+            <main class="main-content">
+        </div>
+        
+        <h1><i class="fas fa-sitemap" style="color: var(--accent-xsiam);"></i> XSIAM Architecture Deep Dive</h1>
+        <p class="lead">Complete technical breakdown of XSIAM's cloud-native architecture - from data collection to automated response. Understanding this architecture is essential for deployment, troubleshooting, and interview success.</p>
+
+        <!-- HIGH-LEVEL ARCHITECTURE -->
+        <h2><i class="fas fa-building"></i> High-Level Architecture</h2>
+
+        <div class="diagram-box">
+XSIAM COMPLETE ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+                     ┌─────────────────────────────────────────────────────────┐
+                     │                    XSIAM CLOUD                          │
+                     │              (Multi-Tenant SaaS Platform)               │
+┌────────────────┐   │  ┌──────────────────────────────────────────────────┐  │
+│   ENDPOINTS    │   │  │              INGESTION LAYER                      │  │
+│                │   │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌────────┐  │  │
+│ ┌────────────┐ │   │  │  │ Stream  │ │  API    │ │ Syslog  │ │ Cloud  │  │  │
+│ │  Cortex    │─┼───┼──┼─▶│ Handler │ │ Gateway │ │ Handler │ │ Ingest │  │  │
+│ │  Agent     │ │   │  │  └────┬────┘ └────┬────┘ └────┬────┘ └───┬────┘  │  │
+│ └────────────┘ │   │  │       │           │           │          │       │  │
+└────────────────┘   │  │       └───────────┼───────────┼──────────┘       │  │
+                     │  │                   ▼           ▼                   │  │
+┌────────────────┐   │  │           ┌──────────────────────────┐           │  │
+│  ON-PREMISES   │   │  │           │     PARSING ENGINE       │           │  │
+│                │   │  │           │                          │           │  │
+│ ┌────────────┐ │   │  │           │  • Auto-detection       │           │  │
+│ │  Broker    │─┼───┼──┼───────────│  • 800+ built-in parsers│           │  │
+│ │    VM      │ │   │  │           │  • Custom parser DSL    │           │  │
+│ └────────────┘ │   │  │           │  • XDM normalization    │           │  │
+└────────────────┘   │  │           └───────────┬──────────────┘           │  │
+                     │  └───────────────────────┼──────────────────────────┘  │
+┌────────────────┐   │                          ▼                             │
+│    CLOUD       │   │  ┌──────────────────────────────────────────────────┐  │
+│                │   │  │              DATA LAKE (Storage)                  │  │
+│ ┌────────────┐ │   │  │                                                   │  │
+│ │  AWS/Azure │─┼───┼──│  ┌─────────────────────────────────────────────┐ │  │
+│ │  GCP/SaaS  │ │   │  │  │ DATASETS                                    │ │  │
+│ └────────────┘ │   │  │  │ ├── xdr_data (endpoint telemetry)          │ │  │
+└────────────────┘   │  │  │ ├── panw_ngfw_* (Palo Alto firewalls)      │ │  │
+                     │  │  │ ├── cloud_audit_* (AWS/Azure/GCP)          │ │  │
+┌────────────────┐   │  │  │ ├── identity_* (Okta, Azure AD, etc.)      │ │  │
+│   NETWORK      │   │  │  │ ├── email_* (O365, Gmail security)         │ │  │
+│                │   │  │  │ └── custom_* (your custom logs)            │ │  │
+│ ┌────────────┐ │   │  │  └─────────────────────────────────────────────┘ │  │
+│ │ Firewalls  │─┼───┼──│                                                   │  │
+│ │ Proxies    │ │   │  │  Retention: 30 days hot / configurable archive  │  │
+│ └────────────┘ │   │  └───────────────────────┬──────────────────────────┘  │
+└────────────────┘   │                          │                             │
+                     │                          ▼                             │
+                     │  ┌──────────────────────────────────────────────────┐  │
+                     │  │           ANALYTICS ENGINE                        │  │
+                     │  │                                                   │  │
+                     │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │  │
+                     │  │  │    XDR      │ │ Correlation │ │     ML      │ │  │
+                     │  │  │  Analytics  │ │    Rules    │ │  Analytics  │ │  │
+                     │  │  │             │ │   (XQL)     │ │             │ │  │
+                     │  │  │ • BIOC      │ │             │ │ • Anomaly   │ │  │
+                     │  │  │ • IOCs      │ │ • Scheduled │ │ • Behavior  │ │  │
+                     │  │  │ • Behavior  │ │ • Real-time │ │ • Clustering│ │  │
+                     │  │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ │  │
+                     │  │         │               │               │        │  │
+                     │  │         └───────────────┼───────────────┘        │  │
+                     │  │                         ▼                        │  │
+                     │  │                    [ALERTS]                      │  │
+                     │  │                         │                        │  │
+                     │  │            ┌────────────┴────────────┐           │  │
+                     │  │            ▼                         ▼           │  │
+                     │  │    ┌──────────────┐         ┌──────────────┐    │  │
+                     │  │    │  INCIDENTS   │         │   HUNTING    │    │  │
+                     │  │    │  (Grouped)   │         │   (Manual)   │    │  │
+                     │  │    └──────┬───────┘         └──────────────┘    │  │
+                     │  └───────────┼──────────────────────────────────────┘  │
+                     │              ▼                                          │
+                     │  ┌──────────────────────────────────────────────────┐  │
+                     │  │            RESPONSE ENGINE (XSOAR)                │  │
+                     │  │                                                   │  │
+                     │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │  │
+                     │  │  │  Playbooks  │ │    Case     │ │   Threat    │ │  │
+                     │  │  │             │ │  Management │ │    Intel    │ │  │
+                     │  │  │ • Auto-run  │ │             │ │             │ │  │
+                     │  │  │ • 900+ int. │ │ • Timeline  │ │ • Unit 42   │ │  │
+                     │  │  │ • Custom    │ │ • Evidence  │ │ • Custom TI │ │  │
+                     │  │  └─────────────┘ └─────────────┘ └─────────────┘ │  │
+                     │  └──────────────────────────────────────────────────┘  │
+                     │                                                         │
+                     │  ┌──────────────────────────────────────────────────┐  │
+                     │  │                 USER INTERFACE                    │  │
+                     │  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐    │  │
+                     │  │  │ Invest.│ │ Query  │ │ Report │ │ Admin  │    │  │
+                     │  │  │ Center │ │ Center │ │ Center │ │ Config │    │  │
+                     │  │  └────────┘ └────────┘ └────────┘ └────────┘    │  │
+                     │  └──────────────────────────────────────────────────┘  │
+                     └─────────────────────────────────────────────────────────┘
+        </div>
+
+        <div class="memory-trick">
+            <h4><i class="fas fa-brain"></i> Memory Trick: "ICE-DAR" - The 6 Layers</h4>
+            <p><strong>I</strong>ngestion → <strong>C</strong>ollection → <strong>E</strong>ngine (Parsing) → <strong>D</strong>ata Lake → <strong>A</strong>nalytics → <strong>R</strong>esponse</p>
+            <p>Think of it as ICE (cold data coming in) being processed to create DAR (detection and response).</p>
+        </div>
+
+        <!-- DATA COLLECTION COMPONENTS -->
+        <h2><i class="fas fa-download"></i> Data Collection Components</h2>
+
+        <h3>1. Cortex XDR Agent</h3>
+        <div class="component-card">
+            <h4>What It Is</h4>
+            <p>Lightweight agent installed on endpoints (Windows, Linux, macOS, mobile) that provides EDR capabilities and sends telemetry to XSIAM.</p>
+            <p><strong>Key Functions:</strong></p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li>Process execution monitoring (like Sysmon)</li>
+                <li>File/Registry/Network activity tracking</li>
+                <li>Malware prevention (NGAV)</li>
+                <li>Behavioral threat protection</li>
+                <li>Device control & USB blocking</li>
+                <li>Host firewall</li>
+            </ul>
+        </div>
+
+        <div class="interview-box">
+            <h4><i class="fas fa-user-tie"></i> Interview Answer: "What's the difference between XDR agent in standalone XDR vs XSIAM?"</h4>
+            <p>"It's the same agent - the Cortex XDR agent doesn't change based on whether you're using standalone Cortex XDR or XSIAM. The difference is where the data goes and what happens to it. In standalone XDR, telemetry goes to the XDR cloud for endpoint-focused detection. In XSIAM, the same telemetry goes to the XSIAM data lake where it's correlated with all other log sources. This means if you have existing XDR deployments, migrating to XSIAM doesn't require re-deploying agents - just re-pointing them to XSIAM."</p>
+        </div>
+
+        <h3>2. Broker VM (Data Broker)</h3>
+        <div class="component-card">
+            <h4>What It Is</h4>
+            <p>On-premises virtual machine that collects logs from sources that can't send directly to cloud and forwards them to XSIAM.</p>
+            <p><strong>Use Cases:</strong></p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li>Syslog collection (UDP/TCP 514)</li>
+                <li>Windows Event forwarding (WEF)</li>
+                <li>CEF/LEEF log collection</li>
+                <li>Database audit logs</li>
+                <li>Legacy systems without internet access</li>
+            </ul>
+        </div>
+
+        <div class="diagram-box">
+BROKER VM ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           ON-PREMISES NETWORK                                │
+│                                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │  Firewalls   │  │   Switches   │  │   Servers    │  │   Windows    │    │
+│  │  (Syslog)    │  │   (Syslog)   │  │   (Syslog)   │  │   Event Fwd  │    │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘    │
+│         │                 │                 │                 │             │
+│         │    UDP/TCP      │      TCP        │      TCP        │    WEF     │
+│         │     514         │      514        │      514        │   5985     │
+│         │                 │                 │                 │             │
+│         └────────────────────────┬──────────────────────────────┘           │
+│                                  │                                           │
+│                                  ▼                                           │
+│                    ┌─────────────────────────────┐                          │
+│                    │         BROKER VM           │                          │
+│                    │                             │                          │
+│                    │  ┌─────────────────────┐   │                          │
+│                    │  │  Syslog Collector   │   │                          │
+│                    │  │  (rsyslog/syslog-ng)│   │                          │
+│                    │  └──────────┬──────────┘   │                          │
+│                    │             │              │                          │
+│                    │  ┌──────────▼──────────┐   │                          │
+│                    │  │  Data Forwarder     │   │                          │
+│                    │  │  (XSIAM Agent)      │   │                          │
+│                    │  └──────────┬──────────┘   │                          │
+│                    │             │              │                          │
+│                    │  ┌──────────▼──────────┐   │                          │
+│                    │  │  Compression &      │   │                          │
+│                    │  │  Encryption (TLS)   │   │                          │
+│                    │  └──────────┬──────────┘   │                          │
+│                    └─────────────┼──────────────┘                          │
+│                                  │                                           │
+└──────────────────────────────────┼───────────────────────────────────────────┘
+                                   │
+                                   │  HTTPS (443)
+                                   │  Outbound Only
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │       XSIAM CLOUD           │
+                    │    (Ingestion Endpoint)     │
+                    └─────────────────────────────┘
+
+
+BROKER VM SIZING GUIDELINES:
+─────────────────────────────────────────────────────────────────────────────
+
+┌────────────────────┬────────────────┬─────────────────┬────────────────────┐
+│ Events Per Second  │ vCPUs          │ Memory          │ Disk               │
+├────────────────────┼────────────────┼─────────────────┼────────────────────┤
+│ Up to 10,000 EPS   │ 4 vCPU         │ 16 GB           │ 500 GB SSD         │
+│ 10,000-25,000 EPS  │ 8 vCPU         │ 32 GB           │ 1 TB SSD           │
+│ 25,000-50,000 EPS  │ 16 vCPU        │ 64 GB           │ 2 TB SSD           │
+│ 50,000+ EPS        │ Multiple Brokers (load balanced)                     │
+└────────────────────┴────────────────┴─────────────────┴────────────────────┘
+
+NETWORK REQUIREMENTS:
+─────────────────────────────────────────────────────────────────────────────
+• Outbound HTTPS (443) to *.paloaltonetworks.com
+• Inbound from log sources (514 UDP/TCP, 5985 for WEF, etc.)
+• 1 Gbps+ network interface recommended for high volume
+• Dedicated network segment recommended
+        </div>
+
+        <div class="tip-box">
+            <strong><i class="fas fa-lightbulb"></i> Broker VM vs Heavy Forwarder (Splunk) vs Log Forwarder (Sentinel)</strong>
+            <ul>
+                <li><strong>XSIAM Broker VM:</strong> VM image provided by Palo Alto, pre-configured for XSIAM</li>
+                <li><strong>Splunk Heavy Forwarder:</strong> Full Splunk installation with parsing capability</li>
+                <li><strong>Sentinel Log Forwarder:</strong> Linux VM with AMA agent for CEF/Syslog</li>
+            </ul>
+            <p><strong>Key Difference:</strong> XSIAM Broker VM does minimal parsing on-prem - most parsing happens in the cloud. This is opposite to Splunk's "parse at the forwarder" philosophy.</p>
+        </div>
+
+        <h3>3. Cloud Collectors (API-Based)</h3>
+        <div class="component-card">
+            <h4>What It Is</h4>
+            <p>Built-in integrations that pull logs from cloud services via API.</p>
+            <p><strong>Supported Sources:</strong></p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li><strong>Cloud Platforms:</strong> AWS CloudTrail, Azure Activity, GCP Audit</li>
+                <li><strong>SaaS Apps:</strong> Microsoft 365, Google Workspace, Salesforce, Okta</li>
+                <li><strong>Security Tools:</strong> CrowdStrike, Carbon Black, Zscaler, Proofpoint</li>
+                <li><strong>Network:</strong> Prisma Access, Prisma Cloud, GlobalProtect</li>
+            </ul>
+        </div>
+
+        <!-- DATA PROCESSING -->
+        <h2><i class="fas fa-cogs"></i> Data Processing Pipeline</h2>
+
+        <div class="diagram-box">
+XSIAM PARSING & NORMALIZATION PIPELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+RAW LOG ARRIVES:
+─────────────────────────────────────────────────────────────────────────────
+
+  &lt;14&gt;Jan 15 10:30:45 fw01.company.com CEF:0|PaloAltoNetworks|PAN-OS|10.1.0|
+  TRAFFIC|end|3|src=192.168.1.100 dst=8.8.8.8 spt=54321 dpt=443 proto=TCP
+  act=allow app=ssl deviceInboundInterface=ethernet1/1 ...
+
+
+STEP 1: SOURCE IDENTIFICATION
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ XSIAM examines:                                                         │
+  │ • Incoming port (514 = syslog)                                         │
+  │ • Log format patterns (CEF header detected)                            │
+  │ • Vendor identifier ("PaloAltoNetworks")                               │
+  │ • Product identifier ("PAN-OS")                                        │
+  │                                                                         │
+  │ Result: Identified as "panw_ngfw" log type                             │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 2: PARSING (Field Extraction)
+─────────────────────────────────────────────────────────────────────────────
+
+  Built-in Parser for "panw_ngfw" applies:
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ EXTRACTED FIELDS:                                                       │
+  │                                                                         │
+  │ vendor          = "PaloAltoNetworks"                                   │
+  │ product         = "PAN-OS"                                             │
+  │ version         = "10.1.0"                                             │
+  │ event_type      = "TRAFFIC"                                            │
+  │ action          = "end"                                                │
+  │ src_ip          = "192.168.1.100"                                      │
+  │ dst_ip          = "8.8.8.8"                                            │
+  │ src_port        = 54321                                                │
+  │ dst_port        = 443                                                  │
+  │ protocol        = "TCP"                                                │
+  │ action_status   = "allow"                                              │
+  │ app             = "ssl"                                                │
+  │ interface       = "ethernet1/1"                                        │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 3: NORMALIZATION (XDM Mapping)
+─────────────────────────────────────────────────────────────────────────────
+
+  XDM (XSIAM Data Model) Mapping:
+  
+  ┌───────────────────────────────────────────────────────────────────────────┐
+  │ VENDOR-SPECIFIC FIELD     →    XDM NORMALIZED FIELD                       │
+  ├───────────────────────────────────────────────────────────────────────────┤
+  │ src_ip                    →    xdm.source.ipv4                            │
+  │ dst_ip                    →    xdm.target.ipv4                            │
+  │ src_port                  →    xdm.source.port                            │
+  │ dst_port                  →    xdm.target.port                            │
+  │ protocol                  →    xdm.network.protocol                       │
+  │ action_status             →    xdm.outcome.action                         │
+  │ app                       →    xdm.network.application                    │
+  │ _time (parsed)            →    xdm.event.timestamp                        │
+  │ "PAN-OS"                  →    xdm.source.product                         │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  
+  WHY XDM MATTERS:
+  ─────────────────────────────────────────────────────────────────────────────
+  With XDM normalization, you can write ONE query that works across
+  ALL firewall vendors:
+  
+  ✅ dataset = panw_ngfw_traffic | filter xdm.target.port = 22
+  ✅ dataset = cisco_asa_traffic | filter xdm.target.port = 22
+  ✅ dataset = fortinet_traffic  | filter xdm.target.port = 22
+  
+  All use the same xdm.target.port field!
+
+
+STEP 4: ENRICHMENT
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ AUTO-ENRICHMENT APPLIED:                                                │
+  │                                                                         │
+  │ • Geo-location:     dst_ip → country="US", city="Mountain View"        │
+  │ • Threat Intel:     dst_ip → reputation="benign", category="dns"       │
+  │ • Asset Context:    src_ip → asset_name="DESKTOP-ABC", user="jsmith"   │
+  │ • Risk Score:       Combined factors → risk_score=15 (low)             │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 5: STORAGE (Data Lake)
+─────────────────────────────────────────────────────────────────────────────
+
+  Final enriched, normalized event stored in dataset: panw_ngfw_traffic
+  
+  Ready for:
+  • XQL queries
+  • Correlation rules
+  • ML analytics
+  • Dashboards/Reports
+        </div>
+
+        <div class="memory-trick">
+            <h4><i class="fas fa-brain"></i> Memory Trick: "SPINE" - The 5 Processing Steps</h4>
+            <p><strong>S</strong>ource ID → <strong>P</strong>arsing → <strong>I</strong>(X)DM Normalization → <strong>N</strong>ormalized Enrichment → (Storag)<strong>E</strong></p>
+        </div>
+
+        <!-- XDM EXPLAINED -->
+        <h2><i class="fas fa-project-diagram"></i> XDM (XSIAM Data Model) Explained</h2>
+
+        <p>XDM is XSIAM's schema normalization layer - similar to Sentinel's ASIM or Splunk's CIM, but with some key differences:</p>
+
+        <table>
+            <thead>
+                <tr><th>Feature</th><th>XSIAM XDM</th><th>Sentinel ASIM</th><th>Splunk CIM</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Normalization Timing</strong></td>
+                    <td>At ingestion (automatic)</td>
+                    <td>At query time (with parsers)</td>
+                    <td>At search time (with data models)</td>
+                </tr>
+                <tr>
+                    <td><strong>Schema Enforcement</strong></td>
+                    <td>Automatic with 800+ parsers</td>
+                    <td>Manual parser configuration</td>
+                    <td>TA-based field extraction</td>
+                </tr>
+                <tr>
+                    <td><strong>Custom Schema</strong></td>
+                    <td>Custom parser DSL</td>
+                    <td>Custom KQL functions</td>
+                    <td>props.conf / transforms.conf</td>
+                </tr>
+                <tr>
+                    <td><strong>Storage Impact</strong></td>
+                    <td>XDM fields stored alongside raw</td>
+                    <td>No storage impact (query-time)</td>
+                    <td>Depends on indexing config</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>XDM Common Field Categories</h3>
+        
+        <div class="diagram-box">
+XDM FIELD CATEGORIES
+═══════════════════════════════════════════════════════════════════════════════
+
+xdm.event.*           - Event metadata
+├── xdm.event.type              (login, process, network, file, etc.)
+├── xdm.event.timestamp         (when it happened)
+├── xdm.event.id                (unique event ID)
+└── xdm.event.description       (human-readable description)
+
+xdm.source.*          - Source of the activity
+├── xdm.source.ipv4             (source IP address)
+├── xdm.source.ipv6             (source IPv6)
+├── xdm.source.host.hostname    (source hostname)
+├── xdm.source.user.username    (user who initiated)
+├── xdm.source.port             (source port)
+└── xdm.source.process.*        (source process details)
+
+xdm.target.*          - Target of the activity
+├── xdm.target.ipv4             (destination IP)
+├── xdm.target.host.hostname    (target hostname)
+├── xdm.target.user.username    (target user)
+├── xdm.target.port             (destination port)
+├── xdm.target.file.*           (file details if file operation)
+└── xdm.target.process.*        (target process)
+
+xdm.network.*         - Network-specific fields
+├── xdm.network.protocol        (TCP, UDP, ICMP)
+├── xdm.network.application     (HTTP, DNS, SSH)
+├── xdm.network.bytes_in        (bytes received)
+├── xdm.network.bytes_out       (bytes sent)
+└── xdm.network.http.*          (HTTP-specific: method, url, status)
+
+xdm.auth.*            - Authentication fields
+├── xdm.auth.auth_method        (password, MFA, certificate)
+├── xdm.auth.outcome            (success, failure, locked)
+└── xdm.auth.service            (LDAP, Kerberos, SAML)
+
+xdm.outcome.*         - Result of the action
+├── xdm.outcome.action          (allowed, blocked, dropped)
+├── xdm.outcome.reason          (why it was blocked)
+└── xdm.outcome.result          (success, failure, error)
+
+xdm.alert.*           - Alert-specific fields (for security alerts)
+├── xdm.alert.severity          (informational, low, medium, high, critical)
+├── xdm.alert.name              (alert name)
+├── xdm.alert.description       (alert description)
+└── xdm.alert.category          (malware, phishing, etc.)
+        </div>
+
+        <div class="interview-box">
+            <h4><i class="fas fa-user-tie"></i> Interview Answer: "Why does XSIAM normalize at ingestion while Sentinel normalizes at query time?"</h4>
+            <p>"It's a trade-off between storage cost and query performance. XSIAM normalizes at ingestion, which means:</p>
+            <ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+                <li>Slightly higher storage (storing both raw and normalized fields)</li>
+                <li>Faster queries (no runtime transformation)</li>
+                <li>Consistent data immediately available for all correlation rules</li>
+            </ul>
+            <p>Sentinel's ASIM normalizes at query time, which means:</p>
+            <ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+                <li>Lower storage cost (only raw data stored)</li>
+                <li>Slower queries when using normalizing parsers</li>
+                <li>More flexibility to change normalization without re-ingesting</li>
+            </ul>
+            <p>XSIAM's approach aligns with their AI-driven philosophy - pre-normalized data enables faster ML processing."</p>
+        </div>
+
+        <!-- ANALYTICS ENGINE -->
+        <h2><i class="fas fa-brain"></i> Analytics Engine</h2>
+
+        <h3>Detection Types in XSIAM</h3>
+
+        <div class="component-card">
+            <h4>1. BIOC (Behavioral IOC) Rules</h4>
+            <p><strong>What:</strong> Pre-built detection rules for known attack patterns, specifically for endpoint telemetry.</p>
+            <p><strong>How:</strong> Runs on XDR data in real-time, uses XQL-like syntax internally.</p>
+            <p><strong>Example:</strong> "PowerShell encoded command with network connection to rare destination"</p>
+            <p><strong>Comparison:</strong> Similar to Sigma rules or Sentinel's built-in analytics rules</p>
+        </div>
+
+        <div class="component-card">
+            <h4>2. Correlation Rules (Custom XQL)</h4>
+            <p><strong>What:</strong> Custom detection rules written in XQL that run on scheduled intervals.</p>
+            <p><strong>How:</strong> You write XQL query, define trigger conditions, set severity and response actions.</p>
+            <p><strong>Example:</strong> "Alert when user authenticates from new country AND accesses sensitive data within 1 hour"</p>
+            <p><strong>Comparison:</strong> Directly comparable to Sentinel Analytics Rules or Splunk Correlation Searches</p>
+        </div>
+
+        <div class="component-card">
+            <h4>3. ML Analytics (Anomaly Detection)</h4>
+            <p><strong>What:</strong> Machine learning models that establish baselines and detect deviations.</p>
+            <p><strong>How:</strong> Runs continuously on data lake, no configuration needed for built-in models.</p>
+            <p><strong>Example:</strong> "Unusual login time for this user" or "Abnormal data download volume"</p>
+            <p><strong>Comparison:</strong> Similar to Sentinel's UEBA or Splunk's ML Toolkit</p>
+        </div>
+
+        <div class="diagram-box">
+DETECTION FLOW IN XSIAM
+═══════════════════════════════════════════════════════════════════════════════
+
+                    ┌────────────────────────────────────────┐
+                    │             DATA LAKE                   │
+                    │  (All normalized, enriched events)      │
+                    └───────────────────┬────────────────────┘
+                                        │
+              ┌─────────────────────────┼─────────────────────────┐
+              │                         │                         │
+              ▼                         ▼                         ▼
+     ┌────────────────┐       ┌────────────────┐       ┌────────────────┐
+     │   BIOC RULES   │       │  CORRELATION   │       │  ML ANALYTICS  │
+     │                │       │     RULES      │       │                │
+     │ • Real-time    │       │                │       │ • Continuous   │
+     │ • Endpoint     │       │ • Scheduled    │       │ • All data     │
+     │   focused      │       │ • XQL-based    │       │ • Anomaly      │
+     │ • Pre-built    │       │ • Cross-source │       │   detection    │
+     └───────┬────────┘       └───────┬────────┘       └───────┬────────┘
+             │                         │                         │
+             │     [ALERT]             │     [ALERT]             │     [ALERT]
+             │                         │                         │
+             └─────────────────────────┼─────────────────────────┘
+                                       │
+                                       ▼
+                         ┌──────────────────────────────┐
+                         │     ALERT CORRELATION        │
+                         │     & INCIDENT CREATION      │
+                         │                              │
+                         │ • Group related alerts       │
+                         │ • Deduplicate                │
+                         │ • Assign severity            │
+                         │ • Create incident            │
+                         └──────────────┬───────────────┘
+                                        │
+                                        ▼
+                         ┌──────────────────────────────┐
+                         │         INCIDENT             │
+                         │                              │
+                         │ • Investigation timeline     │
+                         │ • Entity mapping             │
+                         │ • Evidence collection        │
+                         │ • Playbook trigger           │
+                         └──────────────────────────────┘
+        </div>
+
+        <!-- XSOAR INTEGRATION -->
+        <h2><i class="fas fa-robot"></i> XSOAR Integration (Automation Engine)</h2>
+
+        <p>XSIAM includes the full XSOAR platform, providing:</p>
+
+        <div class="component-card">
+            <h4>Playbooks</h4>
+            <p>Visual workflow automation that can be triggered manually or automatically from incidents.</p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li><strong>Auto-Remediation:</strong> Block IP, disable user, isolate host</li>
+                <li><strong>Enrichment:</strong> Query VirusTotal, WHOIS, threat intel</li>
+                <li><strong>Notification:</strong> Send Slack/Teams/email alerts</li>
+                <li><strong>Ticketing:</strong> Create Jira/ServiceNow tickets</li>
+            </ul>
+        </div>
+
+        <div class="component-card">
+            <h4>Integrations (900+)</h4>
+            <p>Pre-built connectors to third-party tools - no coding required.</p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li><strong>Security Tools:</strong> CrowdStrike, Carbon Black, Recorded Future</li>
+                <li><strong>IT Service:</strong> ServiceNow, Jira, PagerDuty</li>
+                <li><strong>Communication:</strong> Slack, Microsoft Teams, Email</li>
+                <li><strong>Cloud:</strong> AWS, Azure, GCP native APIs</li>
+            </ul>
+        </div>
+
+        <div class="component-card">
+            <h4>Case Management</h4>
+            <p>Full case management system for tracking investigations.</p>
+            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                <li>Timeline view of all incident activities</li>
+                <li>Evidence collection and tagging</li>
+                <li>Analyst assignment and collaboration</li>
+                <li>SLA tracking and metrics</li>
+            </ul>
+        </div>
+
+        <!-- DEPLOYMENT CONSIDERATIONS -->
+        <h2><i class="fas fa-server"></i> Deployment Considerations</h2>
+
+        <table>
+            <thead>
+                <tr><th>Consideration</th><th>XSIAM</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Deployment Model</strong></td>
+                    <td>Cloud-only (SaaS)</td>
+                    <td>No on-prem option - Broker VM is just for collection</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Residency</strong></td>
+                    <td>Regional data centers</td>
+                    <td>US, EU, APAC options - check compliance requirements</td>
+                </tr>
+                <tr>
+                    <td><strong>Agent Deployment</strong></td>
+                    <td>Cortex XDR agent</td>
+                    <td>Same agent for XDR and XSIAM</td>
+                </tr>
+                <tr>
+                    <td><strong>On-Prem Collection</strong></td>
+                    <td>Broker VM required</td>
+                    <td>For syslog, WEF, and non-cloud sources</td>
+                </tr>
+                <tr>
+                    <td><strong>Network Requirements</strong></td>
+                    <td>HTTPS 443 outbound</td>
+                    <td>All traffic is outbound - no inbound from cloud</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Retention</strong></td>
+                    <td>30 days hot, configurable archive</td>
+                    <td>Additional retention costs extra</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning-box">
+            <strong>⚠️ Key Differences from On-Prem Solutions</strong>
+            <ul>
+                <li>No ability to deploy in air-gapped environments (unlike Splunk Enterprise)</li>
+                <li>Data leaves your network - important for regulated industries</li>
+                <li>Dependent on Palo Alto cloud availability</li>
+                <li>Less control over infrastructure scaling</li>
+            </ul>
+        </div>
+
+        <div class="tip-box">
+            <strong><i class="fas fa-lightbulb"></i> When XSIAM Architecture Makes Sense</strong>
+            <ul>
+                <li><strong>Cloud-first organizations</strong> - Already using SaaS, comfortable with cloud security</li>
+                <li><strong>Palo Alto ecosystem</strong> - Have PA firewalls, Prisma, GlobalProtect</li>
+                <li><strong>SOC modernization</strong> - Want to consolidate tools into single platform</li>
+                <li><strong>Automation focus</strong> - Need SOAR capabilities built-in</li>
+            </ul>
+        </div>
+
+        <!-- LINKS -->
+        <h2><i class="fas fa-link"></i> Related Topics</h2>
+        <ul>
+            <li><a href="data-ingestion.html" style="color: var(--accent-primary);">Data Ingestion Deep Dive</a> - Brokers, collectors, parsing configuration</li>
+            <li><a href="xql-fundamentals.html" style="color: var(--accent-primary);">XQL Fundamentals</a> - Learn the query language</li>
+            <li><a href="comparison.html" style="color: var(--accent-primary);">Platform Comparison</a> - XSIAM vs Sentinel vs Splunk architecture</li>
+        </ul>
+
+            </main>
+            
+            <footer class="main-footer">
+                <p>Nik's SIEM - Security Operations Knowledge Base</p>
+                <p>Created for interview preparation and operational reference</p>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

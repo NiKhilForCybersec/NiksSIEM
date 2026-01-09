@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Retention Tiers - Complete Guide Across All SIEMs | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .tier-card { border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .tier-analytics { background: linear-gradient(135deg, rgba(0,120,212,0.2), rgba(0,120,212,0.1)); border-left: 4px solid #0078d4; }
+        .tier-basic { background: linear-gradient(135deg, rgba(245,166,35,0.2), rgba(245,166,35,0.1)); border-left: 4px solid #f5a623; }
+        .tier-auxiliary { background: linear-gradient(135deg, rgba(38,162,105,0.2), rgba(38,162,105,0.1)); border-left: 4px solid #26a269; }
+        .tier-archive { background: linear-gradient(135deg, rgba(128,128,128,0.2), rgba(128,128,128,0.1)); border-left: 4px solid #888; }
+        .raw-log { background: #1a1a2e; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; color: #00ff88; }
+        .parsed-output { background: #0d1b2a; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; }
+        .field-highlight { color: #00d4ff; }
+        .value-highlight { color: #ffd700; }
+        .decision-box { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        .cost-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .cost-card { text-align: center; padding: 1.5rem; background: var(--card-bg); border-radius: 8px; }
+        .cost-value { font-size: 2rem; font-weight: 700; }
+        .platform-section { border-top: 3px solid; padding-top: 2rem; margin-top: 3rem; }
+        .platform-sentinel { border-color: #0078d4; }
+        .platform-splunk { border-color: #65a637; }
+        .platform-xsiam { border-color: #ff6b00; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link active"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC Ops</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Retention Tiers</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-archive"></i> Data Retention Tiers - Complete Guide</h1>
+                    <p class="lead">Understanding storage tiers, cost optimization, and when to use each tier across XSIAM, Sentinel, and Splunk with real raw log examples</p>
+                </div>
+
+                <!-- Overview Comparison -->
+                <section class="content-section">
+                    <h2><i class="fas fa-table"></i> Retention Tiers Comparison - All Platforms</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Tier</th>
+                                <th>Sentinel</th>
+                                <th>Splunk</th>
+                                <th>XSIAM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Hot / Analytics</strong></td>
+                                <td>Analytics Logs (default)</td>
+                                <td>Hot Buckets (searchable)</td>
+                                <td>Online Storage</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Warm / Basic</strong></td>
+                                <td>Basic Logs (limited query)</td>
+                                <td>Warm Buckets</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cold / Auxiliary</strong></td>
+                                <td>Auxiliary Logs (GA Apr 2025)</td>
+                                <td>Cold Buckets</td>
+                                <td>Archive Storage</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Archive / Frozen</strong></td>
+                                <td>Archive tier (long-term)</td>
+                                <td>Frozen (S3/Blob)</td>
+                                <td>Data Lake Export</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Query Speed</strong></td>
+                                <td>Analytics: Fast<br>Basic: Slower<br>Auxiliary: Slowest</td>
+                                <td>Hot: Instant<br>Warm: Fast<br>Cold: Minutes<br>Frozen: Hours</td>
+                                <td>Online: Fast<br>Archive: Slower</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cost Ratio</strong></td>
+                                <td>Analytics: 1x<br>Basic: 0.5x<br>Auxiliary: 0.1x</td>
+                                <td>Based on license model</td>
+                                <td>Based on data units</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- ==================== MICROSOFT SENTINEL ==================== -->
+                <section class="content-section platform-section platform-sentinel">
+                    <h2><i class="fas fa-shield-alt" style="color: #0078d4;"></i> Microsoft Sentinel Retention Tiers</h2>
+
+                    <!-- Analytics Logs -->
+                    <div class="tier-card tier-analytics">
+                        <h3>📊 Analytics Logs (Default Tier)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <p><strong>What it is:</strong> Full-featured storage with complete query capabilities and analytics rule support.</p>
+                                <p><strong>Cost:</strong> ~$2.76/GB ingestion (Pay-As-You-Go, US East)</p>
+                                <p><strong>Retention:</strong> 90 days interactive (free), up to 2 years with cost</p>
+                                <p><strong>Query:</strong> Full KQL, joins, analytics rules, workbooks</p>
+                            </div>
+                            <div>
+                                <p><strong>Best for:</strong></p>
+                                <ul>
+                                    <li>Security events needing real-time correlation</li>
+                                    <li>Data sources used in analytics rules</li>
+                                    <li>High-value logs requiring fast investigation</li>
+                                    <li>Authentication logs (SigninLogs, SecurityEvent)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Logs -->
+                    <div class="tier-card tier-basic">
+                        <h3>📦 Basic Logs (Cost-Optimized)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <p><strong>What it is:</strong> Lower-cost storage with limited query capabilities.</p>
+                                <p><strong>Cost:</strong> ~$0.60/GB ingestion + $0.007/GB query</p>
+                                <p><strong>Retention:</strong> 30 days (fixed), then archive</p>
+                                <p><strong>Query Limits:</strong></p>
+                                <ul>
+                                    <li>8 days lookback per query</li>
+                                    <li>Simple queries only (limited joins)</li>
+                                    <li>No analytics rules</li>
+                                    <li>No workbook visualizations</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p><strong>Best for:</strong></p>
+                                <ul>
+                                    <li>Verbose debug/trace logs</li>
+                                    <li>NetFlow/traffic metadata</li>
+                                    <li>Compliance data rarely queried</li>
+                                    <li>Low-value high-volume logs</li>
+                                </ul>
+                                <p><strong>Configure via:</strong></p>
+                                <code>Log Analytics Workspace → Tables → Select table → Manage table → Change plan to Basic</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auxiliary Logs -->
+                    <div class="tier-card tier-auxiliary">
+                        <h3>🗄️ Auxiliary Logs (Ultra Low Cost - GA April 2025)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <p><strong>What it is:</strong> Cheapest storage tier for massive volumes with minimal query needs.</p>
+                                <p><strong>Cost:</strong> ~$0.15/GB ingestion (US East)</p>
+                                <p><strong>Retention:</strong> Up to 12 years</p>
+                                <p><strong>Query:</strong> Very limited - batch search jobs only</p>
+                            </div>
+                            <div>
+                                <p><strong>Best for:</strong></p>
+                                <ul>
+                                    <li>Compliance/regulatory archives</li>
+                                    <li>Massive log volumes (CDN, load balancer)</li>
+                                    <li>Forensic investigation archives</li>
+                                    <li>Data you must keep but rarely search</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Archive -->
+                    <div class="tier-card tier-archive">
+                        <h3>❄️ Archive Tier (Long-Term Retention)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <p><strong>What it is:</strong> Data moved from interactive retention to archive storage.</p>
+                                <p><strong>Cost:</strong> ~$0.023/GB/month storage</p>
+                                <p><strong>Retention:</strong> Up to 12 years</p>
+                                <p><strong>Query:</strong> Search jobs only (async, minutes to complete)</p>
+                            </div>
+                            <div>
+                                <p><strong>How it works:</strong></p>
+                                <ul>
+                                    <li>After interactive retention expires, data moves to archive</li>
+                                    <li>Configure: Table → Manage → Total retention period</li>
+                                    <li>Query via Search Jobs in Logs blade</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decision Framework -->
+                    <h3>🎯 Decision Framework: Which Sentinel Tier?</h3>
+                    <div class="decision-box">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Log Type</th>
+                                    <th>Volume</th>
+                                    <th>Query Need</th>
+                                    <th>Recommended Tier</th>
+                                    <th>Rationale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SecurityEvent</td>
+                                    <td>High</td>
+                                    <td>Real-time correlation</td>
+                                    <td><strong>Analytics</strong></td>
+                                    <td>Needed for analytics rules, incident investigation</td>
+                                </tr>
+                                <tr>
+                                    <td>SigninLogs</td>
+                                    <td>Medium</td>
+                                    <td>Real-time + historical</td>
+                                    <td><strong>Analytics</strong></td>
+                                    <td>Critical for identity threat detection</td>
+                                </tr>
+                                <tr>
+                                    <td>AADNonInteractiveSignInLogs</td>
+                                    <td>Very High</td>
+                                    <td>Occasional investigation</td>
+                                    <td><strong>Basic</strong></td>
+                                    <td>Verbose, rarely triggers alerts directly</td>
+                                </tr>
+                                <tr>
+                                    <td>AzureNetworkAnalytics_CL</td>
+                                    <td>Very High</td>
+                                    <td>Forensic only</td>
+                                    <td><strong>Basic or Auxiliary</strong></td>
+                                    <td>Network flow data, huge volume</td>
+                                </tr>
+                                <tr>
+                                    <td>ContainerLog</td>
+                                    <td>Extreme</td>
+                                    <td>Debug only</td>
+                                    <td><strong>Basic</strong></td>
+                                    <td>Developer logs, not security critical</td>
+                                </tr>
+                                <tr>
+                                    <td>StorageBlobLogs</td>
+                                    <td>Extreme</td>
+                                    <td>Compliance archive</td>
+                                    <td><strong>Auxiliary</strong></td>
+                                    <td>Regulatory requirement, never queried</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Raw Log Example with Parsing -->
+                    <h3>📝 Real Log Example: Windows Security Event</h3>
+                    
+                    <h4>Step 1: Raw Event on Windows Server</h4>
+                    <div class="raw-log">&lt;Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"&gt;
+  &lt;System&gt;
+    &lt;Provider Name="Microsoft-Windows-Security-Auditing" Guid="{54849625-5478-4994-a5ba-3e3b0328c30d}"/&gt;
+    &lt;EventID&gt;4625&lt;/EventID&gt;
+    &lt;Version&gt;0&lt;/Version&gt;
+    &lt;Level&gt;0&lt;/Level&gt;
+    &lt;Task&gt;12544&lt;/Task&gt;
+    &lt;Opcode&gt;0&lt;/Opcode&gt;
+    &lt;Keywords&gt;0x8010000000000000&lt;/Keywords&gt;
+    &lt;TimeCreated SystemTime="2025-01-09T14:32:15.123456789Z"/&gt;
+    &lt;EventRecordID&gt;987654321&lt;/EventRecordID&gt;
+    &lt;Correlation/&gt;
+    &lt;Execution ProcessID="672" ThreadID="756"/&gt;
+    &lt;Channel&gt;Security&lt;/Channel&gt;
+    &lt;Computer&gt;DC01.contoso.com&lt;/Computer&gt;
+    &lt;Security/&gt;
+  &lt;/System&gt;
+  &lt;EventData&gt;
+    &lt;Data Name="SubjectUserSid"&gt;S-1-0-0&lt;/Data&gt;
+    &lt;Data Name="SubjectUserName"&gt;-&lt;/Data&gt;
+    &lt;Data Name="SubjectDomainName"&gt;-&lt;/Data&gt;
+    &lt;Data Name="SubjectLogonId"&gt;0x0&lt;/Data&gt;
+    &lt;Data Name="TargetUserSid"&gt;S-1-0-0&lt;/Data&gt;
+    &lt;Data Name="TargetUserName"&gt;administrator&lt;/Data&gt;
+    &lt;Data Name="TargetDomainName"&gt;CONTOSO&lt;/Data&gt;
+    &lt;Data Name="Status"&gt;0xc000006d&lt;/Data&gt;
+    &lt;Data Name="FailureReason"&gt;%%2313&lt;/Data&gt;
+    &lt;Data Name="SubStatus"&gt;0xc0000064&lt;/Data&gt;
+    &lt;Data Name="LogonType"&gt;3&lt;/Data&gt;
+    &lt;Data Name="LogonProcessName"&gt;NtLmSsp&lt;/Data&gt;
+    &lt;Data Name="AuthenticationPackageName"&gt;NTLM&lt;/Data&gt;
+    &lt;Data Name="WorkstationName"&gt;ATTACKER-PC&lt;/Data&gt;
+    &lt;Data Name="TransmittedServices"&gt;-&lt;/Data&gt;
+    &lt;Data Name="LmPackageName"&gt;-&lt;/Data&gt;
+    &lt;Data Name="KeyLength"&gt;0&lt;/Data&gt;
+    &lt;Data Name="ProcessId"&gt;0x0&lt;/Data&gt;
+    &lt;Data Name="ProcessName"&gt;-&lt;/Data&gt;
+    &lt;Data Name="IpAddress"&gt;192.168.1.100&lt;/Data&gt;
+    &lt;Data Name="IpPort"&gt;49521&lt;/Data&gt;
+  &lt;/EventData&gt;
+&lt;/Event&gt;</div>
+
+                    <h4>Step 2: AMA Collection via DCR</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">DCR XPath</span>
+                            <span class="code-title">Collection Rule</span>
+                        </div>
+                        <pre><code>// XPath query in DCR that matches this event:
+Security!*[System[(EventID=4625)]]
+
+// The AMA reads this event because:
+// - Log: Security
+// - EventID: 4625 matches our XPath</code></pre>
+                    </div>
+
+                    <h4>Step 3: DCR Transformation (Optional)</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">transformKql in DCR</span>
+                        </div>
+                        <pre><code>// Filter out machine account failures (often noisy)
+source
+| where TargetUserName !endswith "$"
+| where IpAddress != "127.0.0.1"</code></pre>
+                    </div>
+
+                    <h4>Step 4: Parsed Output in SecurityEvent Table</h4>
+                    <div class="parsed-output">
+                        <table style="width: 100%; font-size: 0.85rem;">
+                            <tr><td class="field-highlight">TimeGenerated</td><td class="value-highlight">2025-01-09T14:32:15.123Z</td></tr>
+                            <tr><td class="field-highlight">Computer</td><td class="value-highlight">DC01.contoso.com</td></tr>
+                            <tr><td class="field-highlight">EventID</td><td class="value-highlight">4625</td></tr>
+                            <tr><td class="field-highlight">Account</td><td class="value-highlight">CONTOSO\administrator</td></tr>
+                            <tr><td class="field-highlight">TargetUserName</td><td class="value-highlight">administrator</td></tr>
+                            <tr><td class="field-highlight">TargetDomainName</td><td class="value-highlight">CONTOSO</td></tr>
+                            <tr><td class="field-highlight">LogonType</td><td class="value-highlight">3</td></tr>
+                            <tr><td class="field-highlight">LogonTypeName</td><td class="value-highlight">Network</td></tr>
+                            <tr><td class="field-highlight">IpAddress</td><td class="value-highlight">192.168.1.100</td></tr>
+                            <tr><td class="field-highlight">WorkstationName</td><td class="value-highlight">ATTACKER-PC</td></tr>
+                            <tr><td class="field-highlight">Status</td><td class="value-highlight">0xc000006d</td></tr>
+                            <tr><td class="field-highlight">FailureReason</td><td class="value-highlight">Unknown user name or bad password</td></tr>
+                            <tr><td class="field-highlight">AuthenticationPackageName</td><td class="value-highlight">NTLM</td></tr>
+                        </table>
+                    </div>
+
+                    <h4>Step 5: Query in Sentinel</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Analytics Rule Query</span>
+                        </div>
+                        <pre><code>// Detect brute force attack
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4625
+| where LogonType == 3
+| summarize 
+    FailedAttempts = count(),
+    TargetAccounts = make_set(TargetUserName),
+    SourceIPs = make_set(IpAddress)
+by Computer, bin(TimeGenerated, 5m)
+| where FailedAttempts > 10</code></pre>
+                    </div>
+                </section>
+
+                <!-- ==================== SPLUNK ==================== -->
+                <section class="content-section platform-section platform-splunk">
+                    <h2><i class="fas fa-search" style="color: #65a637;"></i> Splunk Data Tiers & Buckets</h2>
+
+                    <p>Splunk uses a bucket lifecycle model where data moves through tiers based on age and access patterns.</p>
+
+                    <!-- Splunk Bucket Lifecycle -->
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         SPLUNK BUCKET LIFECYCLE                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  INGEST          HOT              WARM             COLD            FROZEN        │
+│                                                                                  │
+│  ┌─────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐   │
+│  │ Raw │─────▶│   HOT   │─────▶│  WARM   │─────▶│  COLD   │─────▶│ FROZEN  │   │
+│  │ Log │      │ Bucket  │      │ Bucket  │      │ Bucket  │      │ (S3/GCS)│   │
+│  └─────┘      └─────────┘      └─────────┘      └─────────┘      └─────────┘   │
+│                   │                │                │                │          │
+│               Actively         Read-only       Searchable       Not indexed    │
+│               written          Fast search      Slower          Restore to     │
+│               SSD storage      SSD/HDD          HDD/NAS         search         │
+│                                                                                  │
+│  Triggers:    maxDataSize     maxHotSpanSecs   maxWarmDBCount   frozenTimePeriod│
+│               or time         (default 90d)    (default 300)    (in seconds)   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <!-- Tier Details -->
+                    <div class="tier-card tier-analytics">
+                        <h3>🔥 Hot Buckets</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <p><strong>What:</strong> Actively receiving data, stored on fast SSD</p>
+                                <p><strong>Storage:</strong> $SPLUNK_DB/&lt;index&gt;/db/hot_*</p>
+                                <p><strong>Characteristics:</strong></p>
+                                <ul>
+                                    <li>Writable - still receiving events</li>
+                                    <li>Fastest search performance</li>
+                                    <li>Most expensive storage</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p><strong>Roll to Warm when:</strong></p>
+                                <ul>
+                                    <li>Bucket size exceeds maxDataSize (default 750MB)</li>
+                                    <li>Time exceeds maxHotSpanSecs</li>
+                                    <li>Splunk restart</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tier-card tier-basic">
+                        <h3>🌡️ Warm Buckets</h3>
+                        <p><strong>What:</strong> Read-only, frequently searched, still on primary storage</p>
+                        <p><strong>Roll to Cold when:</strong> Bucket count exceeds maxWarmDBCount (default 300)</p>
+                    </div>
+
+                    <div class="tier-card tier-auxiliary">
+                        <h3>❄️ Cold Buckets</h3>
+                        <p><strong>What:</strong> Read-only, searchable but slower, can be on cheaper storage (NAS, HDD)</p>
+                        <p><strong>Configure:</strong> <code>coldPath</code> in indexes.conf</p>
+                        <p><strong>Roll to Frozen when:</strong> frozenTimePeriodInSecs exceeded OR coldPath volume limit hit</p>
+                    </div>
+
+                    <div class="tier-card tier-archive">
+                        <h3>🧊 Frozen Buckets</h3>
+                        <p><strong>What:</strong> Removed from Splunk, archived to external storage</p>
+                        <p><strong>Options:</strong></p>
+                        <ul>
+                            <li><strong>Delete:</strong> coldToFrozenDir not set - data is deleted</li>
+                            <li><strong>Archive:</strong> coldToFrozenDir = /archive/splunk - moves raw data</li>
+                            <li><strong>SmartStore (Cloud):</strong> S3/GCS/Azure Blob - remote storage with cache</li>
+                        </ul>
+                        <p><strong>To search:</strong> Must thaw (restore) to warm/cold path first</p>
+                    </div>
+
+                    <!-- Splunk indexes.conf -->
+                    <h3>📝 indexes.conf Configuration</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">indexes.conf - Tiered Retention Example</span>
+                        </div>
+                        <pre><code># $SPLUNK_HOME/etc/apps/my_indexes/local/indexes.conf
+
+[main]
+homePath = $SPLUNK_DB/main/db          # Hot/Warm on fast storage
+coldPath = $SPLUNK_DB/main/colddb      # Cold on slower storage
+thawedPath = $SPLUNK_DB/main/thaweddb  # For restored frozen data
+maxTotalDataSizeMB = 500000            # 500GB total for this index
+frozenTimePeriodInSecs = 7776000       # 90 days before freeze
+
+# High-value security logs - keep longer
+[security]
+homePath = $SPLUNK_DB/security/db
+coldPath = /mnt/cold_storage/security/colddb
+thawedPath = $SPLUNK_DB/security/thaweddb
+maxTotalDataSizeMB = 1000000           # 1TB
+frozenTimePeriodInSecs = 31536000      # 365 days
+coldToFrozenDir = /mnt/archive/security # Archive instead of delete
+
+# High-volume network logs - short retention
+[netflow]
+homePath = $SPLUNK_DB/netflow/db
+coldPath = $SPLUNK_DB/netflow/colddb
+thawedPath = $SPLUNK_DB/netflow/thaweddb
+maxTotalDataSizeMB = 2000000           # 2TB
+frozenTimePeriodInSecs = 604800        # 7 days only
+# No coldToFrozenDir = data deleted after 7 days</code></pre>
+                    </div>
+
+                    <!-- Splunk SmartStore -->
+                    <h3>☁️ SmartStore (Cloud Tiering)</h3>
+                    <div class="info-box">
+                        <p>SmartStore moves warm/cold data to S3/GCS/Azure Blob while keeping hot data local. This is the modern approach for cloud deployments.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">conf</span>
+                                <span class="code-title">indexes.conf with SmartStore</span>
+                            </div>
+                            <pre><code>[volume:remote_store]
+storageType = remote
+path = s3://my-splunk-bucket/
+remote.s3.access_key = AKIAXXXXXXXX
+remote.s3.secret_key = xxxxxxxxxx
+
+[security]
+remotePath = volume:remote_store/$_index_name
+maxDataSize = auto_high_volume
+# Hot data stays local, warm/cold goes to S3</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Raw Log Example - Splunk -->
+                    <h3>📝 Real Log Example: Palo Alto Firewall</h3>
+
+                    <h4>Step 1: Raw Syslog Received at Heavy Forwarder</h4>
+                    <div class="raw-log">&lt;14&gt;Jan  9 14:32:15 PA-3260 1,2025/01/09 14:32:15,001234567890,TRAFFIC,end,2816,2025/01/09 14:32:15,192.168.1.100,8.8.8.8,10.0.0.1,8.8.8.8,Allow_DNS,contoso\jsmith,dns-base,vsys1,Trust,Untrust,ethernet1/1,ethernet1/2,Log-Default,2025/01/09 14:32:15,12345,1,54321,53,0,53,0x400000,udp,allow,196,128,68,2,2025/01/09 14:32:10,0,any,0,987654321,0x0,192.168.0.0-192.168.255.255,United States,0,1,1,aged-out,0,0,0,0,,PA-3260,from-policy,,,0,,0,,N/A,0,0,0,0,12ab34cd-5678-90ef-gh12-ijklmnop3456,0,0,,,,,,,</div>
+
+                    <h4>Step 2: inputs.conf on Heavy Forwarder</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">inputs.conf</span>
+                        </div>
+                        <pre><code># Receive syslog on UDP 514
+[udp://514]
+connection_host = dns
+sourcetype = pan:traffic
+index = pan_logs</code></pre>
+                    </div>
+
+                    <h4>Step 3: props.conf Parsing</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">props.conf (from Palo Alto TA)</span>
+                        </div>
+                        <pre><code>[pan:traffic]
+TIME_FORMAT = %Y/%m/%d %H:%M:%S
+TIME_PREFIX = ^[^,]*,
+MAX_TIMESTAMP_LOOKAHEAD = 32
+SHOULD_LINEMERGE = false
+TRUNCATE = 0
+
+# Field extractions
+REPORT-pan_traffic = pan_traffic_fields
+FIELDALIAS-src = src_ip AS src
+FIELDALIAS-dest = dest_ip AS dest
+FIELDALIAS-action = action AS vendor_action
+
+# CIM compliance
+EVAL-action = case(action=="allow", "allowed", action=="deny", "blocked", 1=1, action)
+EVAL-bytes = bytes_sent + bytes_received</code></pre>
+                    </div>
+
+                    <h4>Step 4: transforms.conf Field Extraction</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">transforms.conf</span>
+                        </div>
+                        <pre><code>[pan_traffic_fields]
+REGEX = ^[^,]*,[^,]*,[^,]*,[^,]*,TRAFFIC,[^,]*,[^,]*,[^,]*,(?P&lt;src_ip&gt;[^,]*),(?P&lt;dest_ip&gt;[^,]*),(?P&lt;nat_src_ip&gt;[^,]*),(?P&lt;nat_dest_ip&gt;[^,]*),(?P&lt;rule&gt;[^,]*),(?P&lt;src_user&gt;[^,]*)
+FORMAT = src_ip::$1 dest_ip::$2 nat_src_ip::$3 nat_dest_ip::$4 rule::$5 src_user::$6</code></pre>
+                    </div>
+
+                    <h4>Step 5: Parsed Event in Splunk</h4>
+                    <div class="parsed-output">
+                        <table style="width: 100%; font-size: 0.85rem;">
+                            <tr><td class="field-highlight">_time</td><td class="value-highlight">2025-01-09 14:32:15</td></tr>
+                            <tr><td class="field-highlight">sourcetype</td><td class="value-highlight">pan:traffic</td></tr>
+                            <tr><td class="field-highlight">index</td><td class="value-highlight">pan_logs</td></tr>
+                            <tr><td class="field-highlight">src_ip</td><td class="value-highlight">192.168.1.100</td></tr>
+                            <tr><td class="field-highlight">dest_ip</td><td class="value-highlight">8.8.8.8</td></tr>
+                            <tr><td class="field-highlight">dest_port</td><td class="value-highlight">53</td></tr>
+                            <tr><td class="field-highlight">src_user</td><td class="value-highlight">contoso\jsmith</td></tr>
+                            <tr><td class="field-highlight">rule</td><td class="value-highlight">Allow_DNS</td></tr>
+                            <tr><td class="field-highlight">action</td><td class="value-highlight">allowed</td></tr>
+                            <tr><td class="field-highlight">bytes_sent</td><td class="value-highlight">128</td></tr>
+                            <tr><td class="field-highlight">bytes_received</td><td class="value-highlight">68</td></tr>
+                            <tr><td class="field-highlight">src (CIM)</td><td class="value-highlight">192.168.1.100</td></tr>
+                            <tr><td class="field-highlight">dest (CIM)</td><td class="value-highlight">8.8.8.8</td></tr>
+                        </table>
+                    </div>
+
+                    <h4>Step 6: Search with CIM</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">SPL</span>
+                            <span class="code-title">Search Query</span>
+                        </div>
+                        <pre><code>| tstats count from datamodel=Network_Traffic 
+    where All_Traffic.action=blocked 
+    by All_Traffic.src, All_Traffic.dest, All_Traffic.dest_port
+| rename All_Traffic.* AS *
+| sort -count</code></pre>
+                    </div>
+                </section>
+
+                <!-- ==================== XSIAM ==================== -->
+                <section class="content-section platform-section platform-xsiam">
+                    <h2><i class="fas fa-fire" style="color: #ff6b00;"></i> Palo Alto XSIAM Data Storage</h2>
+
+                    <p>XSIAM uses a cloud-native data lake architecture with different storage tiers and data units for billing.</p>
+
+                    <div class="tier-card tier-analytics">
+                        <h3>🔥 Online Storage</h3>
+                        <p><strong>What:</strong> Primary queryable storage for all ingested data</p>
+                        <p><strong>Retention:</strong> Configurable per dataset (30 days to 2 years)</p>
+                        <p><strong>Query:</strong> Full XQL with sub-second response</p>
+                        <p><strong>Billing:</strong> Based on Data Units (DUs) consumed</p>
+                    </div>
+
+                    <div class="tier-card tier-archive">
+                        <h3>🗄️ Archive Storage</h3>
+                        <p><strong>What:</strong> Long-term retention at lower cost</p>
+                        <p><strong>Access:</strong> Restore to online before querying (takes minutes)</p>
+                        <p><strong>Use case:</strong> Compliance, forensic investigations</p>
+                    </div>
+
+                    <div class="tier-card tier-auxiliary">
+                        <h3>🌊 Data Lake Export</h3>
+                        <p><strong>What:</strong> Export data to your own data lake (Snowflake, Databricks, S3)</p>
+                        <p><strong>Format:</strong> Parquet files, configurable schedule</p>
+                        <p><strong>Use case:</strong> Long-term analytics, ML, compliance archives</p>
+                    </div>
+
+                    <!-- Raw Log Example - XSIAM -->
+                    <h3>📝 Real Log Example: CEF from Firewall</h3>
+
+                    <h4>Step 1: Raw CEF Log Received at Broker VM</h4>
+                    <div class="raw-log">CEF:0|Palo Alto Networks|PAN-OS|10.2.0|TRAFFIC|end|3|rt=Jan 09 2025 14:32:15 GMT src=192.168.1.100 dst=8.8.8.8 spt=54321 dpt=53 proto=UDP act=allow deviceInboundInterface=ethernet1/1 deviceOutboundInterface=ethernet1/2 cs1=Allow_DNS cs1Label=Rule duser=contoso\\jsmith in=128 out=68 cn1=12345 cn1Label=SessionID</div>
+
+                    <h4>Step 2: Broker VM Syslog Collector</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">Config</span>
+                            <span class="code-title">Broker VM Applet Configuration</span>
+                        </div>
+                        <pre><code># Syslog Collector applet on Broker VM
+Port: 514 (UDP/TCP)
+Format: Auto-detect (CEF detected)
+Vendor: Palo Alto Networks
+Content Pack: Applied automatically</code></pre>
+                    </div>
+
+                    <h4>Step 3: Parsing Rule (Auto-applied from Marketplace)</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">XQL</span>
+                            <span class="code-title">Parsing Rule</span>
+                        </div>
+                        <pre><code>// CEF auto-parsing extracts standard fields
+// Custom parsing rule can add more:
+[INGEST:PAN_TRAFFIC]
+| alter 
+    src_ip = regextract(_raw_log, "src=(\d+\.\d+\.\d+\.\d+)"),
+    dst_ip = regextract(_raw_log, "dst=(\d+\.\d+\.\d+\.\d+)"),
+    src_port = to_integer(regextract(_raw_log, "spt=(\d+)")),
+    dst_port = to_integer(regextract(_raw_log, "dpt=(\d+)")),
+    action = regextract(_raw_log, "act=(\w+)"),
+    user = regextract(_raw_log, "duser=([^\s]+)"),
+    rule_name = regextract(_raw_log, "cs1=([^\s]+)")</code></pre>
+                    </div>
+
+                    <h4>Step 4: Data Model Rule (XDM Mapping)</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">XQL</span>
+                            <span class="code-title">XDM Mapping Rule</span>
+                        </div>
+                        <pre><code>// Map parsed fields to XDM schema
+[MODEL:PAN_TRAFFIC]
+| alter
+    xdm.source.ipv4 = src_ip,
+    xdm.target.ipv4 = dst_ip,
+    xdm.source.port = src_port,
+    xdm.target.port = dst_port,
+    xdm.event.outcome = if(action = "allow", XDM_CONST.OUTCOME_SUCCESS, XDM_CONST.OUTCOME_FAILED),
+    xdm.source.user.username = user,
+    xdm.network.rule = rule_name,
+    xdm.event.type = "NETWORK"</code></pre>
+                    </div>
+
+                    <h4>Step 5: Queryable in XQL</h4>
+                    <div class="parsed-output">
+                        <table style="width: 100%; font-size: 0.85rem;">
+                            <tr><td class="field-highlight">_time</td><td class="value-highlight">2025-01-09T14:32:15Z</td></tr>
+                            <tr><td class="field-highlight">xdm.source.ipv4</td><td class="value-highlight">192.168.1.100</td></tr>
+                            <tr><td class="field-highlight">xdm.target.ipv4</td><td class="value-highlight">8.8.8.8</td></tr>
+                            <tr><td class="field-highlight">xdm.target.port</td><td class="value-highlight">53</td></tr>
+                            <tr><td class="field-highlight">xdm.source.user.username</td><td class="value-highlight">contoso\jsmith</td></tr>
+                            <tr><td class="field-highlight">xdm.network.rule</td><td class="value-highlight">Allow_DNS</td></tr>
+                            <tr><td class="field-highlight">xdm.event.outcome</td><td class="value-highlight">SUCCESS</td></tr>
+                            <tr><td class="field-highlight">xdm.event.type</td><td class="value-highlight">NETWORK</td></tr>
+                        </table>
+                    </div>
+
+                    <h4>Step 6: XQL Query</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">XQL</span>
+                            <span class="code-title">Threat Hunting Query</span>
+                        </div>
+                        <pre><code>datamodel
+| filter xdm.event.type = "NETWORK"
+| filter xdm.event.outcome = XDM_CONST.OUTCOME_FAILED
+| comp count() as blocked_count by xdm.source.ipv4, xdm.target.ipv4
+| filter blocked_count > 100
+| sort desc blocked_count</code></pre>
+                    </div>
+                </section>
+
+                <!-- Decision Framework Summary -->
+                <section class="content-section">
+                    <h2><i class="fas fa-balance-scale"></i> Master Decision Framework</h2>
+
+                    <div class="decision-box">
+                        <h3>🎯 Quick Decision Matrix</h3>
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>If YES → Tier</th>
+                                    <th>If NO → Continue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Do analytics rules need this data?</td>
+                                    <td><strong>Analytics / Hot</strong></td>
+                                    <td>↓</td>
+                                </tr>
+                                <tr>
+                                    <td>Is this used for real-time correlation?</td>
+                                    <td><strong>Analytics / Hot</strong></td>
+                                    <td>↓</td>
+                                </tr>
+                                <tr>
+                                    <td>Queried daily for investigations?</td>
+                                    <td><strong>Analytics / Warm</strong></td>
+                                    <td>↓</td>
+                                </tr>
+                                <tr>
+                                    <td>Occasional queries for forensics?</td>
+                                    <td><strong>Basic / Cold</strong></td>
+                                    <td>↓</td>
+                                </tr>
+                                <tr>
+                                    <td>Required only for compliance?</td>
+                                    <td><strong>Auxiliary / Frozen</strong></td>
+                                    <td>↓</td>
+                                </tr>
+                                <tr>
+                                    <td>High volume, low security value?</td>
+                                    <td><strong>Filter at ingestion or don't collect</strong></td>
+                                    <td>Reassess need</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(255,107,0,0.1)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Explain the different storage tiers in Microsoft Sentinel and when you would use each.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Sentinel has three main storage tiers with different cost/capability tradeoffs:</p>
+                            <p><strong>Analytics Logs (default):</strong> Full-featured tier at ~$2.76/GB. Use for any data that needs to be in analytics rules, workbooks, or requires fast ad-hoc querying. This includes SecurityEvent, SigninLogs, alerts from security products - anything you're actively correlating for threat detection.</p>
+                            <p><strong>Basic Logs:</strong> ~$0.60/GB ingestion plus query costs. Limited to 8-day query lookback, no analytics rules, simple queries only. Perfect for high-volume, low-security-value data like verbose application logs, container stdout, or network flow metadata. You keep it for investigations but don't need real-time correlation.</p>
+                            <p><strong>Auxiliary Logs (GA April 2025):</strong> Ultra-low cost at ~$0.15/GB. Very limited query capabilities - batch search jobs only. Use for compliance archives, data you must keep for regulatory reasons but will almost never query. Think CDN access logs, storage account diagnostics at massive scale.</p>
+                            <p><strong>Archive:</strong> After interactive retention expires, data moves to archive at ~$0.023/GB/month. Query via search jobs only. Configure total retention up to 12 years.</p>
+                            <p>The decision framework: if analytics rules need it, Analytics tier. If occasionally queried for investigations, Basic. If pure compliance storage, Auxiliary or Archive.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through how a firewall log gets from the device to being searchable in Splunk, including the bucket lifecycle.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Let me trace the complete journey:</p>
+                            <p><strong>1. Generation:</strong> Palo Alto firewall generates a traffic log - it's a comma-separated syslog message with dozens of fields.</p>
+                            <p><strong>2. Transport:</strong> Firewall sends syslog to Heavy Forwarder on UDP 514. The HF's inputs.conf defines this input with sourcetype=pan:traffic and target index.</p>
+                            <p><strong>3. Parsing on HF:</strong> The Palo Alto TA's props.conf defines TIME_FORMAT, field extractions via REPORT, and field aliases for CIM compliance. transforms.conf has the regex that extracts src_ip, dest_ip, action, etc.</p>
+                            <p><strong>4. Forwarding:</strong> HF sends parsed events to Indexer cluster via outputs.conf. Uses load balancing across indexers.</p>
+                            <p><strong>5. Indexing:</strong> Indexer receives events, writes to a Hot bucket in the configured index. Hot buckets are on fast SSD, actively receiving new events.</p>
+                            <p><strong>6. Bucket Lifecycle:</strong></p>
+                            <p>Hot → Warm: When bucket hits maxDataSize (750MB) or maxHotSpanSecs, it rolls to warm. Warm buckets are read-only, still on fast storage.</p>
+                            <p>Warm → Cold: When warm bucket count exceeds maxWarmDBCount (300), oldest rolls to cold. Cold buckets move to coldPath - typically slower, cheaper storage like NAS.</p>
+                            <p>Cold → Frozen: When frozenTimePeriodInSecs is exceeded or volume limit hit. If coldToFrozenDir is set, raw data archives there. Otherwise, data is deleted.</p>
+                            <p><strong>7. Search:</strong> User searches with SPL. Search Head distributes search to indexers. They search across hot, warm, and cold buckets. Results aggregate at Search Head. Frozen data requires thawing first.</p>
+                            <p>For SmartStore deployments, warm/cold data lives in S3 with a local cache on indexers - changes the storage economics significantly.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you optimize costs for a Sentinel deployment ingesting 500GB/day with 50% being verbose application logs?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>With 500GB/day and 50% being verbose app logs, cost optimization is critical:</p>
+                            <p><strong>1. Analyze the 50% verbose logs:</strong> First, I'd check what's in them. Use the Usage table to break down by table and data type. Often it's ContainerLog, AppTraces, or custom application telemetry.</p>
+                            <p><strong>2. Move to Basic Logs tier:</strong> For the verbose app logs that don't need analytics rules, switch those tables to Basic Logs. That's 250GB/day going from $2.76/GB to $0.60/GB - saving roughly $540/day or $16K/month.</p>
+                            <p><strong>3. Filter at ingestion:</strong> Use DCR transformKql to drop fields or rows we don't need. For example, ContainerLog often has debug-level messages that aren't security relevant. Filter to Warning and above. Might cut another 20-30% volume.</p>
+                            <p><strong>4. Commitment tiers:</strong> At 500GB/day (15TB/month), we're well into commitment tier territory. A 100GB/day commitment tier is ~50% discount on Analytics logs. For the 250GB of security data staying in Analytics, this saves significant cost.</p>
+                            <p><strong>5. Consider Auxiliary Logs:</strong> For pure compliance data - stuff we must keep but never query - the new Auxiliary tier at $0.15/GB is compelling. Network flow logs, storage diagnostics, etc.</p>
+                            <p><strong>6. Optimize retention:</strong> Do we really need 90 days interactive for everything? Maybe app logs only need 30 days interactive, then archive. Security logs might need 90 days.</p>
+                            <p>Ballpark savings: Starting cost ~$1,380/day ($41K/month). After optimization: maybe $600/day ($18K/month). The key is matching storage tier to actual use case.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Data Retention Tiers</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="splunk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intelligence - IOC Matching in Splunk ES | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+                        <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Pipeline</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders Deep Dive</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Buckets</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced SPL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Enterprise Security</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> ES Overview</a>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-search-plus"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">TI & Automation</div>
+                    <a href="threat-intel.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> Splunk SOAR</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-crosshairs"></i> Threat Intelligence</h1>
+                    <p class="lead">Integrate threat intelligence feeds for IOC matching and enrichment in Splunk ES</p>
+                </div>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-rss"></i> TI Framework in ES</h2>
+                    <p>Splunk ES includes a built-in threat intelligence framework:</p>
+                    <ul>
+                        <li><strong>threatlist</strong> KV store - stores IOCs</li>
+                        <li><strong>Modular inputs</strong> - download from TI providers</li>
+                        <li><strong>Correlation searches</strong> - match IOCs against logs</li>
+                        <li><strong>TI lookups</strong> - enrich events with TI context</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-plus-circle"></i> Adding TI Sources</h2>
+                    
+                    <h3>Built-in Sources</h3>
+                    <ul>
+                        <li>AlienVault OTX</li>
+                        <li>Abuse.ch (Feodo, SSL Blacklist)</li>
+                        <li>SANS ISC</li>
+                        <li>Malware Domain List</li>
+                    </ul>
+
+                    <h3>Custom STIX/TAXII</h3>
+                    <p>Configure → Data Enrichment → Threat Intelligence Management</p>
+                    
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">conf</span>
+                            <span class="code-title">inputs.conf - Custom TI Feed</span>
+                        </div>
+                        <pre><code>[threatlist://my_custom_feed]
+disabled = 0
+type = taxii
+url = https://ti-provider.com/taxii/
+collection = my_collection
+interval = 3600
+description = Custom TAXII feed</code></pre>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2><i class="fas fa-search"></i> IOC Matching</h2>
+                    
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">SPL</span>
+                            <span class="code-title">TI Lookup Queries</span>
+                        </div>
+                        <pre><code>// Match IPs against threat intel
+index=firewall action=allowed
+| lookup threatintel_by_ip ip as dest_ip OUTPUT threat_category, threat_description
+| where isnotnull(threat_category)
+| table _time, src_ip, dest_ip, threat_category, threat_description
+
+// Match file hashes
+index=endpoint file_hash=*
+| lookup threatintel_by_hash file_hash OUTPUT threat_category, malware_family
+| where isnotnull(threat_category)
+
+// Match domains
+index=proxy 
+| lookup threatintel_by_domain domain as url_domain OUTPUT threat_category
+| search threat_category=*</code></pre>
+                    </div>
+                </section>
+
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(101,166,55,0.1), rgba(101,166,55,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you integrate threat intelligence into Splunk ES?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>Splunk ES has a built-in TI framework:</p>
+                            <p><strong>1. Configure sources:</strong> Enable built-in feeds (AlienVault, Abuse.ch) or add custom STIX/TAXII sources via Threat Intelligence Management.</p>
+                            <p><strong>2. IOCs stored in KV store:</strong> The threatlist collection stores IPs, domains, hashes, URLs with threat metadata.</p>
+                            <p><strong>3. Matching via lookups:</strong> Correlation searches use lookup commands against threatintel_by_ip, threatintel_by_hash, etc. to match IOCs in log data.</p>
+                            <p><strong>4. Generate notables:</strong> When a match is found, correlation searches create notable events with the TI context - threat category, confidence, description.</p>
+                            <p><strong>Tuning:</strong> Weight matches by confidence score. High-confidence IOCs might directly create notables; low-confidence might add risk score instead.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

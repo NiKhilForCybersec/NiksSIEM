@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Metrics & KPIs - Measuring Security Operations | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.7rem; overflow-x: auto; line-height: 1.4; }
+        .metric-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #0078d4; }
+        .metric-card.efficiency { border-left-color: #2ecc71; }
+        .metric-card.effectiveness { border-left-color: #f5a623; }
+        .metric-card.coverage { border-left-color: #9b59b6; }
+        .kpi-value { font-size: 2rem; font-weight: bold; color: #0078d4; }
+        .target { color: #2ecc71; }
+        .warning { color: #f5a623; }
+        .critical { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                    <a href="shift-handoff.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Shift Handoff</a>
+                    <a href="soc-metrics.html" class="nav-link active"><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Use Case Management</div>
+                    <a href="use-case-lifecycle.html" class="nav-link"><i class="fas fa-recycle"></i> Use Case Lifecycle</a>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cogs"></i> Detection Engineering</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</h1>
+                    <p class="lead">Key Performance Indicators for measuring SOC effectiveness, efficiency, and coverage</p>
+                </div>
+
+                <!-- Metrics Framework -->
+                <section class="content-section">
+                    <h2><i class="fas fa-th-large"></i> SOC Metrics Framework</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    SOC METRICS FRAMEWORK                                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              OPERATIONAL METRICS                                                 │   │
+│   │                         (Day-to-day SOC performance)                                            │   │
+│   │                                                                                                 │   │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐     │   │
+│   │   │    MTTA     │   │    MTTR     │   │   MTTC      │   │  FP Rate    │   │   Backlog   │     │   │
+│   │   │  (Respond)  │   │  (Resolve)  │   │ (Contain)   │   │             │   │             │     │   │
+│   │   │  < 15 min   │   │  < 4 hours  │   │  < 1 hour   │   │   < 20%     │   │    < 50     │     │   │
+│   │   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘     │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                          │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              EFFECTIVENESS METRICS                                               │   │
+│   │                         (Are we detecting real threats?)                                         │   │
+│   │                                                                                                 │   │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐     │   │
+│   │   │  Detection  │   │   Threat    │   │  Incident   │   │    Rule     │   │   MITRE     │     │   │
+│   │   │    Rate     │   │  Coverage   │   │ Escalation  │   │ Effectiveness│   │  Coverage   │     │   │
+│   │   │             │   │             │   │    Rate     │   │             │   │             │     │   │
+│   │   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘     │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                          │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              COVERAGE METRICS                                                    │   │
+│   │                         (What are we monitoring?)                                                │   │
+│   │                                                                                                 │   │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐     │   │
+│   │   │   Asset     │   │    Log      │   │    Data     │   │    Use      │   │   Threat    │     │   │
+│   │   │  Coverage   │   │  Coverage   │   │   Quality   │   │   Cases     │   │   Intel     │     │   │
+│   │   │    > 95%    │   │   > 90%     │   │   > 95%     │   │   Active    │   │    Feeds    │     │   │
+│   │   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘     │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Operational Metrics -->
+                <section class="content-section">
+                    <h2><i class="fas fa-tachometer-alt"></i> Operational Metrics (Time-Based)</h2>
+
+                    <div class="metric-card">
+                        <h3>MTTA - Mean Time to Acknowledge</h3>
+                        <p>Time from alert creation to first analyst response/assignment</p>
+                        
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Target</th>
+                                    <th>Acceptable</th>
+                                    <th>Breach</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Critical</td>
+                                    <td class="target">< 5 min</td>
+                                    <td class="warning">< 15 min</td>
+                                    <td class="critical">> 15 min</td>
+                                </tr>
+                                <tr>
+                                    <td>High</td>
+                                    <td class="target">< 15 min</td>
+                                    <td class="warning">< 30 min</td>
+                                    <td class="critical">> 30 min</td>
+                                </tr>
+                                <tr>
+                                    <td>Medium</td>
+                                    <td class="target">< 1 hour</td>
+                                    <td class="warning">< 2 hours</td>
+                                    <td class="critical">> 2 hours</td>
+                                </tr>
+                                <tr>
+                                    <td>Low</td>
+                                    <td class="target">< 4 hours</td>
+                                    <td class="warning">< 8 hours</td>
+                                    <td class="critical">> 8 hours</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Calculation Query (Splunk)</h4>
+                        <div class="code-block">
+                            <pre><code>`notable`
+| eval acknowledge_time = if(isnotnull(status_end) AND status="1", status_end - _time, null())
+| stats avg(acknowledge_time) as avg_mtta_sec by urgency
+| eval avg_mtta_min = round(avg_mtta_sec/60, 2)</code></pre>
+                        </div>
+
+                        <h4>Calculation Query (Sentinel)</h4>
+                        <div class="code-block">
+                            <pre><code>SecurityIncident
+| where Status != "New"
+| extend AcknowledgeTime = datetime_diff('minute', FirstModifiedTime, CreatedTime)
+| summarize AvgMTTA = avg(AcknowledgeTime) by Severity</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="metric-card efficiency">
+                        <h3>MTTR - Mean Time to Resolve</h3>
+                        <p>Time from alert creation to incident closure</p>
+                        
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Target</th>
+                                    <th>Acceptable</th>
+                                    <th>Breach</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Critical</td>
+                                    <td class="target">< 4 hours</td>
+                                    <td class="warning">< 8 hours</td>
+                                    <td class="critical">> 8 hours</td>
+                                </tr>
+                                <tr>
+                                    <td>High</td>
+                                    <td class="target">< 8 hours</td>
+                                    <td class="warning">< 24 hours</td>
+                                    <td class="critical">> 24 hours</td>
+                                </tr>
+                                <tr>
+                                    <td>Medium</td>
+                                    <td class="target">< 24 hours</td>
+                                    <td class="warning">< 72 hours</td>
+                                    <td class="critical">> 72 hours</td>
+                                </tr>
+                                <tr>
+                                    <td>Low</td>
+                                    <td class="target">< 72 hours</td>
+                                    <td class="warning">< 1 week</td>
+                                    <td class="critical">> 1 week</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="metric-card effectiveness">
+                        <h3>False Positive Rate</h3>
+                        <p>Percentage of alerts that are not actual security incidents</p>
+                        
+                        <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        FALSE POSITIVE RATE CALCULATION                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│                     FP Rate = (False Positives / Total Alerts) × 100                    │
+│                                                                                          │
+│   ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│   │  Example:                                                                        │   │
+│   │                                                                                  │   │
+│   │  Total Alerts This Month:     1,000                                             │   │
+│   │  True Positives (TP):           200  (actual security events)                   │   │
+│   │  False Positives (FP):          700  (benign activity)                          │   │
+│   │  Inconclusive:                  100  (insufficient evidence)                    │   │
+│   │                                                                                  │   │
+│   │  FP Rate = 700 / 1000 × 100 = 70%  ← NEEDS TUNING                               │   │
+│   │                                                                                  │   │
+│   └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                          │
+│   TARGET BENCHMARKS:                                                                     │
+│   ─────────────────                                                                      │
+│   • Excellent:  < 10% FP rate                                                           │
+│   • Good:       10-20% FP rate                                                          │
+│   • Acceptable: 20-30% FP rate                                                          │
+│   • Needs Work: 30-50% FP rate                                                          │
+│   • Critical:   > 50% FP rate (analyst fatigue risk)                                    │
+│                                                                                          │
+│   TRACK BY RULE:                                                                         │
+│   ──────────────                                                                         │
+│   Identify rules with highest FP rates for prioritized tuning                           │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Executive Dashboard -->
+                <section class="content-section">
+                    <h2><i class="fas fa-chart-bar"></i> Executive Dashboard Template</h2>
+
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               SOC EXECUTIVE DASHBOARD - MONTHLY REPORT                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐        │
+│  │   TOTAL ALERTS     │  │   INCIDENTS        │  │     MTTA           │  │      MTTR          │        │
+│  │                    │  │                    │  │                    │  │                    │        │
+│  │      12,847        │  │        156         │  │     12 min         │  │    4.2 hours       │        │
+│  │   ▼ 8% vs last mo  │  │   ▲ 12% vs last mo │  │   ▼ 3 min better   │  │   ▼ 1.1 hr better  │        │
+│  │                    │  │                    │  │   Target: 15 min   │  │   Target: 4 hours  │        │
+│  └────────────────────┘  └────────────────────┘  └────────────────────┘  └────────────────────┘        │
+│                                                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │  INCIDENTS BY SEVERITY                                                                             │ │
+│  │  ─────────────────────                                                                             │ │
+│  │                                                                                                    │ │
+│  │  Critical  ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░  12  (8%)                                     │ │
+│  │  High      ████████████████████████░░░░░░░░░░░░░░░░  34  (22%)                                    │ │
+│  │  Medium    ████████████████████████████████████████  78  (50%)                                    │ │
+│  │  Low       ████████████████████████████░░░░░░░░░░░░  32  (20%)                                    │ │
+│  │                                                                                                    │ │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                          │
+│  ┌─────────────────────────────────────────────┐  ┌─────────────────────────────────────────────────┐   │
+│  │  TOP INCIDENT CATEGORIES                     │  │  ALERT DISPOSITION                              │   │
+│  │  ───────────────────────                     │  │  ─────────────────                              │   │
+│  │                                              │  │                                                 │   │
+│  │  1. Phishing                    45 (29%)    │  │  True Positive     ████████████████  28%        │   │
+│  │  2. Malware                     32 (21%)    │  │  False Positive    ██████████████████████  62%  │   │
+│  │  3. Unauthorized Access         28 (18%)    │  │  Inconclusive      ████  10%                    │   │
+│  │  4. Policy Violation            23 (15%)    │  │                                                 │   │
+│  │  5. Data Exfiltration           15 (10%)    │  │  FP Rate: 62% ← NEEDS IMPROVEMENT               │   │
+│  │  6. Other                       13 (8%)     │  │  Target: < 30%                                  │   │
+│  │                                              │  │                                                 │   │
+│  └─────────────────────────────────────────────┘  └─────────────────────────────────────────────────┘   │
+│                                                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │  SLA COMPLIANCE                                                                                    │ │
+│  │  ──────────────                                                                                    │ │
+│  │                                                                                                    │ │
+│  │  MTTA SLA Met:     ████████████████████████████████████████░░░░░░░░░░  92%  Target: 95%          │ │
+│  │  MTTR SLA Met:     ████████████████████████████████████░░░░░░░░░░░░░░  87%  Target: 90%          │ │
+│  │                                                                                                    │ │
+│  │  SLA Breaches This Month: 14                                                                       │ │
+│  │  • 8 Critical incidents exceeded 8-hour MTTR                                                      │ │
+│  │  • 6 High incidents exceeded 24-hour MTTR                                                         │ │
+│  │                                                                                                    │ │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                          │
+│  KEY ACTIONS NEXT MONTH:                                                                                 │
+│  ───────────────────────                                                                                 │
+│  1. Tune top 5 FP-generating rules to reduce FP rate to <40%                                            │
+│  2. Review critical incident handling - 8 MTTR breaches unacceptable                                    │
+│  3. Add automation for phishing triage (highest volume category)                                        │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Coverage Metrics -->
+                <section class="content-section">
+                    <h2><i class="fas fa-bullseye"></i> Coverage Metrics</h2>
+
+                    <div class="metric-card coverage">
+                        <h3>Asset Coverage</h3>
+                        <p>Percentage of critical assets sending logs to SIEM</p>
+                        
+                        <div class="workflow-diagram">
+<pre>
+Asset Coverage = (Assets in SIEM / Total Critical Assets) × 100
+
+Categories to measure:
+• Servers (Windows, Linux)           Target: 100%
+• Network devices (FW, switches)     Target: 100%
+• Endpoints (workstations)           Target: 95%
+• Cloud resources                    Target: 100%
+• Applications (critical apps)       Target: 100%
+• Identity systems                   Target: 100%
+</pre>
+                        </div>
+                    </div>
+
+                    <div class="metric-card coverage">
+                        <h3>MITRE ATT&CK Coverage</h3>
+                        <p>Percentage of MITRE techniques with at least one detection rule</p>
+                        
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Tactic</th>
+                                    <th>Techniques</th>
+                                    <th>Covered</th>
+                                    <th>Coverage %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Initial Access</td>
+                                    <td>9</td>
+                                    <td>7</td>
+                                    <td>78%</td>
+                                </tr>
+                                <tr>
+                                    <td>Execution</td>
+                                    <td>14</td>
+                                    <td>11</td>
+                                    <td>79%</td>
+                                </tr>
+                                <tr>
+                                    <td>Persistence</td>
+                                    <td>19</td>
+                                    <td>14</td>
+                                    <td>74%</td>
+                                </tr>
+                                <tr>
+                                    <td>Privilege Escalation</td>
+                                    <td>13</td>
+                                    <td>10</td>
+                                    <td>77%</td>
+                                </tr>
+                                <tr>
+                                    <td>Defense Evasion</td>
+                                    <td>42</td>
+                                    <td>25</td>
+                                    <td>60%</td>
+                                </tr>
+                                <tr>
+                                    <td>Credential Access</td>
+                                    <td>17</td>
+                                    <td>13</td>
+                                    <td>76%</td>
+                                </tr>
+                                <tr>
+                                    <td>Lateral Movement</td>
+                                    <td>9</td>
+                                    <td>8</td>
+                                    <td>89%</td>
+                                </tr>
+                                <tr>
+                                    <td>Exfiltration</td>
+                                    <td>9</td>
+                                    <td>6</td>
+                                    <td>67%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Reporting Cadence -->
+                <section class="content-section">
+                    <h2><i class="fas fa-calendar-alt"></i> Reporting Cadence</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Report</th>
+                                <th>Audience</th>
+                                <th>Frequency</th>
+                                <th>Key Metrics</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Shift Report</strong></td>
+                                <td>SOC Team Lead</td>
+                                <td>Every shift</td>
+                                <td>Open tickets, escalations, handoff items</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Daily Summary</strong></td>
+                                <td>SOC Manager</td>
+                                <td>Daily</td>
+                                <td>Alert volume, incidents, SLA status</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Weekly Operations</strong></td>
+                                <td>Security Leadership</td>
+                                <td>Weekly</td>
+                                <td>MTTA/MTTR, FP rate, backlog, trends</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Monthly Executive</strong></td>
+                                <td>CISO, Executives</td>
+                                <td>Monthly</td>
+                                <td>Full dashboard, trends, recommendations</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quarterly Review</strong></td>
+                                <td>Board/Steering Committee</td>
+                                <td>Quarterly</td>
+                                <td>Strategic metrics, YoY comparisons, investment ROI</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>What KPIs do you use to measure SOC effectiveness?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>I track metrics across three categories:</strong></p>
+                            <p><strong>Operational Efficiency:</strong></p>
+                            <ul>
+                                <li><strong>MTTA (Mean Time to Acknowledge):</strong> How fast we start working on alerts. Target: <15 min for critical.</li>
+                                <li><strong>MTTR (Mean Time to Resolve):</strong> End-to-end resolution time. Target: <4 hours for critical.</li>
+                                <li><strong>False Positive Rate:</strong> % of alerts that aren't real threats. Target: <30%. High FP means wasted analyst time.</li>
+                                <li><strong>Backlog:</strong> Unworked alerts. Should stay below 50 at any time.</li>
+                            </ul>
+                            <p><strong>Detection Effectiveness:</strong></p>
+                            <ul>
+                                <li><strong>True Positive Rate:</strong> % of alerts that are real incidents.</li>
+                                <li><strong>Incident Escalation Rate:</strong> % that become actual incidents requiring response.</li>
+                                <li><strong>Detection Coverage:</strong> MITRE ATT&CK coverage percentage.</li>
+                            </ul>
+                            <p><strong>Coverage:</strong></p>
+                            <ul>
+                                <li><strong>Asset Coverage:</strong> % of critical assets logging to SIEM (target: 100%).</li>
+                                <li><strong>Log Source Health:</strong> % of expected logs actually arriving.</li>
+                            </ul>
+                            <p>I report these weekly to SOC leadership, monthly to executives, with trend analysis to show improvement over time.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

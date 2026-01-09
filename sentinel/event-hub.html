@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="sentinel">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Hub Integration - Streaming Data Architecture | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel active"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+<nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Deep Dive</a>
+                    <a href="event-hub.html" class="nav-link active"><i class="fas fa-broadcast-tower"></i> Event Hub Integration</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion & Cost</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced KQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Content & Intelligence</div>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-cube"></i> Content Hub & ASIM</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Sentinel</a>
+                    <span class="separator">/</span>
+                    <span class="current">Event Hub Integration</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-broadcast-tower"></i> Azure Event Hub Integration</h1>
+                    <p class="lead">Stream high-volume data from Azure services, third-party sources, and on-premises systems into Microsoft Sentinel using Event Hubs</p>
+                </div>
+
+                <!-- When to Use Event Hub -->
+                <section class="content-section">
+                    <h2><i class="fas fa-question-circle"></i> When to Use Event Hub vs Other Methods</h2>
+                    
+                    <div class="decision-matrix" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                        <div class="card" style="border-top: 4px solid #26a269;">
+                            <div class="card-header">
+                                <h3>✅ Use Event Hub When</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>High-volume streaming data (millions of events/sec)</li>
+                                    <li>Azure service diagnostic logs (best method)</li>
+                                    <li>Third-party cloud services with Event Hub export</li>
+                                    <li>Multiple consumers need same data (fan-out)</li>
+                                    <li>Need buffering/replay capability</li>
+                                    <li>Real-time processing before Sentinel</li>
+                                    <li>Cross-tenant data sharing</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="border-top: 4px solid #c01c28;">
+                            <div class="card-header">
+                                <h3>❌ Don't Use Event Hub When</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Native Sentinel connector exists (use that instead)</li>
+                                    <li>Simple API polling suffices</li>
+                                    <li>Low volume data (&lt;100 events/sec)</li>
+                                    <li>On-prem only sources (use AMA/syslog)</li>
+                                    <li>Cost is primary concern (adds Event Hub cost)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Key Decision: Diagnostic Settings vs Event Hub Connector</h4>
+                        <table class="styled-table">
+                            <tr>
+                                <th>Method</th>
+                                <th>When to Use</th>
+                                <th>Data Flow</th>
+                            </tr>
+                            <tr>
+                                <td><strong>Diagnostic Settings → Log Analytics</strong></td>
+                                <td>Direct Azure logs, single workspace, simple setup</td>
+                                <td>Azure Resource → Workspace (direct)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Diagnostic Settings → Event Hub</strong></td>
+                                <td>Multiple consumers, cross-tenant, pre-processing needed</td>
+                                <td>Azure Resource → Event Hub → Function → Workspace</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Event Hub Connector (Sentinel)</strong></td>
+                                <td>Third-party sources streaming to Event Hub</td>
+                                <td>External Source → Event Hub → Sentinel</td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Architecture -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Event Hub Architecture Patterns</h2>
+
+                    <h3>Pattern 1: Azure Diagnostic Logs via Event Hub</h3>
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│              AZURE DIAGNOSTIC LOGS → EVENT HUB → SENTINEL                       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │ Azure        │    │ Diagnostic   │    │ Event Hub    │    │ Azure        │  │
+│  │ Resources    │───▶│ Settings     │───▶│ Namespace    │───▶│ Function     │  │
+│  │              │    │              │    │              │    │              │  │
+│  │ • Key Vault  │    │ Category:    │    │ Partitions:  │    │ Trigger:     │  │
+│  │ • App Svc    │    │ • AuditEvent │    │ • 2-32       │    │ Event Hub    │  │
+│  │ • AKS        │    │ • AllMetrics │    │ Retention:   │    │              │  │
+│  │ • SQL        │    │              │    │ • 1-7 days   │    │ Output:      │  │
+│  │ • NSG Flow   │    │              │    │              │    │ Logs API     │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                      │          │
+│                                                                      ▼          │
+│                                                            ┌──────────────┐     │
+│                                                            │ Log Analytics│     │
+│                                                            │ Workspace    │     │
+│                                                            │              │     │
+│                                                            │ Custom_CL or │     │
+│                                                            │ Standard tbl │     │
+│                                                            └──────────────┘     │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <h3>Pattern 2: Third-Party Sources to Event Hub</h3>
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│              THIRD-PARTY SOURCES → EVENT HUB → SENTINEL                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐                                                               │
+│  │ AWS          │──┐                                                            │
+│  │ CloudTrail   │  │    ┌──────────────┐    ┌──────────────┐                   │
+│  └──────────────┘  │    │              │    │              │                   │
+│                    ├───▶│ Event Hub    │───▶│ Sentinel     │                   │
+│  ┌──────────────┐  │    │ Namespace    │    │ Event Hub    │                   │
+│  │ Palo Alto    │  │    │              │    │ Connector    │                   │
+│  │ Firewall     │──┤    │ insight-logs │    │              │                   │
+│  └──────────────┘  │    │              │    │ Built-in     │                   │
+│                    │    └──────────────┘    │ parsing      │                   │
+│  ┌──────────────┐  │                        └──────────────┘                   │
+│  │ Custom App   │──┘                               │                            │
+│  │ (SDK/REST)   │                                  ▼                            │
+│  └──────────────┘                        ┌──────────────┐                       │
+│                                          │ Log Analytics│                       │
+│                                          │ Workspace    │                       │
+│                                          └──────────────┘                       │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <h3>Pattern 3: Cross-Tenant / Multi-Workspace</h3>
+                    <div class="architecture-diagram" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    CROSS-TENANT DATA SHARING                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  TENANT A (Source)                    TENANT B (SOC)                            │
+│  ┌──────────────────┐                 ┌──────────────────┐                      │
+│  │                  │                 │                  │                      │
+│  │  Azure Resources │                 │  Sentinel        │                      │
+│  │        │         │                 │  Workspace       │                      │
+│  │        ▼         │                 │        ▲         │                      │
+│  │  Diagnostic      │                 │        │         │                      │
+│  │  Settings        │                 │  Event Hub       │                      │
+│  │        │         │                 │  Connector       │                      │
+│  │        ▼         │                 │        ▲         │                      │
+│  │  Event Hub ──────┼─────────────────┼────────┘         │                      │
+│  │  (SAS Token)     │   Cross-tenant  │                  │                      │
+│  │                  │   connection    │                  │                      │
+│  └──────────────────┘                 └──────────────────┘                      │
+│                                                                                  │
+│  Requirements:                                                                   │
+│  • SAS Policy with Listen permission on source Event Hub                        │
+│  • Network connectivity (public endpoint or Private Link)                       │
+│  • Consumer group dedicated to Sentinel                                         │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Setup Guide -->
+                <section class="content-section">
+                    <h2><i class="fas fa-tools"></i> Step-by-Step Setup</h2>
+
+                    <h3>Step 1: Create Event Hub Namespace</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">Azure CLI</span>
+                            <span class="code-title">Create Event Hub Namespace</span>
+                        </div>
+                        <pre><code># Create resource group
+az group create --name rg-eventhub-sentinel --location eastus
+
+# Create Event Hub namespace (Standard tier minimum for Sentinel)
+az eventhubs namespace create \
+  --name evhns-security-logs \
+  --resource-group rg-eventhub-sentinel \
+  --location eastus \
+  --sku Standard \
+  --enable-auto-inflate true \
+  --maximum-throughput-units 10
+
+# Create Event Hub
+az eventhubs eventhub create \
+  --name insights-logs-auditevent \
+  --namespace-name evhns-security-logs \
+  --resource-group rg-eventhub-sentinel \
+  --partition-count 4 \
+  --message-retention 3
+
+# Create consumer group for Sentinel
+az eventhubs eventhub consumer-group create \
+  --name sentinel-consumer \
+  --eventhub-name insights-logs-auditevent \
+  --namespace-name evhns-security-logs \
+  --resource-group rg-eventhub-sentinel
+
+# Create SAS policy for Sentinel to read
+az eventhubs eventhub authorization-rule create \
+  --name sentinel-listen \
+  --eventhub-name insights-logs-auditevent \
+  --namespace-name evhns-security-logs \
+  --resource-group rg-eventhub-sentinel \
+  --rights Listen</code></pre>
+                    </div>
+
+                    <h3>Step 2: Configure Diagnostic Settings</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">Azure CLI</span>
+                            <span class="code-title">Send Azure Logs to Event Hub</span>
+                        </div>
+                        <pre><code># Get Event Hub authorization rule ID
+EVENTHUB_RULE_ID=$(az eventhubs eventhub authorization-rule show \
+  --name sentinel-listen \
+  --eventhub-name insights-logs-auditevent \
+  --namespace-name evhns-security-logs \
+  --resource-group rg-eventhub-sentinel \
+  --query id -o tsv)
+
+# Example: Send Key Vault audit logs to Event Hub
+az monitor diagnostic-settings create \
+  --name "send-to-eventhub" \
+  --resource "/subscriptions/xxx/resourceGroups/rg-keyvault/providers/Microsoft.KeyVault/vaults/my-keyvault" \
+  --event-hub "insights-logs-auditevent" \
+  --event-hub-rule "$EVENTHUB_RULE_ID" \
+  --logs '[{"category": "AuditEvent", "enabled": true}]'
+
+# Example: Send NSG Flow Logs
+az network watcher flow-log create \
+  --name "nsg-flow-logs" \
+  --nsg "my-nsg" \
+  --resource-group "rg-network" \
+  --storage-account "stflowlogs" \
+  --traffic-analytics true \
+  --workspace "sentinel-workspace"</code></pre>
+                    </div>
+
+                    <h3>Step 3: Configure Sentinel Event Hub Connector</h3>
+                    <ol>
+                        <li>Go to <strong>Microsoft Sentinel → Data connectors</strong></li>
+                        <li>Search for <strong>"Azure Event Hub"</strong></li>
+                        <li>Click <strong>Open connector page</strong></li>
+                        <li>Click <strong>+ Add Azure Event Hub</strong></li>
+                        <li>Configure:
+                            <ul>
+                                <li><strong>Subscription:</strong> Where Event Hub lives</li>
+                                <li><strong>Event Hub Namespace:</strong> evhns-security-logs</li>
+                                <li><strong>Event Hub:</strong> insights-logs-auditevent</li>
+                                <li><strong>Consumer Group:</strong> sentinel-consumer</li>
+                            </ul>
+                        </li>
+                        <li>Click <strong>Add</strong></li>
+                    </ol>
+
+                    <div class="warning-box">
+                        <h4>Important Configuration Notes</h4>
+                        <ul>
+                            <li><strong>Consumer Group:</strong> Always create a dedicated consumer group for Sentinel. Sharing $Default can cause data loss.</li>
+                            <li><strong>Partitions:</strong> More partitions = higher throughput but more cost. Start with 4, scale as needed.</li>
+                            <li><strong>Retention:</strong> Event Hub retains data 1-7 days. This is for replay, not long-term storage.</li>
+                            <li><strong>Throughput Units:</strong> 1 TU = 1 MB/s ingress, 2 MB/s egress. Enable auto-inflate for variable loads.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Common Scenarios -->
+                <section class="content-section">
+                    <h2><i class="fas fa-building"></i> Enterprise Scenarios</h2>
+
+                    <div class="scenario-box" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #0078d4;">
+                        <h3>Scenario 1: Azure Activity Logs at Scale</h3>
+                        <p><strong>Challenge:</strong> 50+ subscriptions, need consolidated Activity Logs in Sentinel</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>Create centralized Event Hub namespace</li>
+                            <li>Use Azure Policy to deploy diagnostic settings to all subscriptions</li>
+                            <li>Single Event Hub connector in Sentinel</li>
+                        </ol>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">Azure Policy</span>
+                                <span class="code-title">Deploy Activity Log Diagnostic Setting</span>
+                            </div>
+                            <pre><code>{
+  "if": {
+    "field": "type",
+    "equals": "Microsoft.Resources/subscriptions"
+  },
+  "then": {
+    "effect": "deployIfNotExists",
+    "details": {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "existenceCondition": {
+        "field": "Microsoft.Insights/diagnosticSettings/eventHubName",
+        "equals": "insights-activity-logs"
+      },
+      "roleDefinitionIds": [
+        "/providers/Microsoft.Authorization/roleDefinitions/..."
+      ],
+      "deployment": {
+        "properties": {
+          "template": {
+            // ARM template for diagnostic setting
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="scenario-box" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #0078d4;">
+                        <h3>Scenario 2: AWS CloudTrail to Sentinel</h3>
+                        <p><strong>Challenge:</strong> Multi-cloud environment, AWS logs needed in Sentinel</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>CloudTrail → S3 bucket</li>
+                            <li>S3 notification → EventBridge → Event Hub (via Amazon EventBridge integration)</li>
+                            <li>Or: Azure Function polls S3, sends to Event Hub</li>
+                        </ol>
+                        <p><strong>Alternative:</strong> Use the native AWS S3 connector if latency isn't critical</p>
+                    </div>
+
+                    <div class="scenario-box" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #0078d4;">
+                        <h3>Scenario 3: Custom Application Logs</h3>
+                        <p><strong>Challenge:</strong> In-house application generating 10,000 events/sec</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>Application uses Event Hub SDK to stream logs</li>
+                            <li>Azure Function consumes Event Hub, transforms data</li>
+                            <li>Function sends to Logs Ingestion API with DCR</li>
+                        </ol>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <span class="code-title">Azure Function - Event Hub to Logs Ingestion API</span>
+                            </div>
+                            <pre><code>import azure.functions as func
+import json
+import requests
+from azure.identity import DefaultAzureCredential
+
+# DCE and DCR details
+DCE_ENDPOINT = "https://dce-xxx.eastus.ingest.monitor.azure.com"
+DCR_IMMUTABLE_ID = "dcr-xxxxx"
+STREAM_NAME = "Custom-AppLogs_CL"
+
+def main(events: func.EventHubEvent):
+    credential = DefaultAzureCredential()
+    token = credential.get_token("https://monitor.azure.com/.default")
+    
+    logs = []
+    for event in events:
+        data = json.loads(event.get_body().decode('utf-8'))
+        logs.append({
+            "TimeGenerated": data.get("timestamp"),
+            "Application": data.get("app_name"),
+            "Level": data.get("level"),
+            "Message": data.get("message"),
+            "UserId": data.get("user_id"),
+            "CorrelationId": data.get("correlation_id")
+        })
+    
+    # Send to Logs Ingestion API
+    url = f"{DCE_ENDPOINT}/dataCollectionRules/{DCR_IMMUTABLE_ID}/streams/{STREAM_NAME}?api-version=2023-01-01"
+    headers = {
+        "Authorization": f"Bearer {token.token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(url, headers=headers, json=logs)
+    if response.status_code != 204:
+        raise Exception(f"Failed to send logs: {response.text}")</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Tuning -->
+                <section class="content-section">
+                    <h2><i class="fas fa-tachometer-alt"></i> Performance & Scaling</h2>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Standard Tier</th>
+                                <th>Premium Tier</th>
+                                <th>Dedicated Tier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Throughput</td>
+                                <td>1-20 TU (auto-inflate)</td>
+                                <td>1-20 PU</td>
+                                <td>1+ CU</td>
+                            </tr>
+                            <tr>
+                                <td>1 Unit =</td>
+                                <td>1 MB/s in, 2 MB/s out</td>
+                                <td>~1 MB/s in, ~2 MB/s out</td>
+                                <td>~100 MB/s</td>
+                            </tr>
+                            <tr>
+                                <td>Partitions</td>
+                                <td>32 max</td>
+                                <td>100 max</td>
+                                <td>1024 max</td>
+                            </tr>
+                            <tr>
+                                <td>Retention</td>
+                                <td>7 days max</td>
+                                <td>90 days</td>
+                                <td>90 days</td>
+                            </tr>
+                            <tr>
+                                <td>Use Case</td>
+                                <td>Most Sentinel deployments</td>
+                                <td>High-volume, low-latency</td>
+                                <td>Enterprise, isolation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="info-box">
+                        <h4>Scaling Guidelines</h4>
+                        <ul>
+                            <li><strong>Partitions:</strong> Each partition = sequential processing. Add partitions for parallelism.</li>
+                            <li><strong>Consumer lag:</strong> Monitor "Incoming vs Outgoing Messages" - lag means consumers can't keep up.</li>
+                            <li><strong>Batch size:</strong> Sentinel connector batches events - ensure Event Hub retention > processing lag.</li>
+                            <li><strong>Checkpoint frequency:</strong> More frequent = lower replay on failure, but higher overhead.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Monitoring -->
+                <section class="content-section">
+                    <h2><i class="fas fa-chart-line"></i> Monitoring Event Hub Health</h2>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">KQL</span>
+                            <span class="code-title">Monitor Event Hub Ingestion in Sentinel</span>
+                        </div>
+                        <pre><code>// Check data arriving from Event Hub connector
+AzureDiagnostics
+| where TimeGenerated > ago(1h)
+| where ResourceProvider == "MICROSOFT.EVENTHUB"
+| summarize count() by bin(TimeGenerated, 5m), Resource
+| render timechart
+
+// Check for ingestion delays
+let EventHubData = AzureDiagnostics | where ResourceProvider == "MICROSOFT.EVENTHUB";
+EventHubData
+| extend IngestionDelay = ingestion_time() - TimeGenerated
+| summarize avg(IngestionDelay), max(IngestionDelay) by bin(TimeGenerated, 15m)
+
+// Monitor specific Event Hub metrics
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.EVENTHUB"
+| where MetricName in ("IncomingMessages", "OutgoingMessages", "ThrottledRequests")
+| summarize avg(Average) by MetricName, bin(TimeGenerated, 5m)
+| render timechart</code></pre>
+                    </div>
+
+                    <h3>Azure Monitor Alerts to Configure</h3>
+                    <ul>
+                        <li><strong>Throttled Requests > 0:</strong> You're hitting throughput limits</li>
+                        <li><strong>Incoming Messages dropping:</strong> Source stopped sending</li>
+                        <li><strong>Consumer lag increasing:</strong> Sentinel can't keep up</li>
+                        <li><strong>Capture failures:</strong> If using Event Hub Capture to blob</li>
+                    </ul>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(255,107,0,0.1)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>When would you use Event Hub vs direct ingestion to Sentinel?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>The decision depends on several factors:</p>
+                            <p><strong>Use Event Hub when:</strong></p>
+                            <p>First, for high-volume streaming scenarios - Event Hub handles millions of events per second with built-in buffering. If a source generates massive volume that might overwhelm direct ingestion, Event Hub provides that buffer.</p>
+                            <p>Second, when you need fan-out - multiple consumers reading the same data stream. Maybe Sentinel gets security events, but a data lake gets the same data for long-term analytics, and a real-time dashboard reads it too. Event Hub supports multiple consumer groups.</p>
+                            <p>Third, for cross-tenant scenarios. If tenant A generates logs but tenant B runs Sentinel, Event Hub with SAS tokens enables secure cross-tenant data sharing.</p>
+                            <p>Fourth, when you need pre-processing. An Azure Function can consume Event Hub, enrich or filter data, then send to Sentinel. This is cleaner than trying to do complex transformations in DCR transformKql.</p>
+                            <p><strong>Use direct ingestion when:</strong></p>
+                            <p>A native Sentinel connector exists - they're optimized and maintained by Microsoft. For Azure services, if diagnostic settings can go directly to Log Analytics, that's simpler and cheaper than routing through Event Hub.</p>
+                            <p>For lower volume data where the complexity of Event Hub isn't justified. There's added cost for Event Hub (throughput units, storage) and added components to manage.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you troubleshoot missing data from Event Hub in Sentinel?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>I'd work through the data path systematically:</p>
+                            <p><strong>1. Verify source is sending:</strong> Check Event Hub metrics in Azure Monitor - are "Incoming Messages" and "Incoming Bytes" showing data? If zero, the problem is upstream - the source isn't sending.</p>
+                            <p><strong>2. Check for throttling:</strong> Look at "Throttled Requests" metric. If > 0, you're hitting throughput limits. Solution: increase throughput units or enable auto-inflate.</p>
+                            <p><strong>3. Verify consumer group:</strong> Ensure the Sentinel connector is using a dedicated consumer group, not $Default. Check if the consumer group exists and has active readers.</p>
+                            <p><strong>4. Check connector status:</strong> In Sentinel Data Connectors, is the Event Hub connector showing as connected? Are there error messages?</p>
+                            <p><strong>5. Verify permissions:</strong> The connector needs at minimum "Listen" permission via SAS policy. If using managed identity, verify the RBAC role is assigned.</p>
+                            <p><strong>6. Check consumer lag:</strong> Compare "Incoming Messages" to "Outgoing Messages". If incoming >> outgoing, there's consumer lag - Sentinel can't keep up. This might be a Sentinel workspace issue or network latency.</p>
+                            <p><strong>7. Verify data in workspace:</strong> Run a query for the expected table. Check the Usage table to see if data is arriving but going to unexpected tables.</p>
+                            <p><strong>8. Check Event Hub retention:</strong> If consumer was offline longer than retention period (default 1-7 days), data is lost.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Design a solution for collecting logs from 100 Azure subscriptions into Sentinel.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>For 100 subscriptions, I'd design a scalable, policy-driven architecture:</p>
+                            <p><strong>Architecture:</strong></p>
+                            <p>Centralized Event Hub namespace in a dedicated "logging" subscription. One Event Hub per log category (activity-logs, resource-logs, etc.) - keeps throughput distributed and parsing simpler.</p>
+                            <p>Use Azure Policy at the management group level to deploy diagnostic settings to all subscriptions automatically. This ensures new subscriptions are captured and provides consistent configuration.</p>
+                            <p><strong>Implementation:</strong></p>
+                            <p>1. Create Event Hub namespace with Standard tier, auto-inflate enabled (handles variable load across 100 subs).</p>
+                            <p>2. Create separate Event Hubs: one for Activity Logs, one for resource-specific logs (Key Vault, Storage, etc.).</p>
+                            <p>3. Create Azure Policy definitions that deploy diagnostic settings for each resource type. Assign at management group level with "deployIfNotExists" effect.</p>
+                            <p>4. Configure Sentinel Event Hub connector pointing to each Event Hub with dedicated consumer groups.</p>
+                            <p><strong>Considerations:</strong></p>
+                            <p>Throughput sizing: estimate total log volume across 100 subs. Standard tier with auto-inflate up to 20 TU handles most scenarios.</p>
+                            <p>Cost: Event Hub adds cost but provides buffering, replay capability, and centralized management that's worth it at scale.</p>
+                            <p>Monitoring: Alert on throttling, consumer lag, and incoming message drops.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Event Hub Integration</p>
+                    <p>Personal Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

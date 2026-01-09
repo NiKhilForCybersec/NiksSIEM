@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="splunk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Fundamentals | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk active"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Pipeline</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders Deep Dive</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Buckets</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link active"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced SPL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Enterprise Security</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> ES Overview</a>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-search-plus"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">TI & Automation</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> Splunk SOAR</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Splunk</a>
+                    <span class="separator">/</span>
+                    <span class="current">SPL Fundamentals</span>
+                </div>
+                <div class="top-actions">
+                    <button class="top-btn" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <section class="content-section">
+
+                <h1>SPL Fundamentals</h1>
+                <p class="lead">Master the Search Processing Language for effective security investigations and threat detection.</p>
+
+                <div class="diagram-box">
+SPL (SPLUNK SEARCH PROCESSING LANGUAGE) - THE PIPELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+Data flows through PIPES, each command transforms and passes to the next:
+
+  INDEX           FILTER          AGGREGATE       TRANSFORM       OUTPUT
+    │               │                │               │              │
+    ▼               ▼                ▼               ▼              ▼
+┌────────┐     ┌────────┐      ┌────────┐      ┌────────┐     ┌────────┐
+│ Raw    │ ──► │ where  │  ──► │ stats  │  ──► │ sort   │ ──► │Results │
+│ Events │  |  │EventCode│  |  │count by│  |   │ -count │     │        │
+│1M rows │     │ =4625  │      │Account │      │        │     │ 25 rows│
+└────────┘     └────────┘      └────────┘      └────────┘     └────────┘
+
+
+SPL QUERY EXAMPLE:
+─────────────────────────────────────────────────────────────────────────────
+
+index=security sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name, Source_Network_Address
+| where count > 10
+| sort -count
+| head 20
+
+  │ index=security          → Search in "security" index
+  │ sourcetype=...          → Filter to Windows Security logs
+  │ EventCode=4625          → Failed logon events
+  │ stats count by...       → Group and count
+  │ where count > 10        → Filter aggregated results
+  │ sort -count             → Sort descending
+  └ head 20                 → Top 20 results
+
+
+ESSENTIAL SPL COMMANDS:
+═══════════════════════════════════════════════════════════════════════════════
+
+SEARCHING:
+─────────────────────────────────────────────────────────────────────────────
+  index=         Specify which index to search
+  sourcetype=    Filter by data type
+  search         Find keywords (implicit at start)
+  
+  Example: index=security "mimikatz" OR "credential"
+
+
+FILTERING:
+─────────────────────────────────────────────────────────────────────────────
+  where          Filter with expressions
+                 | where count > 100
+  
+  dedup          Remove duplicates
+                 | dedup src_ip
+
+
+AGGREGATING:
+─────────────────────────────────────────────────────────────────────────────
+  stats          Calculate statistics
+                 | stats count, avg(bytes) by user
+  
+  timechart      Statistics over time
+                 | timechart count by EventCode
+
+
+TRANSFORMING:
+─────────────────────────────────────────────────────────────────────────────
+  eval           Create/modify fields
+                 | eval MB = bytes/1024/1024
+  
+  table          Select columns
+                 | table _time, user, action
+
+
+SOC PATTERNS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Failed Logons by Account:
+   index=security EventCode=4625
+   | stats count by Account_Name
+   | sort -count
+
+2. Outbound Traffic by Destination:
+   index=network dest_port=443
+   | stats sum(bytes) as TotalBytes by dest_ip
+   | sort -TotalBytes
+
+3. Process Execution Timeline:
+   index=endpoint sourcetype=sysmon EventCode=1
+   | table _time, User, ParentImage, Image, CommandLine
+                </div>
+
+                <h2>Search Pipeline Architecture</h2>
+                <p>SPL uses a pipe-based architecture where each command transforms data and passes it to the next:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin-bottom: 1rem;">
+<pre style="margin: 0;">index=security sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name, Source_Network_Address
+| where count > 10
+| sort -count
+| head 20
+
+<span style="color: #6aa3f7;">Pipeline Flow:</span>
+[Raw Events] → [Filter] → [Aggregate] → [Filter Results] → [Sort] → [Limit]</pre>
+                </div>
+
+                <h2>Essential Search Commands</h2>
+                <table>
+                    <thead><tr><th>Command</th><th>Type</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>search</code></td><td>Filtering</td><td>Filter events (implicit at start)</td><td><code>search error OR failed</code></td></tr>
+                        <tr><td><code>where</code></td><td>Filtering</td><td>Filter with expressions</td><td><code>where count > 100</code></td></tr>
+                        <tr><td><code>stats</code></td><td>Aggregating</td><td>Calculate statistics</td><td><code>stats count by src_ip</code></td></tr>
+                        <tr><td><code>eval</code></td><td>Transforming</td><td>Create/modify fields</td><td><code>eval MB=bytes/1024/1024</code></td></tr>
+                        <tr><td><code>table</code></td><td>Formatting</td><td>Select and order fields</td><td><code>table _time, user, action</code></td></tr>
+                        <tr><td><code>rename</code></td><td>Formatting</td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
+                        <tr><td><code>sort</code></td><td>Ordering</td><td>Sort results</td><td><code>sort -count</code></td></tr>
+                        <tr><td><code>dedup</code></td><td>Filtering</td><td>Remove duplicates</td><td><code>dedup user, src_ip</code></td></tr>
+                        <tr><td><code>rex</code></td><td>Extracting</td><td>Regex field extraction</td><td><code>rex field=_raw "user=(?&lt;user&gt;\w+)"</code></td></tr>
+                        <tr><td><code>lookup</code></td><td>Enriching</td><td>Add data from lookups</td><td><code>lookup users.csv user OUTPUT department</code></td></tr>
+                        <tr><td><code>join</code></td><td>Combining</td><td>Join with subsearch</td><td><code>join src_ip [search index=threats]</code></td></tr>
+                        <tr><td><code>append</code></td><td>Combining</td><td>Append subsearch results</td><td><code>append [search index=firewall]</code></td></tr>
+                        <tr><td><code>transaction</code></td><td>Grouping</td><td>Group related events</td><td><code>transaction user maxspan=10m</code></td></tr>
+                        <tr><td><code>timechart</code></td><td>Visualizing</td><td>Time-based statistics</td><td><code>timechart span=1h count by action</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Time Range Specifications</h2>
+                <table>
+                    <thead><tr><th>Syntax</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>earliest=-1h</code></td><td>Relative time (ago)</td><td>Last 1 hour</td></tr>
+                        <tr><td><code>earliest=-7d@d</code></td><td>Snap to day boundary</td><td>Last 7 days, starting at midnight</td></tr>
+                        <tr><td><code>earliest=@d</code></td><td>Start of today</td><td>Today from midnight</td></tr>
+                        <tr><td><code>earliest=-1mon@mon</code></td><td>Start of last month</td><td>Last month from 1st</td></tr>
+                        <tr><td><code>earliest="01/15/2025:00:00:00"</code></td><td>Absolute time</td><td>Specific date/time</td></tr>
+                        <tr><td><code>latest=now</code></td><td>Current time</td><td>Up to now</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Comparison Operators</h2>
+                <table>
+                    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>=</code></td><td>Equals (field exists)</td><td><code>user=admin</code></td></tr>
+                        <tr><td><code>!=</code></td><td>Not equals</td><td><code>action!=allowed</code></td></tr>
+                        <tr><td><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code></td><td>Numeric comparison</td><td><code>bytes > 1000000</code></td></tr>
+                        <tr><td><code>IN</code></td><td>Match any in list</td><td><code>action IN ("login", "logout")</code></td></tr>
+                        <tr><td><code>LIKE</code></td><td>Wildcard match</td><td><code>user LIKE "admin%"</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Search Operators</h2>
+                <table>
+                    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>AND</code></td><td>Both conditions (implicit)</td><td><code>error AND critical</code></td></tr>
+                        <tr><td><code>OR</code></td><td>Either condition</td><td><code>error OR warning</code></td></tr>
+                        <tr><td><code>NOT</code></td><td>Exclude</td><td><code>NOT debug</code></td></tr>
+                        <tr><td><code>*</code></td><td>Wildcard (any characters)</td><td><code>user=admin*</code></td></tr>
+                        <tr><td><code>""</code></td><td>Exact phrase</td><td><code>"failed login"</code></td></tr>
+                        <tr><td><code>()</code></td><td>Grouping</td><td><code>(error OR warning) AND critical</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Stats Functions</h2>
+                <table>
+                    <thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>count</code></td><td>Count events</td><td><code>stats count by user</code></td></tr>
+                        <tr><td><code>dc(field)</code></td><td>Distinct count</td><td><code>stats dc(src_ip) as unique_ips</code></td></tr>
+                        <tr><td><code>sum(field)</code></td><td>Sum values</td><td><code>stats sum(bytes) as total_bytes</code></td></tr>
+                        <tr><td><code>avg(field)</code></td><td>Average</td><td><code>stats avg(response_time)</code></td></tr>
+                        <tr><td><code>min(field)</code>, <code>max(field)</code></td><td>Min/max values</td><td><code>stats min(_time) as first_seen</code></td></tr>
+                        <tr><td><code>values(field)</code></td><td>List unique values</td><td><code>stats values(action) by user</code></td></tr>
+                        <tr><td><code>list(field)</code></td><td>List all values</td><td><code>stats list(dest_ip) by src_ip</code></td></tr>
+                        <tr><td><code>earliest(field)</code></td><td>First value by time</td><td><code>stats earliest(_time) as first</code></td></tr>
+                        <tr><td><code>latest(field)</code></td><td>Last value by time</td><td><code>stats latest(_time) as last</code></td></tr>
+                        <tr><td><code>stdev(field)</code></td><td>Standard deviation</td><td><code>stats stdev(bytes) by host</code></td></tr>
+                        <tr><td><code>perc95(field)</code></td><td>95th percentile</td><td><code>stats perc95(response_time)</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Eval Functions</h2>
+                <table>
+                    <thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>if(condition, true, false)</code></td><td>Conditional</td><td><code>eval status=if(code=200, "OK", "Error")</code></td></tr>
+                        <tr><td><code>case(cond1, val1, ...)</code></td><td>Multiple conditions</td><td><code>eval severity=case(level>7,"High",level>4,"Med",true(),"Low")</code></td></tr>
+                        <tr><td><code>coalesce(field1, field2)</code></td><td>First non-null</td><td><code>eval user=coalesce(username, account)</code></td></tr>
+                        <tr><td><code>isnull(field)</code></td><td>Check if null</td><td><code>where isnull(user)</code></td></tr>
+                        <tr><td><code>isnotnull(field)</code></td><td>Check if not null</td><td><code>where isnotnull(src_ip)</code></td></tr>
+                        <tr><td><code>lower(field)</code>, <code>upper(field)</code></td><td>Case conversion</td><td><code>eval user=lower(user)</code></td></tr>
+                        <tr><td><code>len(field)</code></td><td>String length</td><td><code>eval cmdlen=len(CommandLine)</code></td></tr>
+                        <tr><td><code>substr(field, start, len)</code></td><td>Substring</td><td><code>eval domain=substr(email, 5, 10)</code></td></tr>
+                        <tr><td><code>split(field, delim)</code></td><td>Split to multivalue</td><td><code>eval parts=split(path, "/")</code></td></tr>
+                        <tr><td><code>mvindex(field, index)</code></td><td>Get multivalue item</td><td><code>eval first=mvindex(parts, 0)</code></td></tr>
+                        <tr><td><code>mvcount(field)</code></td><td>Count multivalue items</td><td><code>eval count=mvcount(ips)</code></td></tr>
+                        <tr><td><code>strftime(_time, format)</code></td><td>Format time</td><td><code>eval hour=strftime(_time, "%H")</code></td></tr>
+                        <tr><td><code>strptime(field, format)</code></td><td>Parse time string</td><td><code>eval epoch=strptime(date, "%Y-%m-%d")</code></td></tr>
+                        <tr><td><code>now()</code></td><td>Current epoch time</td><td><code>eval age=now()-_time</code></td></tr>
+                        <tr><td><code>relative_time(time, spec)</code></td><td>Relative time calc</td><td><code>eval yesterday=relative_time(now(), "-1d@d")</code></td></tr>
+                        <tr><td><code>cidrmatch(cidr, ip)</code></td><td>CIDR matching</td><td><code>where cidrmatch("10.0.0.0/8", src_ip)</code></td></tr>
+                        <tr><td><code>match(field, regex)</code></td><td>Regex match</td><td><code>where match(user, "^admin")</code></td></tr>
+                        <tr><td><code>replace(field, regex, new)</code></td><td>Regex replace</td><td><code>eval clean=replace(data, "\s+", " ")</code></td></tr>
+                        <tr><td><code>tonumber(field)</code></td><td>Convert to number</td><td><code>eval port=tonumber(dest_port)</code></td></tr>
+                        <tr><td><code>tostring(field)</code></td><td>Convert to string</td><td><code>eval port_str=tostring(port)</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Security Investigation Patterns</h2>
+                <h3>Pattern 1: Find and Count</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find failed logins and count by user</span>
+index=wineventlog EventCode=4625 earliest=-24h
+| stats count as FailedAttempts, 
+        dc(Source_Network_Address) as UniqueIPs,
+        values(Source_Network_Address) as SourceIPs
+        by Account_Name
+| where FailedAttempts > 5
+| sort -FailedAttempts</pre>
+                </div>
+
+                <h3>Pattern 2: Timeline Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Track user activity over time</span>
+index=proxy user="suspicious_user" earliest=-7d
+| timechart span=1h count by action
+| addtotals</pre>
+                </div>
+
+                <h3>Pattern 3: Baseline Comparison</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Compare today vs baseline</span>
+index=firewall action=blocked earliest=-1d
+| stats count as today_count by dest_port
+| join dest_port 
+    [search index=firewall action=blocked earliest=-8d latest=-1d
+    | stats avg(count) as baseline by dest_port]
+| eval deviation = (today_count - baseline) / baseline * 100
+| where deviation > 200
+| sort -deviation</pre>
+                </div>
+
+                <h3>Pattern 4: Session Reconstruction</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Reconstruct user session</span>
+index=wineventlog (EventCode=4624 OR EventCode=4634 OR EventCode=4625)
+    Account_Name="target_user" earliest=-24h
+| transaction Account_Name, Logon_ID maxspan=12h
+| table _time, Account_Name, eventcount, duration, 
+        values(EventCode), values(Workstation_Name)</pre>
+                </div>
+
+                <h2>Performance Best Practices</h2>
+                <ul>
+                    <li><strong>Always specify index and time range</strong> - Never search all data</li>
+                    <li><strong>Filter early</strong> - Put most restrictive filters first</li>
+                    <li><strong>Avoid wildcards at start</strong> - <code>*admin</code> is slow, <code>admin*</code> is fast</li>
+                    <li><strong>Use fields command</strong> - Limit fields early: <code>| fields user, src_ip, action</code></li>
+                    <li><strong>Use tstats for data models</strong> - 10-100x faster than raw search</li>
+                    <li><strong>Avoid real-time if possible</strong> - Use scheduled searches instead</li>
+                </ul>
+
+            
+                </section>
+            
+                <section class="content-section">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Explain the basic structure of an SPL query.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p>SPL queries start with a search command (often implicit) that retrieves events from indexes. The basic form is: <code>index=main sourcetype=access_combined</code> - this searches the main index for web access logs.</p>
+                            <p>You pipe results through commands: <code>| stats count by status</code> aggregates, <code>| where count > 100</code> filters, <code>| sort -count</code> orders results. The pipe character passes data from one command to the next.</p>
+                            <p>Time is fundamental in Splunk - every event has _time. Use the time picker in the UI or specify in the search: <code>earliest=-24h latest=now</code>.</p>
+                            <p>Key commands for beginners: <strong>stats</strong> for aggregation, <strong>table</strong> for selecting fields, <strong>where/search</strong> for filtering, <strong>eval</strong> for calculations, <strong>rex</strong> for regex extraction.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>What's the difference between search-time and index-time field extraction?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>Index-time extraction</strong> happens when data is ingested. Fields are extracted and stored in the index. Pros: faster search performance. Cons: increases index size, can't change without re-indexing, only works for fields known at ingestion.</p>
+                            <p><strong>Search-time extraction</strong> happens when you run a query. The raw event is parsed on the fly. Pros: flexible, can add/change extractions anytime, doesn't increase storage. Cons: slower for complex extractions on large datasets.</p>
+                            <p>Best practice: use index-time for critical, frequently-searched fields (like source_ip from firewall logs). Use search-time for less common fields or when you're still developing your data model. Most TAs use search-time extractions for flexibility.</p>
+                            <p>You define index-time in transforms.conf, search-time in props.conf with EXTRACT or REPORT attributes.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Splunk Enterprise Security Guide</p>
+                    <p>Personal Reference Guide</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

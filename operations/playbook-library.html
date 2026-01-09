@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IR Playbook Library - Incident Response Procedures | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.65rem; overflow-x: auto; line-height: 1.4; white-space: pre; }
+        .playbook-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #e74c3c; }
+        .playbook-card.phishing { border-left-color: #f5a623; }
+        .playbook-card.malware { border-left-color: #e74c3c; }
+        .playbook-card.ransomware { border-left-color: #8e44ad; }
+        .playbook-card.lateral { border-left-color: #3498db; }
+        .playbook-card.exfil { border-left-color: #1abc9c; }
+        .severity-badge { padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .sev-critical { background: #e74c3c; color: white; }
+        .sev-high { background: #f5a623; color: white; }
+        .sev-medium { background: #3498db; color: white; }
+        .action-immediate { background: rgba(231,76,60,0.2); border: 1px solid #e74c3c; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; }
+        .action-investigate { background: rgba(52,152,219,0.2); border: 1px solid #3498db; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; }
+        .action-contain { background: rgba(241,196,15,0.2); border: 1px solid #f1c40f; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; }
+        .action-recover { background: rgba(46,204,113,0.2); border: 1px solid #2ecc71; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                    <a href="shift-handoff.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Shift Handoff</a>
+                    <a href="soc-metrics.html" class="nav-link"><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Use Case Management</div>
+                    <a href="use-case-lifecycle.html" class="nav-link"><i class="fas fa-recycle"></i> Use Case Lifecycle</a>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cogs"></i> Detection Engineering</a>
+                    <a href="mitre-mapping.html" class="nav-link"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</a>
+                    <a href="tuning-optimization.html" class="nav-link"><i class="fas fa-sliders-h"></i> Tuning & Optimization</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Incident Response</div>
+                    <a href="ir-integration.html" class="nav-link"><i class="fas fa-ambulance"></i> IR Integration</a>
+                    <a href="playbook-library.html" class="nav-link active"><i class="fas fa-book"></i> Playbook Library</a>
+                    <a href="containment-procedures.html" class="nav-link"><i class="fas fa-lock"></i> Containment Procedures</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="soc-operations.html">Operations</a>
+                    <span class="separator">/</span>
+                    <span class="current">Playbook Library</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-book"></i> Incident Response Playbook Library</h1>
+                    <p class="lead">Step-by-step response procedures for common security incidents with decision trees and containment actions</p>
+                </div>
+
+                <!-- Playbook Index -->
+                <section class="content-section">
+                    <h2><i class="fas fa-list"></i> Playbook Index</h2>
+                    
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Playbook</th>
+                                <th>Severity</th>
+                                <th>MITRE Tactics</th>
+                                <th>Avg Resolution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a href="#phishing">PB-001: Phishing Attack</a></td>
+                                <td><span class="severity-badge sev-high">HIGH</span></td>
+                                <td>Initial Access</td>
+                                <td>2-4 hours</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#malware">PB-002: Malware Infection</a></td>
+                                <td><span class="severity-badge sev-high">HIGH</span></td>
+                                <td>Execution, Persistence</td>
+                                <td>4-8 hours</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#ransomware">PB-003: Ransomware</a></td>
+                                <td><span class="severity-badge sev-critical">CRITICAL</span></td>
+                                <td>Impact</td>
+                                <td>Days-Weeks</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#lateral">PB-004: Lateral Movement</a></td>
+                                <td><span class="severity-badge sev-critical">CRITICAL</span></td>
+                                <td>Lateral Movement</td>
+                                <td>4-24 hours</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#exfil">PB-005: Data Exfiltration</a></td>
+                                <td><span class="severity-badge sev-critical">CRITICAL</span></td>
+                                <td>Exfiltration</td>
+                                <td>8-48 hours</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#account">PB-006: Account Compromise</a></td>
+                                <td><span class="severity-badge sev-high">HIGH</span></td>
+                                <td>Credential Access</td>
+                                <td>2-4 hours</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#insider">PB-007: Insider Threat</a></td>
+                                <td><span class="severity-badge sev-high">HIGH</span></td>
+                                <td>Collection, Exfiltration</td>
+                                <td>Days</td>
+                            </tr>
+                            <tr>
+                                <td><a href="#dos">PB-008: DDoS Attack</a></td>
+                                <td><span class="severity-badge sev-medium">MEDIUM</span></td>
+                                <td>Impact</td>
+                                <td>1-4 hours</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Phishing Playbook -->
+                <section class="content-section" id="phishing">
+                    <h2><i class="fas fa-fish"></i> PB-001: Phishing Attack Response</h2>
+
+                    <div class="playbook-card phishing">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">Phishing Attack Response Playbook</h3>
+                            <span class="severity-badge sev-high">HIGH SEVERITY</span>
+                        </div>
+                        <p><strong>Trigger:</strong> User reported phishing, Email gateway alert, User clicked malicious link</p>
+                        <p><strong>MITRE:</strong> T1566 (Phishing), T1566.001 (Spearphishing Attachment), T1566.002 (Spearphishing Link)</p>
+                    </div>
+
+                    <div class="workflow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    PHISHING INCIDENT RESPONSE WORKFLOW                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                              │
+│                                         ┌─────────────────────┐                                              │
+│                                         │   PHISHING ALERT    │                                              │
+│                                         │   RECEIVED          │                                              │
+│                                         └──────────┬──────────┘                                              │
+│                                                    │                                                         │
+│                                                    ▼                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 1: INITIAL TRIAGE (Target: 15 minutes)                                                        │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Identify the phishing email (sender, subject, time received)                                     │    │
+│  │  □ Determine scope: How many users received this email?                                             │    │
+│  │  □ Extract IOCs: sender address, URLs, attachment hashes                                            │    │
+│  │  □ Check threat intel for known campaign                                                            │    │
+│  │                                                                                                      │    │
+│  │  QUERY - Find all recipients:                                                                        │    │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │  │ // Sentinel                                                                                   │   │    │
+│  │  │ EmailEvents                                                                                   │   │    │
+│  │  │ | where SenderFromAddress == "attacker@malicious.com"                                         │   │    │
+│  │  │    or Subject contains "Urgent: Invoice"                                                      │   │    │
+│  │  │ | summarize Recipients=make_set(RecipientEmailAddress), Count=count()                         │   │    │
+│  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                    │                                                         │
+│                                                    ▼                                                         │
+│                              ┌─────────────────────────────────────────┐                                    │
+│                              │  Did any user CLICK the link or         │                                    │
+│                              │  OPEN the attachment?                   │                                    │
+│                              └───────────────────┬─────────────────────┘                                    │
+│                                                  │                                                           │
+│                           ┌──────────────────────┼──────────────────────┐                                   │
+│                           │                      │                      │                                   │
+│                           ▼                      ▼                      ▼                                   │
+│                      ┌─────────┐           ┌─────────┐           ┌─────────┐                                │
+│                      │   NO    │           │   YES   │           │ UNKNOWN │                                │
+│                      │ CLICKS  │           │ CLICKED │           │         │                                │
+│                      └────┬────┘           └────┬────┘           └────┬────┘                                │
+│                           │                     │                     │                                      │
+│                           ▼                     │                     ▼                                      │
+│              ┌────────────────────┐             │        ┌────────────────────┐                             │
+│              │ PHASE 2A: CONTAIN  │             │        │ Search proxy logs  │                             │
+│              │ (Email only)       │             │        │ for URL access     │                             │
+│              │                    │             │        └─────────┬──────────┘                             │
+│              │ □ Block sender     │             │                  │                                        │
+│              │ □ Delete from all  │             │        ┌─────────┴──────────┐                             │
+│              │   mailboxes        │             │        │                    │                             │
+│              │ □ Add URL/hash to  │             │        ▼                    ▼                             │
+│              │   block lists      │             │   [Accessed]           [Not Accessed]                     │
+│              │ □ Notify users     │             │        │                    │                             │
+│              │                    │             │        │                    │                             │
+│              │ CLOSE: Prevented   │             │        │               Go to 2A                           │
+│              └────────────────────┘             │        │                                                   │
+│                                                 ▼        ▼                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 2B: INVESTIGATE USER ACTIVITY (Target: 30 minutes)                                            │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Identify all users who clicked/opened                                                            │    │
+│  │  □ Check if credentials were entered on phishing page                                               │    │
+│  │  □ Review authentication logs for affected users (post-click)                                       │    │
+│  │  □ Check for inbox rule creation (forwarding, deletion)                                             │    │
+│  │  □ Review endpoint for malware execution (if attachment)                                            │    │
+│  │                                                                                                      │    │
+│  │  DECISION POINT: Was the account compromised?                                                        │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                    │                                                         │
+│                           ┌────────────────────────┼────────────────────────┐                               │
+│                           │                        │                        │                               │
+│                           ▼                        ▼                        ▼                               │
+│                   ┌──────────────┐         ┌──────────────┐         ┌──────────────┐                        │
+│                   │  CREDENTIALS │         │   MALWARE    │         │ NO EVIDENCE  │                        │
+│                   │   ENTERED    │         │  DOWNLOADED  │         │ OF COMPROMISE│                        │
+│                   └──────┬───────┘         └──────┬───────┘         └──────┬───────┘                        │
+│                          │                        │                        │                                │
+│                          ▼                        ▼                        ▼                                │
+│  ┌─────────────────────────────┐  ┌─────────────────────────────┐  ┌─────────────────────┐                  │
+│  │ PHASE 3A: ACCOUNT CONTAIN  │  │ PHASE 3B: ENDPOINT CONTAIN  │  │ PHASE 3C: PREVENT   │                  │
+│  │                             │  │                             │  │                     │                  │
+│  │ □ Reset user password       │  │ □ Isolate endpoint          │  │ □ Block IOCs       │                  │
+│  │ □ Revoke all sessions       │  │ □ Run full AV scan          │  │ □ Delete email     │                  │
+│  │ □ Review MFA settings       │  │ □ Collect forensic image    │  │ □ Notify user      │                  │
+│  │ □ Check for inbox rules     │  │ □ Analyze malware           │  │ □ Security         │                  │
+│  │ □ Review recent activity    │  │ □ Check for persistence     │  │   awareness note   │                  │
+│  │ □ Notify user              │  │ □ Check lateral movement    │  │                     │                  │
+│  │                             │  │                             │  │ CLOSE: Prevented   │                  │
+│  │ → Go to Account Compromise  │  │ → Go to Malware Playbook    │  └─────────────────────┘                  │
+│  │   Playbook (PB-006)        │  │   (PB-002)                  │                                            │
+│  └─────────────────────────────┘  └─────────────────────────────┘                                            │
+│                                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 4: RECOVERY & LESSONS LEARNED                                                                  │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Confirm all affected users remediated                                                            │    │
+│  │  □ Verify malicious emails deleted from all mailboxes                                               │    │
+│  │  □ Update email filtering rules                                                                     │    │
+│  │  □ Add IOCs to permanent blocklist                                                                  │    │
+│  │  □ Send company-wide awareness alert (if widespread)                                                │    │
+│  │  □ Schedule targeted training for affected users                                                    │    │
+│  │  □ Document incident and update playbook                                                            │    │
+│  │  □ Create threat intel report if novel campaign                                                     │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+
+                    <h4>Key Queries for Phishing Investigation</h4>
+                    
+                    <div class="action-investigate">
+                        <h5>Find Users Who Clicked Link</h5>
+                        <div class="code-block">
+                            <pre><code>// Sentinel - Proxy logs for URL access
+CommonSecurityLog
+| where DeviceVendor == "Zscaler" or DeviceVendor == "ProofPoint"
+| where RequestURL contains "malicious-domain.com"
+| summarize ClickTime=min(TimeGenerated) by SourceUserName, SourceIP
+| join kind=inner (
+    EmailEvents 
+    | where SenderFromAddress == "attacker@phish.com"
+) on $left.SourceUserName == $right.RecipientEmailAddress</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="action-investigate">
+                        <h5>Check for Suspicious Inbox Rules</h5>
+                        <div class="code-block">
+                            <pre><code>// Sentinel - O365 Inbox Rule Creation
+OfficeActivity
+| where Operation == "New-InboxRule" or Operation == "Set-InboxRule"
+| where UserId in ("affected.user@company.com")
+| extend RuleName = tostring(parse_json(Parameters)[0].Value)
+| where RuleName contains "forward" or RuleName contains "delete"
+| project TimeGenerated, UserId, Operation, RuleName, ClientIP</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="action-contain">
+                        <h5>Containment Actions</h5>
+                        <ul>
+                            <li><strong>Block sender:</strong> Add to email blocklist in gateway</li>
+                            <li><strong>Delete from mailboxes:</strong> Use Content Search in O365 Compliance Center</li>
+                            <li><strong>Block URLs:</strong> Add to proxy blocklist, DNS sinkhole</li>
+                            <li><strong>Block attachment hash:</strong> Add to EDR prevention policy</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Malware Playbook -->
+                <section class="content-section" id="malware">
+                    <h2><i class="fas fa-virus"></i> PB-002: Malware Infection Response</h2>
+
+                    <div class="playbook-card malware">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">Malware Infection Response Playbook</h3>
+                            <span class="severity-badge sev-high">HIGH SEVERITY</span>
+                        </div>
+                        <p><strong>Trigger:</strong> EDR/AV alert, Suspicious process detected, C2 communication identified</p>
+                        <p><strong>MITRE:</strong> T1059 (Command and Scripting Interpreter), T1055 (Process Injection), T1547 (Boot/Logon Autostart)</p>
+                    </div>
+
+                    <div class="workflow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    MALWARE INCIDENT RESPONSE WORKFLOW                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                              │
+│                                         ┌─────────────────────┐                                              │
+│                                         │   MALWARE ALERT     │                                              │
+│                                         │   (EDR/AV/SIEM)     │                                              │
+│                                         └──────────┬──────────┘                                              │
+│                                                    │                                                         │
+│                                                    ▼                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 1: INITIAL ASSESSMENT (Target: 10 minutes)                                                    │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Identify affected endpoint (hostname, IP, user)                                                  │    │
+│  │  □ Determine malware type from detection name                                                       │    │
+│  │  □ Check asset criticality (crown jewel? privileged user?)                                          │    │
+│  │  □ Note detection action: Blocked, Quarantined, or Active?                                          │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                    │                                                         │
+│                                                    ▼                                                         │
+│                              ┌─────────────────────────────────────────┐                                    │
+│                              │  Was the malware BLOCKED/QUARANTINED    │                                    │
+│                              │  or is it ACTIVELY RUNNING?             │                                    │
+│                              └───────────────────┬─────────────────────┘                                    │
+│                                                  │                                                           │
+│                           ┌──────────────────────┴──────────────────────┐                                   │
+│                           │                                             │                                   │
+│                           ▼                                             ▼                                   │
+│                   ┌───────────────┐                             ┌───────────────┐                           │
+│                   │   BLOCKED/    │                             │    ACTIVE     │                           │
+│                   │  QUARANTINED  │                             │   EXECUTION   │                           │
+│                   └───────┬───────┘                             └───────┬───────┘                           │
+│                           │                                             │                                   │
+│                           ▼                                             ▼                                   │
+│          ┌────────────────────────────┐              ┌────────────────────────────────────┐                 │
+│          │ Lower priority path        │              │ ⚠️  IMMEDIATE CONTAINMENT REQUIRED │                 │
+│          │                            │              │                                    │                 │
+│          │ □ Verify quarantine        │              │ □ ISOLATE ENDPOINT NOW             │                 │
+│          │ □ Check for persistence    │              │   (Network isolation via EDR)      │                 │
+│          │ □ Review process history   │              │ □ Preserve volatile evidence       │                 │
+│          │ □ Scan for related files   │              │ □ Notify T2/T3 immediately         │                 │
+│          │                            │              │ □ Check for lateral movement        │                 │
+│          └────────────┬───────────────┘              └─────────────────┬──────────────────┘                 │
+│                       │                                                │                                    │
+│                       └──────────────────────┬─────────────────────────┘                                    │
+│                                              │                                                               │
+│                                              ▼                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 2: SCOPE DETERMINATION (Target: 30 minutes)                                                   │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Collect malware sample (if available)                                                            │    │
+│  │  □ Analyze malware behavior (sandbox, threat intel)                                                 │    │
+│  │  □ Extract all IOCs:                                                                                │    │
+│  │      - File hashes (MD5, SHA256)                                                                    │    │
+│  │      - Network indicators (IPs, domains)                                                            │    │
+│  │      - File paths and names                                                                         │    │
+│  │      - Registry keys                                                                                │    │
+│  │      - Process names                                                                                │    │
+│  │  □ Search environment for same IOCs (lateral spread)                                                │    │
+│  │                                                                                                      │    │
+│  │  HUNT QUERY - Find other infected endpoints:                                                         │    │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │  │ // Sentinel - MDE                                                                             │   │    │
+│  │  │ DeviceFileEvents                                                                              │   │    │
+│  │  │ | where SHA256 == "malware_hash_here"                                                         │   │    │
+│  │  │    or FileName == "malware.exe"                                                               │   │    │
+│  │  │ | summarize Devices=make_set(DeviceName), Count=count()                                       │   │    │
+│  │  │                                                                                               │   │    │
+│  │  │ // Check C2 communication                                                                     │   │    │
+│  │  │ DeviceNetworkEvents                                                                           │   │    │
+│  │  │ | where RemoteIP in ("C2_IP_1", "C2_IP_2") or RemoteUrl contains "malicious.com"             │   │    │
+│  │  │ | summarize by DeviceName, RemoteIP, RemoteUrl                                                │   │    │
+│  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                    │                                                         │
+│                                                    ▼                                                         │
+│                              ┌─────────────────────────────────────────┐                                    │
+│                              │  Is this a KNOWN commodity malware      │                                    │
+│                              │  or TARGETED/APT attack?                │                                    │
+│                              └───────────────────┬─────────────────────┘                                    │
+│                                                  │                                                           │
+│                           ┌──────────────────────┴──────────────────────┐                                   │
+│                           │                                             │                                   │
+│                           ▼                                             ▼                                   │
+│                   ┌───────────────┐                             ┌───────────────┐                           │
+│                   │  COMMODITY    │                             │  TARGETED/    │                           │
+│                   │  MALWARE      │                             │  APT          │                           │
+│                   └───────┬───────┘                             └───────┬───────┘                           │
+│                           │                                             │                                   │
+│                           ▼                                             ▼                                   │
+│          ┌────────────────────────────┐              ┌────────────────────────────────────┐                 │
+│          │ Standard remediation:      │              │ ⚠️  ESCALATE TO IR TEAM/T3         │                 │
+│          │                            │              │                                    │                 │
+│          │ □ Remove malware           │              │ □ Full forensic investigation      │                 │
+│          │ □ Clean persistence        │              │ □ Assume broader compromise        │                 │
+│          │ □ Reimage if needed        │              │ □ Threat hunt across environment   │                 │
+│          │ □ Monitor for reinfection  │              │ □ Engage external IR if needed     │                 │
+│          │                            │              │ □ Consider legal/regulatory notify │                 │
+│          └────────────────────────────┘              └────────────────────────────────────┘                 │
+│                                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 3: CONTAINMENT ACTIONS                                                                        │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  ENDPOINT:                              NETWORK:                           IDENTITY:                 │    │
+│  │  □ Isolate via EDR                      □ Block C2 IPs at firewall         □ Reset affected user pwd │    │
+│  │  □ Kill malicious processes             □ Block C2 domains at DNS          □ Revoke active sessions  │    │
+│  │  □ Delete malware files                 □ Add to proxy blocklist           □ Review for persistence  │    │
+│  │  □ Remove persistence                   □ Hunt for other connections       □ Check for priv escalation│    │
+│  │  □ Full AV/EDR scan                     □ Enable enhanced logging                                    │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 4: ERADICATION & RECOVERY                                                                     │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  □ Verify all malware removed from affected systems                                                 │    │
+│  │  □ Confirm no persistence mechanisms remain                                                         │    │
+│  │  □ Restore from clean backup OR reimage (preferred for confirmed compromise)                        │    │
+│  │  □ Remove network isolation                                                                         │    │
+│  │  □ Monitor endpoint closely for 72 hours                                                            │    │
+│  │  □ Confirm no reinfection or callback attempts                                                      │    │
+│  │  □ Add IOCs to permanent detection                                                                  │    │
+│  │  □ Document and close incident                                                                      │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+                </section>
+
+                <!-- Ransomware Playbook -->
+                <section class="content-section" id="ransomware">
+                    <h2><i class="fas fa-lock"></i> PB-003: Ransomware Response</h2>
+
+                    <div class="playbook-card ransomware">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">Ransomware Response Playbook</h3>
+                            <span class="severity-badge sev-critical">CRITICAL SEVERITY</span>
+                        </div>
+                        <p><strong>Trigger:</strong> Ransom note discovered, Mass file encryption detected, EDR ransomware alert</p>
+                        <p><strong>MITRE:</strong> T1486 (Data Encrypted for Impact)</p>
+                    </div>
+
+                    <div class="action-immediate">
+                        <h4>⚠️ IMMEDIATE ACTIONS (First 5 Minutes)</h4>
+                        <ol>
+                            <li><strong>DO NOT POWER OFF</strong> infected systems (preserves memory evidence)</li>
+                            <li><strong>ISOLATE</strong> - Network disconnect all affected systems immediately</li>
+                            <li><strong>ISOLATE</strong> - Consider isolating entire network segment if spread unclear</li>
+                            <li><strong>PRESERVE</strong> - Take photos of ransom notes, do not interact with attacker</li>
+                            <li><strong>ESCALATE</strong> - Notify CISO, IR team, Legal immediately</li>
+                        </ol>
+                    </div>
+
+                    <div class="workflow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    RANSOMWARE RESPONSE DECISION TREE                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                              │
+│                                    ┌────────────────────────┐                                                │
+│                                    │  RANSOMWARE DETECTED   │                                                │
+│                                    │                        │                                                │
+│                                    │  ⚠️ CRITICAL INCIDENT  │                                                │
+│                                    └───────────┬────────────┘                                                │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│                              ┌─────────────────────────────────────┐                                        │
+│                              │  IMMEDIATE: Isolate affected systems │                                        │
+│                              │  (within 5 minutes of detection)    │                                        │
+│                              └─────────────────┬───────────────────┘                                        │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│                              ┌─────────────────────────────────────┐                                        │
+│                              │  Is the ransomware ACTIVELY         │                                        │
+│                              │  SPREADING to other systems?        │                                        │
+│                              └─────────────────┬───────────────────┘                                        │
+│                                                │                                                             │
+│                         ┌──────────────────────┴──────────────────────┐                                     │
+│                         │                                             │                                     │
+│                         ▼                                             ▼                                     │
+│                    ┌─────────┐                                   ┌─────────┐                                │
+│                    │   YES   │                                   │   NO    │                                │
+│                    │SPREADING│                                   │CONTAINED│                                │
+│                    └────┬────┘                                   └────┬────┘                                │
+│                         │                                             │                                     │
+│                         ▼                                             ▼                                     │
+│      ┌──────────────────────────────────────┐          ┌──────────────────────────────────┐                │
+│      │ ⚠️ ENTERPRISE-WIDE RESPONSE           │          │ SCOPED RESPONSE                  │                │
+│      │                                      │          │                                  │                │
+│      │ □ Isolate entire network segment    │          │ □ Isolate affected systems only  │                │
+│      │ □ Disable domain admin accounts     │          │ □ Hunt for IOCs on other systems │                │
+│      │ □ Block lateral movement ports      │          │ □ Verify backup integrity        │                │
+│      │ □ Consider full network shutdown    │          │ □ Prepare for recovery           │                │
+│      │ □ Activate BC/DR plan               │          │                                  │                │
+│      └──────────────────────────────────────┘          └──────────────────────────────────┘                │
+│                         │                                             │                                     │
+│                         └──────────────────────┬──────────────────────┘                                     │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│                              ┌─────────────────────────────────────┐                                        │
+│                              │  PARALLEL WORKSTREAMS               │                                        │
+│                              └─────────────────────────────────────┘                                        │
+│                                                │                                                             │
+│         ┌──────────────────────────────────────┼──────────────────────────────────────┐                     │
+│         │                                      │                                      │                     │
+│         ▼                                      ▼                                      ▼                     │
+│  ┌────────────────────┐              ┌────────────────────┐              ┌────────────────────┐             │
+│  │ INVESTIGATION      │              │ RECOVERY PLANNING  │              │ COMMUNICATION      │             │
+│  │                    │              │                    │              │                    │             │
+│  │ □ Identify patient │              │ □ Assess backup    │              │ □ Notify exec team │             │
+│  │   zero             │              │   availability     │              │ □ Legal counsel    │             │
+│  │ □ Determine entry  │              │ □ Verify backups   │              │ □ Insurance carrier│             │
+│  │   vector           │              │   not encrypted    │              │ □ Law enforcement  │             │
+│  │ □ Map spread path  │              │ □ Estimate recovery│              │ □ Regulatory bodies│             │
+│  │ □ Identify variant │              │   time             │              │ □ Customer/partner │             │
+│  │ □ Check for data   │              │ □ Prioritize       │              │   notification     │             │
+│  │   exfil (double    │              │   critical systems │              │ □ PR/Media         │             │
+│  │   extortion)       │              │                    │              │                    │             │
+│  └────────────────────┘              └────────────────────┘              └────────────────────┘             │
+│                                                                                                              │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│                              ┌─────────────────────────────────────┐                                        │
+│                              │  RANSOM PAYMENT DECISION            │                                        │
+│                              │  (Executive/Legal/Insurance)        │                                        │
+│                              │                                     │                                        │
+│                              │  Factors:                           │                                        │
+│                              │  • Backup availability              │                                        │
+│                              │  • Business impact of downtime      │                                        │
+│                              │  • Decryptor availability (free)    │                                        │
+│                              │  • Legal implications               │                                        │
+│                              │  • Insurance coverage               │                                        │
+│                              │  • Attacker reliability             │                                        │
+│                              │                                     │                                        │
+│                              │  ⚠️ FBI recommends NOT paying       │                                        │
+│                              └─────────────────────────────────────┘                                        │
+│                                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+                </section>
+
+                <!-- Account Compromise -->
+                <section class="content-section" id="account">
+                    <h2><i class="fas fa-user-secret"></i> PB-006: Account Compromise Response</h2>
+
+                    <div class="playbook-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">Account Compromise Response Playbook</h3>
+                            <span class="severity-badge sev-high">HIGH SEVERITY</span>
+                        </div>
+                        <p><strong>Trigger:</strong> Impossible travel, Unfamiliar sign-in properties, MFA fatigue attack, Credential leak detected</p>
+                        <p><strong>MITRE:</strong> T1078 (Valid Accounts), T1110 (Brute Force), T1539 (Steal Web Session Cookie)</p>
+                    </div>
+
+                    <div class="workflow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                ACCOUNT COMPROMISE RESPONSE WORKFLOW                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                              │
+│                                    ┌────────────────────────┐                                                │
+│                                    │  ACCOUNT COMPROMISE    │                                                │
+│                                    │  ALERT                 │                                                │
+│                                    └───────────┬────────────┘                                                │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 1: IMMEDIATE CONTAINMENT (Target: 15 minutes)                                                 │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  ☐ Reset user password immediately                                                                  │    │
+│  │  ☐ Revoke all active sessions and refresh tokens                                                   │    │
+│  │  ☐ Disable account if confirmed malicious activity                                                  │    │
+│  │  ☐ Block sign-in from suspicious locations/IPs                                                      │    │
+│  │                                                                                                      │    │
+│  │  AZURE AD COMMANDS:                                                                                  │    │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │  │ # Revoke all sessions                                                                        │   │    │
+│  │  │ Revoke-AzureADUserAllRefreshToken -ObjectId "user-object-id"                                 │   │    │
+│  │  │                                                                                              │   │    │
+│  │  │ # Reset password                                                                             │   │    │
+│  │  │ Set-AzureADUserPassword -ObjectId "user-object-id" -Password $NewPassword                    │   │    │
+│  │  │                                                                                              │   │    │
+│  │  │ # Block sign-in                                                                              │   │    │
+│  │  │ Set-AzureADUser -ObjectId "user-object-id" -AccountEnabled $false                            │   │    │
+│  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 2: INVESTIGATE ATTACKER ACTIVITY (Target: 1 hour)                                             │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  ☐ Review sign-in logs for unauthorized access                                                      │    │
+│  │  ☐ Check email inbox rules (forwarding, deletion rules)                                             │    │
+│  │  ☐ Review email sent/received during compromise window                                              │    │
+│  │  ☐ Check for OAuth app consents granted                                                             │    │
+│  │  ☐ Review file access (OneDrive, SharePoint)                                                        │    │
+│  │  ☐ Check for MFA method changes                                                                     │    │
+│  │  ☐ Review Azure AD audit logs for admin actions                                                     │    │
+│  │                                                                                                      │    │
+│  │  INVESTIGATION QUERIES:                                                                              │    │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │  │ // Sign-in activity                                                                          │   │    │
+│  │  │ SigninLogs                                                                                   │   │    │
+│  │  │ | where UserPrincipalName == "compromised.user@company.com"                                  │   │    │
+│  │  │ | where TimeGenerated > ago(7d)                                                              │   │    │
+│  │  │ | project TimeGenerated, IPAddress, Location, AppDisplayName, ResultType, DeviceDetail      │   │    │
+│  │  │                                                                                              │   │    │
+│  │  │ // Inbox rules                                                                               │   │    │
+│  │  │ OfficeActivity                                                                               │   │    │
+│  │  │ | where UserId == "compromised.user@company.com"                                             │   │    │
+│  │  │ | where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")                  │   │    │
+│  │  │                                                                                              │   │    │
+│  │  │ // OAuth consents                                                                            │   │    │
+│  │  │ AuditLogs                                                                                    │   │    │
+│  │  │ | where OperationName == "Consent to application"                                            │   │    │
+│  │  │ | where InitiatedBy.user.userPrincipalName == "compromised.user@company.com"                 │   │    │
+│  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                │                                                             │
+│                                                ▼                                                             │
+│                              ┌─────────────────────────────────────┐                                        │
+│                              │  WHAT DID THE ATTACKER DO?          │                                        │
+│                              └─────────────────────────────────────┘                                        │
+│                                                │                                                             │
+│         ┌──────────────────┬───────────────────┼───────────────────┬──────────────────┐                     │
+│         │                  │                   │                   │                  │                     │
+│         ▼                  ▼                   ▼                   ▼                  ▼                     │
+│  ┌─────────────┐   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   ┌─────────────┐                 │
+│  │ SENT PHISH  │   │ ACCESSED    │    │ CREATED     │    │ INSTALLED   │   │ ELEVATED    │                 │
+│  │ EMAILS      │   │ SENSITIVE   │    │ INBOX       │    │ MALICIOUS   │   │ PRIVILEGES  │                 │
+│  │             │   │ DATA        │    │ RULES       │    │ OAUTH APP   │   │             │                 │
+│  └──────┬──────┘   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘   └──────┬──────┘                 │
+│         │                  │                  │                  │                  │                      │
+│         ▼                  ▼                  ▼                  ▼                  ▼                      │
+│  ☐ Notify recip-   ☐ Assess data     ☐ Remove          ☐ Revoke app      ☐ Remove added                  │
+│    ients           ☐ Consider data      malicious        consent            roles                          │
+│  ☐ Block sender      breach            rules          ☐ Block app ID    ☐ Review all                      │
+│  ☐ Delete emails   ☐ Legal/compliance                                      changes made                    │
+│                                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ PHASE 3: REMEDIATION                                                                                │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                                      │    │
+│  │  ☐ Remove all malicious inbox rules                                                                 │    │
+│  │  ☐ Revoke malicious OAuth app consents                                                              │    │
+│  │  ☐ Reset password to strong value                                                                   │    │
+│  │  ☐ Re-register MFA (require new device enrollment)                                                  │    │
+│  │  ☐ Review and remove unknown MFA methods                                                            │    │
+│  │  ☐ Re-enable account with monitoring                                                                │    │
+│  │  ☐ Notify user and provide guidance                                                                 │    │
+│  │  ☐ Schedule security awareness training                                                             │    │
+│  │                                                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 12px; padding: 2rem;">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Walk me through how you would respond to a ransomware incident.</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>Ransomware requires immediate, decisive action. Here's my approach:</strong></p>
+                            <p><strong>First 5 Minutes - Contain:</strong> Immediately isolate affected systems from the network - physically disconnect or use EDR network isolation. Do NOT power off (preserves memory evidence). If spread is unclear, consider isolating the entire network segment. Notify CISO and IR team.</p>
+                            <p><strong>Assess Scope:</strong> Determine which systems are encrypted, identify patient zero, check if ransomware is still actively spreading. Hunt for the ransomware IOCs across the environment.</p>
+                            <p><strong>Parallel Workstreams:</strong> While IR investigates the entry vector and spread path, have a separate team assess backup availability and integrity - verify backups weren't also encrypted. Begin recovery planning for critical systems.</p>
+                            <p><strong>Communication:</strong> Engage legal counsel, insurance carrier (if cyber insurance exists), and prepare for potential regulatory notifications. Consider law enforcement notification (FBI IC3).</p>
+                            <p><strong>Recovery:</strong> Once contained, restore from clean backups. Reimage affected systems - don't just decrypt. Monitor closely for persistence mechanisms or repeat infection.</p>
+                            <p><strong>Never rush to pay ransom</strong> - that's an executive/legal decision based on backup availability, business impact, and other factors. FBI recommends against paying.</p>
+                        </div>
+                    </div>
+
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How do you handle a phishing incident where a user clicked a malicious link?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>My response follows a structured decision tree:</strong></p>
+                            <p><strong>1. Scope the impact:</strong> First, I determine how many users received the email and how many clicked. I use email gateway and proxy logs to correlate recipients with URL access.</p>
+                            <p><strong>2. Branch based on what happened after the click:</strong></p>
+                            <ul>
+                                <li><strong>If credentials entered:</strong> Immediately reset password, revoke sessions, check for inbox rules created (attackers often set up forwarding), and review recent sign-ins for attacker activity. This becomes an account compromise investigation.</li>
+                                <li><strong>If malware downloaded:</strong> Isolate the endpoint, run full scan, collect forensic image if needed, check for persistence and lateral movement. This becomes a malware incident.</li>
+                                <li><strong>If just visited page (no creds/download):</strong> Lower risk - add URL to blocklist, delete emails, notify user, close as contained.</li>
+                            </ul>
+                            <p><strong>3. Containment:</strong> Block the sender, delete phishing emails from all mailboxes using Content Search, add URLs and file hashes to blocklists.</p>
+                            <p><strong>4. Recovery:</strong> Notify affected users, send awareness alert if widespread campaign, update email filtering rules, document lessons learned.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - IR Playbook Library</p>
+                    <p>Production-Ready Reference</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>
