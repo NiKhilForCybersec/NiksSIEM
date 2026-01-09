@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise SOC Operations | XSIAM | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="agents.html" class="nav-link"><i class="fas fa-user-secret"></i> Cortex Agents</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-line"></i> Dashboards</a>
+                    <a href="enterprise-soc.html" class="nav-link active"><i class="fas fa-building"></i> Enterprise SOC</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Enterprise SOC</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <h1><i class="fas fa-building"></i> Enterprise SOC Operations with XSIAM</h1>
+                <p class="lead">Operating a Security Operations Center at enterprise scale with XSIAM requires structured processes, role definitions, workflow optimization, and continuous improvement practices.</p>
+                
+                <h2><i class="fas fa-users"></i> SOC Team Structure</h2>
+                
+                <h3>Recommended Role Hierarchy</h3>
+                <div class="diagram-box">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        ENTERPRISE SOC ORGANIZATION                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│                          ┌──────────────────┐                                   │
+│                          │    SOC Manager   │                                   │
+│                          │   (Leadership)   │                                   │
+│                          └────────┬─────────┘                                   │
+│                                   │                                             │
+│          ┌────────────────────────┼────────────────────────┐                   │
+│          │                        │                        │                   │
+│   ┌──────▼──────┐         ┌───────▼───────┐        ┌──────▼──────┐            │
+│   │  Detection  │         │   Incident    │        │   Threat    │            │
+│   │  Engineers  │         │   Response    │        │   Intel     │            │
+│   │  (Content)  │         │   Lead        │        │   Lead      │            │
+│   └──────┬──────┘         └───────┬───────┘        └──────┬──────┘            │
+│          │                        │                        │                   │
+│          │                 ┌──────┴──────┐                 │                   │
+│          │                 │             │                 │                   │
+│          │          ┌──────▼──────┐ ┌────▼─────┐          │                   │
+│          │          │  Tier 2/3   │ │  Tier 1  │          │                   │
+│          │          │  Analysts   │ │ Analysts │          │                   │
+│          │          │  (Escalation│ │ (Triage) │          │                   │
+│          │          └─────────────┘ └──────────┘          │                   │
+│          │                                                 │                   │
+│          └─────────────────────────────────────────────────┘                   │
+│                               (Feedback Loop)                                   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </div>
+                
+                <h3>Role Definitions</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Primary Responsibilities</th>
+                                <th>XSIAM Permissions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Tier 1 Analyst</strong></td>
+                                <td>Alert triage, initial investigation, escalation</td>
+                                <td>View alerts, incidents; Run queries; Basic response</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 2 Analyst</strong></td>
+                                <td>Deep investigation, incident handling, hunting</td>
+                                <td>Full investigation; Live Terminal; IOC management</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 3/IR Lead</strong></td>
+                                <td>Major incidents, forensics, remediation</td>
+                                <td>All response actions; Isolation; Remediation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Detection Engineer</strong></td>
+                                <td>Rules, correlation, tuning, coverage</td>
+                                <td>Rule management; Parsing; Content development</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOAR Engineer</strong></td>
+                                <td>Playbook development, integration, automation</td>
+                                <td>XSOAR admin; Integration config; Script development</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Threat Intel Analyst</strong></td>
+                                <td>Intel analysis, feed management, context</td>
+                                <td>TIM admin; Feed configuration; Indicator management</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOC Manager</strong></td>
+                                <td>Operations oversight, metrics, stakeholder comms</td>
+                                <td>Full admin; Reporting; User management</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-stream"></i> Incident Response Workflow</h2>
+                
+                <h3>XSIAM Incident Lifecycle</h3>
+                <div class="code-block">
+                    <div class="code-header">Incident States and Transitions</div>
+                    <pre>┌─────────────────────────────────────────────────────────────────┐
+│                    INCIDENT LIFECYCLE                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌────────┐    ┌───────────┐    ┌─────────────┐    ┌─────────┐  │
+│  │  NEW   │───▶│  ASSIGNED │───▶│ INVESTIGATING│───▶│RESOLVED │  │
+│  └────────┘    └───────────┘    └─────────────┘    └─────────┘  │
+│      │              │                  │                │        │
+│      │              │                  │                │        │
+│      ▼              ▼                  ▼                ▼        │
+│  Auto-assign    Analyst         Investigation      Resolution   │
+│  or manual      picks up        in progress        documented   │
+│  queue          incident                                        │
+│                                                                  │
+│  Status Values:                                                  │
+│  • NEW - Unassigned, pending triage                             │
+│  • ASSIGNED - Assigned to analyst                               │
+│  • INVESTIGATING - Active investigation                         │
+│  • PENDING - Waiting on external (user, team, vendor)           │
+│  • RESOLVED_TRUE_POSITIVE - Confirmed threat                    │
+│  • RESOLVED_FALSE_POSITIVE - Not a threat                       │
+│  • RESOLVED_SECURITY_TEST - Authorized activity                 │
+│  • RESOLVED_DUPLICATE - Already handled                         │
+│  • RESOLVED_OTHER - Other resolution                            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘</pre>
+                </div>
+                
+                <h3>Triage Playbook</h3>
+                <div class="info-box">
+                    <h4>Standard Triage Process (Tier 1)</h4>
+                    <ol>
+                        <li><strong>Review Incident Summary:</strong> Severity, alert count, affected entities</li>
+                        <li><strong>Check XSIAM Stitching:</strong> Are related alerts properly grouped?</li>
+                        <li><strong>Identify Key Indicators:</strong> IPs, hashes, users, hosts involved</li>
+                        <li><strong>Context Enrichment:</strong> Check TI matches, asset criticality, user role</li>
+                        <li><strong>Initial Assessment:</strong> True positive probability, scope estimation</li>
+                        <li><strong>Decision:</strong> Self-handle, escalate, or close as false positive</li>
+                        <li><strong>Document:</strong> Add notes before any status change</li>
+                    </ol>
+                </div>
+                
+                <h3>Escalation Criteria</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Condition</th>
+                                <th>Escalate To</th>
+                                <th>SLA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Critical severity incident</td>
+                                <td>Tier 2/3 + SOC Manager</td>
+                                <td>Immediate</td>
+                            </tr>
+                            <tr>
+                                <td>Confirmed malware execution</td>
+                                <td>Tier 2 + IR Team</td>
+                                <td>15 minutes</td>
+                            </tr>
+                            <tr>
+                                <td>Data exfiltration indicators</td>
+                                <td>Tier 3 + Legal/Privacy</td>
+                                <td>30 minutes</td>
+                            </tr>
+                            <tr>
+                                <td>Executive/VIP affected</td>
+                                <td>SOC Manager + Exec comms</td>
+                                <td>15 minutes</td>
+                            </tr>
+                            <tr>
+                                <td>Multiple hosts compromised</td>
+                                <td>Tier 3 + IR Team</td>
+                                <td>30 minutes</td>
+                            </tr>
+                            <tr>
+                                <td>Investigation > 2 hours</td>
+                                <td>Tier 2</td>
+                                <td>At 2-hour mark</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-clock"></i> Shift Operations</h2>
+                
+                <h3>Shift Handoff Process</h3>
+                <div class="code-block">
+                    <div class="code-header">Handoff Checklist</div>
+                    <pre>SHIFT HANDOFF TEMPLATE
+═══════════════════════════════════════════════════════════════
+
+Date: ____________  Outgoing Shift: ___________  Incoming: ___________
+
+OPEN INCIDENTS
+─────────────────────────────────────────────────────────────────
+ID          Severity    Status          Owner       Notes
+INC-001     High        Investigating   jsmith      Awaiting user response
+INC-002     Medium      Assigned        -           Needs pickup
+INC-003     Critical    Investigating   jsmith      IR engaged, bridge active
+
+ONGOING ACTIVITIES
+─────────────────────────────────────────────────────────────────
+□ Threat hunt in progress: [Description]
+□ Scheduled maintenance: [System/Time]
+□ Known issues: [Description]
+
+PLATFORM STATUS
+─────────────────────────────────────────────────────────────────
+□ Data ingestion: Normal / Delayed / Issue
+□ Agent health: Normal / Degraded
+□ Alert volume: Normal / Elevated / Spike
+□ Known FP spike: [Rule name if applicable]
+
+FOLLOW-UPS NEEDED
+─────────────────────────────────────────────────────────────────
+1. [Task description] - Due: [time]
+2. [Task description] - Due: [time]
+
+CONTACTS ENGAGED
+─────────────────────────────────────────────────────────────────
+□ IT Teams: [Names/tickets]
+□ Business units: [Contacts]
+□ External: [Vendors/partners]</pre>
+                </div>
+                
+                <h2><i class="fas fa-chart-bar"></i> SOC Metrics & KPIs</h2>
+                
+                <h3>Operational Metrics</h3>
+                <div class="code-block">
+                    <div class="code-header">XQL: SOC Performance Metrics</div>
+                    <pre>// Daily incident volume and status
+dataset = xdr_incidents
+| filter _time > ago(30d)
+| alter day = format_timestamp(_time, "%Y-%m-%d")
+| comp count() as total,
+    count(status = "RESOLVED_TRUE_POSITIVE") as true_positives,
+    count(status = "RESOLVED_FALSE_POSITIVE") as false_positives
+    by day
+| alter fp_rate = round(multiply(divide(false_positives, total), 100), 1)
+
+// MTTR by severity
+dataset = xdr_incidents
+| filter status contains "RESOLVED"
+| filter _time > ago(30d)
+| alter resolution_hours = timestamp_diff(resolved_timestamp, creation_timestamp, "HOUR")
+| comp avg(resolution_hours) as avg_mttr,
+    percentile(resolution_hours, 90) as p90_mttr
+    by severity
+| sort asc severity
+
+// Analyst workload distribution
+dataset = xdr_incidents
+| filter _time > ago(7d)
+| filter assigned_to != null
+| comp count() as incidents_handled,
+    count(status contains "RESOLVED") as resolved
+    by assigned_to
+| alter resolution_rate = round(multiply(divide(resolved, incidents_handled), 100), 1)
+| sort desc incidents_handled</pre>
+                </div>
+                
+                <h3>Key Performance Indicators</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>KPI</th>
+                                <th>Target</th>
+                                <th>Measurement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>MTTD</strong> (Mean Time to Detect)</td>
+                                <td>< 1 hour</td>
+                                <td>Event time to alert creation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MTTA</strong> (Mean Time to Acknowledge)</td>
+                                <td>< 15 minutes</td>
+                                <td>Alert creation to assignment</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MTTR</strong> (Mean Time to Respond)</td>
+                                <td>< 4 hours</td>
+                                <td>Alert creation to resolution</td>
+                            </tr>
+                            <tr>
+                                <td><strong>False Positive Rate</strong></td>
+                                <td>< 25%</td>
+                                <td>FP closures / total closures</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alert-to-Incident Ratio</strong></td>
+                                <td>100:1 or better</td>
+                                <td>Alerts / incidents (stitching effectiveness)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Automation Rate</strong></td>
+                                <td>> 50%</td>
+                                <td>Auto-handled / total alerts</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Detection Coverage</strong></td>
+                                <td>> 70% MITRE</td>
+                                <td>Techniques with active detection</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-robot"></i> Automation Strategy</h2>
+                
+                <h3>Automation Tiers</h3>
+                <div class="info-box">
+                    <h4>Progressive Automation Approach</h4>
+                    <ul>
+                        <li><strong>Tier 0 - Auto-Close:</strong> Known false positives, authorized scanners, test traffic</li>
+                        <li><strong>Tier 1 - Enrichment:</strong> Auto-enrich all alerts with TI, asset, identity context</li>
+                        <li><strong>Tier 2 - Triage Assist:</strong> Auto-collect evidence, suggest severity, recommend actions</li>
+                        <li><strong>Tier 3 - Containment:</strong> Auto-isolate confirmed threats (with approval workflow)</li>
+                        <li><strong>Tier 4 - Full Response:</strong> End-to-end automation for high-confidence scenarios</li>
+                    </ul>
+                </div>
+                
+                <h3>Automation Candidates</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>Automation Level</th>
+                                <th>Playbook Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Phishing email reported</td>
+                                <td>Full automation</td>
+                                <td>Extract IOCs → Check TI → Block sender → Remove from mailboxes → Close</td>
+                            </tr>
+                            <tr>
+                                <td>Known malware hash</td>
+                                <td>Full automation</td>
+                                <td>Quarantine file → Scan host → Block hash → Alert closed</td>
+                            </tr>
+                            <tr>
+                                <td>Brute force detected</td>
+                                <td>Semi-automation</td>
+                                <td>Enrich IP → Check geo → Block if external → Analyst review</td>
+                            </tr>
+                            <tr>
+                                <td>Suspicious process</td>
+                                <td>Enrichment only</td>
+                                <td>Collect process tree → Get file hash → TI lookup → Analyst review</td>
+                            </tr>
+                            <tr>
+                                <td>Lateral movement</td>
+                                <td>Containment ready</td>
+                                <td>Map scope → Present to analyst → One-click isolation option</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-sync-alt"></i> Continuous Improvement</h2>
+                
+                <h3>Detection Tuning Cycle</h3>
+                <div class="code-block">
+                    <div class="code-header">Weekly Tuning Process</div>
+                    <pre>WEEKLY DETECTION REVIEW PROCESS
+═══════════════════════════════════════════════════════════════
+
+1. FALSE POSITIVE ANALYSIS
+   ─────────────────────────────────────────────────────────────
+   • Query: Top 10 rules by FP rate
+   • For each high-FP rule:
+     - Identify pattern causing FP
+     - Create exception or refine rule logic
+     - Document change and expected impact
+   
+2. COVERAGE GAP REVIEW
+   ─────────────────────────────────────────────────────────────
+   • Review MITRE ATT&CK coverage dashboard
+   • Identify techniques without detection
+   • Prioritize based on threat intel relevance
+   • Create detection development backlog items
+   
+3. RULE PERFORMANCE CHECK
+   ─────────────────────────────────────────────────────────────
+   • Identify rules with zero hits (dead rules)
+   • Check rules with excessive hits (noisy rules)
+   • Validate rule execution times
+   • Disable or retire ineffective rules
+   
+4. NEW THREAT ADAPTATION
+   ─────────────────────────────────────────────────────────────
+   • Review Unit 42 threat reports
+   • Check industry-specific threat feeds
+   • Create detections for new TTPs
+   • Test against historical data</pre>
+                </div>
+                
+                <h3>Post-Incident Review</h3>
+                <div class="info-box">
+                    <h4>PIR Template</h4>
+                    <ul>
+                        <li><strong>Detection:</strong> How was the incident detected? Could we have detected sooner?</li>
+                        <li><strong>Response:</strong> What went well? What were the bottlenecks?</li>
+                        <li><strong>Containment:</strong> Was containment effective? Any gaps in capabilities?</li>
+                        <li><strong>Communication:</strong> Were stakeholders informed appropriately?</li>
+                        <li><strong>Improvements:</strong> What changes will prevent recurrence or improve response?</li>
+                        <li><strong>Action Items:</strong> Specific tasks with owners and due dates</li>
+                    </ul>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you measure SOC effectiveness?"</h4>
+                    <p>"I measure SOC effectiveness across three dimensions: speed, accuracy, and coverage. For speed, I track MTTD, MTTA, and MTTR - how quickly we detect threats, acknowledge them, and resolve them. My targets are typically under 1 hour for detection, 15 minutes for acknowledgment, and 4 hours for resolution on high-priority incidents. For accuracy, I monitor false positive rate by detection rule and overall - anything above 25% triggers a tuning initiative. I also track true positive conversion rate to ensure we're catching real threats. For coverage, I maintain a MITRE ATT&CK mapping showing which techniques have active detections. In XSIAM, I also track the alert-to-incident ratio - XSIAM's stitching should give us at least 100:1 reduction, meaning analysts focus on incidents, not individual alerts. I present these metrics weekly to the team and monthly to leadership."</p>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you handle a major incident in XSIAM?"</h4>
+                    <p>"For major incidents, I follow a structured process. First, I ensure the incident is escalated properly - Tier 3 analyst and SOC manager notified immediately. I establish a communication bridge or war room in XSOAR for coordination. I use XSIAM's incident view to understand the full scope - which hosts, users, and systems are affected. I leverage the causality chain view to understand the attack path. For containment, I use Live Terminal for immediate response actions - isolating compromised hosts, killing malicious processes, collecting evidence. I coordinate with IT for broader network-level containment if needed. Throughout, I document everything in the incident timeline. After containment, I work with the team on eradication and recovery. Post-incident, I lead a PIR to identify improvements - new detections, playbook updates, or process changes. The key is having pre-defined playbooks so we're not making decisions under pressure."</p>
+                </div>
+                
+            </main>
+            
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        <a href="../index.html">Home</a>
+                        <a href="index.html">XSIAM</a>
+                        <a href="xsoar-automation.html">XSOAR</a>
+                        <a href="dashboards.html">Dashboards</a>
+                    </div>
+                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Causality Analysis - Cortex XDR</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>SOC Compendium</h2>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">🏠 Home</a></li>
+            <li><a href="index.html" class="active">🟠 Cortex XDR</a></li>
+            <li><a href="../crowdstrike/index.html">🔴 CrowdStrike</a></li>
+            <li><a href="../mde/index.html">🔵 Microsoft Defender</a></li>
+            <li><a href="../xsiam/index.html">🟣 XSIAM</a></li>
+            <li><a href="../sentinel/index.html">🔷 Sentinel</a></li>
+            <li><a href="../splunk/index.html">🟢 Splunk</a></li>
+            <li><a href="../operations/index.html">⚙️ Operations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>🟠 Causality Analysis</h1>
+            <p>Understand attack chains and root cause analysis using Cortex XDR's causality view</p>
+        </div>
+
+        <section class="content-section">
+            <h2>Understanding Causality</h2>
+            <div class="info-box">
+                <p>Causality Analysis automatically reconstructs the complete attack chain by linking related events across time and showing the parent-child relationships between processes, files, and network connections.</p>
+            </div>
+            
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            CAUSALITY CHAIN EXAMPLE                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   [Email Client]                                                                 │
+│        │                                                                         │
+│        ▼                                                                         │
+│   [outlook.exe] ──── Opens attachment ────▶ [invoice.docm]                      │
+│                                                  │                               │
+│                                                  ▼                               │
+│                                           [WINWORD.EXE]                          │
+│                                                  │                               │
+│                                       ┌─────────┴─────────┐                      │
+│                                       │ Macro Execution   │                      │
+│                                       └─────────┬─────────┘                      │
+│                                                 ▼                                │
+│                                           [cmd.exe]                              │
+│                                                 │                                │
+│                            ┌────────────────────┼────────────────────┐           │
+│                            ▼                    ▼                    ▼           │
+│                     [powershell.exe]     [certutil.exe]       [wscript.exe]     │
+│                            │                    │                    │           │
+│                            ▼                    ▼                    │           │
+│                     Download payload      Decode payload             │           │
+│                            │                    │                    │           │
+│                            └────────┬───────────┘                    │           │
+│                                     ▼                                │           │
+│                              [malware.exe] ◀─────────────────────────┘           │
+│                                     │                                            │
+│                    ┌────────────────┼────────────────┐                           │
+│                    ▼                ▼                ▼                           │
+│             [LSASS Access]    [C2 Connection]   [Lateral Move]                   │
+│             (Credentials)      (45.33.32.1)     (PsExec)                         │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Causality Chain Elements</h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Description</th>
+                        <th>Investigation Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Causality Group Owner (CGO)</strong></td>
+                        <td>The root process that initiated the activity chain</td>
+                        <td>Identifies initial access point</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Actor Process</strong></td>
+                        <td>Parent process that spawned the current action</td>
+                        <td>Shows execution context</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Action Process</strong></td>
+                        <td>The process performing the suspicious activity</td>
+                        <td>Identifies the threat tool</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Target Object</strong></td>
+                        <td>Files, registry keys, network connections affected</td>
+                        <td>Shows impact and IOCs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Causality ID</strong></td>
+                        <td>Unique identifier linking all related events</td>
+                        <td>Query for complete chain</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>XQL Queries for Causality Analysis</h2>
+
+            <h3>Find Complete Attack Chain</h3>
+            <div class="code-block">
+                <pre><code>// Get all events in a causality chain
+dataset = xdr_data 
+| filter causality_id = "abc123def456"
+| sort asc _time
+| fields _time, 
+         event_type,
+         causality_actor_process_image_name,
+         action_process_image_name,
+         action_process_command_line,
+         action_file_path,
+         action_remote_ip
+| limit 500</code></pre>
+            </div>
+
+            <h3>Find Root Cause (CGO)</h3>
+            <div class="code-block">
+                <pre><code>// Identify the Causality Group Owner
+dataset = xdr_data 
+| filter action_process_causality_id = "abc123def456"
+| filter causality_actor_causality_id = null  // CGO has no parent causality
+| fields agent_hostname,
+         action_process_image_name,
+         action_process_image_path,
+         action_process_command_line,
+         action_process_username,
+         _time
+| dedup action_process_image_name</code></pre>
+            </div>
+
+            <h3>Trace Process Lineage</h3>
+            <div class="code-block">
+                <pre><code>// Follow process tree from suspicious child to root
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "mimikatz.exe"
+| fields agent_hostname,
+         // Direct parent
+         actor_process_image_name as parent,
+         actor_process_command_line as parent_cmd,
+         // Grandparent (if available)
+         causality_actor_process_image_name as grandparent,
+         // The suspicious process
+         action_process_image_name as child,
+         action_process_command_line as child_cmd,
+         action_process_causality_id
+| limit 100</code></pre>
+            </div>
+
+            <h3>Map Attack Timeline</h3>
+            <div class="code-block">
+                <pre><code>// Create timeline of attack phases
+dataset = xdr_data 
+| filter causality_id = "abc123def456"
+| alter phase = case(
+    event_type = ENUM.EVENT_TYPE_PROCESS and 
+    action_process_image_name in ("outlook.exe", "chrome.exe"), "Initial Access",
+    
+    event_type = ENUM.EVENT_TYPE_PROCESS and 
+    actor_process_image_name contains "Office", "Execution",
+    
+    event_type = ENUM.EVENT_TYPE_FILE_CREATE and
+    action_file_name contains ".exe", "Payload Delivery",
+    
+    event_type = ENUM.EVENT_TYPE_REGISTRY_SET_VALUE and
+    action_registry_key_name contains "Run", "Persistence",
+    
+    event_type = ENUM.EVENT_TYPE_OPEN_REMOTE_PROCESS_HANDLE and
+    target_process_name = "lsass.exe", "Credential Access",
+    
+    event_type = ENUM.EVENT_TYPE_NETWORK and
+    action_remote_port in (4444, 8080, 443), "C2 Communication",
+    
+    default, "Other"
+)
+| fields _time, phase, event_type, action_process_image_name, action_file_name, action_remote_ip
+| sort asc _time</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Common Attack Patterns</h2>
+
+            <h3>Phishing → Macro → PowerShell</h3>
+            <div class="code-block">
+                <pre><code>// Detect Office spawning suspicious children
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter actor_process_image_name in ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE")
+| filter action_process_image_name in ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| fields agent_hostname,
+         actor_process_image_name as office_app,
+         action_process_image_name as spawned_process,
+         action_process_command_line,
+         action_process_causality_id,
+         _time
+| limit 100</code></pre>
+            </div>
+
+            <h3>Living Off The Land (LOLBins)</h3>
+            <div class="code-block">
+                <pre><code>// Detect abuse of legitimate Windows binaries
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name in (
+    "certutil.exe", "bitsadmin.exe", "mshta.exe",
+    "regsvr32.exe", "rundll32.exe", "msiexec.exe",
+    "wmic.exe", "cmstp.exe", "msconfig.exe"
+)
+| filter action_process_command_line contains "http" or
+         action_process_command_line contains "-decode" or
+         action_process_command_line contains "/i:" or
+         action_process_command_line contains "scrobj"
+| fields agent_hostname,
+         action_process_image_name as lolbin,
+         action_process_command_line,
+         actor_process_image_name as parent,
+         action_process_causality_id,
+         _time
+| limit 100</code></pre>
+            </div>
+
+            <h3>Lateral Movement Chain</h3>
+            <div class="code-block">
+                <pre><code>// Track lateral movement between systems
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name in ("psexec.exe", "psexesvc.exe", "wmic.exe")
+   or (action_process_image_name = "powershell.exe" and 
+       action_process_command_line contains "Invoke-Command")
+   or (action_process_image_name = "schtasks.exe" and 
+       action_process_command_line contains "/s ")
+| fields agent_hostname,
+         action_process_image_name,
+         action_process_command_line,
+         action_remote_ip,
+         action_process_username,
+         action_process_causality_id,
+         _time
+| sort asc _time</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Investigation Workflow</h2>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Start with Alert</h4>
+                    <p>Open alert, note causality_id and action_process</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>View Causality Chain</h4>
+                    <p>Click "Causality View" to see graphical process tree</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Find Root Cause</h4>
+                    <p>Trace back to CGO - this is initial access</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Map Attack Phases</h4>
+                    <p>Identify each MITRE ATT&CK technique used</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Extract IOCs</h4>
+                    <p>Collect hashes, IPs, domains, file paths</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">6</span>
+                    <h4>Scope Impact</h4>
+                    <p>Search for same causality patterns on other endpoints</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            
+            <div class="interview-qa">
+                <h4>Q: How do you use Cortex XDR's causality analysis to investigate an alert?</h4>
+                <p><strong>A:</strong> When I receive an alert, I start by opening the Causality View which shows a graphical representation of the entire attack chain. I identify the Causality Group Owner (CGO) which tells me how the attack started, whether it was a phishing email, drive-by download, or compromised service. I then trace the process tree from the initial access through each phase - execution, persistence, credential access, lateral movement, etc. Each node in the chain gives me IOCs like file hashes, command lines, and network connections. I use XQL queries with the causality_id to pull all related events and build a complete timeline. This helps me understand not just what happened, but how the attacker operated and where I need to focus remediation efforts.</p>
+            </div>
+
+            <div class="interview-qa">
+                <h4>Q: What's the difference between the actor process and the action process?</h4>
+                <p><strong>A:</strong> The actor process is the parent that initiated or spawned the action. The action process is the one actually performing the suspicious activity. For example, if Word opens and runs a macro that launches PowerShell, Word is the actor process and PowerShell is the action process. Understanding this relationship is critical for root cause analysis. If I see PowerShell doing something malicious, I need to know what launched it to understand the full attack chain. In Cortex XDR, the Causality Group Owner is the ultimate root that started the entire chain, while each subsequent process has its own actor-action relationship.</p>
+            </div>
+        </section>
+
+        <div class="navigation-links">
+            <a href="response-actions.html">← Response Actions</a>
+            <a href="analytics.html">Analytics →</a>
+        </div>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

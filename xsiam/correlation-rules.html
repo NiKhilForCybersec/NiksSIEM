@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correlation Rules | XSIAM | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link active"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-line"></i> Dashboards</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Correlation Rules</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <h1><i class="fas fa-project-diagram"></i> XSIAM Correlation Rules</h1>
+                <p class="lead">Correlation rules in XSIAM detect complex attack patterns by analyzing relationships between events across multiple data sources, enabling detection of threats that single-event rules would miss.</p>
+                
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> Understanding Correlation Rules</h3>
+                    <p>XSIAM correlation rules differ from simple alert rules by analyzing <strong>relationships between multiple events</strong> over time. They detect:</p>
+                    <ul>
+                        <li><strong>Attack Sequences:</strong> Multiple steps of an attack chain</li>
+                        <li><strong>Anomalous Patterns:</strong> Deviations from baseline behavior</li>
+                        <li><strong>Threshold Violations:</strong> Events exceeding normal counts</li>
+                        <li><strong>Cross-Source Correlations:</strong> Related activity across different log sources</li>
+                    </ul>
+                </div>
+                
+                <h2><i class="fas fa-layer-group"></i> Correlation Rule Types</h2>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Use Case</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Sequence Rules</strong></td>
+                                <td>Detect ordered event chains</td>
+                                <td>Recon → Exploitation → Persistence</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Aggregation Rules</strong></td>
+                                <td>Threshold-based detection</td>
+                                <td>10+ failed logins in 5 minutes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Statistical Rules</strong></td>
+                                <td>Anomaly detection</td>
+                                <td>Data transfer 3x above baseline</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Join Rules</strong></td>
+                                <td>Cross-source correlation</td>
+                                <td>VPN login + endpoint alert within 1 hour</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Temporal Rules</strong></td>
+                                <td>Time-based patterns</td>
+                                <td>Activity outside business hours</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-code"></i> Creating Correlation Rules</h2>
+                
+                <h3>Rule Structure</h3>
+                <div class="code-block">
+                    <div class="code-header">Correlation Rule Components</div>
+                    <pre>// Every correlation rule has these components:
+
+1. TRIGGER QUERY
+   - XQL query that identifies base events
+   - Runs on schedule (1min to 24hr intervals)
+
+2. CORRELATION LOGIC
+   - Grouping: Which fields to correlate on (user, host, IP)
+   - Time Window: How long to look for related events
+   - Thresholds: Minimum counts or score thresholds
+
+3. ALERT CONFIGURATION
+   - Severity: Informational, Low, Medium, High, Critical
+   - Alert Name: Dynamic naming with variables
+   - MITRE ATT&CK Mapping: Technique and tactic IDs
+
+4. RESPONSE ACTIONS
+   - Create Alert
+   - Add to Incident
+   - Trigger Playbook
+   - Update Risk Score</pre>
+                </div>
+                
+                <h3>Example: Brute Force Detection</h3>
+                <div class="code-block">
+                    <div class="code-header">Aggregation Rule: Failed Login Threshold</div>
+                    <pre>// Rule Name: Brute Force Authentication Attempt
+// Type: Aggregation
+// Schedule: Every 5 minutes
+
+// Trigger Query
+dataset = xdr_data 
+| filter xdm.event.type = "AUTHENTICATION" 
+    and xdm.event.outcome = XDM_CONST.OUTCOME_FAILED
+| filter _time > ago(5m)
+| comp count() as failed_attempts,
+    count_distinct(xdm.target.host.hostname) as target_hosts,
+    array_agg(xdm.target.host.hostname) as targets
+    by xdm.source.ipv4, xdm.source.user.username
+
+// Correlation Criteria
+| filter failed_attempts >= 10
+
+// Enrichment
+| alter 
+    severity = if(failed_attempts >= 50, "High", 
+               if(failed_attempts >= 25, "Medium", "Low")),
+    alert_name = concat("Brute Force: ", xdm.source.user.username, 
+                        " from ", xdm.source.ipv4),
+    mitre_technique = "T1110",
+    mitre_tactic = "Credential Access"</pre>
+                </div>
+                
+                <h3>Example: Lateral Movement Sequence</h3>
+                <div class="code-block">
+                    <div class="code-header">Sequence Rule: Lateral Movement Detection</div>
+                    <pre>// Rule Name: Potential Lateral Movement Chain
+// Type: Sequence
+// Schedule: Every 10 minutes
+
+// Step 1: Initial compromise indicator
+dataset = xdr_data 
+| filter xdm.alert.severity in ("High", "Critical")
+| filter _time > ago(1h)
+| fields host_step1 = xdm.source.host.hostname,
+    user_step1 = xdm.source.user.username,
+    alert_time = _time,
+    initial_alert = xdm.alert.name
+
+// Step 2: Join with authentication to new hosts
+| join type = inner (
+    dataset = xdr_data 
+    | filter xdm.event.type = "AUTHENTICATION"
+    | filter xdm.event.outcome = XDM_CONST.OUTCOME_SUCCESS
+    | filter xdm.auth.method in ("NTLM", "Kerberos", "RemoteInteractive")
+    | fields auth_time = _time,
+        auth_user = xdm.source.user.username,
+        source_host = xdm.source.host.hostname,
+        target_host = xdm.target.host.hostname
+) as auth_events 
+    on user_step1 = auth_events.auth_user
+
+// Correlation: Alert host authenticating to new hosts within 1 hour
+| filter auth_events.auth_time > alert_time
+| filter auth_events.auth_time < add(alert_time, 1h)
+| filter host_step1 = auth_events.source_host
+| filter host_step1 != auth_events.target_host
+
+// Output
+| comp count() as lateral_moves,
+    array_agg(auth_events.target_host) as compromised_hosts
+    by user_step1, host_step1, initial_alert
+| filter lateral_moves >= 2
+
+| alter
+    severity = "Critical",
+    alert_name = concat("Lateral Movement: ", user_step1, 
+                        " moving from ", host_step1),
+    mitre_technique = "T1021",
+    mitre_tactic = "Lateral Movement"</pre>
+                </div>
+                
+                <h3>Example: Data Exfiltration Detection</h3>
+                <div class="code-block">
+                    <div class="code-header">Statistical Rule: Anomalous Data Transfer</div>
+                    <pre>// Rule Name: Potential Data Exfiltration
+// Type: Statistical/Anomaly
+// Schedule: Every 15 minutes
+
+// Calculate current data transfer
+dataset = xdr_data 
+| filter xdm.network.direction = "OUTBOUND"
+| filter xdm.target.ipv4 not in INTERNAL_IP_RANGES
+| filter _time > ago(15m)
+| comp sum(xdm.network.bytes_sent) as current_bytes
+    by xdm.source.host.hostname, xdm.source.user.username
+
+// Calculate baseline (past 7 days, same time window)
+| join type = left (
+    dataset = xdr_data 
+    | filter xdm.network.direction = "OUTBOUND"
+    | filter _time > ago(7d) and _time < ago(15m)
+    | comp avg(xdm.network.bytes_sent) as baseline_avg,
+        stddev(xdm.network.bytes_sent) as baseline_stddev
+        by xdm.source.host.hostname
+) as baseline 
+    on xdm.source.host.hostname = baseline.xdm.source.host.hostname
+
+// Anomaly detection: Current > baseline + 3 standard deviations
+| alter threshold = add(baseline.baseline_avg, 
+                        multiply(baseline.baseline_stddev, 3))
+| filter current_bytes > threshold
+| filter current_bytes > 100000000  // Min 100MB to reduce noise
+
+// Convert to MB for readability
+| alter 
+    current_mb = divide(current_bytes, 1048576),
+    baseline_mb = divide(baseline.baseline_avg, 1048576),
+    deviation_factor = divide(current_bytes, baseline.baseline_avg)
+
+| alter
+    severity = if(deviation_factor > 10, "Critical",
+               if(deviation_factor > 5, "High", "Medium")),
+    alert_name = concat("Anomalous Data Transfer: ", 
+                        xdm.source.host.hostname, " - ",
+                        round(current_mb), "MB"),
+    mitre_technique = "T1041",
+    mitre_tactic = "Exfiltration"</pre>
+                </div>
+                
+                <h2><i class="fas fa-cogs"></i> Rule Configuration Best Practices</h2>
+                
+                <h3>Tuning Parameters</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Recommendation</th>
+                                <th>Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Schedule Interval</strong></td>
+                                <td>Match detection urgency (1-5min for critical, 15-60min for low)</td>
+                                <td>Faster = more CPU, near real-time detection</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lookback Window</strong></td>
+                                <td>Slightly longer than schedule interval</td>
+                                <td>Too short = missed events, too long = duplicates</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Aggregation Fields</strong></td>
+                                <td>Balance specificity vs. coverage</td>
+                                <td>Too specific = many alerts, too broad = noisy</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Thresholds</strong></td>
+                                <td>Start high, tune down based on baseline</td>
+                                <td>Low = false positives, high = missed detections</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Exclusions</strong></td>
+                                <td>Add after validation, document reason</td>
+                                <td>Reduces noise but may create blind spots</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Exception Handling</h3>
+                <div class="code-block">
+                    <div class="code-header">Building Exclusions into Rules</div>
+                    <pre>// Method 1: Inline exclusions
+dataset = xdr_data 
+| filter xdm.event.type = "AUTHENTICATION"
+| filter xdm.event.outcome = XDM_CONST.OUTCOME_FAILED
+
+// Exclude known service accounts
+| filter xdm.source.user.username not in (
+    "svc_backup", "svc_monitor", "svc_scanner"
+)
+
+// Exclude internal vulnerability scanner
+| filter xdm.source.ipv4 not in ("10.0.100.50", "10.0.100.51")
+
+// Method 2: Reference list exclusions (recommended)
+| filter xdm.source.user.username not incidr 
+    REFERENCE_LIST("approved_service_accounts")
+| filter xdm.source.ipv4 not incidr 
+    REFERENCE_LIST("authorized_scanners")
+
+// Method 3: Asset-based exclusions
+| join type = left (
+    dataset = asset_inventory
+    | filter asset_type = "security_scanner"
+) as scanners on xdm.source.ipv4 = scanners.ip
+| filter scanners.ip = null  // Only keep non-scanner events</pre>
+                </div>
+                
+                <h2><i class="fas fa-project-diagram"></i> MITRE ATT&CK Mapping</h2>
+                
+                <div class="info-box">
+                    <h4>Always Map Rules to MITRE ATT&CK</h4>
+                    <p>Every correlation rule should include:</p>
+                    <ul>
+                        <li><strong>Tactic:</strong> The adversary's goal (e.g., Persistence, Lateral Movement)</li>
+                        <li><strong>Technique:</strong> How the goal is achieved (e.g., T1053 - Scheduled Task)</li>
+                        <li><strong>Sub-technique:</strong> Specific variation if applicable (e.g., T1053.005 - Scheduled Task/Job: At)</li>
+                    </ul>
+                    <p>This enables coverage analysis and helps analysts understand the threat context.</p>
+                </div>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Detection Scenario</th>
+                                <th>Tactic</th>
+                                <th>Technique</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Multiple failed logins</td>
+                                <td>Credential Access</td>
+                                <td>T1110 - Brute Force</td>
+                            </tr>
+                            <tr>
+                                <td>PowerShell encoded commands</td>
+                                <td>Execution</td>
+                                <td>T1059.001 - PowerShell</td>
+                            </tr>
+                            <tr>
+                                <td>New scheduled task</td>
+                                <td>Persistence</td>
+                                <td>T1053.005 - Scheduled Task</td>
+                            </tr>
+                            <tr>
+                                <td>Remote service creation</td>
+                                <td>Lateral Movement</td>
+                                <td>T1021.002 - SMB/Windows Admin Shares</td>
+                            </tr>
+                            <tr>
+                                <td>Large outbound transfer</td>
+                                <td>Exfiltration</td>
+                                <td>T1048 - Exfiltration Over Alternative Protocol</td>
+                            </tr>
+                            <tr>
+                                <td>Security tool disabled</td>
+                                <td>Defense Evasion</td>
+                                <td>T1562.001 - Disable or Modify Tools</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-vial"></i> Testing Correlation Rules</h2>
+                
+                <div class="code-block">
+                    <div class="code-header">Rule Testing Workflow</div>
+                    <pre>// Step 1: Test query logic with historical data
+// Run your XQL query manually with extended time range
+
+dataset = xdr_data 
+| filter _time > ago(7d)  // Test with 7 days of data
+// ... your rule logic ...
+| limit 100
+
+// Step 2: Analyze results
+// Check: Are these true positives? False positives?
+// Tune thresholds based on findings
+
+// Step 3: Create rule in TEST mode
+// Settings → Detection Rules → Create Rule
+// Set status to "Test" - generates alerts but doesn't create incidents
+
+// Step 4: Monitor test alerts for 1-2 weeks
+dataset = xdr_alerts
+| filter alert_source = "Correlation Rule"
+| filter rule_name = "Your Test Rule Name"
+| comp count() as alert_count by _time = truncate(_time, 1d)
+
+// Step 5: Review false positive rate
+// Target: < 10% false positive rate before enabling
+
+// Step 6: Enable rule in production
+// Change status from "Test" to "Enabled"</pre>
+                </div>
+                
+                <h2><i class="fas fa-chart-bar"></i> Rule Performance Monitoring</h2>
+                
+                <div class="code-block">
+                    <div class="code-header">XQL: Rule Effectiveness Dashboard</div>
+                    <pre>// Alert volume by correlation rule
+dataset = xdr_alerts
+| filter _time > ago(30d)
+| filter alert_source = "Correlation Rule"
+| comp count() as alert_count,
+    count_distinct(incident_id) as incidents_created
+    by rule_name
+| sort desc alert_count
+
+// True positive rate (requires incident resolution data)
+dataset = xdr_incidents
+| filter _time > ago(30d)
+| comp 
+    count() as total_incidents,
+    count(resolution = "True Positive") as true_positives,
+    count(resolution = "False Positive") as false_positives
+    by source_rule
+| alter tp_rate = multiply(divide(true_positives, total_incidents), 100)
+| sort desc tp_rate
+
+// Rule execution performance
+dataset = xdr_audit_logs
+| filter action = "correlation_rule_executed"
+| comp avg(execution_time_ms) as avg_runtime,
+    max(execution_time_ms) as max_runtime,
+    count() as executions
+    by rule_name
+| filter avg_runtime > 1000  // Flag slow rules
+| sort desc avg_runtime</pre>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you approach creating a new correlation rule?"</h4>
+                    <p>"I follow a structured process. First, I identify the threat I'm detecting - usually mapped to a MITRE ATT&CK technique. Then I research what log sources would show this behavior and what the specific indicators look like. Next, I write the XQL query and test it against historical data to validate it catches the behavior without excessive false positives. I start with conservative thresholds and tune based on results. Before enabling in production, I run the rule in test mode for 1-2 weeks to measure false positive rate - I target under 10%. I also ensure the rule includes proper enrichment fields so analysts have context, and I map it to MITRE ATT&CK for coverage tracking. Finally, I document the rule's purpose, expected alert volume, and known exclusions."</p>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "What's the difference between a simple alert rule and a correlation rule?"</h4>
+                    <p>"A simple alert rule triggers on individual events - for example, alerting every time a specific process runs. A correlation rule analyzes relationships between multiple events. For example, instead of alerting on every failed login, a correlation rule detects 10+ failed logins from the same IP within 5 minutes - that's the difference between noise and a brute force attack. Correlation rules can also sequence events - detecting reconnaissance followed by exploitation followed by persistence within a time window. They can join data across sources - a VPN login from a new country correlated with unusual file access. The key value is reducing alert fatigue while catching attacks that span multiple events. In XSIAM, I use aggregation for thresholds, joins for cross-source correlation, and time windows for sequence detection."</p>
+                </div>
+                
+            </main>
+            
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        <a href="../index.html">Home</a>
+                        <a href="index.html">XSIAM</a>
+                        <a href="xdr-overview.html">XDR Detection</a>
+                        <a href="xsoar-automation.html">XSOAR</a>
+                    </div>
+                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

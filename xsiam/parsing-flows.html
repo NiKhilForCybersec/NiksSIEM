@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-platform="xsiam">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parsing Flows & Data Normalization | XSIAM | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Ingestion</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="parsing-flows.html" class="nav-link active"><i class="fas fa-stream"></i> Parsing Flows</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM Setup</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced XQL</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-virus"></i> XDR Detection</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Threat Intelligence</div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Reference</div>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> Platform Comparison</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-line"></i> Dashboards</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Parsing Flows</span>
+                </div>
+            </header>
+            
+            <main class="main-content">
+                <h1><i class="fas fa-stream"></i> Parsing Flows & Data Normalization</h1>
+                <p class="lead">XSIAM's parsing engine transforms raw log data into the normalized XDM (Cross-Platform Data Model) schema, enabling unified querying and correlation across all data sources.</p>
+                
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is XDM?</h3>
+                    <p><strong>XDM (Cross-Platform Data Model)</strong> is XSIAM's unified schema that normalizes data from hundreds of different sources into consistent field names and formats. This enables:</p>
+                    <ul>
+                        <li>Write one query, search across all vendors</li>
+                        <li>Correlation rules work regardless of log source</li>
+                        <li>Consistent field names (xdm.source.host, xdm.target.user)</li>
+                        <li>Automatic enrichment and context addition</li>
+                    </ul>
+                </div>
+                
+                <h2><i class="fas fa-layer-group"></i> Parsing Pipeline Architecture</h2>
+                
+                <div class="diagram-box">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          XSIAM PARSING PIPELINE                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  RAW DATA     VENDOR        XDM           ENRICHMENT      DATA LAKE             │
+│  INGESTION    PARSING      MAPPING        ENGINE          STORAGE               │
+│                                                                                  │
+│  ┌────────┐   ┌────────┐   ┌────────┐    ┌────────┐      ┌────────┐            │
+│  │ Syslog │──▶│ Parser │──▶│ XDM    │───▶│ Enrich │─────▶│ Index  │            │
+│  │ API    │   │ Rules  │   │ Mapper │    │ Module │      │ Store  │            │
+│  │ Agent  │   │        │   │        │    │        │      │        │            │
+│  └────────┘   └────────┘   └────────┘    └────────┘      └────────┘            │
+│       │            │            │              │               │                │
+│       │            │            │              │               │                │
+│       ▼            ▼            ▼              ▼               ▼                │
+│  [Raw Bytes]  [Structured]  [Normalized]  [Enriched]     [Queryable]           │
+│               Fields        XDM Fields    + Context       via XQL              │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </div>
+                
+                <h2><i class="fas fa-code"></i> Parsing Stages</h2>
+                
+                <h3>Stage 1: Raw Data Reception</h3>
+                <div class="info-box">
+                    <p>Data arrives via multiple ingestion methods and is tagged with metadata:</p>
+                    <ul>
+                        <li><strong>Source Identification:</strong> IP, hostname, collector ID</li>
+                        <li><strong>Ingestion Timestamp:</strong> When XSIAM received the data</li>
+                        <li><strong>Format Detection:</strong> Syslog, JSON, CEF, LEEF, custom</li>
+                        <li><strong>Vendor Hint:</strong> Based on port, format, or explicit configuration</li>
+                    </ul>
+                </div>
+                
+                <h3>Stage 2: Vendor Parsing</h3>
+                <p>XSIAM includes 800+ pre-built parsers for common security products. Parsers extract vendor-specific fields.</p>
+                
+                <div class="code-block">
+                    <div class="code-header">Example: Palo Alto Firewall Log → Parsed Fields</div>
+                    <pre>// Raw syslog message
+&lt;14&gt;1 2024-01-15T10:30:45.123Z PA-5260 - TRAFFIC - 
+    src=192.168.1.100 dst=8.8.8.8 sport=54321 dport=443 
+    action=allow app=ssl rule="Allow-Outbound"
+
+// After vendor parsing
+{
+    "vendor": "Palo Alto Networks",
+    "product": "NGFW",
+    "log_type": "TRAFFIC",
+    "source_ip": "192.168.1.100",
+    "destination_ip": "8.8.8.8",
+    "source_port": 54321,
+    "destination_port": 443,
+    "action": "allow",
+    "application": "ssl",
+    "rule_name": "Allow-Outbound",
+    "timestamp": "2024-01-15T10:30:45.123Z"
+}</pre>
+                </div>
+                
+                <h3>Stage 3: XDM Mapping</h3>
+                <p>Vendor fields are mapped to standardized XDM schema fields.</p>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vendor Field</th>
+                                <th>XDM Field</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>source_ip / src / SrcIP</td>
+                                <td>xdm.source.ipv4</td>
+                                <td>Source IP address</td>
+                            </tr>
+                            <tr>
+                                <td>destination_ip / dst / DstIP</td>
+                                <td>xdm.target.ipv4</td>
+                                <td>Target IP address</td>
+                            </tr>
+                            <tr>
+                                <td>user / username / AccountName</td>
+                                <td>xdm.source.user.username</td>
+                                <td>User performing action</td>
+                            </tr>
+                            <tr>
+                                <td>action / outcome / result</td>
+                                <td>xdm.event.outcome</td>
+                                <td>Success/Failure/Unknown</td>
+                            </tr>
+                            <tr>
+                                <td>host / hostname / Computer</td>
+                                <td>xdm.source.host.hostname</td>
+                                <td>Source hostname</td>
+                            </tr>
+                            <tr>
+                                <td>process / app / application</td>
+                                <td>xdm.source.process.name</td>
+                                <td>Process or application name</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Stage 4: Enrichment</h3>
+                <p>XSIAM automatically enriches normalized data with additional context:</p>
+                
+                <div class="card-grid">
+                    <div class="card" style="cursor: default;">
+                        <div class="card-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <h3>GeoIP Enrichment</h3>
+                        <p>Country, city, ASN for external IPs</p>
+                    </div>
+                    <div class="card" style="cursor: default;">
+                        <div class="card-icon"><i class="fas fa-skull"></i></div>
+                        <h3>Threat Intelligence</h3>
+                        <p>Reputation scores from Unit 42 and custom feeds</p>
+                    </div>
+                    <div class="card" style="cursor: default;">
+                        <div class="card-icon"><i class="fas fa-users"></i></div>
+                        <h3>Identity Mapping</h3>
+                        <p>User details from Active Directory integration</p>
+                    </div>
+                    <div class="card" style="cursor: default;">
+                        <div class="card-icon"><i class="fas fa-server"></i></div>
+                        <h3>Asset Context</h3>
+                        <p>Asset criticality, owner, business unit</p>
+                    </div>
+                </div>
+                
+                <h2><i class="fas fa-database"></i> XDM Schema Categories</h2>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Prefix</th>
+                                <th>Example Fields</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Event</strong></td>
+                                <td>xdm.event.*</td>
+                                <td>type, outcome, timestamp, duration</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Source</strong></td>
+                                <td>xdm.source.*</td>
+                                <td>ipv4, host.hostname, user.username, process.name</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Target</strong></td>
+                                <td>xdm.target.*</td>
+                                <td>ipv4, host.hostname, port, resource.name</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network</strong></td>
+                                <td>xdm.network.*</td>
+                                <td>protocol, direction, bytes_sent, bytes_received</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Auth</strong></td>
+                                <td>xdm.auth.*</td>
+                                <td>method, outcome, service</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alert</strong></td>
+                                <td>xdm.alert.*</td>
+                                <td>severity, category, name, description</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Observer</strong></td>
+                                <td>xdm.observer.*</td>
+                                <td>vendor, product, version, type</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h2><i class="fas fa-tools"></i> Custom Parsing Rules</h2>
+                
+                <p>When built-in parsers don't cover your data source, create custom parsing rules:</p>
+                
+                <div class="code-block">
+                    <div class="code-header">Custom Parser: JSON Application Logs</div>
+                    <pre>// Settings → Data Management → Parsing Rules → Create Rule
+
+// Step 1: Define log identification
+Filter: _collector_name = "app-server-logs"
+
+// Step 2: Parse JSON structure
+[INGEST:VENDOR="Custom", PRODUCT="AppServer", TARGET_DATASET="custom_app_logs"]
+alter 
+    parsed = json_extract_scalar(_raw_log, "$"),
+    timestamp = json_extract_scalar(_raw_log, "$.timestamp"),
+    level = json_extract_scalar(_raw_log, "$.level"),
+    message = json_extract_scalar(_raw_log, "$.message"),
+    user = json_extract_scalar(_raw_log, "$.user"),
+    action = json_extract_scalar(_raw_log, "$.action"),
+    resource = json_extract_scalar(_raw_log, "$.resource"),
+    ip = json_extract_scalar(_raw_log, "$.client_ip")
+
+// Step 3: Map to XDM
+| alter
+    xdm.event.type = "APPLICATION",
+    xdm.event.outcome = if(level = "ERROR", XDM_CONST.OUTCOME_FAILED, XDM_CONST.OUTCOME_SUCCESS),
+    xdm.source.user.username = user,
+    xdm.source.ipv4 = ip,
+    xdm.target.resource.name = resource,
+    xdm.event.description = message;</pre>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">Custom Parser: CSV Format Logs</div>
+                    <pre>// For CSV-formatted logs
+[INGEST:VENDOR="Custom", PRODUCT="LegacyApp", TARGET_DATASET="legacy_app"]
+alter
+    fields = split(_raw_log, ","),
+    timestamp = arrayindex(fields, 0),
+    severity = arrayindex(fields, 1),
+    source_ip = arrayindex(fields, 2),
+    dest_ip = arrayindex(fields, 3),
+    action = arrayindex(fields, 4),
+    details = arrayindex(fields, 5)
+
+| alter
+    xdm.event.type = "NETWORK",
+    xdm.source.ipv4 = source_ip,
+    xdm.target.ipv4 = dest_ip,
+    xdm.event.outcome = if(action = "ALLOW", XDM_CONST.OUTCOME_SUCCESS, XDM_CONST.OUTCOME_FAILED),
+    xdm.alert.severity = severity;</pre>
+                </div>
+                
+                <h2><i class="fas fa-bug"></i> Parsing Troubleshooting</h2>
+                
+                <h3>Common Parsing Issues</h3>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Issue</th>
+                                <th>Symptoms</th>
+                                <th>Resolution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Wrong parser applied</td>
+                                <td>Fields mapped incorrectly, missing data</td>
+                                <td>Check vendor identification, create explicit routing rule</td>
+                            </tr>
+                            <tr>
+                                <td>Timestamp parsing failure</td>
+                                <td>Events show wrong time, sorting issues</td>
+                                <td>Verify timestamp format, configure timezone</td>
+                            </tr>
+                            <tr>
+                                <td>Truncated messages</td>
+                                <td>Incomplete data, cut-off fields</td>
+                                <td>Increase message size limits, check Broker VM config</td>
+                            </tr>
+                            <tr>
+                                <td>Missing XDM fields</td>
+                                <td>Correlation rules don't match</td>
+                                <td>Verify parser mapping, add custom XDM mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Same event appears multiple times</td>
+                                <td>Check for multiple collectors, enable deduplication</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">XQL: Analyze Parsing Quality</div>
+                    <pre>// Check for unparsed/raw logs
+dataset = xdr_data 
+| filter _vendor = null or _product = null
+| comp count() as unparsed_count by _collector_name
+| sort desc unparsed_count
+| limit 20
+
+// Verify XDM field population
+dataset = xdr_data 
+| filter _time > ago(1h)
+| comp count() as total,
+    count(xdm.source.ipv4) as has_source_ip,
+    count(xdm.target.ipv4) as has_target_ip,
+    count(xdm.source.user.username) as has_user
+    by _vendor, _product
+| alter 
+    source_ip_pct = round(multiply(divide(has_source_ip, total), 100), 2),
+    target_ip_pct = round(multiply(divide(has_target_ip, total), 100), 2),
+    user_pct = round(multiply(divide(has_user, total), 100), 2)
+
+// Find parsing errors
+dataset = xdr_data 
+| filter _parsing_status != "SUCCESS"
+| fields _time, _raw_log, _parsing_status, _parsing_error
+| limit 100</pre>
+                </div>
+                
+                <h2><i class="fas fa-tachometer-alt"></i> Parsing Performance</h2>
+                
+                <div class="info-box">
+                    <h4>Optimization Best Practices</h4>
+                    <ul>
+                        <li><strong>Use built-in parsers:</strong> Pre-optimized for performance</li>
+                        <li><strong>Minimize regex:</strong> Use string functions when possible</li>
+                        <li><strong>Filter early:</strong> Drop unnecessary logs before parsing</li>
+                        <li><strong>Batch similar sources:</strong> Configure efficient routing</li>
+                        <li><strong>Monitor parsing lag:</strong> Track delay between event time and indexed time</li>
+                    </ul>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How does XSIAM normalize data from different sources?"</h4>
+                    <p>"XSIAM uses a four-stage parsing pipeline. First, raw data arrives via various ingestion methods and gets tagged with source metadata. Second, vendor-specific parsers extract structured fields - XSIAM includes 800+ pre-built parsers for products like Palo Alto firewalls, CrowdStrike, Okta, etc. Third, these vendor fields are mapped to the XDM schema - standardized field names like xdm.source.ipv4 and xdm.target.user.username. This normalization is critical because it means I can write one correlation rule that works across Palo Alto, Cisco, and Fortinet firewalls. Finally, data gets enriched with GeoIP, threat intel, and asset context. If we have a custom application without a built-in parser, I create a parsing rule using XQL functions to extract and map fields to XDM."</p>
+                </div>
+                
+                <div class="interview-box">
+                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "What is XDM and why is it important?"</h4>
+                    <p>"XDM stands for Cross-Platform Data Model. It's XSIAM's unified schema that standardizes field names across all data sources. Without normalization, the same concept might be called 'src_ip' in one product, 'SourceAddress' in another, and 'client.ip' in a third. XDM maps all these to 'xdm.source.ipv4'. This matters for three reasons: First, I can write queries that span multiple vendors without knowing each one's field names. Second, correlation rules become vendor-agnostic - a rule detecting lateral movement works whether the data comes from Windows events or Palo Alto logs. Third, dashboards and reports can aggregate data meaningfully. The XDM schema covers categories like event metadata, source/target entities, network details, authentication, and alerts."</p>
+                </div>
+                
+            </main>
+            
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        <a href="../index.html">Home</a>
+                        <a href="index.html">XSIAM</a>
+                        <a href="data-ingestion.html">Data Ingestion</a>
+                        <a href="retention-tiers.html">Retention</a>
+                    </div>
+                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

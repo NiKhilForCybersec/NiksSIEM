@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Agent Deployment - Cortex XDR</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>SOC Compendium</h2>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">🏠 Home</a></li>
+            <li><a href="index.html" class="active">🟠 Cortex XDR</a></li>
+            <li><a href="../crowdstrike/index.html">🔴 CrowdStrike</a></li>
+            <li><a href="../mde/index.html">🔵 Microsoft Defender</a></li>
+            <li><a href="../xsiam/index.html">🟣 XSIAM</a></li>
+            <li><a href="../sentinel/index.html">🔷 Sentinel</a></li>
+            <li><a href="../splunk/index.html">🟢 Splunk</a></li>
+            <li><a href="../operations/index.html">⚙️ Operations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>🟠 Cortex XDR Agent Deployment</h1>
+            <p>Complete guide to deploying and managing Cortex XDR agents across enterprise environments</p>
+        </div>
+
+        <section class="content-section">
+            <h2>Deployment Architecture</h2>
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        CORTEX XDR DEPLOYMENT ARCHITECTURE                        │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │   Windows    │    │    macOS     │    │    Linux     │    │   Android    │  │
+│  │   Agent      │    │    Agent     │    │    Agent     │    │    Agent     │  │
+│  │  (Traps)     │    │  (Traps)     │    │  (Traps)     │    │   (Mobile)   │  │
+│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘  │
+│         │                   │                   │                   │          │
+│         └───────────────────┴─────────┬─────────┴───────────────────┘          │
+│                                       │                                         │
+│                                       ▼                                         │
+│                         ┌─────────────────────────┐                             │
+│                         │   Broker VM (Optional)   │                            │
+│                         │  - Content Updates       │                            │
+│                         │  - Log Forwarding        │                            │
+│                         │  - Proxy Support         │                            │
+│                         └───────────┬─────────────┘                             │
+│                                     │                                           │
+│                                     ▼                                           │
+│                    ┌─────────────────────────────────┐                          │
+│                    │     Cortex Data Lake (Cloud)     │                         │
+│                    │  - Event Collection              │                         │
+│                    │  - Analytics Engine              │                         │
+│                    │  - Threat Intelligence           │                         │
+│                    └─────────────────────────────────┘                          │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>System Requirements</h2>
+            
+            <h3>Windows Requirements</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Minimum</th>
+                        <th>Recommended</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>OS Version</td>
+                        <td>Windows 7 SP1 / Server 2008 R2</td>
+                        <td>Windows 10/11 / Server 2016+</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>1 GHz single core</td>
+                        <td>2 GHz dual core</td>
+                    </tr>
+                    <tr>
+                        <td>RAM</td>
+                        <td>512 MB</td>
+                        <td>2 GB</td>
+                    </tr>
+                    <tr>
+                        <td>Disk Space</td>
+                        <td>300 MB</td>
+                        <td>1 GB</td>
+                    </tr>
+                    <tr>
+                        <td>.NET Framework</td>
+                        <td>4.5.2</td>
+                        <td>4.7.2+</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>macOS Requirements</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Minimum</th>
+                        <th>Recommended</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>OS Version</td>
+                        <td>macOS 10.15 Catalina</td>
+                        <td>macOS 12 Monterey+</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>Intel 64-bit</td>
+                        <td>Apple Silicon / Intel</td>
+                    </tr>
+                    <tr>
+                        <td>RAM</td>
+                        <td>2 GB</td>
+                        <td>4 GB</td>
+                    </tr>
+                    <tr>
+                        <td>Disk Space</td>
+                        <td>500 MB</td>
+                        <td>1 GB</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Linux Requirements</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Distribution</th>
+                        <th>Supported Versions</th>
+                        <th>Kernel Requirements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>RHEL / CentOS</td>
+                        <td>7.x, 8.x, 9.x</td>
+                        <td>3.10+</td>
+                    </tr>
+                    <tr>
+                        <td>Ubuntu</td>
+                        <td>18.04, 20.04, 22.04</td>
+                        <td>4.15+</td>
+                    </tr>
+                    <tr>
+                        <td>SUSE</td>
+                        <td>12 SP3+, 15</td>
+                        <td>4.4+</td>
+                    </tr>
+                    <tr>
+                        <td>Oracle Linux</td>
+                        <td>7.x, 8.x</td>
+                        <td>3.10+</td>
+                    </tr>
+                    <tr>
+                        <td>Debian</td>
+                        <td>9, 10, 11</td>
+                        <td>4.9+</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>Network Requirements</h2>
+            <div class="info-box">
+                <h4>Required Connectivity</h4>
+                <p>Cortex XDR agents require outbound HTTPS (443) connectivity to the following domains:</p>
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Domain Pattern</th>
+                        <th>Purpose</th>
+                        <th>Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>*.xdr.&lt;region&gt;.paloaltonetworks.com</code></td>
+                        <td>XDR Cloud Communication</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><code>*.traps.paloaltonetworks.com</code></td>
+                        <td>Agent Management</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><code>*.panw-xdr.com</code></td>
+                        <td>Content Updates</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><code>*.paloaltonetworks.com</code></td>
+                        <td>Global Services</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><code>*.wldap.com</code></td>
+                        <td>WildFire Analysis</td>
+                        <td>Recommended</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>Installation Methods</h2>
+
+            <h3>Windows - Interactive Installation</h3>
+            <div class="code-block">
+                <pre><code># Download installer from Cortex XDR console
+# Run with administrative privileges
+
+# Silent installation with default settings
+msiexec /i TrapsAgent.msi /qn
+
+# Silent installation with logging
+msiexec /i TrapsAgent.msi /qn /l*v C:\Logs\traps_install.log
+
+# Installation with custom parameters
+msiexec /i TrapsAgent.msi /qn INSTALLDIR="C:\Program Files\Palo Alto Networks" TRAY_ICON=1</code></pre>
+            </div>
+
+            <h3>Windows - SCCM/Intune Deployment</h3>
+            <div class="code-block">
+                <pre><code># SCCM Application Detection Method (PowerShell)
+$AgentPath = "C:\Program Files\Palo Alto Networks\Traps\cyserver.exe"
+if (Test-Path $AgentPath) {
+    $Version = (Get-Item $AgentPath).VersionInfo.FileVersion
+    if ([version]$Version -ge [version]"8.0.0") {
+        Write-Host "Installed"
+        exit 0
+    }
+}
+exit 1
+
+# SCCM Installation Command
+msiexec /i TrapsAgent.msi /qn REBOOT=ReallySuppress
+
+# Intune Win32 App Install Command
+msiexec /i TrapsAgent.msi /qn /l*v %TEMP%\traps_install.log
+
+# Intune Detection Rule (Registry)
+# Path: HKLM\SOFTWARE\Palo Alto Networks\Traps
+# Value: Version
+# Comparison: Greater than or equal to 8.0.0</code></pre>
+            </div>
+
+            <h3>macOS Installation</h3>
+            <div class="code-block">
+                <pre><code># Download PKG from Cortex XDR console
+
+# Interactive installation
+sudo installer -pkg TrapsAgent.pkg -target /
+
+# Silent installation via MDM (Jamf Pro)
+# Upload PKG to Jamf and deploy via policy
+
+# Post-installation: Grant required permissions
+# System Preferences → Security & Privacy → Privacy:
+# - Full Disk Access: Palo Alto Networks Traps
+# - Network Filtering: Palo Alto Networks Traps
+
+# Verify installation
+/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool runtime status</code></pre>
+            </div>
+
+            <h3>Linux Installation</h3>
+            <div class="code-block">
+                <pre><code># RHEL/CentOS - RPM Installation
+sudo rpm -ivh traps_agent.rpm
+
+# Ubuntu/Debian - DEB Installation
+sudo dpkg -i traps_agent.deb
+sudo apt-get install -f  # Fix dependencies if needed
+
+# Verify installation
+sudo /opt/traps/bin/cytool runtime status
+
+# Check agent connectivity
+sudo /opt/traps/bin/cytool connect status
+
+# View agent logs
+sudo journalctl -u traps -f
+tail -f /var/log/traps/traps.log</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Agent Profiles</h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Profile Type</th>
+                        <th>Protection Level</th>
+                        <th>Performance Impact</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Full Protection</strong></td>
+                        <td>Maximum</td>
+                        <td>Medium</td>
+                        <td>Standard endpoints, workstations</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Detection Only</strong></td>
+                        <td>Detection</td>
+                        <td>Low</td>
+                        <td>Initial rollout, testing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Server Profile</strong></td>
+                        <td>Optimized</td>
+                        <td>Low</td>
+                        <td>Production servers, databases</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VDI Profile</strong></td>
+                        <td>Optimized</td>
+                        <td>Minimal</td>
+                        <td>Virtual desktops, non-persistent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>POS/Kiosk</strong></td>
+                        <td>Tailored</td>
+                        <td>Minimal</td>
+                        <td>Point of sale, embedded systems</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Profile Configuration Settings</h3>
+            <div class="code-block">
+                <pre><code># Full Protection Profile Settings
+{
+    "profile_name": "Full Protection",
+    "malware_protection": {
+        "enabled": true,
+        "action": "block",
+        "behavioral_threat_protection": true,
+        "ransomware_protection": true
+    },
+    "exploit_protection": {
+        "enabled": true,
+        "action": "block",
+        "protected_processes": ["browsers", "office", "pdf_readers"]
+    },
+    "restriction_settings": {
+        "child_process_protection": true,
+        "script_protection": true,
+        "macro_protection": true
+    },
+    "data_collection": {
+        "enhanced_data": true,
+        "network_events": true,
+        "file_events": true,
+        "registry_events": true
+    }
+}
+
+# Server Profile Settings
+{
+    "profile_name": "Server Profile",
+    "malware_protection": {
+        "enabled": true,
+        "action": "block",
+        "scan_on_write": true,
+        "scan_on_read": false  # Reduce I/O impact
+    },
+    "performance_optimization": {
+        "cpu_limit": 30,
+        "scan_priority": "low",
+        "exclude_paths": [
+            "/var/log/*",
+            "/var/lib/mysql/*",
+            "/var/lib/postgresql/*"
+        ]
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Mass Deployment Scripts</h2>
+
+            <h3>PowerShell - Domain-Joined Deployment</h3>
+            <div class="code-block">
+                <pre><code># Deploy to multiple computers from AD
+$Computers = Get-ADComputer -Filter * -SearchBase "OU=Workstations,DC=corp,DC=local" | 
+             Select-Object -ExpandProperty Name
+
+$InstallerPath = "\\fileserver\software\Traps\TrapsAgent.msi"
+$LogPath = "\\fileserver\logs\traps"
+
+foreach ($Computer in $Computers) {
+    $Session = New-PSSession -ComputerName $Computer -ErrorAction SilentlyContinue
+    if ($Session) {
+        Invoke-Command -Session $Session -ScriptBlock {
+            param($Installer, $LogDir, $CompName)
+            
+            $LogFile = Join-Path $LogDir "$CompName-install.log"
+            $Arguments = "/i `"$Installer`" /qn /l*v `"$LogFile`""
+            
+            Start-Process msiexec.exe -ArgumentList $Arguments -Wait -NoNewWindow
+            
+        } -ArgumentList $InstallerPath, $LogPath, $Computer
+        
+        Remove-PSSession $Session
+        Write-Host "Deployed to $Computer" -ForegroundColor Green
+    } else {
+        Write-Host "Failed to connect to $Computer" -ForegroundColor Red
+    }
+}</code></pre>
+            </div>
+
+            <h3>Ansible Playbook - Linux Deployment</h3>
+            <div class="code-block">
+                <pre><code>---
+# cortex_xdr_deploy.yml
+- name: Deploy Cortex XDR Agent to Linux Servers
+  hosts: linux_servers
+  become: yes
+  vars:
+    agent_package: "traps_agent_8.0.rpm"
+    agent_source: "https://internal-repo.corp.local/cortex/"
+    
+  tasks:
+    - name: Download Cortex XDR agent package
+      get_url:
+        url: "{{ agent_source }}{{ agent_package }}"
+        dest: "/tmp/{{ agent_package }}"
+        mode: '0644'
+      
+    - name: Install Cortex XDR agent (RHEL/CentOS)
+      yum:
+        name: "/tmp/{{ agent_package }}"
+        state: present
+        disable_gpg_check: yes
+      when: ansible_os_family == "RedHat"
+      
+    - name: Install Cortex XDR agent (Debian/Ubuntu)
+      apt:
+        deb: "/tmp/{{ agent_package | replace('.rpm', '.deb') }}"
+        state: present
+      when: ansible_os_family == "Debian"
+      
+    - name: Start Cortex XDR service
+      service:
+        name: traps
+        state: started
+        enabled: yes
+        
+    - name: Verify agent connectivity
+      command: /opt/traps/bin/cytool connect status
+      register: connect_status
+      
+    - name: Display connection status
+      debug:
+        var: connect_status.stdout_lines</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Agent Management Commands</h2>
+            
+            <h3>Windows - cytool Commands</h3>
+            <div class="code-block">
+                <pre><code># Check agent status
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" runtime status
+
+# Check connectivity
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connect status
+
+# Force content update
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" content update
+
+# View agent version
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
+
+# Check protection status
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" protect status
+
+# Isolate endpoint (requires admin token)
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate enable
+
+# Remove isolation
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate disable
+
+# Generate support file
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" support generate</code></pre>
+            </div>
+
+            <h3>Linux - cytool Commands</h3>
+            <div class="code-block">
+                <pre><code># Check agent status
+sudo /opt/traps/bin/cytool runtime status
+
+# Check all modules
+sudo /opt/traps/bin/cytool runtime modules
+
+# View protection policy
+sudo /opt/traps/bin/cytool protect policy
+
+# Check file exclusions
+sudo /opt/traps/bin/cytool protect exclusions
+
+# Force sync with management
+sudo /opt/traps/bin/cytool sync
+
+# Check hash verdict
+sudo /opt/traps/bin/cytool hash query <sha256>
+
+# Collect diagnostic bundle
+sudo /opt/traps/bin/cytool support generate --output /tmp/traps_diag.tar.gz</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Troubleshooting</h2>
+
+            <h3>Common Issues and Solutions</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Symptoms</th>
+                        <th>Resolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Agent Not Connecting</strong></td>
+                        <td>Disconnected status, no heartbeat</td>
+                        <td>Check firewall rules, verify proxy settings, test connectivity to *.paloaltonetworks.com</td>
+                    </tr>
+                    <tr>
+                        <td><strong>High CPU Usage</strong></td>
+                        <td>cyserver.exe consuming >30% CPU</td>
+                        <td>Add exclusions for high-I/O applications, switch to Server profile, check for malware scans</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Content Update Failures</strong></td>
+                        <td>Outdated signatures, update errors</td>
+                        <td>Check Broker VM connectivity, verify internet access, force update via cytool</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Installation Fails</strong></td>
+                        <td>MSI error codes, incomplete install</td>
+                        <td>Check prerequisites (.NET, disk space), run with verbose logging, verify admin rights</td>
+                    </tr>
+                    <tr>
+                        <td><strong>macOS Permissions</strong></td>
+                        <td>Limited visibility, missing events</td>
+                        <td>Grant Full Disk Access, approve system extensions, check MDM profiles</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Diagnostic Commands</h3>
+            <div class="code-block">
+                <pre><code># Windows - Check service status
+Get-Service -Name "cyserver" | Select-Object Status, StartType
+
+# Windows - View recent logs
+Get-EventLog -LogName Application -Source "Traps*" -Newest 50
+
+# Windows - Check network connectivity
+Test-NetConnection -ComputerName "*.xdr.us.paloaltonetworks.com" -Port 443
+
+# Linux - Check service status
+systemctl status traps
+
+# Linux - View logs
+journalctl -u traps --since "1 hour ago"
+
+# macOS - Check extensions
+systemextensionsctl list | grep paloalto
+
+# macOS - View logs
+log show --predicate 'subsystem == "com.paloaltonetworks.traps"' --last 1h</code></pre>
+            </div>
+        </section>
+
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            
+            <div class="interview-qa">
+                <h4>Q: How would you deploy Cortex XDR agents to 5,000 endpoints in a large enterprise?</h4>
+                <p><strong>A:</strong> I would approach this in phases. First, I would work with the infrastructure team to deploy using existing tools like SCCM or Intune for Windows, Jamf for macOS, and Ansible or Puppet for Linux. I would start with a pilot group of 100-200 machines across different departments to identify any compatibility issues. I would use Detection-Only mode initially to avoid disrupting operations, then gradually enable blocking after validating false positive rates. For network requirements, I would work with the firewall team to allow connectivity to Palo Alto's cloud domains. I would also deploy a Broker VM in each major site for environments with restricted internet access to handle content updates and log forwarding.</p>
+            </div>
+
+            <div class="interview-qa">
+                <h4>Q: What's the difference between Cortex XDR agent profiles and when would you use each?</h4>
+                <p><strong>A:</strong> Cortex XDR offers several profiles optimized for different environments. Full Protection provides maximum security with all prevention modules enabled, ideal for standard workstations. Server Profile reduces I/O impact by optimizing scan operations and is designed for production servers where performance is critical. VDI Profile handles non-persistent desktops efficiently by minimizing local storage and optimizing for golden image scenarios. Detection-Only mode captures all telemetry without blocking, which I use during initial deployments or when troubleshooting false positives. The key is matching the profile to the endpoint's role and adjusting exclusions based on legitimate applications running on each system type.</p>
+            </div>
+        </section>
+
+        <div class="navigation-links">
+            <a href="index.html">← Back to Cortex XDR</a>
+            <a href="xql-reference.html">XQL Reference →</a>
+        </div>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

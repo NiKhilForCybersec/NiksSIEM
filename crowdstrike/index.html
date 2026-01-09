@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdStrike Falcon - Complete Reference Guide | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Compendium</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-shield-virus"></i> IOA Rules</a>
+                    <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-crow"></i> CrowdStrike Falcon</h1>
+                    <p class="lead">Cloud-native endpoint protection platform with world-class threat intelligence and 24/7 managed hunting</p>
+                </div>
+
+                <!-- Architecture Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Falcon Platform Architecture</h2>
+                    <div class="workflow-diagram">
+<pre>
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                              CROWDSTRIKE FALCON ARCHITECTURE                                                          ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                       ║
+║    ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
+║    │                                              ENDPOINTS                                                                       │   ║
+║    │                                                                                                                             │   ║
+║    │   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐           │   ║
+║    │   │  Windows    │    │   macOS     │    │   Linux     │    │ Kubernetes  │    │   Cloud     │    │   Mobile    │           │   ║
+║    │   │  Sensor     │    │   Sensor    │    │   Sensor    │    │  Container  │    │  Workloads  │    │  (Falcon    │           │   ║
+║    │   │             │    │             │    │             │    │   Runtime   │    │  (AWS/GCP/  │    │   Mobile)   │           │   ║
+║    │   │ Lightweight │    │ Lightweight │    │ Lightweight │    │  Protection │    │   Azure)    │    │             │           │   ║
+║    │   │  ~35MB      │    │  ~50MB      │    │  ~60MB      │    │             │    │             │    │             │           │   ║
+║    │   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘           │   ║
+║    │          │                  │                  │                  │                  │                  │                  │   ║
+║    └──────────┴──────────────────┴──────────────────┴──────────────────┴──────────────────┴──────────────────┴──────────────────┘   ║
+║                                                            │                                                                         ║
+║                                              ┌─────────────▼─────────────┐                                                           ║
+║                                              │     CLOUD STREAM API      │                                                           ║
+║                                              │   (Real-time telemetry)   │                                                           ║
+║                                              └─────────────┬─────────────┘                                                           ║
+║                                                            │                                                                         ║
+║    ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║    │                                         FALCON CLOUD                                                                         │  ║
+║    │                                                                                                                              │  ║
+║    │  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐     │  ║
+║    │  │  THREAT GRAPH      │  │  FALCON X          │  │  THREAT INTEL      │  │  OVERWATCH         │  │  FALCON COMPLETE   │     │  ║
+║    │  │                    │  │  (Sandbox)         │  │                    │  │  (Managed Hunt)    │  │  (MDR Service)     │     │  ║
+║    │  │  • AI/ML Engine    │  │  • Dynamic         │  │  • Adversary       │  │  • 24/7 Human      │  │  • Full Managed    │     │  ║
+║    │  │  • Behavioral      │  │    Analysis        │  │    Intelligence    │  │    Threat Hunting  │  │    Response        │     │  ║
+║    │  │    Analysis        │  │  • Malware         │  │  • Campaign        │  │  • Proactive       │  │  • Investigation   │     │  ║
+║    │  │  • Graph DB        │  │    Classification  │  │    Tracking        │  │    Notifications   │  │    Support         │     │  ║
+║    │  │  • Pattern         │  │  • IOC             │  │  • Attribution     │  │  • Expert          │  │                    │     │  ║
+║    │  │    Matching        │  │    Extraction      │  │                    │  │    Guidance        │  │                    │     │  ║
+║    │  └────────────────────┘  └────────────────────┘  └────────────────────┘  └────────────────────┘  └────────────────────┘     │  ║
+║    │                                                                                                                              │  ║
+║    │  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │  ║
+║    │  │                                         DETECTION ENGINE                                                               │ │  ║
+║    │  │                                                                                                                        │ │  ║
+║    │  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │ │  ║
+║    │  │  │  IOA (Indicator  │  │  ML Models       │  │  IOC Matching    │  │  Behavioral      │  │  Custom IOA      │         │ │  ║
+║    │  │  │  of Attack)      │  │                  │  │                  │  │  Prevention      │  │  Rules           │         │ │  ║
+║    │  │  │                  │  │  • Static ML     │  │  • Hash match    │  │                  │  │                  │         │ │  ║
+║    │  │  │  Attack pattern  │  │  • On-sensor ML  │  │  • Domain match  │  │  • Ransomware    │  │  • Custom        │         │ │  ║
+║    │  │  │  detection       │  │  • Cloud ML      │  │  • IP match      │  │  • Fileless      │  │    detections    │         │ │  ║
+║    │  │  │                  │  │                  │  │  • C2 detection  │  │  • Credential    │  │  • Org-specific  │         │ │  ║
+║    │  │  └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘         │ │  ║
+║    │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │  ║
+║    │                                                                                                                              │  ║
+║    └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                            │                                                                         ║
+║                                                            ▼                                                                         ║
+║    ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║    │                                           FALCON UI / API                                                                    │  ║
+║    │                                                                                                                              │  ║
+║    │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐    │  ║
+║    │  │  Detections    │  │  Event Search  │  │  Host Mgmt     │  │  Real Time     │  │  Reports &     │  │  API Gateway   │    │  ║
+║    │  │  Dashboard     │  │  & Hunting     │  │  & Groups      │  │  Response      │  │  Dashboards    │  │  & Streaming   │    │  ║
+║    │  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘    │  ║
+║    └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                                                                                                       ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre>
+                    </div>
+                </section>
+
+                <!-- Detection Flow Diagram -->
+                <section class="content-section">
+                    <h2><i class="fas fa-project-diagram"></i> Detection & Response Flow</h2>
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CROWDSTRIKE DETECTION FLOW                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│    ENDPOINT ACTIVITY                    CLOUD ANALYSIS                   RESPONSE               │
+│    ─────────────────                    ──────────────                   ────────               │
+│                                                                                                  │
+│    ┌───────────────┐                                                                            │
+│    │   Process     │                                                                            │
+│    │   Execution   │──┐                                                                         │
+│    └───────────────┘  │                                                                         │
+│                       │     ┌─────────────────────────────────────────────────────────────┐    │
+│    ┌───────────────┐  │     │                    THREAT GRAPH                             │    │
+│    │    File       │──┼────▶│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │    │
+│    │   Activity    │  │     │  │   IOA    │  │    ML    │  │   IOC    │  │Behavioral│   │    │
+│    └───────────────┘  │     │  │ Matching │  │  Models  │  │ Lookup   │  │ Analysis │   │    │
+│                       │     │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │    │
+│    ┌───────────────┐  │     │       │             │             │             │         │    │
+│    │   Network     │──┤     │       └──────┬──────┴──────┬──────┴──────┬──────┘         │    │
+│    │  Connections  │  │     │              │             │             │                │    │
+│    └───────────────┘  │     │              ▼             ▼             ▼                │    │
+│                       │     │       ┌────────────────────────────────────────┐          │    │
+│    ┌───────────────┐  │     │       │         CORRELATION ENGINE             │          │    │
+│    │   Registry    │──┤     │       │   (Combines signals, assigns scores)   │          │    │
+│    │   Changes     │  │     │       └──────────────────┬─────────────────────┘          │    │
+│    └───────────────┘  │     │                          │                                │    │
+│                       │     └──────────────────────────┼────────────────────────────────┘    │
+│    ┌───────────────┐  │                                │                                      │
+│    │     DNS       │──┘                                ▼                                      │
+│    │   Queries     │                    ┌──────────────────────────────┐                     │
+│    └───────────────┘                    │      DETECTION CREATED       │                     │
+│                                         │  (Informational → Critical)  │                     │
+│                                         └──────────────┬───────────────┘                     │
+│                                                        │                                      │
+│                       ┌────────────────────────────────┼────────────────────────────────┐    │
+│                       │                                │                                │    │
+│                       ▼                                ▼                                ▼    │
+│            ┌─────────────────────┐        ┌─────────────────────┐        ┌────────────────┐ │
+│            │    DETECT ONLY     │        │   AUTO-BLOCK/KILL   │        │  QUARANTINE    │ │
+│            │  (Alert to SOC)    │        │  (Prevention Mode)  │        │   (Isolate)    │ │
+│            └─────────────────────┘        └─────────────────────┘        └────────────────┘ │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Sensor Communication Flow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exchange-alt"></i> Sensor Communication Architecture</h2>
+                    <div class="diagram-box">
+<pre>
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│                         FALCON SENSOR COMMUNICATION                                         │
+├────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│   ENDPOINT                              NETWORK                    CROWDSTRIKE CLOUD       │
+│                                                                                             │
+│   ┌─────────────────┐                                           ┌───────────────────────┐ │
+│   │  FALCON SENSOR  │                                           │   FALCON CLOUD API    │ │
+│   │                 │                                           │                       │ │
+│   │  ┌───────────┐  │          HTTPS/443                       │  ┌─────────────────┐  │ │
+│   │  │  Kernel   │  │    ┌──────────────────────┐              │  │  Event Ingestion │  │ │
+│   │  │  Driver   │  │    │   Event Stream       │─────────────▶│  │     Pipeline     │  │ │
+│   │  │ (Process  │  │    │  (Compressed JSON)   │              │  │                  │  │ │
+│   │  │  Hooks)   │  │    │  ~1-5 KB/event      │              │  │  ~1M events/sec  │  │ │
+│   │  └───────────┘  │    └──────────────────────┘              │  │   per customer   │  │ │
+│   │        │        │                                           │  └─────────────────┘  │ │
+│   │        ▼        │    ┌──────────────────────┐              │           │           │ │
+│   │  ┌───────────┐  │    │   Configuration      │◀─────────────│  ┌───────▼─────────┐  │ │
+│   │  │  Event    │  │    │   Channel            │              │  │   Threat Graph  │  │ │
+│   │  │  Buffer   │  │    │  (Policy updates,    │              │  │   (Analysis +   │  │ │
+│   │  │  (Local)  │  │    │   IOC updates)       │              │  │    Correlation) │  │ │
+│   │  └───────────┘  │    └──────────────────────┘              │  └───────┬─────────┘  │ │
+│   │        │        │                                           │          │           │ │
+│   │        ▼        │    ┌──────────────────────┐              │  ┌───────▼─────────┐  │ │
+│   │  ┌───────────┐  │    │   Response Channel   │◀─────────────│  │   Detection     │  │ │
+│   │  │  Action   │◀─┼────│  (RTR commands,      │              │  │   Engine        │  │ │
+│   │  │  Engine   │  │    │   containment)       │              │  └─────────────────┘  │ │
+│   │  └───────────┘  │    └──────────────────────┘              │                       │ │
+│   │                 │                                           │                       │ │
+│   └─────────────────┘                                           └───────────────────────┘ │
+│                                                                                             │
+│   TELEMETRY COLLECTED:                    BANDWIDTH:                                       │
+│   • Process creation/termination          • Typical: 100KB-1MB/endpoint/day               │
+│   • File writes/reads/deletes             • Peak: 5-10MB during incidents                 │
+│   • Network connections                   • Compressed & batched                          │
+│   • Registry modifications                                                                 │
+│   • DNS queries                           OFFLINE CAPABILITY:                             │
+│   • Authentication events                 • Local buffer: 7 days of events               │
+│   • Script execution                      • ML models cached locally                      │
+│   • Module loads                          • Prevention continues offline                  │
+│                                                                                             │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Key Capabilities -->
+                <section class="content-section">
+                    <h2><i class="fas fa-star"></i> Key Capabilities</h2>
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon red"><i class="fas fa-shield-virus"></i></div>
+                                <div>
+                                    <div class="card-title">IOA Detection</div>
+                                    <div class="card-subtitle">Indicators of Attack</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                Behavioral detection based on attacker techniques rather than signatures. Detects novel attacks by identifying malicious patterns and sequences of activity regardless of specific malware variants.
+                            </div>
+                            <a href="ioa-rules.html" class="card-link">IOA Rules Guide <i class="fas fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon purple"><i class="fas fa-search"></i></div>
+                                <div>
+                                    <div class="card-title">Threat Hunting</div>
+                                    <div class="card-subtitle">Threat Hunting</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                Search across all endpoint telemetry with powerful query syntax. Filter by process, file, network, registry events, and more with 7-day hot data retention.
+                            </div>
+                            <a href="threat-hunting.html" class="card-link">Threat Hunting <i class="fas fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon cyan"><i class="fas fa-terminal"></i></div>
+                                <div>
+                                    <div class="card-title">Real Time Response</div>
+                                    <div class="card-subtitle">Remote Investigation</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                Interactive remote shell for live investigation and remediation. Execute commands, collect files, kill processes, and perform forensic actions on endpoints in real-time.
+                            </div>
+                            <a href="rtr.html" class="card-link">RTR Commands <i class="fas fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon orange"><i class="fas fa-eye"></i></div>
+                                <div>
+                                    <div class="card-title">Falcon OverWatch</div>
+                                    <div class="card-subtitle">Managed Threat Hunting</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                24/7 proactive threat hunting by CrowdStrike experts. Elite team hunts for sophisticated threats that evade automated detection, providing early warning of targeted attacks.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Event Search Quick Reference -->
+                <section class="content-section">
+                    <h2><i class="fas fa-balance-scale"></i> IOA vs IOC Detection</h2>
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              IOA vs IOC DETECTION COMPARISON                                 │
+├────────────────────────────────────────┬────────────────────────────────────────────────────┤
+│           IOC (Indicator of           │            IOA (Indicator of                       │
+│             Compromise)                │               Attack)                              │
+├────────────────────────────────────────┼────────────────────────────────────────────────────┤
+│                                        │                                                    │
+│   WHAT IT DETECTS:                     │   WHAT IT DETECTS:                                │
+│   • Known malware hashes               │   • Behavioral patterns                           │
+│   • Malicious IP addresses             │   • Attack techniques (TTPs)                      │
+│   • Bad domain names                   │   • Suspicious sequences                          │
+│   • Specific file paths                │   • Anomalous activity chains                     │
+│                                        │                                                    │
+│   ┌─────────────────────────────────┐  │   ┌─────────────────────────────────────────────┐ │
+│   │   Hash: a1b2c3d4e5f6...         │  │   │   Parent: explorer.exe                      │ │
+│   │   IP: 192.168.1.100             │  │   │      └─▶ Child: powershell.exe              │ │
+│   │   Domain: evil.com              │  │   │           └─▶ Downloads file from web       │ │
+│   │                                  │  │   │               └─▶ Executes downloaded file │ │
+│   │   Match? ──▶ ALERT              │  │   │                                             │ │
+│   └─────────────────────────────────┘  │   │   Pattern Match? ──▶ ALERT                  │ │
+│                                        │   └─────────────────────────────────────────────┘ │
+│   STRENGTHS:                           │   STRENGTHS:                                      │
+│   ✓ High confidence (known bad)        │   ✓ Detects NEW/UNKNOWN threats                  │
+│   ✓ Low false positive rate            │   ✓ Catches zero-days                            │
+│   ✓ Fast lookup                        │   ✓ Resilient to hash changes                    │
+│                                        │   ✓ Detects fileless attacks                     │
+│   WEAKNESSES:                          │                                                   │
+│   ✗ Only catches KNOWN threats         │   WEAKNESSES:                                    │
+│   ✗ Easily evaded (change hash)        │   ✗ May have higher false positives             │
+│   ✗ Requires constant updates          │   ✗ Requires tuning                              │
+│   ✗ Misses fileless attacks            │   ✗ More complex to create                       │
+│                                        │                                                    │
+├────────────────────────────────────────┴────────────────────────────────────────────────────┤
+│                                                                                              │
+│   CROWDSTRIKE APPROACH: Uses BOTH IOA + IOC + ML for layered detection                      │
+│                                                                                              │
+│   ┌────────────────────────────────────────────────────────────────────────────────────┐    │
+│   │   IOC Layer     ────▶    IOA Layer     ────▶    ML Layer     ────▶   DETECTION    │    │
+│   │   (Known bad)           (Behaviors)            (Anomalies)           (Combined)    │    │
+│   └────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Detection Severity Flow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Detection Severity & Response</h2>
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           DETECTION SEVERITY LEVELS & RESPONSE                               │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│   SEVERITY        │   TYPICAL TRIGGERS                  │   RECOMMENDED RESPONSE            │
+│   ─────────────────┼─────────────────────────────────────┼────────────────────────────────── │
+│                    │                                     │                                   │
+│   ┌─────────────┐  │                                     │                                   │
+│   │ INFORMATIONAL│  │  • Legitimate admin tools           │  • Log for awareness              │
+│   │   (Gray)     │  │  • PUPs (Potentially Unwanted)      │  • Periodic review                │
+│   └─────────────┘  │  • Policy violations                │  • No immediate action            │
+│         │          │                                     │                                   │
+│         ▼          │                                     │                                   │
+│   ┌─────────────┐  │                                     │                                   │
+│   │    LOW      │  │  • Suspicious but common patterns   │  • Triage within 24 hours         │
+│   │   (Blue)    │  │  • Weak IOA matches                 │  • Investigate if clustered       │
+│   └─────────────┘  │  • Reconnaissance indicators        │  • Context-dependent              │
+│         │          │                                     │                                   │
+│         ▼          │                                     │                                   │
+│   ┌─────────────┐  │                                     │                                   │
+│   │   MEDIUM    │  │  • Credential access attempts       │  • Triage within 4 hours          │
+│   │  (Yellow)   │  │  • Persistence mechanisms           │  • Investigate fully              │
+│   └─────────────┘  │  • Defense evasion techniques       │  • Notify asset owner             │
+│         │          │                                     │                                   │
+│         ▼          │                                     │                                   │
+│   ┌─────────────┐  │                                     │                                   │
+│   │    HIGH     │  │  • Active malware execution         │  • Triage within 1 hour           │
+│   │   (Orange)  │  │  • Lateral movement detected        │  • Consider containment           │
+│   └─────────────┘  │  • Data collection activity         │  • Escalate to Tier 2             │
+│         │          │                                     │                                   │
+│         ▼          │                                     │                                   │
+│   ┌─────────────┐  │                                     │                                   │
+│   │  CRITICAL   │  │  • Ransomware indicators            │  • IMMEDIATE response             │
+│   │    (Red)    │  │  • Active exfiltration              │  • Network isolation              │
+│   └─────────────┘  │  • Known APT TTPs                   │  • Incident bridge call           │
+│                    │  • Domain admin compromise          │  • Executive notification         │
+│                    │                                     │                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Event Search Quick Reference -->
+                <section class="content-section">
+                    <h2><i class="fas fa-search"></i> Event Search Quick Reference</h2>
+                    
+                    <h3>Search Syntax</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Operator</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>=</code></td>
+                                    <td>Exact match</td>
+                                    <td><code>ImageFileName="powershell.exe"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>!=</code></td>
+                                    <td>Not equal</td>
+                                    <td><code>UserName!="SYSTEM"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>=*</code></td>
+                                    <td>Wildcard match</td>
+                                    <td><code>CommandLine=*"-enc"*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>></code> <code><</code></td>
+                                    <td>Comparison</td>
+                                    <td><code>BytesSent>1000000</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>AND</code></td>
+                                    <td>Both conditions</td>
+                                    <td><code>ProcessStartTime>-1h AND ImageFileName="cmd.exe"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OR</code></td>
+                                    <td>Either condition</td>
+                                    <td><code>ImageFileName="psexec.exe" OR ImageFileName="paexec.exe"</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Essential Hunting Queries</h3>
+                    <pre><code>// Encoded PowerShell Commands
+event_simpleName=ProcessRollup2 
+| ImageFileName="*powershell.exe" 
+| CommandLine=*"-enc"* OR CommandLine=*"-encodedcommand"*
+
+// Suspicious Parent-Child Relationships (Office spawning cmd/PowerShell)
+event_simpleName=ProcessRollup2 
+| ParentBaseFileName IN ("winword.exe", "excel.exe", "outlook.exe") 
+| ImageFileName IN ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe")
+
+// Lateral Movement Tools
+event_simpleName=ProcessRollup2 
+| ImageFileName IN ("psexec.exe", "psexesvc.exe", "wmic.exe", "winrm.exe", "wmiprvse.exe")
+
+// LSASS Access Detection
+event_simpleName=ProcessRollup2 
+| TargetFileName="*lsass.exe" 
+| ParentBaseFileName!="svchost.exe"
+
+// Scheduled Task Creation
+event_simpleName=ProcessRollup2 
+| ImageFileName="schtasks.exe" 
+| CommandLine=*"/create"*</code></pre>
+                </section>
+
+                <!-- Sensor Management -->
+                <section class="content-section">
+                    <h2><i class="fas fa-cogs"></i> Prevention Policies</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Description</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Cloud ML</strong></td>
+                                    <td>Machine learning detection in cloud</td>
+                                    <td>Enable - Aggressive for workstations</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sensor ML</strong></td>
+                                    <td>On-device ML for offline protection</td>
+                                    <td>Enable - Moderate</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Script-Based Execution</strong></td>
+                                    <td>Prevent malicious scripts</td>
+                                    <td>Enable for all endpoints</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Credential Access</strong></td>
+                                    <td>Block credential theft attempts</td>
+                                    <td>Enable - Critical protection</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Lateral Movement</strong></td>
+                                    <td>Detect/prevent lateral movement</td>
+                                    <td>Enable - High priority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ransomware</strong></td>
+                                    <td>Behavioral ransomware protection</td>
+                                    <td>Enable - Maximum protection</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>USB Device Control</strong></td>
+                                    <td>Control removable media</td>
+                                    <td>Enable per compliance needs</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Real Time Response Commands -->
+                <section class="content-section">
+                    <h2><i class="fas fa-terminal"></i> Real Time Response (RTR) Commands</h2>
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon cyan"><i class="fas fa-info-circle"></i></div>
+                                <div><div class="card-title">Information Gathering</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>ps              // List processes
+netstat         // Network connections
+ipconfig        // Network configuration
+users           // Logged in users
+filehash [path] // Get file hash
+reg query [key] // Query registry
+ls [path]       // List directory</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon red"><i class="fas fa-gavel"></i></div>
+                                <div><div class="card-title">Response Actions</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>kill [PID]      // Kill process
+rm [path]       // Delete file
+memdump [PID]   // Memory dump
+getsid          // Get SID
+zip [src] [dst] // Archive files
+put [local] [remote]  // Upload file
+get [remote]    // Download file</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon purple"><i class="fas fa-shield-alt"></i></div>
+                                <div><div class="card-title">Containment</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>// Network Contain (isolate host)
+contain [hostname]
+
+// Remove containment
+lift_containment [hostname]
+
+// Still allows Falcon comms
+// Host can't reach network</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon green"><i class="fas fa-code"></i></div>
+                                <div><div class="card-title">Custom Scripts</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>// Run custom PowerShell
+runscript -CloudFile="CollectEvidence"
+
+// Run batch script
+runscript -Raw=```
+netstat -ano > c:\output.txt
+ipconfig /all >> c:\output.txt
+```</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Navigation Cards -->
+                <section class="content-section">
+                    <h2><i class="fas fa-book"></i> Documentation Sections</h2>
+                    <div class="card-grid">
+                        <div class="platform-card">
+                            <div class="platform-card-header crowdstrike">
+                                <h3>Threat Hunting</h3>
+                                <span>Complete Query Reference</span>
+                            </div>
+                            <div class="platform-card-body">
+                                <ul>
+                                    <li>Search syntax and operators</li>
+                                    <li>Event types and fields</li>
+                                    <li>Time-based searches</li>
+                                    <li>Saved searches</li>
+                                </ul>
+                                <a href="threat-hunting.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Threat Hunting</a>
+                            </div>
+                        </div>
+
+                        <div class="platform-card">
+                            <div class="platform-card-header crowdstrike">
+                                <h3>IOA Rules</h3>
+                                <span>Custom Detection Engineering</span>
+                            </div>
+                            <div class="platform-card-body">
+                                <ul>
+                                    <li>IOA rule creation</li>
+                                    <li>Rule testing workflow</li>
+                                    <li>Performance optimization</li>
+                                    <li>MITRE ATT&CK mapping</li>
+                                </ul>
+                                <a href="ioa-rules.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> IOA Rules</a>
+                            </div>
+                        </div>
+
+                        <div class="platform-card">
+                            <div class="platform-card-header crowdstrike">
+                                <h3>Real Time Response</h3>
+                                <span>Remote Investigation & Response</span>
+                            </div>
+                            <div class="platform-card-body">
+                                <ul>
+                                    <li>RTR command reference</li>
+                                    <li>Evidence collection</li>
+                                    <li>Containment procedures</li>
+                                    <li>Custom scripts</li>
+                                </ul>
+                                <a href="rtr.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> RTR Guide</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

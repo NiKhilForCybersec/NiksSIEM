@@ -3,9 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sizing-calculator | Nik's SIEM</title>
+    <title>SIEM Sizing Calculator | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .calc-section { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border: 1px solid var(--border-color); }
+        .calc-section h3 { margin-top: 0; color: #0078d4; display: flex; align-items: center; gap: 0.5rem; }
+        .sizing-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .sizing-table th, .sizing-table td { padding: 0.75rem; text-align: left; border: 1px solid var(--border-color); }
+        .sizing-table th { background: var(--code-bg); font-weight: 600; }
+        .sizing-table tr:hover { background: rgba(255,255,255,0.02); }
+        .input-group { margin: 1rem 0; }
+        .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .input-group input, .input-group select { 
+            width: 100%; max-width: 300px; padding: 0.75rem; 
+            border: 1px solid var(--border-color); border-radius: 8px; 
+            background: var(--code-bg); color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: #0078d4; }
+        .result-box { background: linear-gradient(135deg, rgba(0,120,212,0.2), rgba(0,120,212,0.1)); 
+            border: 1px solid rgba(0,120,212,0.4); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .result-box h4 { margin: 0 0 1rem 0; color: #0078d4; }
+        .result-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .result-item:last-child { border-bottom: none; }
+        .result-value { font-weight: 600; color: #2ecc71; }
+        .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .reference-card { background: var(--code-bg); border-radius: 8px; padding: 1rem; }
+        .reference-card h4 { margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #f5a623; }
+        .formula-box { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); 
+            border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: monospace; }
+        .platform-card { background: var(--code-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #0078d4; }
+        .platform-card.sentinel { border-left-color: #0078d4; }
+        .platform-card.splunk { border-left-color: #65a637; }
+        .platform-card.xsiam { border-left-color: #ff6b35; }
+        .platform-card h3 { margin-top: 0; }
+        .interview-qa { background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.05)); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; border: 1px solid rgba(0,120,212,0.3); }
+        .interview-qa h3 { color: #0078d4; margin-top: 0; }
+        .qa-item { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .qa-item strong { color: #f5a623; }
+        .warning-note { background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .warning-note h4 { color: #f5a623; margin: 0 0 0.5rem 0; }
+        .btn-calculate { background: #0078d4; color: white; border: none; padding: 0.75rem 2rem; 
+            border-radius: 8px; cursor: pointer; font-size: 1rem; margin: 1rem 0; }
+        .btn-calculate:hover { background: #005a9e; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -19,18 +61,633 @@
                     </div>
                 </a>
             </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations Home</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Project Planning</div>
+                    <a href="siem-project-planning.html" class="nav-link"><i class="fas fa-project-diagram"></i> Project Planning</a>
+                    <a href="data-source-priority.html" class="nav-link"><i class="fas fa-sort-amount-down"></i> Data Source Priority</a>
+                    <a href="sizing-calculator.html" class="nav-link active"><i class="fas fa-calculator"></i> Sizing Calculator</a>
+                    <a href="migration-guide.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Migration Guide</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Compliance</div>
+                    <a href="compliance-mapping.html" class="nav-link"><i class="fas fa-balance-scale"></i> Compliance Mapping</a>
+                    <a href="rbac-design.html" class="nav-link"><i class="fas fa-user-lock"></i> RBAC Design</a>
+                </div>
+            </nav>
         </aside>
+        
         <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Operations</a>
+                    <span class="separator">/</span>
+                    <span class="current">Sizing Calculator</span>
+                </div>
+            </header>
+            
             <main class="main-content">
                 <div class="page-header">
-                    <h1><i class="fas fa-cog"></i> sizing-calculator</h1>
-                    <p class="lead">Content coming soon</p>
+                    <h1><i class="fas fa-calculator"></i> SIEM Sizing Calculator</h1>
+                    <p class="lead">Capacity planning reference for SIEM deployments with data volume estimation and cost modeling</p>
                 </div>
+
+                <!-- Data Volume Estimation -->
                 <section class="content-section">
-                    <p>This page is under construction. Check back for detailed content.</p>
+                    <h2><i class="fas fa-database"></i> Data Volume Estimation</h2>
+                    <p>Accurate sizing starts with understanding your log sources and their typical event rates.</p>
+
+                    <h3>Common Data Sources - Volume Reference</h3>
+                    <table class="sizing-table">
+                        <thead>
+                            <tr>
+                                <th>Data Source</th>
+                                <th>Events/Day (per unit)</th>
+                                <th>Avg Size</th>
+                                <th>GB/Day (1000 units)</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Windows Endpoint (Security Log)</strong></td>
+                                <td>5,000 - 50,000</td>
+                                <td>~800 bytes</td>
+                                <td>4 - 40 GB</td>
+                                <td>Varies heavily with audit policy</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Windows Server</strong></td>
+                                <td>50,000 - 500,000</td>
+                                <td>~1 KB</td>
+                                <td>50 - 500 GB</td>
+                                <td>DCs can be 10x higher</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Linux Server (Syslog)</strong></td>
+                                <td>10,000 - 100,000</td>
+                                <td>~500 bytes</td>
+                                <td>5 - 50 GB</td>
+                                <td>App servers vary widely</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Firewall (Palo Alto/Cisco)</strong></td>
+                                <td>1M - 50M</td>
+                                <td>~400 bytes</td>
+                                <td>0.4 - 20 GB</td>
+                                <td>Per firewall; traffic-dependent</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Web Proxy (Zscaler/Squid)</strong></td>
+                                <td>500K - 5M</td>
+                                <td>~600 bytes</td>
+                                <td>0.3 - 3 GB</td>
+                                <td>Per 1000 users</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Azure AD / Entra ID</strong></td>
+                                <td>10,000 - 100,000</td>
+                                <td>~1.5 KB</td>
+                                <td>15 - 150 GB</td>
+                                <td>Per 10,000 users</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Microsoft 365</strong></td>
+                                <td>50,000 - 500,000</td>
+                                <td>~1 KB</td>
+                                <td>50 - 500 GB</td>
+                                <td>Per 10,000 users</td>
+                            </tr>
+                            <tr>
+                                <td><strong>AWS CloudTrail</strong></td>
+                                <td>100,000 - 1M</td>
+                                <td>~2 KB</td>
+                                <td>0.2 - 2 GB</td>
+                                <td>Per account; management events</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DNS Logs</strong></td>
+                                <td>10M - 100M</td>
+                                <td>~200 bytes</td>
+                                <td>2 - 20 GB</td>
+                                <td>Per 1000 users</td>
+                            </tr>
+                            <tr>
+                                <td><strong>EDR (CrowdStrike/MDE)</strong></td>
+                                <td>20,000 - 100,000</td>
+                                <td>~1 KB</td>
+                                <td>20 - 100 GB</td>
+                                <td>Per 1000 endpoints</td>
+                            </tr>
+                            <tr>
+                                <td><strong>VPN (Cisco AnyConnect)</strong></td>
+                                <td>5,000 - 50,000</td>
+                                <td>~500 bytes</td>
+                                <td>2.5 - 25 GB</td>
+                                <td>Per 1000 users</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Database Audit (SQL/Oracle)</strong></td>
+                                <td>100,000 - 10M</td>
+                                <td>~800 bytes</td>
+                                <td>80 - 8000 GB</td>
+                                <td>Highly variable; tune carefully</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="warning-note">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Important Considerations</h4>
+                        <ul>
+                            <li>Volumes can vary 10x based on audit policy verbosity</li>
+                            <li>Peak hours may see 3-5x average volume</li>
+                            <li>Security incidents can spike volume temporarily</li>
+                            <li>Add 20% buffer for growth and variance</li>
+                        </ul>
+                    </div>
                 </section>
+
+                <!-- Quick Calculator -->
+                <section class="content-section">
+                    <h2><i class="fas fa-calculator"></i> Quick Volume Calculator</h2>
+                    
+                    <div class="calc-section">
+                        <h3><i class="fas fa-laptop"></i> Enter Your Environment</h3>
+                        <div class="calc-grid">
+                            <div class="input-group">
+                                <label for="endpoints">Windows Endpoints</label>
+                                <input type="number" id="endpoints" value="1000" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="servers">Windows Servers</label>
+                                <input type="number" id="servers" value="100" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="linuxservers">Linux Servers</label>
+                                <input type="number" id="linuxservers" value="50" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="firewalls">Firewalls</label>
+                                <input type="number" id="firewalls" value="5" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="users">Total Users (for cloud services)</label>
+                                <input type="number" id="users" value="5000" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="retention">Retention Days</label>
+                                <input type="number" id="retention" value="90" min="1">
+                            </div>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateVolume()">Calculate Estimate</button>
+                    </div>
+
+                    <div class="result-box" id="results">
+                        <h4><i class="fas fa-chart-bar"></i> Estimated Volume</h4>
+                        <div class="result-item">
+                            <span>Daily Ingestion</span>
+                            <span class="result-value" id="dailyGB">-- GB/day</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Monthly Ingestion</span>
+                            <span class="result-value" id="monthlyGB">-- GB/month</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Hot Storage Required</span>
+                            <span class="result-value" id="storageGB">-- GB</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Estimated Monthly Cost (Sentinel)</span>
+                            <span class="result-value" id="sentinelCost">$--</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Estimated Annual Cost (Splunk Cloud)</span>
+                            <span class="result-value" id="splunkCost">$--</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sizing Formulas -->
+                <section class="content-section">
+                    <h2><i class="fas fa-square-root-alt"></i> Sizing Formulas</h2>
+
+                    <h3>Basic Volume Calculation</h3>
+                    <div class="formula-box">
+                        Daily GB = Σ (Sources × Events/Day × Avg Event Size) / 1,073,741,824<br><br>
+                        Monthly GB = Daily GB × 30<br><br>
+                        Storage Required = Daily GB × Retention Days × 1.2 (20% overhead)
+                    </div>
+
+                    <h3>Growth Planning</h3>
+                    <div class="formula-box">
+                        Year 1 Estimate = Current Volume × 1.3 (30% growth buffer)<br><br>
+                        3-Year Projection = Current × (1 + Annual Growth Rate)³
+                    </div>
+
+                    <h3>Cost Estimation Reference</h3>
+                    <div class="calc-grid">
+                        <div class="reference-card">
+                            <h4>Microsoft Sentinel</h4>
+                            <p><strong>Pay-as-you-go:</strong> ~$2.46/GB ingested</p>
+                            <p><strong>Commitment Tier:</strong></p>
+                            <ul style="font-size: 0.85rem; margin: 0; padding-left: 1rem;">
+                                <li>100 GB/day: ~$1.96/GB</li>
+                                <li>500 GB/day: ~$1.76/GB</li>
+                                <li>1000 GB/day: ~$1.47/GB</li>
+                            </ul>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary);">*Prices vary by region</p>
+                        </div>
+                        <div class="reference-card">
+                            <h4>Splunk Cloud</h4>
+                            <p><strong>Workload Pricing:</strong> ~$1,800/GB/year</p>
+                            <p><strong>Ingest Pricing:</strong></p>
+                            <ul style="font-size: 0.85rem; margin: 0; padding-left: 1rem;">
+                                <li>1-10 GB/day: ~$2,000/GB/year</li>
+                                <li>50+ GB/day: ~$1,200/GB/year</li>
+                                <li>500+ GB/day: Negotiate</li>
+                            </ul>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary);">*Enterprise pricing varies</p>
+                        </div>
+                        <div class="reference-card">
+                            <h4>Cortex XSIAM</h4>
+                            <p><strong>Per-Endpoint:</strong> ~$50-80/endpoint/year</p>
+                            <p><strong>Includes:</strong></p>
+                            <ul style="font-size: 0.85rem; margin: 0; padding-left: 1rem;">
+                                <li>XDR telemetry</li>
+                                <li>Log ingestion allotment</li>
+                                <li>XSOAR automation</li>
+                            </ul>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary);">*Bundle pricing</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Platform-Specific Sizing -->
+                <section class="content-section">
+                    <h2><i class="fas fa-server"></i> Platform-Specific Sizing</h2>
+
+                    <div class="platform-card sentinel">
+                        <h3><i class="fas fa-shield-alt"></i> Microsoft Sentinel Sizing</h3>
+                        
+                        <h4>Workspace Architecture</h4>
+                        <table class="sizing-table">
+                            <tr>
+                                <th>Volume</th>
+                                <th>Architecture</th>
+                                <th>Recommendations</th>
+                            </tr>
+                            <tr>
+                                <td>&lt;50 GB/day</td>
+                                <td>Single workspace</td>
+                                <td>Standard deployment, pay-as-you-go acceptable</td>
+                            </tr>
+                            <tr>
+                                <td>50-500 GB/day</td>
+                                <td>Single or regional workspaces</td>
+                                <td>100GB commitment tier, consider dedicated cluster</td>
+                            </tr>
+                            <tr>
+                                <td>&gt;500 GB/day</td>
+                                <td>Dedicated cluster</td>
+                                <td>Required for &gt;500GB, better pricing, CMK support</td>
+                            </tr>
+                        </table>
+
+                        <h4>Cost Optimization Strategies</h4>
+                        <ul>
+                            <li><strong>Basic Logs:</strong> Use for high-volume, low-value data (up to 70% cost reduction)</li>
+                            <li><strong>Archive Tier:</strong> Move data older than 90 days to archive</li>
+                            <li><strong>Data Collection Rules:</strong> Filter at ingestion to reduce volume</li>
+                            <li><strong>Free data sources:</strong> Azure Activity, Office 365 audit (with M365 license)</li>
+                        </ul>
+
+                        <div class="code-block">
+                            <div class="code-header">Query: Current Usage Analysis</div>
+                            <pre><code>Usage
+| where TimeGenerated > ago(30d)
+| summarize TotalGB = sum(Quantity) / 1024 by DataType, IsBillable
+| where IsBillable == true
+| sort by TotalGB desc
+| extend MonthlyCost = TotalGB * 2.46
+| project DataType, TotalGB = round(TotalGB, 2), MonthlyCost = round(MonthlyCost, 2)</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="platform-card splunk">
+                        <h3><i class="fas fa-search"></i> Splunk Sizing</h3>
+
+                        <h4>Infrastructure Requirements</h4>
+                        <table class="sizing-table">
+                            <tr>
+                                <th>Component</th>
+                                <th>&lt;50 GB/day</th>
+                                <th>50-200 GB/day</th>
+                                <th>&gt;200 GB/day</th>
+                            </tr>
+                            <tr>
+                                <td>Indexers</td>
+                                <td>1-2 (single instance possible)</td>
+                                <td>3-6 (clustered)</td>
+                                <td>6+ (clustered, replicated)</td>
+                            </tr>
+                            <tr>
+                                <td>Search Heads</td>
+                                <td>1 (can combine)</td>
+                                <td>2-3 (SHC recommended)</td>
+                                <td>3+ (SHC required)</td>
+                            </tr>
+                            <tr>
+                                <td>Indexer Specs</td>
+                                <td>8 CPU, 32GB RAM, 500GB SSD</td>
+                                <td>16 CPU, 64GB RAM, 2TB SSD</td>
+                                <td>32 CPU, 128GB RAM, 4TB NVMe</td>
+                            </tr>
+                        </table>
+
+                        <h4>Storage Calculation</h4>
+                        <div class="formula-box">
+                            Raw Storage = Daily Volume × Retention Days<br>
+                            Splunk Storage = Raw Storage × 0.5 (compression) × Replication Factor<br><br>
+                            Example: 100 GB/day × 90 days × 0.5 × 2 (RF) = 9 TB
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header">Query: License Usage</div>
+                            <pre><code>index=_internal source=*license_usage.log type=Usage
+| stats sum(b) as bytes by idx, st
+| eval GB = round(bytes/1024/1024/1024, 2)
+| sort -GB
+| head 20</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="platform-card xsiam">
+                        <h3><i class="fas fa-fire"></i> Cortex XSIAM Sizing</h3>
+
+                        <h4>Capacity Considerations</h4>
+                        <table class="sizing-table">
+                            <tr>
+                                <th>Factor</th>
+                                <th>Consideration</th>
+                            </tr>
+                            <tr>
+                                <td>Endpoint Count</td>
+                                <td>Primary licensing metric; includes XDR telemetry</td>
+                            </tr>
+                            <tr>
+                                <td>Third-Party Logs</td>
+                                <td>Additional ingestion beyond XDR is separately metered</td>
+                            </tr>
+                            <tr>
+                                <td>Analytics Storage</td>
+                                <td>30-day hot storage for analytics; extended archive available</td>
+                            </tr>
+                            <tr>
+                                <td>Automation</td>
+                                <td>XSOAR automation included; consider playbook complexity</td>
+                            </tr>
+                        </table>
+
+                        <div class="code-block">
+                            <div class="code-header">XQL: Data Volume Analysis</div>
+                            <pre><code>datamodel dataset = *
+| comp count() as events, sum(raw_log_size) as bytes by _vendor, _product
+| alter GB = divide(bytes, 1073741824)
+| sort desc GB
+| fields _vendor, _product, events, GB</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Retention Planning -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clock"></i> Retention Planning</h2>
+
+                    <h3>Compliance-Driven Retention</h3>
+                    <table class="sizing-table">
+                        <thead>
+                            <tr>
+                                <th>Framework</th>
+                                <th>Requirement</th>
+                                <th>Typical Implementation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PCI-DSS</td>
+                                <td>1 year (90 days immediately available)</td>
+                                <td>90 days hot, 275 days archive</td>
+                            </tr>
+                            <tr>
+                                <td>HIPAA</td>
+                                <td>6 years</td>
+                                <td>90 days hot, 6 years cold storage</td>
+                            </tr>
+                            <tr>
+                                <td>SOX</td>
+                                <td>7 years</td>
+                                <td>90 days hot, 7 years archive</td>
+                            </tr>
+                            <tr>
+                                <td>GDPR</td>
+                                <td>"As long as necessary"</td>
+                                <td>90 days default, document justification</td>
+                            </tr>
+                            <tr>
+                                <td>SOC 2</td>
+                                <td>No specific requirement</td>
+                                <td>90 days recommended minimum</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Tiered Storage Strategy</h3>
+                    <table class="sizing-table">
+                        <thead>
+                            <tr>
+                                <th>Tier</th>
+                                <th>Duration</th>
+                                <th>Access Speed</th>
+                                <th>Cost</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Hot</strong></td>
+                                <td>0-30 days</td>
+                                <td>Instant</td>
+                                <td>$$$</td>
+                                <td>Active investigation, real-time queries</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Warm</strong></td>
+                                <td>30-90 days</td>
+                                <td>Seconds</td>
+                                <td>$$</td>
+                                <td>Threat hunting, incident review</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cold/Archive</strong></td>
+                                <td>90+ days</td>
+                                <td>Minutes-Hours</td>
+                                <td>$</td>
+                                <td>Compliance, forensic investigation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Optimization Strategies -->
+                <section class="content-section">
+                    <h2><i class="fas fa-compress-arrows-alt"></i> Volume Optimization</h2>
+
+                    <h3>Data Reduction Strategies</h3>
+                    <table class="sizing-table">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Typical Reduction</th>
+                                <th>Risk</th>
+                                <th>Implementation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Filter noisy events</strong></td>
+                                <td>20-40%</td>
+                                <td>Low</td>
+                                <td>Drop heartbeat, info-level logs at ingestion</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Reduce verbosity</strong></td>
+                                <td>30-50%</td>
+                                <td>Medium</td>
+                                <td>Tune audit policies, reduce debug logging</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sampling</strong></td>
+                                <td>50-90%</td>
+                                <td>High</td>
+                                <td>Sample high-volume, low-value sources</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Aggregation</strong></td>
+                                <td>40-70%</td>
+                                <td>Medium</td>
+                                <td>Pre-aggregate metrics before ingestion</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deduplication</strong></td>
+                                <td>10-30%</td>
+                                <td>Low</td>
+                                <td>Remove duplicate events from multiple paths</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">Sentinel - DCR Filtering Example</div>
+                        <pre><code>// Data Collection Rule transformation to filter events
+source
+| where EventID !in (4688, 4689)  // Filter process start/stop
+    or (EventID == 4688 and NewProcessName !contains "svchost")
+| where Level != 0  // Drop Informational
+| project-away RawData  // Remove raw data field</code></pre>
+                    </div>
+                </section>
+
+                <!-- Interview Q&A -->
+                <div class="interview-qa">
+                    <h3><i class="fas fa-user-tie"></i> Interview Q&A: SIEM Sizing</h3>
+                    
+                    <div class="qa-item">
+                        <strong>Q: How do you size a SIEM deployment for a new organization?</strong>
+                        <p><strong>A:</strong> I follow a systematic approach. First, inventory data sources: count endpoints, servers, network devices, cloud services, and users. Second, estimate volume using industry benchmarks—Windows endpoints typically generate 5-50K events/day, servers 50-500K, firewalls 1-50M depending on traffic. Third, apply multipliers for your environment's verbosity. Fourth, add 20-30% buffer for growth and variance. Fifth, calculate storage based on retention requirements—typically compliance-driven. For a 1000-endpoint enterprise with standard server and network infrastructure, I'd estimate 50-150 GB/day as starting point, then refine based on pilot data. Always run a 2-week pilot to validate estimates before full deployment.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you optimize SIEM costs without sacrificing security coverage?</strong>
+                        <p><strong>A:</strong> Tiered approach to data value. First, identify high-value vs. noise—security events, authentication, and process execution are high-value; heartbeat logs and routine info events are noise. Filter noise at ingestion using DCRs or forwarder rules. Second, use appropriate storage tiers—hot storage for recent data needed for active investigation, archive for compliance-only data. Third, leverage platform discounts—Sentinel commitment tiers can reduce cost 40%, Splunk volume discounts are significant. Fourth, tune audit policies at source—overly verbose Windows audit policies can 10x your volume unnecessarily. Fifth, consider sampling for extremely high-volume, low-value sources like DNS queries. Key is documenting decisions so coverage gaps are intentional and understood.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: What retention strategy would you recommend for a company with PCI and HIPAA requirements?</strong>
+                        <p><strong>A:</strong> The strictest requirement wins: HIPAA needs 6 years, so that's the floor. Implementation: 90-day hot tier for active investigation and analytics—this covers PCI's "immediately available" requirement. Archive tier from 90 days to 6 years for compliance. Not all data needs 6 years—segment by data type: authentication and access logs for HIPAA systems need full retention, general endpoint telemetry might only need 1 year. Use data classification to apply appropriate retention. For cost efficiency, archive storage is typically 90%+ cheaper than hot storage. Key deliverable is a data retention matrix mapping data types to retention periods with compliance justification.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you handle a situation where actual SIEM volume significantly exceeds estimates?</strong>
+                        <p><strong>A:</strong> First, don't panic—this is common. Immediate action: identify the sources driving overages using platform usage queries. Usually one or two sources are responsible—often overly verbose audit policies, misconfigured debug logging, or unexpected application behavior. Short-term: implement filtering at ingestion for obvious noise while maintaining security coverage. Medium-term: tune audit policies at source—work with system owners to reduce verbosity appropriately. Long-term: review architecture—consider dedicated pipelines for high-volume sources with different retention, or sampling strategies for specific data types. Document everything—explain what you're filtering and why, so there's traceability if questions arise during incidents or audits. Always maintain detection coverage as primary goal; cost is secondary.</p>
+                    </div>
+                </div>
+
             </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Sizing Calculator</p>
+                    <p>Capacity Planning Reference</p>
+                </div>
+            </footer>
         </div>
     </div>
+    
+    <script src="../assets/js/main.js"></script>
+    <script>
+        function calculateVolume() {
+            // Get input values
+            const endpoints = parseInt(document.getElementById('endpoints').value) || 0;
+            const servers = parseInt(document.getElementById('servers').value) || 0;
+            const linuxservers = parseInt(document.getElementById('linuxservers').value) || 0;
+            const firewalls = parseInt(document.getElementById('firewalls').value) || 0;
+            const users = parseInt(document.getElementById('users').value) || 0;
+            const retention = parseInt(document.getElementById('retention').value) || 90;
+
+            // Estimate GB/day (using mid-range estimates)
+            const endpointGB = endpoints * 0.02;        // ~20 MB/endpoint/day
+            const serverGB = servers * 0.2;             // ~200 MB/server/day
+            const linuxGB = linuxservers * 0.025;       // ~25 MB/server/day
+            const firewallGB = firewalls * 5;           // ~5 GB/firewall/day
+            const cloudGB = (users / 1000) * 15;        // ~15 GB/1000 users for cloud services
+
+            const dailyGB = endpointGB + serverGB + linuxGB + firewallGB + cloudGB;
+            const monthlyGB = dailyGB * 30;
+            const storageGB = dailyGB * retention * 1.2; // 20% overhead
+
+            // Cost estimates
+            const sentinelCost = monthlyGB * 2.46;  // Pay-as-you-go rate
+            const splunkCost = (dailyGB * 365) * 1500;  // Approximate annual per-GB
+
+            // Update display
+            document.getElementById('dailyGB').textContent = dailyGB.toFixed(1) + ' GB/day';
+            document.getElementById('monthlyGB').textContent = monthlyGB.toFixed(0) + ' GB/month';
+            document.getElementById('storageGB').textContent = (storageGB / 1000).toFixed(1) + ' TB';
+            document.getElementById('sentinelCost').textContent = '$' + sentinelCost.toLocaleString(undefined, {maximumFractionDigits: 0}) + '/month';
+            document.getElementById('splunkCost').textContent = '$' + splunkCost.toLocaleString(undefined, {maximumFractionDigits: 0}) + '/year';
+        }
+
+        // Calculate on page load with defaults
+        document.addEventListener('DOMContentLoaded', calculateVolume);
+    </script>
 </body>
 </html>

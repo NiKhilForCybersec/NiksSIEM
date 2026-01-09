@@ -3,31 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nik's SIEM - Enterprise Security Reference Guide</title>
+    <title>Nik's SIEM - Security Operations Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/main.css">
     <style>
-        .hero { text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 16px; margin-bottom: 2rem; }
-        .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        .hero p { font-size: 1.2rem; opacity: 0.8; }
-        .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-        .platform-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #666; }
-        .platform-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .platform-card.xsiam { border-top-color: #ff6b35; }
-        .platform-card.sentinel { border-top-color: #0078d4; }
-        .platform-card.splunk { border-top-color: #65a637; }
-        .platform-card.mde { border-top-color: #00a4ef; }
-        .platform-card.ops { border-top-color: #9b59b6; }
-        .platform-card h3 { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-        .platform-card .stats { display: flex; gap: 1.5rem; margin: 1rem 0; }
-        .platform-card .stat { text-align: center; }
-        .platform-card .stat-value { font-size: 1.5rem; font-weight: bold; }
-        .platform-card .stat-label { font-size: 0.8rem; opacity: 0.7; }
-        .platform-card a { display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 6px; text-decoration: none; color: inherit; }
-        .platform-card a:hover { background: rgba(255,255,255,0.2); }
-        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
-        .feature { background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align: center; }
-        .feature i { font-size: 2rem; margin-bottom: 0.5rem; color: #0078d4; }
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+        .platform-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .platform-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        .platform-card.xsiam::before { background: linear-gradient(90deg, #ff6b35, #ff8c42); }
+        .platform-card.sentinel::before { background: linear-gradient(90deg, #0078d4, #00bcf2); }
+        .platform-card.splunk::before { background: linear-gradient(90deg, #65a637, #8bc34a); }
+        .platform-card.mde::before { background: linear-gradient(90deg, #00bcf2, #0078d4); }
+        .platform-card.cortex::before { background: linear-gradient(90deg, #fa582d, #ff8c42); }
+        .platform-card.crowdstrike::before { background: linear-gradient(90deg, #e01e37, #ff6b6b); }
+        .platform-card.operations::before { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
+        .platform-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent-primary);
+        }
+        .platform-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .platform-card.xsiam .icon { color: #ff6b35; }
+        .platform-card.sentinel .icon { color: #0078d4; }
+        .platform-card.splunk .icon { color: #65a637; }
+        .platform-card.mde .icon { color: #00bcf2; }
+        .platform-card.cortex .icon { color: #fa582d; }
+        .platform-card.crowdstrike .icon { color: #e01e37; }
+        .platform-card.operations .icon { color: #9b59b6; }
+        .platform-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.35rem;
+        }
+        .platform-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .platform-card .page-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        .section-title i {
+            color: var(--accent-primary);
+            margin-right: 0.5rem;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+        .feature-item i {
+            color: var(--accent-primary);
+            font-size: 1.25rem;
+        }
+        .feature-item span {
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
@@ -38,24 +152,26 @@
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
                     <div class="brand-text">
                         <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                        <span class="brand-subtitle">Security Operations Reference</span>
                     </div>
                 </a>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">Platforms</div>
-                    <a href="xsiam/index.html" class="nav-link"><i class="fas fa-fire"></i> Cortex XSIAM</a>
+                    <div class="nav-section-title">SIEM Platforms</div>
+                    <a href="xsiam/index.html" class="nav-link"><i class="fas fa-fire"></i> Palo Alto XSIAM</a>
                     <a href="sentinel/index.html" class="nav-link"><i class="fas fa-shield-alt"></i> Microsoft Sentinel</a>
-                    <a href="splunk/index.html" class="nav-link"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="splunk/index.html" class="nav-link"><i class="fas fa-search"></i> Splunk Enterprise</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">EDR Platforms</div>
                     <a href="mde/index.html" class="nav-link"><i class="fas fa-desktop"></i> Microsoft Defender</a>
+                    <a href="cortex/index.html" class="nav-link"><i class="fas fa-crosshairs"></i> Cortex XDR</a>
+                    <a href="crowdstrike/index.html" class="nav-link"><i class="fas fa-crow"></i> CrowdStrike Falcon</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Operations</div>
                     <a href="operations/index.html" class="nav-link"><i class="fas fa-cogs"></i> SOC Operations</a>
-                    <a href="operations/compliance-mapping.html" class="nav-link"><i class="fas fa-balance-scale"></i> Compliance</a>
-                    <a href="operations/siem-project-planning.html" class="nav-link"><i class="fas fa-project-diagram"></i> Project Planning</a>
-                    <a href="operations/playbook-library.html" class="nav-link"><i class="fas fa-book"></i> Playbooks</a>
                 </div>
             </nav>
         </aside>
@@ -63,130 +179,143 @@
         <div class="main-wrapper">
             <main class="main-content">
                 <div class="hero">
-                    <h1><i class="fas fa-shield-halved"></i> Nik's SIEM</h1>
-                    <p>Enterprise Security Reference Guide - Production-Ready Documentation</p>
+                    <h1><i class="fas fa-shield-halved"></i> Nik's SIEM Compendium</h1>
+                    <p class="subtitle">A comprehensive security operations reference covering SIEM platforms, EDR solutions, detection engineering, incident response, and SOC best practices.</p>
                 </div>
-
-                <div class="platform-grid">
-                    <div class="platform-card xsiam">
-                        <h3><i class="fas fa-fire"></i> Cortex XSIAM</h3>
-                        <p>Palo Alto's AI-driven security platform with XQL queries and XSOAR automation</p>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-value">12</div>
-                                <div class="stat-label">Pages</div>
-                            </div>
-                        </div>
-                        <a href="xsiam/index.html">Explore XSIAM →</a>
+                
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-value">90+</div>
+                        <div class="stat-label">Documentation Pages</div>
                     </div>
-
-                    <div class="platform-card sentinel">
-                        <h3><i class="fas fa-shield-alt"></i> Microsoft Sentinel</h3>
-                        <p>Cloud-native SIEM with KQL, DCR/DCE architecture, and Azure integration</p>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-value">17</div>
-                                <div class="stat-label">Pages</div>
-                            </div>
-                        </div>
-                        <a href="sentinel/index.html">Explore Sentinel →</a>
+                    <div class="stat-item">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Security Platforms</div>
                     </div>
-
-                    <div class="platform-card splunk">
-                        <h3><i class="fas fa-search"></i> Splunk</h3>
-                        <p>Enterprise Security with SPL, correlation searches, and risk-based alerting</p>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-value">20</div>
-                                <div class="stat-label">Pages</div>
-                            </div>
-                        </div>
-                        <a href="splunk/index.html">Explore Splunk →</a>
+                    <div class="stat-item">
+                        <div class="stat-value">500+</div>
+                        <div class="stat-label">Query Examples</div>
                     </div>
-
-                    <div class="platform-card mde">
-                        <h3><i class="fas fa-desktop"></i> Microsoft Defender</h3>
-                        <p>Endpoint detection and response with advanced hunting and remediation</p>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-value">5</div>
-                                <div class="stat-label">Pages</div>
-                            </div>
-                        </div>
-                        <a href="mde/index.html">Explore MDE →</a>
-                    </div>
-
-                    <div class="platform-card ops">
-                        <h3><i class="fas fa-cogs"></i> SOC Operations</h3>
-                        <p>Production procedures, compliance mapping, project planning, and incident response</p>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-value">20</div>
-                                <div class="stat-label">Pages</div>
-                            </div>
-                        </div>
-                        <a href="operations/index.html">Explore Operations →</a>
+                    <div class="stat-item">
+                        <div class="stat-value">100+</div>
+                        <div class="stat-label">Interview Q&As</div>
                     </div>
                 </div>
-
-                <section class="content-section">
-                    <h2><i class="fas fa-star"></i> What's Included</h2>
-                    <div class="features">
-                        <div class="feature">
-                            <i class="fas fa-code"></i>
-                            <h4>Query Languages</h4>
-                            <p>SPL, KQL, XQL with examples</p>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-sitemap"></i>
-                            <h4>Architecture</h4>
-                            <p>Data flows and components</p>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-tasks"></i>
-                            <h4>SOC Procedures</h4>
-                            <p>Triage, escalation, metrics</p>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-balance-scale"></i>
-                            <h4>Compliance</h4>
-                            <p>PCI-DSS, HIPAA, SOC 2</p>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-book"></i>
-                            <h4>Playbooks</h4>
-                            <p>Phishing, malware, access</p>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-user-tie"></i>
-                            <h4>Interview Prep</h4>
-                            <p>Q&A on every page</p>
-                        </div>
+                
+                <h2 class="section-title"><i class="fas fa-th-large"></i> Platform Documentation</h2>
+                
+                <div class="platform-cards">
+                    <a href="xsiam/index.html" class="platform-card xsiam">
+                        <div class="icon"><i class="fas fa-fire"></i></div>
+                        <h3>Palo Alto XSIAM</h3>
+                        <p>Complete guide to XSIAM including XQL queries, correlation rules, XSOAR automation, threat intelligence, and ASM.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 18 pages</span>
+                    </a>
+                    
+                    <a href="sentinel/index.html" class="platform-card sentinel">
+                        <div class="icon"><i class="fas fa-shield-alt"></i></div>
+                        <h3>Microsoft Sentinel</h3>
+                        <p>KQL mastery, analytics rules, data connectors, workbooks, Logic Apps automation, and cost optimization.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 17 pages</span>
+                    </a>
+                    
+                    <a href="splunk/index.html" class="platform-card splunk">
+                        <div class="icon"><i class="fas fa-search"></i></div>
+                        <h3>Splunk Enterprise Security</h3>
+                        <p>SPL fundamentals to advanced, dashboards, Enterprise Security, notable events, and threat intelligence.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 20 pages</span>
+                    </a>
+                    
+                    <a href="mde/index.html" class="platform-card mde">
+                        <div class="icon"><i class="fas fa-desktop"></i></div>
+                        <h3>Microsoft Defender for Endpoint</h3>
+                        <p>Onboarding guides, KQL hunting, alert tuning, response actions, and Sentinel integration.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 8 pages</span>
+                    </a>
+                    
+                    <a href="cortex/index.html" class="platform-card cortex">
+                        <div class="icon"><i class="fas fa-crosshairs"></i></div>
+                        <h3>Cortex XDR</h3>
+                        <p>XQL hunting, BIOC rules, causality analysis, analytics profiles, and response actions.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 8 pages</span>
+                    </a>
+                    
+                    <a href="crowdstrike/index.html" class="platform-card crowdstrike">
+                        <div class="icon"><i class="fas fa-crow"></i></div>
+                        <h3>CrowdStrike Falcon</h3>
+                        <p>IOA rules, RTR commands, sensor deployment, detection tuning, and threat hunting.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 6 pages</span>
+                    </a>
+                    
+                    <a href="operations/index.html" class="platform-card operations">
+                        <div class="icon"><i class="fas fa-cogs"></i></div>
+                        <h3>SOC Operations</h3>
+                        <p>Incident response, detection engineering, tuning optimization, RBAC, migration guides, and audit prep.</p>
+                        <span class="page-count"><i class="fas fa-file-alt"></i> 20 pages</span>
+                    </a>
+                </div>
+                
+                <h2 class="section-title"><i class="fas fa-star"></i> Key Features</h2>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <i class="fas fa-code"></i>
+                        <span>Production-ready query examples</span>
                     </div>
-                </section>
-
-                <section class="content-section">
-                    <h2><i class="fas fa-chart-bar"></i> Total Coverage</h2>
-                    <p><strong>74 comprehensive pages</strong> covering:</p>
-                    <ul>
-                        <li>Platform-specific technical deep dives (XSIAM, Sentinel, Splunk, MDE)</li>
-                        <li>SOC operating procedures with decision trees and workflows</li>
-                        <li>Use case lifecycle and detection engineering methodology</li>
-                        <li>Compliance mapping for PCI-DSS 4.0, HIPAA, SOC 2</li>
-                        <li>Project planning with data source prioritization</li>
-                        <li>Incident response playbooks with step-by-step guidance</li>
-                        <li>Interview Q&A on every page</li>
-                    </ul>
-                </section>
+                    <div class="feature-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Interview Q&A sections</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Memory tricks & mnemonics</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Platform comparisons</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>Architecture diagrams</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-virus"></i>
+                        <span>MITRE ATT&CK mapping</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-bug"></i>
+                        <span>Troubleshooting guides</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>SOC metrics & KPIs</span>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <h4><i class="fas fa-info-circle"></i> About This Compendium</h4>
+                    <p>This comprehensive reference guide covers enterprise security operations across major SIEM and EDR platforms. Content is designed for security professionals preparing for interviews, building detection capabilities, or operating a SOC. Each section includes practical examples, best practices, and real-world scenarios.</p>
+                </div>
+                
             </main>
             
-            <footer class="content-footer">
+            <footer class="main-footer">
                 <div class="footer-content">
-                    <p>Nik's SIEM - Enterprise Security Reference</p>
-                    <p>Production-Ready Documentation</p>
+                    <div class="footer-links">
+                        <a href="xsiam/index.html">XSIAM</a>
+                        <a href="sentinel/index.html">Sentinel</a>
+                        <a href="splunk/index.html">Splunk</a>
+                        <a href="mde/index.html">MDE</a>
+                        <a href="operations/index.html">Operations</a>
+                    </div>
+                    <div class="footer-copy">
+                        Nik's SIEM - Security Operations Knowledge Base
+                    </div>
                 </div>
             </footer>
         </div>
     </div>
+    
+    <script src="assets/js/main.js"></script>
 </body>
 </html>

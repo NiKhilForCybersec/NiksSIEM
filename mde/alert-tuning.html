@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>MDE Alert Tuning | SOC Compendium</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">SOC Compendium</a>
+            <div class="nav-links">
+                <a href="../sentinel/index.html">Sentinel</a>
+                <a href="../splunk/index.html">Splunk</a>
+                <a href="../xsiam/index.html">XSIAM</a>
+                <a href="../mde/index.html" class="active">Defender</a>
+                <a href="../cortex/index.html">Cortex</a>
+                <a href="../crowdstrike/index.html">CrowdStrike</a>
+                <a href="../operations/index.html">Operations</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Microsoft Defender</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="onboarding-windows.html">Windows Onboarding</a></li>
+                    <li><a href="onboarding-macos.html">macOS Onboarding</a></li>
+                    <li><a href="onboarding-linux.html">Linux Onboarding</a></li>
+                    <li><a href="kql-hunting.html">KQL Threat Hunting</a></li>
+                    <li><a href="response-actions.html">Response Actions</a></li>
+                    <li><a href="alert-tuning.html" class="active">Alert Tuning</a></li>
+                    <li><a href="troubleshooting.html">Troubleshooting</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <article class="main-content">
+            <header class="content-header">
+                <h1>MDE Alert Tuning</h1>
+                <p class="subtitle">Optimizing detection fidelity and reducing false positives in Microsoft Defender for Endpoint</p>
+            </header>
+
+            <section class="content-section">
+                <h2>Tuning Philosophy</h2>
+                <p>Effective alert tuning balances detection coverage with operational efficiency. The goal is to maintain high detection fidelity while ensuring analysts aren't overwhelmed with false positives that lead to alert fatigue.</p>
+
+                <div class="info-box">
+                    <h4>Key Tuning Principles</h4>
+                    <ul>
+                        <li><strong>Document everything:</strong> Every suppression should have a business justification and ticket reference</li>
+                        <li><strong>Start narrow:</strong> Begin with specific exclusions and broaden only if necessary</li>
+                        <li><strong>Review regularly:</strong> Suppressions should be reviewed quarterly for continued validity</li>
+                        <li><strong>Monitor coverage:</strong> Track detection coverage to ensure suppressions don't create blind spots</li>
+                        <li><strong>Test thoroughly:</strong> Validate suppressions in a test environment before production</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Suppression Types</h2>
+
+                <h3>Alert Suppression Rules</h3>
+                <p>Suppress specific alerts based on conditions without affecting underlying detection:</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Condition Type</th>
+                            <th>Use Case</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Device Name</td>
+                            <td>Suppress on specific devices (test labs, honeypots)</td>
+                            <td>deviceName contains "LAB-"</td>
+                        </tr>
+                        <tr>
+                            <td>Device Group</td>
+                            <td>Suppress for entire device groups</td>
+                            <td>deviceGroup equals "Security Testing"</td>
+                        </tr>
+                        <tr>
+                            <td>User Name</td>
+                            <td>Suppress for service accounts or security team</td>
+                            <td>userName equals "svc_pentest"</td>
+                        </tr>
+                        <tr>
+                            <td>File Name</td>
+                            <td>Suppress for known legitimate tools</td>
+                            <td>fileName equals "legitimate_tool.exe"</td>
+                        </tr>
+                        <tr>
+                            <td>File Path</td>
+                            <td>Suppress for specific directories</td>
+                            <td>filePath contains "C:\SecurityTools\"</td>
+                        </tr>
+                        <tr>
+                            <td>SHA256</td>
+                            <td>Suppress specific file hashes</td>
+                            <td>sha256 equals "abc123..."</td>
+                        </tr>
+                        <tr>
+                            <td>IP Address</td>
+                            <td>Suppress for known IPs (security scanners)</td>
+                            <td>remoteIP equals "10.0.0.50"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Creating Suppression Rules via Portal</h3>
+                <ol>
+                    <li>Navigate to Settings → Endpoints → Alert suppression</li>
+                    <li>Click "Add suppression rule"</li>
+                    <li>Select the alert type to suppress</li>
+                    <li>Define IOC conditions (AND/OR logic)</li>
+                    <li>Set rule scope (all devices or specific groups)</li>
+                    <li>Add business justification comment</li>
+                    <li>Enable rule and set expiration if appropriate</li>
+                </ol>
+
+                <h3>Suppression Rule via API</h3>
+                <div class="code-block">
+                    <pre><code># Create Alert Suppression Rule
+POST https://api.securitycenter.microsoft.com/api/alertsuppressionrules
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+    "title": "Suppress PenTest Tool - Q4 Assessment",
+    "description": "Suppressing alerts for authorized penetration testing tool during Q4 security assessment",
+    "enabled": true,
+    "expirationDatetime": "2024-12-31T23:59:59Z",
+    "alertTypes": [
+        "Suspicious PowerShell command line"
+    ],
+    "conditions": [
+        {
+            "type": "FilePath",
+            "operator": "Contains",
+            "value": "C:\\PenTest\\Tools\\"
+        },
+        {
+            "type": "UserName",
+            "operator": "Equals",
+            "value": "pentest_operator"
+        }
+    ],
+    "rbacGroupIds": [],
+    "comment": "Authorized by Security Team - TICKET-12345"
+}</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Indicator-Based Allowlisting</h2>
+
+                <h3>File Hash Allowlist</h3>
+                <p>Allow specific file hashes to prevent detections:</p>
+                <div class="code-block">
+                    <pre><code># Create Allow Indicator for File Hash
+POST https://api.securitycenter.microsoft.com/api/indicators
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+    "indicatorValue": "3395856ce81f2b7382dee72602f798b642f14140",
+    "indicatorType": "FileSha1",
+    "action": "Allowed",
+    "title": "Allow corporate security tool",
+    "description": "Custom security monitoring agent - approved by IT Security",
+    "severity": "Informational",
+    "recommendedActions": "No action required - legitimate software",
+    "rbacGroupNames": [],
+    "generateAlert": false
+}</code></pre>
+                </div>
+
+                <h3>Certificate-Based Allowlisting</h3>
+                <p>Allow files signed by specific certificates:</p>
+                <div class="code-block">
+                    <pre><code># Create Certificate Indicator
+POST https://api.securitycenter.microsoft.com/api/indicators
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+    "indicatorValue": "1234567890ABCDEF1234567890ABCDEF12345678",
+    "indicatorType": "CertificateThumbprint",
+    "action": "Allowed",
+    "title": "Allow internal code signing certificate",
+    "description": "Corporate code signing certificate for internal tools",
+    "severity": "Informational",
+    "rbacGroupNames": []
+}</code></pre>
+                </div>
+
+                <h3>IP/Domain Allowlisting</h3>
+                <div class="code-block">
+                    <pre><code># Allow IP Address
+POST https://api.securitycenter.microsoft.com/api/indicators
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+    "indicatorValue": "192.168.100.50",
+    "indicatorType": "IpAddress",
+    "action": "Allowed",
+    "title": "Allow vulnerability scanner IP",
+    "description": "Qualys scanner appliance - authorized scanning",
+    "severity": "Informational",
+    "rbacGroupNames": []
+}
+
+# Allow Domain
+{
+    "indicatorValue": "internal-tools.company.com",
+    "indicatorType": "DomainName",
+    "action": "Allowed",
+    "title": "Allow internal tooling domain",
+    "description": "Internal development and security tools",
+    "severity": "Informational"
+}</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Antivirus Exclusions</h2>
+
+                <h3>Exclusion Types</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Scope</th>
+                            <th>Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Path Exclusion</td>
+                            <td>Specific file or folder</td>
+                            <td>Application directories, data folders</td>
+                        </tr>
+                        <tr>
+                            <td>Extension Exclusion</td>
+                            <td>File types</td>
+                            <td>Database files, custom formats</td>
+                        </tr>
+                        <tr>
+                            <td>Process Exclusion</td>
+                            <td>Scanning by specific process</td>
+                            <td>High-performance applications</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Configure via Intune</h3>
+                <div class="code-block">
+                    <pre><code>// Intune - Endpoint Security → Antivirus → Policy
+{
+    "PathExclusions": [
+        "C:\\Database\\",
+        "D:\\Backup\\*.bak",
+        "%ProgramFiles%\\CustomApp\\logs\\"
+    ],
+    "ExtensionExclusions": [
+        ".mdf",
+        ".ldf",
+        ".bak"
+    ],
+    "ProcessExclusions": [
+        "sqlservr.exe",
+        "w3wp.exe",
+        "java.exe"
+    ]
+}</code></pre>
+                </div>
+
+                <h3>Configure via PowerShell</h3>
+                <div class="code-block">
+                    <pre><code># Add Path Exclusion
+Add-MpPreference -ExclusionPath "C:\CustomApp\Data"
+
+# Add Extension Exclusion
+Add-MpPreference -ExclusionExtension ".customdb"
+
+# Add Process Exclusion
+Add-MpPreference -ExclusionProcess "customapp.exe"
+
+# View Current Exclusions
+Get-MpPreference | Select-Object -Property Exclusion*
+
+# Remove Exclusion
+Remove-MpPreference -ExclusionPath "C:\OldApp\Data"</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Exclusion Security Risks</h4>
+                    <ul>
+                        <li>Path exclusions are commonly abused by attackers who drop malware in excluded directories</li>
+                        <li>Extension exclusions should be very limited - attackers can rename files</li>
+                        <li>Process exclusions should only be used when absolutely necessary for performance</li>
+                        <li>Always document the business reason and approval for each exclusion</li>
+                        <li>Review exclusions quarterly and remove those no longer needed</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Attack Surface Reduction (ASR) Tuning</h2>
+
+                <h3>ASR Rule Modes</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Value</th>
+                            <th>Behavior</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Disabled</td>
+                            <td>0</td>
+                            <td>Rule not active</td>
+                        </tr>
+                        <tr>
+                            <td>Block</td>
+                            <td>1</td>
+                            <td>Block and log</td>
+                        </tr>
+                        <tr>
+                            <td>Audit</td>
+                            <td>2</td>
+                            <td>Log only, don't block</td>
+                        </tr>
+                        <tr>
+                            <td>Warn</td>
+                            <td>6</td>
+                            <td>User can bypass with click</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>ASR Rule Exclusions</h3>
+                <div class="code-block">
+                    <pre><code># Add ASR Rule Exclusion (Path)
+Add-MpPreference -AttackSurfaceReductionOnlyExclusions "C:\LegacyApp\macros.xlsm"
+
+# Add ASR Rule Exclusion (Process)
+# Note: Process exclusions apply to the process initiating the action
+Add-MpPreference -AttackSurfaceReductionOnlyExclusions "C:\Program Files\CustomApp\app.exe"
+
+# View ASR Exclusions
+Get-MpPreference | Select-Object -ExpandProperty AttackSurfaceReductionOnlyExclusions
+
+# Configure ASR Rule Mode
+# Block Office apps from creating executable content (d4f940ab-401b-4efc-aadc-ad5f3c50688a)
+Add-MpPreference -AttackSurfaceReductionRules_Ids d4f940ab-401b-4efc-aadc-ad5f3c50688a -AttackSurfaceReductionRules_Actions 2</code></pre>
+                </div>
+
+                <h3>ASR Audit Analysis</h3>
+                <div class="code-block">
+                    <pre><code>// KQL - Find ASR Blocks/Audits for Tuning
+DeviceEvents
+| where Timestamp > ago(7d)
+| where ActionType startswith "Asr"
+| summarize Count = count(), 
+            UniqueDevices = dcount(DeviceName),
+            UniqueUsers = dcount(InitiatingProcessAccountName)
+    by ActionType, FileName, FolderPath
+| order by Count desc
+
+// Find specific ASR rule triggers
+DeviceEvents
+| where Timestamp > ago(7d)
+| where ActionType == "AsrOfficeChildProcessAudited" 
+        or ActionType == "AsrOfficeChildProcessBlocked"
+| project Timestamp, DeviceName, InitiatingProcessAccountName,
+          FileName, FolderPath, ProcessCommandLine, ActionType
+| order by Timestamp desc</code></pre>
+                </div>
+
+                <h3>Recommended ASR Rollout</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Mode</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1. Baseline</td>
+                            <td>Audit</td>
+                            <td>2 weeks</td>
+                            <td>Enable all rules in audit mode, collect data</td>
+                        </tr>
+                        <tr>
+                            <td>2. Analysis</td>
+                            <td>Audit</td>
+                            <td>1 week</td>
+                            <td>Analyze audit events, identify legitimate triggers</td>
+                        </tr>
+                        <tr>
+                            <td>3. Exclusions</td>
+                            <td>Audit</td>
+                            <td>1 week</td>
+                            <td>Create exclusions for legitimate use cases</td>
+                        </tr>
+                        <tr>
+                            <td>4. Pilot Block</td>
+                            <td>Block</td>
+                            <td>2 weeks</td>
+                            <td>Enable block on pilot group, monitor closely</td>
+                        </tr>
+                        <tr>
+                            <td>5. Full Deployment</td>
+                            <td>Block</td>
+                            <td>Ongoing</td>
+                            <td>Roll out to all devices, continue monitoring</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Custom Detection Rules Tuning</h2>
+
+                <h3>Analyze Detection Performance</h3>
+                <div class="code-block">
+                    <pre><code>// Find most common alert sources (potential FP candidates)
+AlertInfo
+| where Timestamp > ago(30d)
+| join kind=inner AlertEvidence on AlertId
+| where EntityType == "File" or EntityType == "Process"
+| summarize AlertCount = count(), 
+            UniqueDevices = dcount(DeviceId)
+    by Title, FileName, FolderPath
+| where AlertCount > 10
+| order by AlertCount desc
+
+// Analyze alert resolution patterns
+AlertInfo
+| where Timestamp > ago(30d)
+| where Status in ("Resolved", "Dismissed")
+| summarize 
+    TotalAlerts = count(),
+    FalsePositives = countif(Classification == "FalsePositive"),
+    TruePositives = countif(Classification == "TruePositive")
+    by Title
+| extend FPRate = round(todouble(FalsePositives) / TotalAlerts * 100, 2)
+| where FPRate > 50
+| order by FPRate desc</code></pre>
+                </div>
+
+                <h3>Custom Detection Rule Refinement</h3>
+                <div class="code-block">
+                    <pre><code>// Original rule with high FP rate
+DeviceProcessEvents
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has "-enc"
+
+// Refined rule with better precision
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand", "-e ")
+// Exclude known legitimate encoded commands
+| where not(ProcessCommandLine has_any (
+    "SQBmACAAKABHAGUAdAAtAE0A",  // Known SCCM script prefix
+    "JABlAG4AdgA6AFAAUQBP"       // Known GPO script prefix
+))
+// Exclude specific service accounts
+| where InitiatingProcessAccountName !in~ ("svc_sccm", "svc_intune")
+// Exclude specific paths
+| where InitiatingProcessFolderPath !startswith @"C:\Program Files\Microsoft Configuration Manager"</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Tuning Workflow</h2>
+
+                <div class="workflow-diagram">
+                    <div class="workflow-step">
+                        <span class="step-number">1</span>
+                        <h4>Identify Pattern</h4>
+                        <p>Analyze high-volume alerts and FP classifications</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">2</span>
+                        <h4>Validate Legitimacy</h4>
+                        <p>Confirm behavior is genuinely benign</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">3</span>
+                        <h4>Document</h4>
+                        <p>Record justification and approval</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">4</span>
+                        <h4>Create Suppression</h4>
+                        <p>Implement narrowest possible exclusion</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">5</span>
+                        <h4>Monitor</h4>
+                        <p>Verify reduction without coverage gaps</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">6</span>
+                        <h4>Review</h4>
+                        <p>Quarterly review for continued validity</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Interview Q&A</h2>
+
+                <div class="qa-section">
+                    <h3>Q: How do you approach tuning MDE in a new environment?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> My MDE tuning approach for a new environment:</p>
+                        <ol>
+                            <li><strong>Baseline period:</strong> Run for 2-4 weeks with all protections in audit/detect mode to understand the environment's normal behavior</li>
+                            <li><strong>Data analysis:</strong> Use Advanced Hunting to identify highest-volume alerts, FP patterns by alert type, user, device group, and file path</li>
+                            <li><strong>Prioritize by impact:</strong> Focus first on alerts that generate the most analyst workload without security value</li>
+                            <li><strong>Validate before suppressing:</strong> Work with application owners to confirm legitimacy of flagged behaviors</li>
+                            <li><strong>Implement narrowly:</strong> Start with specific conditions (hash + user + path) before broadening</li>
+                            <li><strong>Document everything:</strong> Create suppression rules with clear descriptions, ticket references, and expiration dates where appropriate</li>
+                            <li><strong>Monitor effectiveness:</strong> Track alert volume reduction and any gaps that might indicate missed detections</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="qa-section">
+                    <h3>Q: What's the difference between suppression rules and indicators?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> Key differences in MDE tuning mechanisms:</p>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Aspect</th>
+                                    <th>Suppression Rules</th>
+                                    <th>Allow Indicators</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Scope</td>
+                                    <td>Alert-specific, conditional</td>
+                                    <td>Global, entity-based</td>
+                                </tr>
+                                <tr>
+                                    <td>Effect</td>
+                                    <td>Hides matching alerts</td>
+                                    <td>Prevents detection entirely</td>
+                                </tr>
+                                <tr>
+                                    <td>Telemetry</td>
+                                    <td>Events still collected</td>
+                                    <td>May reduce telemetry</td>
+                                </tr>
+                                <tr>
+                                    <td>Use Case</td>
+                                    <td>Noisy but valid detections</td>
+                                    <td>Known-good software</td>
+                                </tr>
+                                <tr>
+                                    <td>Flexibility</td>
+                                    <td>Complex conditions (AND/OR)</td>
+                                    <td>Single entity match</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>I prefer suppression rules when I want to maintain visibility but reduce noise, and allow indicators for verified legitimate software where we don't need alerts at all.</p>
+                    </div>
+                </div>
+
+                <div class="qa-section">
+                    <h3>Q: How do you balance security coverage with operational efficiency?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> Balancing coverage and efficiency requires a risk-based approach:</p>
+                        <ul>
+                            <li><strong>Measure FP rates:</strong> Track false positive percentage by alert type - rules with >70% FP rate need attention</li>
+                            <li><strong>Consider asset criticality:</strong> More aggressive detection on crown jewels, more tuned on general workstations</li>
+                            <li><strong>Layer defenses:</strong> If suppressing one detection type, ensure other detections cover similar attack techniques</li>
+                            <li><strong>Use automation:</strong> Auto-close low-severity alerts with known-benign patterns, but log for trend analysis</li>
+                            <li><strong>Regular review:</strong> Quarterly audits of all suppressions - attackers evolve, so should our detections</li>
+                            <li><strong>Feedback loop:</strong> Track which suppressions correlate with missed incidents and adjust</li>
+                        </ul>
+                        <p>The goal is analyst efficiency (time spent on real threats) rather than just alert reduction.</p>
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

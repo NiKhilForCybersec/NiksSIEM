@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Triage Handbook - Alert Analysis Guide | Nik's SIEM</title>
+    <title>Triage Handbook - Complete Alert Analysis | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
-        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.65rem; overflow-x: auto; line-height: 1.4; }
+        .workflow-diagram { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.52rem; overflow-x: auto; line-height: 1.2; white-space: pre; }
     </style>
 </head>
 <body>
@@ -28,8 +28,6 @@
                     <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
                     <a href="triage-handbook.html" class="nav-link active"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
                     <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
-                    <a href="shift-handoff.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Shift Handoff</a>
-                    <a href="soc-metrics.html" class="nav-link"><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</a>
                 </div>
             </nav>
         </aside>
@@ -38,153 +36,319 @@
             <main class="main-content">
                 <div class="page-header">
                     <h1><i class="fas fa-clipboard-check"></i> Triage Handbook</h1>
-                    <p class="lead">Quick reference for common alert types and analysis techniques</p>
+                    <p class="lead">Complete decision trees for every common alert type</p>
                 </div>
 
                 <section class="content-section">
-                    <h2><i class="fas fa-list-ol"></i> Triage Quick Reference by Alert Type</h2>
-
+                    <h2><i class="fas fa-key"></i> Authentication Alert Decision Tree</h2>
                     <div class="workflow-diagram">
 <pre>
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                           ALERT TYPE: BRUTE FORCE / FAILED LOGINS                                        │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                          │
-│   FIRST CHECKS:                                                                                          │
-│   ☐ Is source IP internal or external?                                                                  │
-│   ☐ Is target a service account or user account?                                                        │
-│   ☐ Did any authentication SUCCEED after failures?                                                      │
-│   ☐ Is source IP a known scanner or security tool?                                                      │
-│                                                                                                          │
-│   COMMON FALSE POSITIVES:                                                                                │
-│   • Expired password / locked account (user retrying)                                                   │
-│   • Misconfigured service account                                                                       │
-│   • Vulnerability scanner / security tool                                                               │
-│   • Mobile device with old credentials                                                                  │
-│                                                                                                          │
-│   TRUE POSITIVE INDICATORS:                                                                              │
-│   • External IP targeting multiple accounts                                                             │
-│   • Success after many failures (compromised!)                                                          │
-│   • Targeting privileged accounts                                                                       │
-│   • Known malicious IP (TI match)                                                                       │
-│                                                                                                          │
-│   RESPONSE IF TRUE POSITIVE:                                                                             │
-│   → Block source IP at firewall                                                                         │
-│   → If success detected: Reset password, revoke sessions                                                │
-│   → Add IP to watchlist                                                                                 │
-│                                                                                                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                           ALERT TYPE: SUSPICIOUS POWERSHELL                                              │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                          │
-│   FIRST CHECKS:                                                                                          │
-│   ☐ Who is the user running PowerShell?                                                                 │
-│   ☐ What is the parent process? (Explorer = user, svchost = service)                                   │
-│   ☐ Is the command encoded (base64)?                                                                    │
-│   ☐ Are there network connections from PowerShell process?                                              │
-│                                                                                                          │
-│   COMMON FALSE POSITIVES:                                                                                │
-│   • IT admin running legitimate scripts                                                                 │
-│   • SCCM/Intune management commands                                                                     │
-│   • Scheduled tasks for maintenance                                                                     │
-│   • Software deployment tools                                                                           │
-│                                                                                                          │
-│   TRUE POSITIVE INDICATORS:                                                                              │
-│   • Encoded commands (bypassing logging)                                                                │
-│   • Download cradle patterns (IEX, Invoke-WebRequest)                                                   │
-│   • AMSI bypass attempts                                                                                │
-│   • Spawned by Office application (macro)                                                               │
-│   • Connecting to external IPs                                                                          │
-│                                                                                                          │
-│   DECODE BASE64:                                                                                         │
-│   PowerShell: [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String("encoded"))        │
-│   Linux: echo "encoded" | base64 -d                                                                     │
-│                                                                                                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                           ALERT TYPE: C2 / BEACONING                                                     │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                          │
-│   FIRST CHECKS:                                                                                          │
-│   ☐ What is the destination domain/IP?                                                                  │
-│   ☐ Check domain registration date (recently registered = suspicious)                                   │
-│   ☐ What process is making the connection?                                                              │
-│   ☐ Is there regular interval (beaconing pattern)?                                                      │
-│   ☐ What's the data volume per connection?                                                              │
-│                                                                                                          │
-│   COMMON FALSE POSITIVES:                                                                                │
-│   • Software update checks (regular interval)                                                           │
-│   • Cloud sync services (OneDrive, Dropbox)                                                             │
-│   • Telemetry/analytics                                                                                 │
-│   • CDN domains                                                                                         │
-│                                                                                                          │
-│   TRUE POSITIVE INDICATORS:                                                                              │
-│   • Domain matches TI feed (known C2)                                                                   │
-│   • Recently registered domain (<30 days)                                                               │
-│   • DGA-like domain (random characters)                                                                 │
-│   • Non-standard port for protocol                                                                      │
-│   • Process normally doesn't make network calls                                                         │
-│   • JA3/JA3S hash matches known malware                                                                 │
-│                                                                                                          │
-│   RESPONSE IF TRUE POSITIVE:                                                                             │
-│   → Isolate endpoint IMMEDIATELY                                                                        │
-│   → Block domain/IP at firewall                                                                         │
-│   → Hunt for IOCs across environment                                                                    │
-│   → Escalate to IR team                                                                                 │
-│                                                                                                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                         AUTHENTICATION ALERT TRIAGE - COMPLETE DECISION TREE                                                                        ║
+╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                                                     ║
+║  ALERT TYPES: Brute force / Password spray / Impossible travel / Failed logins / Unusual location / MFA bypass                                                     ║
+║                                                                                                                                                                     ║
+║                                                              ┌─────────────────────────┐                                                                            ║
+║                                                              │   AUTHENTICATION        │                                                                            ║
+║                                                              │   ALERT RECEIVED        │                                                                            ║
+║                                                              └────────────┬────────────┘                                                                            ║
+║                                                                           │                                                                                         ║
+║                                                                           ▼                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 1: IDENTIFY ALERT SUB-TYPE                                                                                                                             ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║  ┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐                                                        ║   ║
+║  ║  ▼             ▼             ▼             ▼             ▼             ▼             ▼             ▼                                                        ║   ║
+║  ║ ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐                                                             ║   ║
+║  ║ │BRUTE  │   │PASSWORD│  │IMPOSSI│   │UNUSUAL│   │FAILED │   │SUCCESS│   │MFA    │   │LEGACY │                                                             ║   ║
+║  ║ │FORCE  │   │SPRAY   │   │BLE    │   │LOCATION│  │LOGINS │   │AFTER  │   │BYPASS │   │PROTO- │                                                             ║   ║
+║  ║ │       │   │        │   │TRAVEL │   │       │   │(Multi)│   │FAILURES│  │       │   │COL    │                                                             ║   ║
+║  ║ └───┬───┘   └───┬───┘   └───┬───┘   └───┬───┘   └───┬───┘   └───┬───┘   └───┬───┘   └───┬───┘                                                             ║   ║
+║  ║     │           │           │           │           │           │           │           │                                                                    ║   ║
+║  ║     ▼           ▼           ▼           ▼           ▼           ▼           ▼           ▼                                                                    ║   ║
+║  ║ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐                                                            ║   ║
+║  ║ │Single   │ │Multiple │ │2 logins │ │Login    │ │Multiple │ │Failures │ │MFA not  │ │IMAP/POP│                                                            ║   ║
+║  ║ │account  │ │accounts │ │from far │ │from new │ │failures │ │then     │ │triggered│ │SMTP    │                                                            ║   ║
+║  ║ │many     │ │few fails│ │locations│ │country/ │ │same     │ │success  │ │or failed│ │used    │                                                            ║   ║
+║  ║ │failures │ │each     │ │short    │ │city     │ │account  │ │from     │ │attempt  │ │instead │                                                            ║   ║
+║  ║ │same src │ │same src │ │time     │ │         │ │         │ │diff IP  │ │         │ │of      │                                                            ║   ║
+║  ║ │         │ │         │ │         │ │         │ │         │ │         │ │         │ │modern  │                                                            ║   ║
+║  ║ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘                                                            ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 2: SOURCE IP ANALYSIS                                                                                                                                  ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  Is source IP INTERNAL or EXTERNAL?                 │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║                                    ┌──────────────────────────────────┼──────────────────────────────────┐                                                  ║   ║
+║  ║                                    ▼                                  ▼                                  ▼                                                  ║   ║
+║  ║                               ┌─────────┐                        ┌─────────┐                        ┌─────────┐                                             ║   ║
+║  ║                               │INTERNAL │                        │EXTERNAL │                        │  VPN    │                                             ║   ║
+║  ║                               │(Corp IP)│                        │(Internet│                        │ EXIT IP │                                             ║   ║
+║  ║                               │         │                        │   IP)   │                        │         │                                             ║   ║
+║  ║                               └────┬────┘                        └────┬────┘                        └────┬────┘                                             ║   ║
+║  ║                                    │                                  │                                  │                                                  ║   ║
+║  ║                                    ▼                                  ▼                                  ▼                                                  ║   ║
+║  ║                    ┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐                                      ║   ║
+║  ║                    │ LIKELY SCENARIOS:         │      │ CHECK IP REPUTATION:      │      │ USER MAY BE REMOTE:       │                                      ║   ║
+║  ║                    │                           │      │                           │      │                           │                                      ║   ║
+║  ║                    │ • Misconfigured service   │      │ ☐ VirusTotal              │      │ • Verify VPN connection   │                                      ║   ║
+║  ║                    │ • Expired password        │      │ ☐ AbuseIPDB               │      │ • Check VPN logs for user │                                      ║   ║
+║  ║                    │ • Saved wrong credential  │      │ ☐ Internal TI             │      │ • Normal if user working  │                                      ║   ║
+║  ║                    │ • Service account issue   │      │ ☐ Geolocation             │      │   remotely                │                                      ║   ║
+║  ║                    │ • Actual insider threat   │      │                           │      │                           │                                      ║   ║
+║  ║                    │                           │      │ IF KNOWN BAD IP:          │      │ IF VPN BUT WRONG USER:    │                                      ║   ║
+║  ║                    │ NEXT: Check what device   │      │ ──► HIGH PRIORITY         │      │ ──► Credential theft      │                                      ║   ║
+║  ║                    │       is at that IP       │      │ ──► Block IP              │      │                           │                                      ║   ║
+║  ║                    └───────────────────────────┘      │ ──► Check for success     │      └───────────────────────────┘                                      ║   ║
+║  ║                                                       └───────────────────────────┘                                                                          ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 3: TARGET ACCOUNT ANALYSIS                                                                                                                             ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  What TYPE of account is being targeted?            │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║     ┌───────────────┬───────────────┬───────────────┬─────────────────┼─────────────────┬───────────────┬───────────────┐                                   ║   ║
+║  ║     ▼               ▼               ▼               ▼                 ▼                 ▼               ▼               ▼                                   ║   ║
+║  ║ ┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐         ┌────────┐       ┌────────┐     ┌────────┐     ┌────────┐                                  ║   ║
+║  ║ │DOMAIN  │     │LOCAL   │     │SERVICE │     │STANDARD│         │EXEC/VIP│       │IT ADMIN│     │DISABLED│     │NON-    │                                  ║   ║
+║  ║ │ADMIN   │     │ADMIN   │     │ACCOUNT │     │USER    │         │USER    │       │        │     │ACCOUNT │     │EXISTENT│                                  ║   ║
+║  ║ └───┬────┘     └───┬────┘     └───┬────┘     └───┬────┘         └───┬────┘       └───┬────┘     └───┬────┘     └───┬────┘                                  ║   ║
+║  ║     │               │               │               │                 │               │               │               │                                      ║   ║
+║  ║     ▼               ▼               ▼               ▼                 ▼               ▼               ▼               ▼                                      ║   ║
+║  ║ ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐        ┌─────────┐     ┌─────────┐    ┌─────────┐    ┌─────────┐                                   ║   ║
+║  ║ │CRITICAL │    │HIGH     │    │HIGH     │    │MEDIUM   │        │HIGH     │     │HIGH     │    │SUSPICIOUS│   │RECON    │                                   ║   ║
+║  ║ │PRIORITY │    │PRIORITY │    │PRIORITY │    │PRIORITY │        │PRIORITY │     │PRIORITY │    │          │    │ACTIVITY │                                   ║   ║
+║  ║ │         │    │         │    │         │    │         │        │         │     │         │    │Why target│    │         │                                   ║   ║
+║  ║ │Immedi-  │    │Can pwn  │    │Often has│    │Standard │        │High     │     │Privi-   │    │disabled  │    │Attacker │                                   ║   ║
+║  ║ │ate      │    │entire   │    │excessive│    │triage   │        │value    │     │leged    │    │account?  │    │guessing │                                   ║   ║
+║  ║ │escalate │    │server   │    │privi-   │    │         │        │target   │     │access   │    │          │    │usernames│                                   ║   ║
+║  ║ │to IR    │    │         │    │leges    │    │         │        │for BEC  │     │         │    │Terminated│    │         │                                   ║   ║
+║  ║ │         │    │         │    │         │    │         │        │         │     │         │    │employee? │    │Low risk │                                   ║   ║
+║  ║ └─────────┘    └─────────┘    └─────────┘    └─────────┘        └─────────┘     └─────────┘    └─────────┘    └─────────┘                                   ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 4: CRITICAL QUESTION - WAS THERE A SUCCESSFUL LOGIN?                                                                                                   ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  After the failures, was there a SUCCESSFUL login? │                                                        ║   ║
+║  ║                                              │  (Check authentication logs for success event)      │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║                          ┌────────────────────────────────────────────┼────────────────────────────────────────────┐                                        ║   ║
+║  ║                          ▼                                            ▼                                            ▼                                        ║   ║
+║  ║                     ┌─────────┐                                  ┌─────────┐                                  ┌─────────┐                                   ║   ║
+║  ║                     │   YES   │                                  │   NO    │                                  │ UNSURE  │                                   ║   ║
+║  ║                     │(Success │                                  │(All     │                                  │         │                                   ║   ║
+║  ║                     │ after   │                                  │failures)│                                  │         │                                   ║   ║
+║  ║                     │failures)│                                  │         │                                  │         │                                   ║   ║
+║  ║                     └────┬────┘                                  └────┬────┘                                  └────┬────┘                                   ║   ║
+║  ║                          │                                            │                                            │                                        ║   ║
+║  ║                          ▼                                            ▼                                            ▼                                        ║   ║
+║  ║     ┌──────────────────────────────────────────┐     ┌──────────────────────────────────────────┐     ┌────────────────────────────────┐                    ║   ║
+║  ║     │ ██████████████████████████████████████ │     │ LOWER PRIORITY:                          │     │ INVESTIGATE:                   │                    ║   ║
+║  ║     │ ██  ACCOUNT LIKELY COMPROMISED!     ██ │     │                                          │     │                                │                    ║   ║
+║  ║     │ ██████████████████████████████████████ │     │ • Attack was unsuccessful               │     │ • Query auth logs for success  │                    ║   ║
+║  ║     │                                          │     │ • Account lockout may have triggered   │     │ • Check different auth sources │                    ║   ║
+║  ║     │ IMMEDIATE ACTIONS:                       │     │ • Still document and monitor           │     │ • O365, Azure AD, on-prem AD   │                    ║   ║
+║  ║     │ ☐ 1. DISABLE ACCOUNT IMMEDIATELY        │     │                                          │     │ • VPN, SSO, etc.               │                    ║   ║
+║  ║     │ ☐ 2. Revoke all sessions                │     │ ACTIONS:                                 │     │                                │                    ║   ║
+║  ║     │ ☐ 3. Reset password                     │     │ ☐ Block source IP if external          │     │ IF SUCCESS FOUND:              │                    ║   ║
+║  ║     │ ☐ 4. Enable/verify MFA                  │     │ ☐ Check if account is lockout-enabled  │     │ ──► Treat as COMPROMISED       │                    ║   ║
+║  ║     │ ☐ 5. Check post-success activity        │     │ ☐ Document pattern for tuning          │     │                                │                    ║   ║
+║  ║     │ ☐ 6. Check for lateral movement         │     │ ☐ Consider automated block rule        │     │ IF NO SUCCESS:                 │                    ║   ║
+║  ║     │ ☐ 7. Check inbox rules                  │     │ ☐ Close as "Attack Blocked"            │     │ ──► Treat as failed attack     │                    ║   ║
+║  ║     │                                          │     │                                          │     └────────────────────────────────┘                    ║   ║
+║  ║     │ ──► ESCALATE TO TIER 2 / IR             │     └──────────────────────────────────────────┘                                                            ║   ║
+║  ║     └──────────────────────────────────────────┘                                                                                                             ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 5: COMMON FALSE POSITIVE CHECKS                                                                                                                        ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║   ║
+║  ║  │ COMMON FALSE POSITIVE SCENARIOS - Check these before closing as benign:                                                                               │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ ☐ EXPIRED PASSWORD: User trying with old password. Check: Password last changed date vs. failure time                                                 │  ║   ║
+║  ║  │ ☐ LOCKED ACCOUNT: Account already locked, user keeps trying. Check: Account lockout status                                                            │  ║   ║
+║  ║  │ ☐ SERVICE ACCOUNT: Misconfigured with wrong password. Check: Is source a server? Is target a service account?                                         │  ║   ║
+║  ║  │ ☐ MOBILE DEVICE: Old password cached on phone. Check: User agent, is it mobile?                                                                       │  ║   ║
+║  ║  │ ☐ SECURITY SCANNER: Vulnerability scanner testing. Check: Is source IP a known scanner?                                                               │  ║   ║
+║  ║  │ ☐ PASSWORD CHANGE: User changed password, old cached. Check: Recent password change?                                                                  │  ║   ║
+║  ║  │ ☐ VPN + MFA: VPN client retrying after MFA. Check: VPN logs, MFA logs                                                                                 │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ ⚠️ IMPORTANT: Even if FP, if there's a SUCCESS after failures from DIFFERENT IP ──► Still treat as potential compromise                              │  ║   ║
+║  ║  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                                                                                                                     ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 </pre>
                     </div>
                 </section>
 
                 <section class="content-section">
-                    <h2><i class="fas fa-search"></i> Enrichment Checklist</h2>
-                    <p>For every alert, gather this context:</p>
-                    
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Enrichment Type</th>
-                                <th>Source</th>
-                                <th>Why It Matters</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Asset Criticality</strong></td>
-                                <td>CMDB, Asset inventory</td>
-                                <td>DC vs workstation changes severity</td>
-                            </tr>
-                            <tr>
-                                <td><strong>User Role</strong></td>
-                                <td>AD groups, HR system</td>
-                                <td>Admin vs regular user</td>
-                            </tr>
-                            <tr>
-                                <td><strong>IP Reputation</strong></td>
-                                <td>VirusTotal, AbuseIPDB, TI feeds</td>
-                                <td>Known malicious?</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Domain Age</strong></td>
-                                <td>WHOIS lookup</td>
-                                <td>New domains are suspicious</td>
-                            </tr>
-                            <tr>
-                                <td><strong>File Hash</strong></td>
-                                <td>VirusTotal, internal TI</td>
-                                <td>Known malware?</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Recent Activity</strong></td>
-                                <td>SIEM (last 24-48h)</td>
-                                <td>Pattern of suspicious behavior?</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <h2><i class="fas fa-terminal"></i> Suspicious PowerShell Decision Tree</h2>
+                    <div class="workflow-diagram">
+<pre>
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                         SUSPICIOUS POWERSHELL TRIAGE - COMPLETE DECISION TREE                                                                       ║
+╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                                                     ║
+║                                                              ┌─────────────────────────┐                                                                            ║
+║                                                              │ POWERSHELL ALERT        │                                                                            ║
+║                                                              │ RECEIVED                │                                                                            ║
+║                                                              └────────────┬────────────┘                                                                            ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 1: IDENTIFY USER CONTEXT                                                                                                                               ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  WHO is running the PowerShell command?             │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║            ┌───────────────────┬───────────────────┬──────────────────┼──────────────────┬───────────────────┬───────────────────┐                          ║   ║
+║  ║            ▼                   ▼                   ▼                  ▼                  ▼                   ▼                   ▼                          ║   ║
+║  ║       ┌─────────┐         ┌─────────┐         ┌─────────┐       ┌─────────┐        ┌─────────┐         ┌─────────┐         ┌─────────┐                      ║   ║
+║  ║       │IT ADMIN │         │DEVELOPER│         │STANDARD │       │SERVICE  │        │  SYSTEM │         │HELPDESK │         │UNKNOWN  │                      ║   ║
+║  ║       │         │         │         │         │USER     │       │ACCOUNT  │        │(NT AUTH)│         │         │         │         │                      ║   ║
+║  ║       └────┬────┘         └────┬────┘         └────┬────┘       └────┬────┘        └────┬────┘         └────┬────┘         └────┬────┘                      ║   ║
+║  ║            │                   │                   │                 │                  │                   │                   │                           ║   ║
+║  ║            ▼                   ▼                   ▼                 ▼                  ▼                   ▼                   ▼                           ║   ║
+║  ║       ┌─────────┐         ┌─────────┐         ┌─────────┐       ┌─────────┐        ┌─────────┐         ┌─────────┐         ┌─────────┐                      ║   ║
+║  ║       │MAY be   │         │Could be │         │UNUSUAL! │       │CHECK:   │        │COULD BE:│         │LIMITED  │         │HIGH     │                      ║   ║
+║  ║       │legitimate│        │scripting│         │Standard │       │What     │        │ • SCCM  │         │PS usage │         │SUSPICION│                      ║   ║
+║  ║       │but verify│        │work     │         │users    │       │service? │        │ • Intune│         │expected │         │         │                      ║   ║
+║  ║       │content   │        │         │         │rarely   │       │Expected?│        │ • GPO   │         │         │         │Identify │                      ║   ║
+║  ║       │         │         │Still    │         │use PS   │       │         │        │ • WMI   │         │Verify   │         │user     │                      ║   ║
+║  ║       │         │         │verify   │         │         │       │         │        │ • Task  │         │content  │         │first    │                      ║   ║
+║  ║       └─────────┘         └─────────┘         └─────────┘       └─────────┘        └─────────┘         └─────────┘         └─────────┘                      ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 2: CHECK PARENT PROCESS                                                                                                                                ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  What PARENT PROCESS spawned PowerShell?            │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║     ┌────────────────┬────────────────┬────────────────┬──────────────┼──────────────┬────────────────┬────────────────┬────────────────┐                   ║   ║
+║  ║     ▼                ▼                ▼                ▼              ▼              ▼                ▼                ▼                ▼                   ║   ║
+║  ║ ┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐    ┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐                   ║   ║
+║  ║ │EXPLORER│      │ CMD    │      │ WORD/  │      │OUTLOOK │      │SVCHOST │    │WMIPRVSE│      │SCHEDULE│      │WSCRIPT/│      │UNKNOWN │                   ║   ║
+║  ║ │.EXE    │      │.EXE    │      │ EXCEL  │      │.EXE    │      │.EXE    │    │.EXE    │      │.EXE    │      │CSCRIPT │      │PROCESS │                   ║   ║
+║  ║ └───┬────┘      └───┬────┘      └───┬────┘      └───┬────┘      └───┬────┘    └───┬────┘      └───┬────┘      └───┬────┘      └───┬────┘                   ║   ║
+║  ║     │               │               │               │               │             │               │               │               │                        ║   ║
+║  ║     ▼               ▼               ▼               ▼               ▼             ▼               ▼               ▼               ▼                        ║   ║
+║  ║ ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐                       ║   ║
+║  ║ │User     │    │Could be │    │🚨 HIGH  │    │🚨 HIGH  │    │Service  │    │WMI exec │    │Sched    │    │Script   │    │VERY     │                       ║   ║
+║  ║ │launched │    │chained  │    │SUSPICION│    │SUSPICION│    │context  │    │ution    │    │task     │    │launched │    │SUSPICIOUS│                      ║   ║
+║  ║ │manually │    │or       │    │         │    │         │    │         │    │         │    │         │    │         │    │          │                      ║   ║
+║  ║ │         │    │script   │    │MACRO    │    │EMAIL    │    │Check    │    │Often    │    │Check if │    │Often    │    │Investigate│                     ║   ║
+║  ║ │Verify   │    │         │    │EXECUT-  │    │ATTACH   │    │what     │    │used by  │    │legit    │    │malicious│    │process   │                      ║   ║
+║  ║ │content  │    │Check    │    │ION!     │    │MENT!    │    │service  │    │lateral  │    │task     │    │         │    │name      │                      ║   ║
+║  ║ │         │    │original │    │         │    │         │    │         │    │movement │    │         │    │         │    │          │                      ║   ║
+║  ║ │NORMAL   │    │parent   │    │ESCALATE │    │ESCALATE │    │VERIFY   │    │SUSPICI- │    │VERIFY   │    │SUSPICI- │    │ESCALATE  │                      ║   ║
+║  ║ └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘                       ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 3: ANALYZE COMMAND LINE                                                                                                                                ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║   ║
+║  ║  │ RED FLAG INDICATORS IN COMMAND LINE:                                                                                                                  │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ 🚨 ENCODED COMMAND (-enc, -encodedcommand):                                                                                                           │  ║   ║
+║  ║  │    powershell.exe -enc JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8A...                                                                                    │  ║   ║
+║  ║  │    ──► DECODE IT: [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String("..."))                                                      │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ 🚨 DOWNLOAD CRADLES:                                                                                                                                  │  ║   ║
+║  ║  │    • IEX (New-Object Net.WebClient).DownloadString('http://...')                                                                                     │  ║   ║
+║  ║  │    • Invoke-Expression                                                                                                                                │  ║   ║
+║  ║  │    • Invoke-WebRequest | IEX                                                                                                                          │  ║   ║
+║  ║  │    • Start-BitsTransfer                                                                                                                               │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ 🚨 EVASION TECHNIQUES:                                                                                                                                │  ║   ║
+║  ║  │    • -ExecutionPolicy Bypass                                                                                                                          │  ║   ║
+║  ║  │    • -WindowStyle Hidden                                                                                                                              │  ║   ║
+║  ║  │    • -NoProfile -NonInteractive                                                                                                                       │  ║   ║
+║  ║  │    • AMSI bypass patterns                                                                                                                             │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ 🚨 CREDENTIAL ACCESS:                                                                                                                                 │  ║   ║
+║  ║  │    • Mimikatz patterns                              • Get-Credential                                                                                  │  ║   ║
+║  ║  │    • sekurlsa::logonpasswords                       • ConvertTo-SecureString                                                                         │  ║   ║
+║  ║  │    • Invoke-Mimikatz                                                                                                                                  │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ 🚨 RECONNAISSANCE:                                                                                                                                    │  ║   ║
+║  ║  │    • Get-ADUser, Get-ADComputer, Get-ADGroup                                                                                                          │  ║   ║
+║  ║  │    • Net user /domain, net group /domain                                                                                                              │  ║   ║
+║  ║  │    • Test-NetConnection (port scanning)                                                                                                               │  ║   ║
+║  ║  │                                                                                                                                                       │  ║   ║
+║  ║  │ ✅ OFTEN LEGITIMATE:                                                                                                                                  │  ║   ║
+║  ║  │    • Get-ChildItem, Get-Content, Get-Process        • Import-Module                                                                                   │  ║   ║
+║  ║  │    • Set-ExecutionPolicy (when run by admin)        • Install-Module                                                                                  │  ║   ║
+║  ║  │    • Get-Help, Get-Command                          • Update-Help                                                                                     │  ║   ║
+║  ║  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                           │                                                                                         ║
+║  ╔════════════════════════════════════════════════════════════════════════╧════════════════════════════════════════════════════════════════════════════════════╗   ║
+║  ║ STEP 4: CHECK NETWORK ACTIVITY                                                                                                                              ║   ║
+║  ╠════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣   ║
+║  ║                                                                                                                                                             ║   ║
+║  ║                                              ┌─────────────────────────────────────────────────────┐                                                        ║   ║
+║  ║                                              │  Did PowerShell make any NETWORK CONNECTIONS?       │                                                        ║   ║
+║  ║                                              └────────────────────────┬────────────────────────────┘                                                        ║   ║
+║  ║                                                                       │                                                                                     ║   ║
+║  ║                          ┌────────────────────────────────────────────┼────────────────────────────────────────────┐                                        ║   ║
+║  ║                          ▼                                            ▼                                            ▼                                        ║   ║
+║  ║                     ┌─────────┐                                  ┌─────────┐                                  ┌─────────┐                                   ║   ║
+║  ║                     │   YES   │                                  │   NO    │                                  │ UNKNOWN │                                   ║   ║
+║  ║                     │         │                                  │         │                                  │         │                                   ║   ║
+║  ║                     └────┬────┘                                  └────┬────┘                                  └────┬────┘                                   ║   ║
+║  ║                          │                                            │                                            │                                        ║   ║
+║  ║                          ▼                                            ▼                                            ▼                                        ║   ║
+║  ║     ┌──────────────────────────────────────────┐     ┌──────────────────────────────────────────┐     ┌────────────────────────────────┐                    ║   ║
+║  ║     │ ANALYZE THE CONNECTION:                  │     │ LOWER RISK:                              │     │ CHECK EDR/SYSMON:              │                    ║   ║
+║  ║     │                                          │     │                                          │     │                                │                    ║   ║
+║  ║     │ ☐ What IP/domain was contacted?          │     │ • No external communication              │     │ • Network connection events    │                    ║   ║
+║  ║     │ ☐ Check domain reputation                │     │ • Local execution only                   │     │ • DNS queries                  │                    ║   ║
+║  ║     │ ☐ Check domain age (WHOIS)               │     │ • Still analyze command content          │     │ • Process network activity     │                    ║   ║
+║  ║     │ ☐ Was anything downloaded?               │     │                                          │     │                                │                    ║   ║
+║  ║     │ ☐ Was data sent out (exfil)?             │     │ COULD STILL BE:                          │     │                                │                    ║   ║
+║  ║     │                                          │     │ • Local privilege escalation             │     │                                │                    ║   ║
+║  ║     │ IF EXTERNAL + SUSPICIOUS DOMAIN:         │     │ • Credential dumping                     │     │                                │                    ║   ║
+║  ║     │ ──► HIGH/CRITICAL PRIORITY               │     │ • Persistence installation               │     │                                │                    ║   ║
+║  ║     │ ──► Block domain at proxy                │     │                                          │     │                                │                    ║   ║
+║  ║     │ ──► Isolate endpoint                     │     │                                          │     │                                │                    ║   ║
+║  ║     └──────────────────────────────────────────┘     └──────────────────────────────────────────┘     └────────────────────────────────┘                    ║   ║
+║  ║                                                                                                                                                             ║   ║
+║  ╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝   ║
+║                                                                                                                                                                     ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre>
+                    </div>
                 </section>
 
                 <section class="content-section interview-section" style="background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.2)); border-radius: 12px; padding: 2rem;">
@@ -192,18 +356,19 @@
                     <div class="interview-box">
                         <div class="interview-question">
                             <i class="fas fa-question-circle"></i>
-                            <span>How do you determine if a PowerShell alert is a true positive or false positive?</span>
+                            <span>How do you analyze a suspicious PowerShell alert?</span>
                         </div>
                         <div class="interview-answer">
-                            <p><strong>I look at several factors:</strong></p>
-                            <p><strong>Context:</strong> Who ran it? IT admin running scripts is different from finance user. What's the parent process? If Word spawned PowerShell, that's suspicious (macro).</p>
-                            <p><strong>Content:</strong> Is it encoded? Encoded commands are evasion. Decode it and look for: download cradles (IEX, Invoke-WebRequest), AMSI bypass, credential harvesting (Mimikatz patterns).</p>
-                            <p><strong>Network:</strong> Did PowerShell make external connections? What destination? Check domain reputation.</p>
-                            <p><strong>Common FPs:</strong> SCCM deployments, Intune management, scheduled admin tasks - these usually have recognizable patterns and come from management systems.</p>
-                            <p>If it's encoded, spawned by Office, and making network connections - that's almost certainly malicious.</p>
+                            <p><strong>I follow a 4-step analysis process:</strong></p>
+                            <p><strong>1. User Context:</strong> Who ran it? IT admin running scripts is different from finance user. I check AD for their role - standard users rarely need PowerShell.</p>
+                            <p><strong>2. Parent Process:</strong> What spawned PowerShell? If Word or Outlook is the parent, that's a macro or email attachment executing - immediate red flag. Explorer is normal (user launched). Svchost or scheduled task needs verification.</p>
+                            <p><strong>3. Command Analysis:</strong> I look for red flags: encoded commands (decode them!), download cradles (IEX, Invoke-WebRequest), evasion flags (-ExecutionPolicy Bypass, -WindowStyle Hidden), and credential access patterns (Mimikatz, sekurlsa). If encoded, I always decode it.</p>
+                            <p><strong>4. Network Activity:</strong> Did PowerShell make external connections? Check destination reputation and domain age. If it downloaded something or connected to a new domain - high priority.</p>
+                            <p>The combination of: standard user + Office parent + encoded command + external connection = almost certainly malicious. Isolate immediately.</p>
                         </div>
                     </div>
                 </section>
+
             </main>
         </div>
     </div>

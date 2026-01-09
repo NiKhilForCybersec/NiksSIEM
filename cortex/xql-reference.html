@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XQL Reference - Cortex XDR | Nik's SIEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Compendium</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Cortex XDR</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="xql-reference.html" class="nav-link active"><i class="fas fa-code"></i> XQL Reference</a>
+                    <a href="xql-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="bioc-rules.html" class="nav-link"><i class="fas fa-shield-virus"></i> BIOC Rules</a>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
+                </div>
+            </nav>
+        </aside>
+        
+        <div class="main-wrapper">
+            <main class="main-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-code"></i> XQL Reference</h1>
+                    <p class="lead">Complete XDR Query Language reference with syntax, operators, functions, and production-ready examples</p>
+                </div>
+
+                <!-- Query Structure -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> Query Structure</h2>
+                    <div class="workflow-diagram">
+<pre>
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                              XQL QUERY STRUCTURE                                                                      ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                       ║
+║   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
+║   │  dataset = xdr_data                         // 1. DATA SOURCE - Required, specifies the dataset to query                    │   ║
+║   │  | preset = xdr_process                     // 2. PRESET (optional) - Pre-filtered views for common use cases               │   ║
+║   │  | filter event_type = PROCESS              // 3. FILTER - Narrow down results (WHERE clause equivalent)                    │   ║
+║   │  | filter action_process_image_name contains "powershell"                                                                    │   ║
+║   │  | fields agent_hostname, _time, ...        // 4. FIELDS - Select specific columns to return                                │   ║
+║   │  | alter new_field = concat(a, b)           // 5. ALTER - Create calculated fields                                          │   ║
+║   │  | comp count() as total by hostname        // 6. COMP - Aggregate/compute statistics (GROUP BY equivalent)                 │   ║
+║   │  | sort desc _time                          // 7. SORT - Order results                                                      │   ║
+║   │  | limit 100                                // 8. LIMIT - Restrict number of results                                        │   ║
+║   └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   ║
+║                                                                                                                                       ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre>
+                    </div>
+                </section>
+
+                <!-- Datasets -->
+                <section class="content-section">
+                    <h2><i class="fas fa-database"></i> Available Datasets</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <th>Description</th>
+                                    <th>Key Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>xdr_data</code></td>
+                                    <td>All endpoint telemetry data</td>
+                                    <td>event_type, agent_hostname, action_*, actor_*</td>
+                                </tr>
+                                <tr>
+                                    <td><code>cloud_audit_logs</code></td>
+                                    <td>Cloud platform audit events</td>
+                                    <td>cloud_provider, cloud_operation, cloud_resource</td>
+                                </tr>
+                                <tr>
+                                    <td><code>firewall_logs</code></td>
+                                    <td>Palo Alto firewall logs</td>
+                                    <td>src_ip, dst_ip, dst_port, action</td>
+                                </tr>
+                                <tr>
+                                    <td><code>identity_data</code></td>
+                                    <td>Identity and authentication events</td>
+                                    <td>user_name, auth_result, source_ip</td>
+                                </tr>
+                                <tr>
+                                    <td><code>alerts</code></td>
+                                    <td>Cortex XDR alerts</td>
+                                    <td>alert_name, severity, alert_source</td>
+                                </tr>
+                                <tr>
+                                    <td><code>incidents</code></td>
+                                    <td>Cortex XDR incidents</td>
+                                    <td>incident_id, status, severity</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Presets -->
+                <section class="content-section">
+                    <h2><i class="fas fa-filter"></i> Presets (Pre-filtered Views)</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Preset</th>
+                                    <th>Pre-applied Filter</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>xdr_process</code></td>
+                                    <td>event_type = PROCESS</td>
+                                    <td>Process execution analysis</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_file</code></td>
+                                    <td>event_type = FILE</td>
+                                    <td>File operations</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_registry</code></td>
+                                    <td>event_type = REGISTRY</td>
+                                    <td>Registry modifications</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_network</code></td>
+                                    <td>event_type = NETWORK</td>
+                                    <td>Network connections</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_event_log</code></td>
+                                    <td>event_type = EVENT_LOG</td>
+                                    <td>Windows event logs</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_injection</code></td>
+                                    <td>event_type = INJECTION</td>
+                                    <td>Process injection events</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Filter Operators -->
+                <section class="content-section">
+                    <h2><i class="fas fa-equals"></i> Filter Operators</h2>
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon cyan"><i class="fas fa-equals"></i></div>
+                                <div><div class="card-title">Comparison Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>= , != , < , > , <= , >=
+
+// Examples
+| filter severity = "High"
+| filter _time >= timestamp("2024-01-01")
+| filter bytes_sent > 1000000</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon purple"><i class="fas fa-search"></i></div>
+                                <div><div class="card-title">String Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>contains, ~contains (case-insensitive)
+!contains, !~contains
+in, not in
+
+// Examples
+| filter cmd contains "-enc"
+| filter process ~contains "powershell"
+| filter user in ("admin", "system")</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon green"><i class="fas fa-asterisk"></i></div>
+                                <div><div class="card-title">Pattern Matching</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>matches (regex)
+
+// Examples
+| filter filename matches ".*\.exe$"
+| filter ip matches "^10\.\d+\.\d+\.\d+$"
+| filter path matches ".*\\Temp\\.*"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon orange"><i class="fas fa-code-branch"></i></div>
+                                <div><div class="card-title">Logical Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>and, or, not
+() for grouping
+
+// Examples
+| filter (severity = "High" or severity = "Critical")
+| filter user != null and auth_result = "Failed"
+| filter not (ip in allow_list)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Functions -->
+                <section class="content-section">
+                    <h2><i class="fas fa-function"></i> Functions Reference</h2>
+                    
+                    <h3>String Functions</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>lowercase(str)</code></td>
+                                    <td>Convert to lowercase</td>
+                                    <td><code>alter user_lower = lowercase(user_name)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>uppercase(str)</code></td>
+                                    <td>Convert to uppercase</td>
+                                    <td><code>alter host_upper = uppercase(hostname)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>concat(str1, str2, ...)</code></td>
+                                    <td>Concatenate strings</td>
+                                    <td><code>alter full_path = concat(dir, "\\", filename)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>substring(str, start, len)</code></td>
+                                    <td>Extract substring</td>
+                                    <td><code>alter short = substring(hash, 0, 8)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>split(str, delim)</code></td>
+                                    <td>Split into array</td>
+                                    <td><code>alter parts = split(path, "\\")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>replace(str, old, new)</code></td>
+                                    <td>Replace substring</td>
+                                    <td><code>alter clean = replace(cmd, "  ", " ")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>trim(str)</code></td>
+                                    <td>Remove whitespace</td>
+                                    <td><code>alter trimmed = trim(input)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>length(str)</code></td>
+                                    <td>String length</td>
+                                    <td><code>alter cmd_len = length(command_line)</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Aggregation Functions</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>count()</code></td>
+                                    <td>Count records</td>
+                                    <td><code>comp count() as total by hostname</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>count_distinct(field)</code></td>
+                                    <td>Count unique values</td>
+                                    <td><code>comp count_distinct(user) as unique_users</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>sum(field)</code></td>
+                                    <td>Sum values</td>
+                                    <td><code>comp sum(bytes_sent) as total_bytes</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>avg(field)</code></td>
+                                    <td>Average value</td>
+                                    <td><code>comp avg(duration) as avg_duration</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>min(field)</code></td>
+                                    <td>Minimum value</td>
+                                    <td><code>comp min(_time) as first_seen</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>max(field)</code></td>
+                                    <td>Maximum value</td>
+                                    <td><code>comp max(_time) as last_seen</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>values(field)</code></td>
+                                    <td>Collect unique values</td>
+                                    <td><code>comp values(src_ip) as source_ips</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Time Functions</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>timestamp(str)</code></td>
+                                    <td>Parse timestamp string</td>
+                                    <td><code>filter _time >= timestamp("2024-01-01T00:00:00Z")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>now()</code></td>
+                                    <td>Current time</td>
+                                    <td><code>alter age = now() - _time</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>format_timestamp(ts, fmt)</code></td>
+                                    <td>Format timestamp</td>
+                                    <td><code>alter date = format_timestamp(_time, "%Y-%m-%d")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>extract_time(ts, part)</code></td>
+                                    <td>Extract time part</td>
+                                    <td><code>alter hour = extract_time(_time, "HOUR")</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Production Queries -->
+                <section class="content-section">
+                    <h2><i class="fas fa-crosshairs"></i> Production Threat Hunting Queries</h2>
+
+                    <h3>Credential Access Detection</h3>
+                    <pre><code>// LSASS Access - Credential Dumping Detection
+dataset = xdr_data
+| filter event_type = PROCESS
+| filter action_process_image_name ~contains "lsass"
+| filter actor_process_image_name not in ("svchost.exe", "wininit.exe", "csrss.exe", "services.exe")
+| fields _time, agent_hostname, actor_process_image_name, actor_process_image_path, 
+         action_process_image_name, actor_process_image_command_line
+| sort desc _time</code></pre>
+
+                    <h3>Encoded PowerShell Detection</h3>
+                    <pre><code>// Detect Base64 Encoded PowerShell Commands
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name ~contains "powershell"
+| filter action_process_image_command_line contains "-enc" 
+         or action_process_image_command_line contains "-encodedcommand"
+         or action_process_image_command_line contains "frombase64"
+| fields _time, agent_hostname, actor_process_image_name, action_process_image_command_line
+| alter cmd_length = length(action_process_image_command_line)
+| filter cmd_length > 500  // Long encoded commands are suspicious
+| sort desc _time</code></pre>
+
+                    <h3>Lateral Movement Detection</h3>
+                    <pre><code>// Detect Remote Execution Tools
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name in ("psexec.exe", "psexesvc.exe", "wmic.exe", 
+         "winrs.exe", "wmiexec.exe", "smbexec.exe", "atexec.exe")
+| fields _time, agent_hostname, actor_process_image_name, actor_process_image_path,
+         action_process_image_name, action_process_image_command_line
+| sort desc _time</code></pre>
+
+                    <h3>Persistence Mechanisms</h3>
+                    <pre><code>// Registry Run Key Modifications
+dataset = xdr_data
+| preset = xdr_registry
+| filter action_registry_key_name contains "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+| filter action_registry_value_name != null
+| fields _time, agent_hostname, actor_process_image_name, action_registry_key_name,
+         action_registry_value_name, action_registry_data
+| sort desc _time
+
+// Scheduled Task Creation
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name = "schtasks.exe"
+| filter action_process_image_command_line contains "/create"
+| fields _time, agent_hostname, actor_process_image_name, action_process_image_command_line
+| sort desc _time</code></pre>
+
+                    <h3>Data Exfiltration Indicators</h3>
+                    <pre><code>// Large Outbound Transfers
+dataset = xdr_data
+| preset = xdr_network
+| filter action_remote_ip != null
+| filter action_local_ip matches "^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+| filter action_remote_ip not matches "^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+| comp sum(action_total_sent_bytes) as bytes_sent, count() as conn_count by agent_hostname, action_remote_ip
+| filter bytes_sent > 100000000  // >100MB
+| sort desc bytes_sent</code></pre>
+
+                    <h3>DNS Tunneling Detection</h3>
+                    <pre><code>// Detect Potential DNS Exfiltration
+dataset = xdr_data
+| preset = xdr_network
+| filter action_app_protocol = "DNS"
+| comp count() as query_count, count_distinct(action_external_hostname) as unique_domains by agent_hostname
+| filter query_count > 1000 and unique_domains > 500
+| sort desc query_count</code></pre>
+                </section>
+
+                <!-- Interview Section -->
+                <section class="content-section interview-section">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you hunt for credential dumping using Cortex XDR?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>I would use XQL to query for LSASS access patterns:</strong></p>
+                            <p>First, I'd look for any process accessing LSASS that isn't a known legitimate process like svchost.exe or csrss.exe. In XQL:</p>
+                            <p><code>dataset = xdr_data | filter event_type = PROCESS | filter action_process_image_name ~contains "lsass" | filter actor_process_image_name not in ("svchost.exe", "wininit.exe")</code></p>
+                            <p>I'd also look for Mimikatz-related activity by searching for suspicious command-line patterns like "sekurlsa" or known Mimikatz process names. Additionally, I'd check for process injection events targeting LSASS using the xdr_injection preset.</p>
+                            <p>The key indicators are: unusual parent processes accessing LSASS, command lines containing credential dumping keywords, and any remote thread creation into LSASS.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

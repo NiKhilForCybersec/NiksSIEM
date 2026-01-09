@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOA Rules - Custom Behavioral Detection | CrowdStrike Falcon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .ioa-component { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #e74c3c; }
+        .ioa-component h3 { margin-top: 0; color: #e74c3c; display: flex; align-items: center; gap: 0.5rem; }
+        .rule-example { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; overflow-x: auto; }
+        .rule-example .comment { color: #6a9955; }
+        .rule-example .keyword { color: #569cd6; }
+        .rule-example .value { color: #ce9178; }
+        .rule-example .action { color: #e74c3c; font-weight: bold; }
+        .rule-type-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .rule-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; border-top: 4px solid #e74c3c; }
+        .rule-card.network { border-top-color: #3498db; }
+        .rule-card.file { border-top-color: #2ecc71; }
+        .rule-card.registry { border-top-color: #f5a623; }
+        .rule-card.dns { border-top-color: #9b59b6; }
+        .rule-card h4 { margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .action-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem; font-weight: bold; }
+        .action-badge.detect { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .action-badge.block { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+        .action-badge.kill { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .severity-scale { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+        .severity-item { padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; }
+        .severity-item.info { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .severity-item.low { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .severity-item.medium { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+        .severity-item.high { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .severity-item.critical { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+        .workflow-step { display: flex; gap: 1rem; padding: 1.5rem; background: var(--card-bg); border-radius: 12px; margin: 1rem 0; }
+        .workflow-step .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #e74c3c, #c0392b); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .workflow-step .step-content h4 { margin: 0 0 0.5rem 0; color: #e74c3c; }
+        .mitre-mapping { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
+        .mitre-mapping .tactic { color: #e74c3c; font-weight: bold; }
+        .mitre-mapping .technique { color: #3498db; }
+        .field-ref-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .field-ref-table th, .field-ref-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .field-ref-table th { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+        .field-ref-table code { background: rgba(0,0,0,0.3); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85rem; }
+        .use-case-section { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .use-case-section h3 { margin-top: 0; color: #e74c3c; }
+        .tip-box { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .tip-box .tip-title { color: #2ecc71; font-weight: bold; margin-bottom: 0.5rem; }
+        .warning-box { background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .warning-box .warning-title { color: #e74c3c; font-weight: bold; margin-bottom: 0.5rem; }
+        .interview-qa { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; border-left: 4px solid #e74c3c; }
+        .interview-qa h3 { margin-top: 0; color: #e74c3c; }
+        .qa-item { margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .qa-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .qa-item .question { font-weight: bold; color: #3498db; margin-bottom: 0.75rem; }
+        .qa-item .answer { color: var(--text-secondary); line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-shield-virus"></i> IOA Rules</a>
+                    <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-title">
+                    <h1><i class="fas fa-crosshairs" style="color: #e74c3c;"></i> IOA Rules</h1>
+                    <p class="subtitle">Custom Behavioral Detection Rules in CrowdStrike Falcon</p>
+                </div>
+                <div class="header-meta">
+                    <span class="last-updated"><i class="fas fa-calendar-alt"></i> Updated: January 2026</span>
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                        <i class="fas fa-crow"></i> CrowdStrike Falcon
+                    </span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-info-circle"></i> IOA Overview</h2>
+                    <p>Indicators of Attack (IOA) rules in CrowdStrike Falcon enable custom behavioral detection beyond the built-in detection library. Unlike IOCs (Indicators of Compromise) which match on static artifacts, IOAs detect malicious behavior patterns regardless of the specific tools or malware used.</p>
+                    
+                    <div class="rule-type-cards">
+                        <div class="rule-card">
+                            <h4><i class="fas fa-microchip"></i> Process Rules</h4>
+                            <p>Detect suspicious process execution patterns, command lines, parent-child relationships, and process injection attempts.</p>
+                            <div style="margin-top: 1rem;">
+                                <span class="action-badge detect">Detect</span>
+                                <span class="action-badge block">Block</span>
+                                <span class="action-badge kill">Kill</span>
+                            </div>
+                        </div>
+                        <div class="rule-card file">
+                            <h4><i class="fas fa-file-alt"></i> File Rules</h4>
+                            <p>Monitor file creation, modification, and access patterns in suspicious locations or with unusual attributes.</p>
+                            <div style="margin-top: 1rem;">
+                                <span class="action-badge detect">Detect</span>
+                                <span class="action-badge block">Block</span>
+                            </div>
+                        </div>
+                        <div class="rule-card network">
+                            <h4><i class="fas fa-network-wired"></i> Network Rules</h4>
+                            <p>Identify suspicious network connections, unusual ports, known bad destinations, and data exfiltration patterns.</p>
+                            <div style="margin-top: 1rem;">
+                                <span class="action-badge detect">Detect</span>
+                                <span class="action-badge block">Block</span>
+                            </div>
+                        </div>
+                        <div class="rule-card registry">
+                            <h4><i class="fas fa-database"></i> Registry Rules</h4>
+                            <p>Track registry modifications for persistence, privilege escalation, and security bypass techniques.</p>
+                            <div style="margin-top: 1rem;">
+                                <span class="action-badge detect">Detect</span>
+                            </div>
+                        </div>
+                        <div class="rule-card dns">
+                            <h4><i class="fas fa-globe"></i> DNS Rules</h4>
+                            <p>Detect DNS-based attacks including tunneling, DGA domains, and suspicious resolution patterns.</p>
+                            <div style="margin-top: 1rem;">
+                                <span class="action-badge detect">Detect</span>
+                                <span class="action-badge block">Block</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- IOA Architecture -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> IOA Architecture</h2>
+                    
+                    <div class="ioa-component">
+                        <h3><i class="fas fa-layer-group"></i> Rule Groups</h3>
+                        <p>Rule Groups are containers that organize related IOA rules with shared configuration settings. Each group can be assigned to specific Host Groups for targeted deployment.</p>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Property</th><th>Description</th><th>Best Practice</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>Name</code></td>
+                                    <td>Descriptive identifier for the rule group</td>
+                                    <td>Use format: Purpose-Platform-Version (e.g., Ransomware-Windows-v2)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Platform</code></td>
+                                    <td>Target OS: Windows, macOS, Linux</td>
+                                    <td>Create separate groups per platform for easier management</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Enabled</code></td>
+                                    <td>Active status of the group</td>
+                                    <td>Test in disabled state first, enable for specific host groups</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Assignment</code></td>
+                                    <td>Host Groups where rules apply</td>
+                                    <td>Start with pilot group before organization-wide deployment</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ioa-component">
+                        <h3><i class="fas fa-ruler-combined"></i> Rule Structure</h3>
+                        <p>Each IOA rule consists of conditions (what to match), actions (what to do), and metadata (classification and tracking).</p>
+                        
+                        <h4>Severity Levels</h4>
+                        <div class="severity-scale">
+                            <div class="severity-item info"><i class="fas fa-info-circle"></i> Informational</div>
+                            <div class="severity-item low"><i class="fas fa-shield-alt"></i> Low</div>
+                            <div class="severity-item medium"><i class="fas fa-exclamation-triangle"></i> Medium</div>
+                            <div class="severity-item high"><i class="fas fa-radiation"></i> High</div>
+                            <div class="severity-item critical"><i class="fas fa-skull-crossbones"></i> Critical</div>
+                        </div>
+
+                        <h4>Available Actions</h4>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Action</th><th>Behavior</th><th>Use Case</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="action-badge detect">Detect Only</span></td>
+                                    <td>Generate alert, no prevention</td>
+                                    <td>Initial testing, monitoring rules, low-confidence detections</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="action-badge block">Detect + Block</span></td>
+                                    <td>Alert + prevent execution/connection</td>
+                                    <td>Known bad patterns, file drops, network connections</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="action-badge kill">Detect + Kill</span></td>
+                                    <td>Alert + terminate process</td>
+                                    <td>Active threats, malware execution, credential theft</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Process Rules -->
+                <section class="content-section">
+                    <h2><i class="fas fa-microchip"></i> Process Rules</h2>
+                    <p>Process rules are the most powerful IOA type, enabling detection of suspicious execution patterns, command-line arguments, and process relationships.</p>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-terminal"></i> Process Field Reference</h3>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Field</th><th>Description</th><th>Example Values</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>ImageFileName</code></td>
+                                    <td>Name of the executing process</td>
+                                    <td><code>powershell.exe</code>, <code>cmd.exe</code>, <code>*script*.exe</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>ImageFilePath</code></td>
+                                    <td>Full path to the executable</td>
+                                    <td><code>*\Temp\*</code>, <code>*\Downloads\*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>CommandLine</code></td>
+                                    <td>Full command line with arguments</td>
+                                    <td><code>*-enc*</code>, <code>*IEX*</code>, <code>*downloadstring*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>ParentImageFileName</code></td>
+                                    <td>Name of parent process</td>
+                                    <td><code>WINWORD.EXE</code>, <code>OUTLOOK.EXE</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>ParentCommandLine</code></td>
+                                    <td>Parent process command line</td>
+                                    <td>Used for deeper context</td>
+                                </tr>
+                                <tr>
+                                    <td><code>GrandParentImageFileName</code></td>
+                                    <td>Grandparent process name</td>
+                                    <td>Detect multi-stage attacks</td>
+                                </tr>
+                                <tr>
+                                    <td><code>TargetImageFileName</code></td>
+                                    <td>Target of injection/access</td>
+                                    <td><code>lsass.exe</code>, <code>winlogon.exe</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>SHA256Hash</code></td>
+                                    <td>Process file hash</td>
+                                    <td>Specific malware variants</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserName</code></td>
+                                    <td>User context of process</td>
+                                    <td><code>SYSTEM</code>, <code>*admin*</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-code"></i> Encoded PowerShell Detection</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1059.001</span> - <span class="technique">Command and Scripting Interpreter: PowerShell</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect base64-encoded PowerShell commands</span>
+<span class="keyword">Rule Name:</span> <span class="value">Encoded PowerShell Execution</span>
+<span class="keyword">Rule Type:</span> <span class="value">Process Creation</span>
+
+<span class="keyword">ImageFileName:</span> <span class="value">powershell.exe</span> OR <span class="value">pwsh.exe</span>
+<span class="keyword">CommandLine:</span> <span class="value">*-enc*</span> OR <span class="value">*-EncodedCommand*</span> OR <span class="value">*[Convert]::FromBase64String*</span>
+
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># Tuning: Exclude known management tools</span>
+<span class="keyword">Exclusion:</span> <span class="value">ParentImageFileName = sccm*.exe OR *intune*.exe</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-file-word"></i> Office Macro Spawning Shell</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1204.002</span> - <span class="technique">User Execution: Malicious File</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect Office applications spawning command interpreters</span>
+<span class="keyword">Rule Name:</span> <span class="value">Office Application Spawning Shell</span>
+<span class="keyword">Rule Type:</span> <span class="value">Process Creation</span>
+
+<span class="keyword">ParentImageFileName:</span> <span class="value">WINWORD.EXE</span> OR <span class="value">EXCEL.EXE</span> OR <span class="value">POWERPNT.EXE</span> OR <span class="value">OUTLOOK.EXE</span>
+<span class="keyword">ImageFileName:</span> <span class="value">cmd.exe</span> OR <span class="value">powershell.exe</span> OR <span class="value">pwsh.exe</span> OR <span class="value">wscript.exe</span> OR <span class="value">cscript.exe</span> OR <span class="value">mshta.exe</span>
+
+<span class="keyword">Severity:</span> <span class="value">Critical</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Note: May need tuning for legitimate add-ins</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-key"></i> Credential Dumping Detection</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1003.001</span> - <span class="technique">OS Credential Dumping: LSASS Memory</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect suspicious LSASS memory access</span>
+<span class="keyword">Rule Name:</span> <span class="value">LSASS Memory Access - Non-Standard Process</span>
+<span class="keyword">Rule Type:</span> <span class="value">Process Access</span>
+
+<span class="keyword">TargetImageFileName:</span> <span class="value">lsass.exe</span>
+<span class="keyword">ImageFileName NOT:</span> <span class="value">MsMpEng.exe</span>, <span class="value">csrss.exe</span>, <span class="value">wininit.exe</span>, <span class="value">lsm.exe</span>, <span class="value">svchost.exe</span>, <span class="value">MRT.exe</span>
+
+<span class="keyword">Severity:</span> <span class="value">Critical</span>
+<span class="action">Action: Detect + Kill</span>
+
+<span class="comment"># Also detect common tools by name</span>
+<span class="keyword">OR ImageFileName:</span> <span class="value">mimikatz*</span> OR <span class="value">procdump*</span> OR <span class="value">*dump*lsass*</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-user-secret"></i> Living Off the Land Binaries (LOLBins)</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1218</span> - <span class="technique">System Binary Proxy Execution</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect suspicious use of signed Microsoft binaries</span>
+<span class="keyword">Rule Name:</span> <span class="value">LOLBin Suspicious Execution</span>
+<span class="keyword">Rule Type:</span> <span class="value">Process Creation</span>
+
+<span class="comment"># Certutil downloading files</span>
+<span class="keyword">ImageFileName:</span> <span class="value">certutil.exe</span>
+<span class="keyword">CommandLine:</span> <span class="value">*-urlcache*</span> OR <span class="value">*-decode*</span> OR <span class="value">*-encode*</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Mshta executing remote content</span>
+<span class="keyword">ImageFileName:</span> <span class="value">mshta.exe</span>
+<span class="keyword">CommandLine:</span> <span class="value">*http*</span> OR <span class="value">*javascript:*</span> OR <span class="value">*vbscript:*</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Regsvr32 with URL (Squiblydoo)</span>
+<span class="keyword">ImageFileName:</span> <span class="value">regsvr32.exe</span>
+<span class="keyword">CommandLine:</span> <span class="value">*/s*</span> AND (<span class="value">*http*</span> OR <span class="value">*scrobj.dll*</span>)
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Rundll32 suspicious patterns</span>
+<span class="keyword">ImageFileName:</span> <span class="value">rundll32.exe</span>
+<span class="keyword">CommandLine:</span> <span class="value">*javascript:*</span> OR <span class="value">*shell32.dll,ShellExec_RunDLL*http*</span>
+<span class="keyword">Severity:</span> <span class="value">Critical</span>
+<span class="action">Action: Detect + Block</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-network-wired"></i> Remote Execution Detection</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1021.006</span> - <span class="technique">Remote Services: Windows Remote Management</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect PsExec and similar remote execution tools</span>
+<span class="keyword">Rule Name:</span> <span class="value">Remote Execution Tool Usage</span>
+<span class="keyword">Rule Type:</span> <span class="value">Process Creation</span>
+
+<span class="keyword">ImageFileName:</span> <span class="value">psexec*</span> OR <span class="value">paexec*</span> OR <span class="value">csexec*</span>
+<span class="keyword">Severity:</span> <span class="value">Medium</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># WMI Remote Process Creation</span>
+<span class="keyword">ParentImageFileName:</span> <span class="value">WmiPrvSE.exe</span>
+<span class="keyword">ImageFileName:</span> <span class="value">cmd.exe</span> OR <span class="value">powershell.exe</span>
+<span class="keyword">Severity:</span> <span class="value">Medium</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># WinRM Remote Execution</span>
+<span class="keyword">ParentImageFileName:</span> <span class="value">wsmprovhost.exe</span>
+<span class="keyword">ImageFileName:</span> <span class="value">cmd.exe</span> OR <span class="value">powershell.exe</span>
+<span class="keyword">Severity:</span> <span class="value">Medium</span>
+<span class="action">Action: Detect</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- File Rules -->
+                <section class="content-section">
+                    <h2><i class="fas fa-file-alt"></i> File Rules</h2>
+                    <p>File rules detect suspicious file operations including creation in unusual locations, suspicious extensions, and known malware characteristics.</p>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-folder-open"></i> File Field Reference</h3>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Field</th><th>Description</th><th>Example Values</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>FilePath</code></td>
+                                    <td>Full path of file operation</td>
+                                    <td><code>*\Temp\*.exe</code>, <code>*\Downloads\*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>FileName</code></td>
+                                    <td>Name of the file</td>
+                                    <td><code>*.exe</code>, <code>mimikatz*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>FileExtension</code></td>
+                                    <td>File extension</td>
+                                    <td><code>.exe</code>, <code>.dll</code>, <code>.ps1</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OriginatingProcess</code></td>
+                                    <td>Process that created/modified file</td>
+                                    <td><code>powershell.exe</code>, <code>chrome.exe</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>SHA256Hash</code></td>
+                                    <td>File hash</td>
+                                    <td>Specific malware signatures</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-folder-plus"></i> Executable in Suspicious Location</h3>
+                        <div class="rule-example">
+<span class="comment"># Detect executables created in temp/user directories</span>
+<span class="keyword">Rule Name:</span> <span class="value">Executable in Suspicious Path</span>
+<span class="keyword">Rule Type:</span> <span class="value">File Write</span>
+
+<span class="keyword">FilePath:</span> <span class="value">*\AppData\Local\Temp\*.exe</span> OR 
+          <span class="value">*\Users\*\Downloads\*.exe</span> OR
+          <span class="value">*\ProgramData\*.exe</span> OR
+          <span class="value">*\Windows\Temp\*.exe</span>
+
+<span class="keyword">Severity:</span> <span class="value">Medium</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># Tuning: Exclude known installers</span>
+<span class="keyword">Exclusion:</span> <span class="value">OriginatingProcess = chrome.exe AND FilePath contains "ChromeSetup"</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-lock"></i> Ransomware Extension Detection</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1486</span> - <span class="technique">Data Encrypted for Impact</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect common ransomware file extensions</span>
+<span class="keyword">Rule Name:</span> <span class="value">Ransomware File Extension</span>
+<span class="keyword">Rule Type:</span> <span class="value">File Write</span>
+
+<span class="keyword">FileExtension:</span> <span class="value">.encrypted</span> OR <span class="value">.locked</span> OR <span class="value">.crypted</span> OR 
+               <span class="value">.crypt</span> OR <span class="value">.locky</span> OR <span class="value">.wcry</span> OR 
+               <span class="value">.wncry</span> OR <span class="value">.cerber</span> OR <span class="value">.zepto</span>
+
+<span class="keyword">Severity:</span> <span class="value">Critical</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Also detect mass file modification patterns (requires analytics)</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-scroll"></i> Script File Creation</h3>
+                        <div class="rule-example">
+<span class="comment"># Detect script files written to startup locations</span>
+<span class="keyword">Rule Name:</span> <span class="value">Script in Startup Location</span>
+<span class="keyword">Rule Type:</span> <span class="value">File Write</span>
+
+<span class="keyword">FilePath:</span> <span class="value">*\Start Menu\Programs\Startup\*</span> OR
+          <span class="value">*\Microsoft\Windows\Start Menu\Programs\Startup\*</span>
+<span class="keyword">FileExtension:</span> <span class="value">.vbs</span> OR <span class="value">.js</span> OR <span class="value">.bat</span> OR <span class="value">.cmd</span> OR <span class="value">.ps1</span>
+
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Registry Rules -->
+                <section class="content-section">
+                    <h2><i class="fas fa-database"></i> Registry Rules</h2>
+                    <p>Registry rules detect modifications to critical registry locations used for persistence, privilege escalation, and security bypass.</p>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-key"></i> Registry Field Reference</h3>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Field</th><th>Description</th><th>Example Values</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>RegistryPath</code></td>
+                                    <td>Full registry path</td>
+                                    <td><code>*\CurrentVersion\Run\*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>RegistryKey</code></td>
+                                    <td>Registry key name</td>
+                                    <td><code>Run</code>, <code>RunOnce</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>RegistryValue</code></td>
+                                    <td>Value being set</td>
+                                    <td><code>*powershell*</code>, <code>*http*</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OriginatingProcess</code></td>
+                                    <td>Process making modification</td>
+                                    <td><code>reg.exe</code>, <code>powershell.exe</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-play-circle"></i> Persistence via Run Keys</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1547.001</span> - <span class="technique">Boot or Logon Autostart Execution: Registry Run Keys</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect suspicious Run key additions</span>
+<span class="keyword">Rule Name:</span> <span class="value">Suspicious Run Key Modification</span>
+<span class="keyword">Rule Type:</span> <span class="value">Registry Set Value</span>
+
+<span class="keyword">RegistryPath:</span> <span class="value">*\Software\Microsoft\Windows\CurrentVersion\Run*</span> OR
+              <span class="value">*\Software\Microsoft\Windows\CurrentVersion\RunOnce*</span> OR
+              <span class="value">*\Software\Microsoft\Windows\CurrentVersion\RunServices*</span>
+
+<span class="comment"># Flag suspicious values</span>
+<span class="keyword">RegistryValue:</span> <span class="value">*powershell*</span> OR <span class="value">*cmd /c*</span> OR <span class="value">*wscript*</span> OR 
+               <span class="value">*\Temp\*</span> OR <span class="value">*\AppData\*</span>
+
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-shield-alt"></i> Security Software Bypass</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1562.001</span> - <span class="technique">Impair Defenses: Disable or Modify Tools</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect attempts to disable security features</span>
+<span class="keyword">Rule Name:</span> <span class="value">Security Feature Tampering</span>
+<span class="keyword">Rule Type:</span> <span class="value">Registry Set Value</span>
+
+<span class="comment"># Windows Defender tampering</span>
+<span class="keyword">RegistryPath:</span> <span class="value">*\Windows Defender\*</span>
+<span class="keyword">RegistryKey:</span> <span class="value">DisableAntiSpyware</span> OR <span class="value">DisableRealtimeMonitoring</span>
+
+<span class="comment"># UAC bypass</span>
+<span class="keyword">RegistryPath:</span> <span class="value">*\Policies\System\*</span>
+<span class="keyword">RegistryKey:</span> <span class="value">EnableLUA</span>
+<span class="keyword">RegistryValue:</span> <span class="value">0</span>
+
+<span class="comment"># Firewall tampering</span>
+<span class="keyword">RegistryPath:</span> <span class="value">*\Services\SharedAccess\Parameters\FirewallPolicy\*</span>
+<span class="keyword">RegistryKey:</span> <span class="value">EnableFirewall</span>
+<span class="keyword">RegistryValue:</span> <span class="value">0</span>
+
+<span class="keyword">Severity:</span> <span class="value">Critical</span>
+<span class="action">Action: Detect</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Network Rules -->
+                <section class="content-section">
+                    <h2><i class="fas fa-network-wired"></i> Network Rules</h2>
+                    <p>Network rules detect suspicious outbound connections, unusual ports, and potential command and control communication.</p>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-globe"></i> Network Field Reference</h3>
+                        <table class="field-ref-table">
+                            <thead>
+                                <tr><th>Field</th><th>Description</th><th>Example Values</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>RemoteIP</code></td>
+                                    <td>Destination IP address</td>
+                                    <td><code>192.168.*</code>, specific IPs</td>
+                                </tr>
+                                <tr>
+                                    <td><code>RemotePort</code></td>
+                                    <td>Destination port</td>
+                                    <td><code>4444</code>, <code>8080</code>, <code>443</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>LocalPort</code></td>
+                                    <td>Source port</td>
+                                    <td>Rarely used in rules</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Protocol</code></td>
+                                    <td>Network protocol</td>
+                                    <td><code>TCP</code>, <code>UDP</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OriginatingProcess</code></td>
+                                    <td>Process making connection</td>
+                                    <td><code>powershell.exe</code>, <code>notepad.exe</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-user-secret"></i> Suspicious Process Network Activity</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1071.001</span> - <span class="technique">Application Layer Protocol: Web Protocols</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect processes that shouldn't make network connections</span>
+<span class="keyword">Rule Name:</span> <span class="value">Unusual Process Network Connection</span>
+<span class="keyword">Rule Type:</span> <span class="value">Network Connection</span>
+
+<span class="comment"># Notepad making network connections</span>
+<span class="keyword">OriginatingProcess:</span> <span class="value">notepad.exe</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Calculator making network connections</span>
+<span class="keyword">OriginatingProcess:</span> <span class="value">calc.exe</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+
+<span class="comment"># Registry editor making network connections</span>
+<span class="keyword">OriginatingProcess:</span> <span class="value">regedit.exe</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect + Block</span>
+                        </div>
+                    </div>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-door-open"></i> Known Bad Ports</h3>
+                        <div class="rule-example">
+<span class="comment"># Detect connections to commonly abused ports</span>
+<span class="keyword">Rule Name:</span> <span class="value">Connection to Suspicious Port</span>
+<span class="keyword">Rule Type:</span> <span class="value">Network Connection</span>
+
+<span class="keyword">RemotePort:</span> <span class="value">4444</span> OR <span class="value">5555</span> OR <span class="value">6666</span> OR <span class="value">1337</span> OR 
+            <span class="value">31337</span> OR <span class="value">12345</span> OR <span class="value">54321</span>
+
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># Note: May generate FP from legitimate services on these ports</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DNS Rules -->
+                <section class="content-section">
+                    <h2><i class="fas fa-globe"></i> DNS Rules</h2>
+                    <p>DNS rules detect malicious DNS activity including tunneling, DGA domains, and queries to known malicious domains.</p>
+
+                    <div class="use-case-section">
+                        <h3><i class="fas fa-random"></i> DNS Tunneling Detection</h3>
+                        <div class="mitre-mapping">
+                            <span class="tactic">T1071.004</span> - <span class="technique">Application Layer Protocol: DNS</span>
+                        </div>
+                        <div class="rule-example">
+<span class="comment"># Detect potential DNS tunneling via long queries</span>
+<span class="keyword">Rule Name:</span> <span class="value">DNS Tunneling - Long Subdomain</span>
+<span class="keyword">Rule Type:</span> <span class="value">DNS Request</span>
+
+<span class="comment"># Subdomain length > 50 characters often indicates tunneling</span>
+<span class="keyword">DomainName:</span> <span class="value">Length > 50</span>
+<span class="keyword">DomainName:</span> <span class="value">Contains encoded data patterns</span>
+
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+
+<span class="comment"># High-volume TXT record queries</span>
+<span class="keyword">Rule Name:</span> <span class="value">Excessive TXT Queries</span>
+<span class="keyword">QueryType:</span> <span class="value">TXT</span>
+<span class="keyword">Count:</span> <span class="value">> 100 per minute from single host</span>
+<span class="keyword">Severity:</span> <span class="value">High</span>
+<span class="action">Action: Detect</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Rule Development Workflow -->
+                <section class="content-section">
+                    <h2><i class="fas fa-project-diagram"></i> Rule Development Workflow</h2>
+                    
+                    <div class="workflow-step">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <h4>Identify Detection Gap</h4>
+                            <p>Review threat intelligence, missed detections from incidents, MITRE ATT&CK coverage gaps, or new attack techniques to identify what behaviors need detection.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <h4>Research Behavior Patterns</h4>
+                            <p>Analyze how the attack technique manifests in telemetry. Review historical events using Event Search. Document process relationships, file operations, registry changes, and network activity.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <h4>Draft Rule Logic</h4>
+                            <p>Write initial rule conditions with broad detection first, then refine. Consider parent-child relationships, command line patterns, and multiple indicators when possible.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">4</div>
+                        <div class="step-content">
+                            <h4>Test in Detect-Only Mode</h4>
+                            <p>Deploy rule in detect-only mode to a test host group. Run atomic tests to validate detection. Monitor for false positives in production traffic.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">5</div>
+                        <div class="step-content">
+                            <h4>Tune and Refine</h4>
+                            <p>Add exclusions for legitimate activity. Adjust severity based on confidence. Consider adding additional conditions for higher fidelity. Document tuning rationale.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">6</div>
+                        <div class="step-content">
+                            <h4>Enable Prevention (if appropriate)</h4>
+                            <p>For high-confidence rules, enable blocking or kill actions. Deploy to pilot group first, then expand. Monitor for business impact.</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-num">7</div>
+                        <div class="step-content">
+                            <h4>Document and Maintain</h4>
+                            <p>Document rule purpose, MITRE mapping, expected behavior, and tuning history. Schedule periodic review. Update as attack techniques evolve.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Best Practices -->
+                <section class="content-section">
+                    <h2><i class="fas fa-lightbulb"></i> Best Practices</h2>
+
+                    <div class="tip-box">
+                        <div class="tip-title"><i class="fas fa-check-circle"></i> Start with Detection Only</div>
+                        <p>Always deploy new rules in detect-only mode first. Run for at least 1-2 weeks to assess false positive rate before enabling blocking actions.</p>
+                    </div>
+
+                    <div class="tip-box">
+                        <div class="tip-title"><i class="fas fa-check-circle"></i> Use Multiple Conditions</div>
+                        <p>Combine multiple indicators (parent process + command line + target) for higher fidelity detections with fewer false positives.</p>
+                    </div>
+
+                    <div class="tip-box">
+                        <div class="tip-title"><i class="fas fa-check-circle"></i> Document Everything</div>
+                        <p>Include rule purpose, MITRE mapping, expected FP rate, and tuning history in rule descriptions. Future you will thank present you.</p>
+                    </div>
+
+                    <div class="tip-box">
+                        <div class="tip-title"><i class="fas fa-check-circle"></i> Leverage Host Groups</div>
+                        <p>Use host groups for staged rollouts. Test on IT endpoints first, then servers, then production workstations.</p>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Avoid Overly Broad Rules</div>
+                        <p>Rules like "any PowerShell execution" will generate massive alert volumes. Always include additional context to reduce noise.</p>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Test Before Kill Actions</div>
+                        <p>Never enable kill actions without extensive testing. Terminating legitimate processes can cause production outages and data loss.</p>
+                    </div>
+                </section>
+
+                <!-- Interview Q&A -->
+                <section class="content-section">
+                    <div class="interview-qa">
+                        <h3><i class="fas fa-user-tie"></i> Interview Q&A</h3>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: What's the difference between IOAs and IOCs in CrowdStrike?</div>
+                            <div class="answer">A: IOCs (Indicators of Compromise) are static artifacts like file hashes, IP addresses, and domain names that indicate a specific known threat. IOAs (Indicators of Attack) detect behavioral patterns regardless of the specific tools used. For example, an IOC might block a specific malware hash, while an IOA detects "Office application spawning PowerShell" which catches the attack behavior regardless of which malware variant is used. IOAs provide better coverage against novel threats and variants since they focus on the attack technique rather than specific artifacts.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: How would you approach creating a custom IOA rule?</div>
+                            <div class="answer">A: I follow a structured process: First, identify the detection gap through threat intelligence or incident analysis. Then research how the technique manifests in CrowdStrike telemetry using Event Search to understand the specific events generated. Draft the rule logic starting broad, then refine. Deploy in detect-only mode to a test group and run atomic tests to validate detection. Monitor for false positives over 1-2 weeks. Add exclusions for legitimate activity, then consider enabling blocking if high confidence. Finally, document the rule purpose, MITRE mapping, and tuning rationale.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: How do you balance detection coverage with false positive management?</div>
+                            <div class="answer">A: The key is using multiple indicators in rules rather than single conditions. Instead of alerting on "any PowerShell execution," I add context like specific command-line patterns (encoded commands, download cradles), suspicious parent processes (Office apps, WMI), or execution from unusual paths. I also use severity levels appropriately - informational for broad rules, critical only for high-confidence detections. Host group assignment helps too - more aggressive rules on servers, baseline rules on workstations. Finally, I maintain exclusion documentation so tuning decisions are traceable and reversible.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: What rules would you prioritize for a new CrowdStrike deployment?</div>
+                            <div class="answer">A: I'd prioritize rules that cover the most common initial access and execution techniques: Office applications spawning command interpreters (malicious macros), encoded PowerShell execution, LSASS access from non-standard processes (credential theft), executables running from user temp directories, and persistence via Run keys. These cover MITRE techniques that appear in most attack chains. I'd also add rules for the organization's specific threat model - if they're in healthcare, additional rules for ePHI access patterns; if in finance, rules for specific fraud techniques.</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

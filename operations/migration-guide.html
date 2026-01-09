@@ -3,9 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>migration-guide | Nik's SIEM</title>
+    <title>SIEM Migration Guide | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .phase-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #0078d4; }
+        .phase-card h3 { margin-top: 0; display: flex; align-items: center; gap: 0.5rem; color: #0078d4; }
+        .phase-card.assess { border-left-color: #f5a623; }
+        .phase-card.assess h3 { color: #f5a623; }
+        .phase-card.plan { border-left-color: #2ecc71; }
+        .phase-card.plan h3 { color: #2ecc71; }
+        .phase-card.execute { border-left-color: #3498db; }
+        .phase-card.execute h3 { color: #3498db; }
+        .phase-card.validate { border-left-color: #9b59b6; }
+        .phase-card.validate h3 { color: #9b59b6; }
+        .phase-card.cutover { border-left-color: #e74c3c; }
+        .phase-card.cutover h3 { color: #e74c3c; }
+        .migration-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .migration-table th, .migration-table td { padding: 0.75rem; text-align: left; border: 1px solid var(--border-color); }
+        .migration-table th { background: var(--code-bg); font-weight: 600; }
+        .migration-table tr:hover { background: rgba(255,255,255,0.02); }
+        .timeline-container { position: relative; padding: 1rem 0 1rem 2rem; margin: 1.5rem 0; }
+        .timeline-container::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: var(--border-color); }
+        .timeline-item { position: relative; margin-bottom: 1.5rem; }
+        .timeline-item::before { content: ''; position: absolute; left: -1.75rem; top: 0.25rem; width: 12px; height: 12px; border-radius: 50%; background: #0078d4; border: 2px solid var(--bg-primary); }
+        .timeline-item h4 { margin: 0 0 0.5rem 0; color: #0078d4; }
+        .risk-high { color: #e74c3c; }
+        .risk-medium { color: #f5a623; }
+        .risk-low { color: #2ecc71; }
+        .checklist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .checklist-item { background: var(--code-bg); padding: 1rem; border-radius: 8px; }
+        .checklist-item h4 { margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+        .mapping-example { background: var(--code-bg); padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+        .interview-qa { background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.05)); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; border: 1px solid rgba(0,120,212,0.3); }
+        .interview-qa h3 { color: #0078d4; margin-top: 0; }
+        .qa-item { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .qa-item strong { color: #f5a623; }
+        .alert-box { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+        .alert-box.warning { background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); }
+        .alert-box h4 { margin: 0 0 0.5rem 0; color: #f5a623; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -19,18 +56,578 @@
                     </div>
                 </a>
             </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations Home</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Project Planning</div>
+                    <a href="siem-project-planning.html" class="nav-link"><i class="fas fa-project-diagram"></i> Project Planning</a>
+                    <a href="data-source-priority.html" class="nav-link"><i class="fas fa-sort-amount-down"></i> Data Source Priority</a>
+                    <a href="sizing-calculator.html" class="nav-link"><i class="fas fa-calculator"></i> Sizing Calculator</a>
+                    <a href="migration-guide.html" class="nav-link active"><i class="fas fa-exchange-alt"></i> Migration Guide</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Compliance</div>
+                    <a href="compliance-mapping.html" class="nav-link"><i class="fas fa-balance-scale"></i> Compliance Mapping</a>
+                    <a href="rbac-design.html" class="nav-link"><i class="fas fa-user-lock"></i> RBAC Design</a>
+                </div>
+            </nav>
         </aside>
+        
         <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Operations</a>
+                    <span class="separator">/</span>
+                    <span class="current">Migration Guide</span>
+                </div>
+            </header>
+            
             <main class="main-content">
                 <div class="page-header">
-                    <h1><i class="fas fa-cog"></i> migration-guide</h1>
-                    <p class="lead">Content coming soon</p>
+                    <h1><i class="fas fa-exchange-alt"></i> SIEM Migration Guide</h1>
+                    <p class="lead">Enterprise methodology for migrating between SIEM platforms with minimal operational disruption</p>
                 </div>
+
+                <!-- Migration Overview -->
                 <section class="content-section">
-                    <p>This page is under construction. Check back for detailed content.</p>
+                    <h2><i class="fas fa-map-signs"></i> Migration Methodology Overview</h2>
+                    <p>SIEM migrations are complex undertakings requiring careful planning to maintain security visibility. This guide provides a structured approach for common migration scenarios.</p>
+                    
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Migration Path</th>
+                                <th>Complexity</th>
+                                <th>Duration</th>
+                                <th>Key Considerations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Splunk → Sentinel</td>
+                                <td class="risk-medium">Medium-High</td>
+                                <td>12-20 weeks</td>
+                                <td>SPL to KQL translation, data model differences</td>
+                            </tr>
+                            <tr>
+                                <td>RSA NetWitness → Sentinel</td>
+                                <td class="risk-high">High</td>
+                                <td>16-24 weeks</td>
+                                <td>Architecture shift, parser rewrites, analytics rebuild</td>
+                            </tr>
+                            <tr>
+                                <td>QRadar → Splunk</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>12-16 weeks</td>
+                                <td>AQL to SPL, offense to notable mapping</td>
+                            </tr>
+                            <tr>
+                                <td>ArcSight → Sentinel</td>
+                                <td class="risk-high">High</td>
+                                <td>16-24 weeks</td>
+                                <td>Rule complexity translation, data model transformation</td>
+                            </tr>
+                            <tr>
+                                <td>Splunk ES → XSIAM</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>10-16 weeks</td>
+                                <td>SPL to XQL, native EDR integration benefits</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </section>
+
+                <!-- Phase 1: Assessment -->
+                <section class="content-section">
+                    <h2><i class="fas fa-search-plus"></i> Phase 1: Current State Assessment</h2>
+                    <div class="phase-card assess">
+                        <h3><i class="fas fa-clipboard-list"></i> Assessment Activities (Weeks 1-2)</h3>
+                        <p>Comprehensive discovery of your current SIEM deployment before migration planning.</p>
+                    </div>
+
+                    <h3>Data Source Inventory</h3>
+                    <div class="code-block">
+                        <div class="code-header">Splunk - List All Data Sources</div>
+                        <pre><code>| tstats count WHERE index=* by index, sourcetype, source
+| stats sum(count) as event_count dc(source) as source_count by index, sourcetype
+| sort -event_count
+| eval daily_gb = round(event_count * 0.0005 / 30, 2)
+| table index sourcetype source_count event_count daily_gb</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">Sentinel - List All Data Sources</div>
+                        <pre><code>Usage
+| where TimeGenerated > ago(30d)
+| summarize TotalGB = sum(Quantity) / 1024, EventCount = count() by DataType
+| sort by TotalGB desc
+| extend DailyGB = round(TotalGB / 30, 2)</code></pre>
+                    </div>
+
+                    <h3>Detection Rule Inventory</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Items to Document</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Active Detections</td>
+                                <td>Rule name, logic, severity, MITRE mapping</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                            <tr>
+                                <td>Correlation Rules</td>
+                                <td>Multi-event correlations, time windows</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards</td>
+                                <td>Name, purpose, queries, visualizations</td>
+                                <td class="risk-medium">High</td>
+                            </tr>
+                            <tr>
+                                <td>Automation/Playbooks</td>
+                                <td>SOAR integrations, auto-response actions</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Detection Export Template</h3>
+                    <div class="code-block">
+                        <div class="code-header">Detection Documentation Template</div>
+                        <pre><code>Rule_ID,Rule_Name,Description,Query_Logic,Severity,MITRE_Tactic,MITRE_Technique,Data_Sources,Alert_Frequency,FP_Rate,Migration_Priority
+R001,Suspicious PowerShell,Encoded PS commands,&lt;query&gt;,High,Execution,T1059.001,Windows Logs,12/day,15%,Critical
+R002,Brute Force Auth,Failed logins + success,&lt;query&gt;,Medium,Cred Access,T1110,Azure AD,3/day,8%,Critical</code></pre>
+                    </div>
+                </section>
+
+                <!-- Phase 2: Planning -->
+                <section class="content-section">
+                    <h2><i class="fas fa-tasks"></i> Phase 2: Migration Planning</h2>
+                    <div class="phase-card plan">
+                        <h3><i class="fas fa-sitemap"></i> Planning Activities (Weeks 3-4)</h3>
+                        <p>Develop parallel operation strategy and rollback procedures.</p>
+                    </div>
+
+                    <h3>Parallel Operation Strategy</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <h4>Week 1-2: Dual Ingestion Setup</h4>
+                            <p>Configure log forwarding to both platforms. Validate data parity.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 3-4: Detection Parity</h4>
+                            <p>Migrate critical detections. Compare alerts between platforms.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 5-6: SOC Training</h4>
+                            <p>Train analysts on new platform. Shadow operations.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 7-8: Primary Cutover</h4>
+                            <p>New SIEM becomes primary. Legacy remains for validation.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 9-12: Decommission</h4>
+                            <p>Archive legacy data. Complete decommission.</p>
+                        </div>
+                    </div>
+
+                    <h3>Risk Assessment Matrix</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Risk</th>
+                                <th>Likelihood</th>
+                                <th>Impact</th>
+                                <th>Mitigation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Detection Gap</td>
+                                <td class="risk-medium">Medium</td>
+                                <td class="risk-high">High</td>
+                                <td>Parallel operation, detection parity validation</td>
+                            </tr>
+                            <tr>
+                                <td>Data Loss</td>
+                                <td class="risk-low">Low</td>
+                                <td class="risk-high">High</td>
+                                <td>Dual ingestion, buffer queues, validation scripts</td>
+                            </tr>
+                            <tr>
+                                <td>Performance Issues</td>
+                                <td class="risk-medium">Medium</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>Load testing, phased rollout</td>
+                            </tr>
+                            <tr>
+                                <td>Analyst Productivity</td>
+                                <td class="risk-high">High</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>Extensive training, quick reference guides</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Phase 3: Query Translation -->
+                <section class="content-section">
+                    <h2><i class="fas fa-language"></i> Phase 3: Query Language Translation</h2>
+                    <div class="phase-card execute">
+                        <h3><i class="fas fa-code"></i> Query Translation Reference</h3>
+                        <p>Common patterns between major SIEM platforms.</p>
+                    </div>
+
+                    <h3>SPL to KQL Translation</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>SPL (Splunk)</th>
+                                <th>KQL (Sentinel)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Basic Search</td>
+                                <td><code>index=main sourcetype=WinEventLog</code></td>
+                                <td><code>SecurityEvent</code></td>
+                            </tr>
+                            <tr>
+                                <td>Field Filter</td>
+                                <td><code>| where EventCode=4625</code></td>
+                                <td><code>| where EventID == 4625</code></td>
+                            </tr>
+                            <tr>
+                                <td>Stats Count</td>
+                                <td><code>| stats count by user</code></td>
+                                <td><code>| summarize count() by Account</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Range</td>
+                                <td><code>earliest=-24h latest=now</code></td>
+                                <td><code>| where TimeGenerated > ago(24h)</code></td>
+                            </tr>
+                            <tr>
+                                <td>String Contains</td>
+                                <td><code>| search user="*admin*"</code></td>
+                                <td><code>| where Account contains "admin"</code></td>
+                            </tr>
+                            <tr>
+                                <td>Regex Extract</td>
+                                <td><code>| rex "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></td>
+                                <td><code>| extend ip = extract(@"(\d+.\d+.\d+.\d+)", 1, msg)</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Bucket</td>
+                                <td><code>| bucket _time span=1h</code></td>
+                                <td><code>| summarize by bin(TimeGenerated, 1h)</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Detection Translation Example</h3>
+                    <div class="mapping-example">
+                        <h4>Brute Force Detection - Splunk SPL</h4>
+                        <div class="code-block">
+                            <pre><code>index=windows sourcetype=WinEventLog EventCode=4625
+| bucket _time span=5m
+| stats count as failed_attempts by src_ip, _time
+| where failed_attempts > 10
+| join type=inner src_ip [
+    search index=windows EventCode=4624 earliest=-1h
+    | stats count by src_ip
+]</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="mapping-example">
+                        <h4>Brute Force Detection - Sentinel KQL</h4>
+                        <div class="code-block">
+                            <pre><code>let failed_threshold = 10;
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts = count() by IpAddress, bin(TimeGenerated, 5m)
+| where FailedAttempts > failed_threshold
+| join kind=inner (
+    SecurityEvent
+    | where EventID == 4624 and TimeGenerated > ago(1h)
+    | summarize SuccessCount = count() by IpAddress
+) on IpAddress</code></pre>
+                        </div>
+                    </div>
+
+                    <h3>AQL to SPL Translation</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>AQL (QRadar)</th>
+                                <th>SPL (Splunk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Basic Query</td>
+                                <td><code>SELECT * FROM events WHERE logsourcename='Windows'</code></td>
+                                <td><code>index=windows sourcetype=WinEventLog</code></td>
+                            </tr>
+                            <tr>
+                                <td>Aggregation</td>
+                                <td><code>SELECT username, COUNT(*) GROUP BY username</code></td>
+                                <td><code>| stats count by user</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Filter</td>
+                                <td><code>WHERE devicetime > NOW() - 24 HOURS</code></td>
+                                <td><code>earliest=-24h</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Phase 4: Data Migration -->
+                <section class="content-section">
+                    <h2><i class="fas fa-database"></i> Phase 4: Data Migration</h2>
+                    <div class="phase-card execute">
+                        <h3><i class="fas fa-truck-loading"></i> Historical Data Strategies</h3>
+                        <p>Approaches for handling historical data during migration.</p>
+                    </div>
+
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Description</th>
+                                <th>Pros</th>
+                                <th>Cons</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cold Start</strong></td>
+                                <td>Begin fresh, no historical migration</td>
+                                <td>Simplest, fastest</td>
+                                <td>No historical context</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Archive Access</strong></td>
+                                <td>Keep legacy SIEM read-only</td>
+                                <td>Full history preserved</td>
+                                <td>Ongoing costs</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Selective Migration</strong></td>
+                                <td>Migrate only critical data</td>
+                                <td>Balanced approach</td>
+                                <td>Partial history</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Full Migration</strong></td>
+                                <td>Export and import all data</td>
+                                <td>Complete continuity</td>
+                                <td>Expensive, time-consuming</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Data Validation Checklist</h3>
+                    <div class="checklist-grid">
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Volume Validation</h4>
+                            <p>Compare event counts. Allow 1-2% variance.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Schema Validation</h4>
+                            <p>Verify field mappings and data types.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Time Validation</h4>
+                            <p>Confirm timestamps and timezone handling.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Search Validation</h4>
+                            <p>Run identical queries, compare results.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Phase 5: Cutover -->
+                <section class="content-section">
+                    <h2><i class="fas fa-rocket"></i> Phase 5: Production Cutover</h2>
+                    <div class="phase-card cutover">
+                        <h3><i class="fas fa-flag-checkered"></i> Go-Live Checklist</h3>
+                        <p>Critical steps for production cutover.</p>
+                    </div>
+
+                    <h3>Pre-Cutover Checklist</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Checkpoint</th>
+                                <th>Owner</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Data Ingestion</strong></td>
+                                <td>All critical data sources connected and validated</td>
+                                <td>Engineering</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Detections</strong></td>
+                                <td>Critical detections migrated and tested</td>
+                                <td>Detection Eng</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOC Readiness</strong></td>
+                                <td>All analysts trained, runbooks updated</td>
+                                <td>SOC Manager</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Integration</strong></td>
+                                <td>SOAR/ticketing integration tested</td>
+                                <td>Engineering</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Compliance</strong></td>
+                                <td>Retention policies configured</td>
+                                <td>Compliance</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Cutover Day Timeline</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <h4>T-2 Hours: Final Validation</h4>
+                            <p>Run final data parity checks. Brief on-call team.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T-0: Primary Switch</h4>
+                            <p>Update SOC primary monitoring. Enable production alerting.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T+1 Hour: Initial Check</h4>
+                            <p>Verify alerts flowing. Check analyst access.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T+24 Hours: Day 1 Review</h4>
+                            <p>Full metrics review. Document lessons learned.</p>
+                        </div>
+                    </div>
+
+                    <h3>Rollback Procedure</h3>
+                    <div class="alert-box warning">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Rollback Triggers</h4>
+                        <ul>
+                            <li>Critical detection failures (>3 missed known threats)</li>
+                            <li>Data ingestion failure >30 minutes for critical sources</li>
+                            <li>Platform unavailability >15 minutes</li>
+                            <li>SOC productivity drop >50%</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Common Scenarios -->
+                <section class="content-section">
+                    <h2><i class="fas fa-route"></i> Common Migration Scenarios</h2>
+
+                    <h3>RSA NetWitness to Microsoft Sentinel</h3>
+                    <div class="mapping-example">
+                        <h4>Key Challenges</h4>
+                        <ul>
+                            <li><strong>Architecture:</strong> Packet capture → Log-centric model</li>
+                            <li><strong>Parsers:</strong> Lua parsers → KQL parsing functions</li>
+                            <li><strong>Meta Keys:</strong> NetWitness meta → Sentinel schema</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">NetWitness to Sentinel Schema Mapping</div>
+                        <pre><code>NetWitness Meta    → Sentinel Field
+user.dst           → TargetUserName
+ip.src             → SourceIP  
+ip.dst             → DestinationIP
+service            → Service
+action             → EventResult
+time               → TimeGenerated</code></pre>
+                    </div>
+
+                    <h3>Splunk ES to XSIAM</h3>
+                    <div class="mapping-example">
+                        <h4>Migration Advantages</h4>
+                        <ul>
+                            <li><strong>Native EDR:</strong> Cortex XDR data without parsing</li>
+                            <li><strong>Similar Concepts:</strong> SPL → XQL translation straightforward</li>
+                            <li><strong>Built-in Analytics:</strong> XSIAM analytics replace custom searches</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Interview Q&A -->
+                <div class="interview-qa">
+                    <h3><i class="fas fa-user-tie"></i> Interview Q&A: SIEM Migration</h3>
+                    
+                    <div class="qa-item">
+                        <strong>Q: Walk me through planning a SIEM migration from Splunk to Sentinel.</strong>
+                        <p><strong>A:</strong> I use a 6-phase approach. Assessment: inventory data sources, detection rules, dashboards, and integrations with volumes and priorities. Planning: develop parallel operation strategy, map SPL to KQL, identify native Sentinel content, create risk matrix and rollback procedures. Implementation: configure data connectors, migrate critical detections prioritized by MITRE coverage, enable dual ingestion. Validation: run atomic tests, compare alert outputs targeting >95% correlation. Training: train analysts on KQL, update runbooks. Cutover: execute checklist, monitor 24-48 hours, keep legacy available for rollback. Key is never cutting over without validated detection parity.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you handle historical data during migration?</strong>
+                        <p><strong>A:</strong> Depends on compliance needs. Cold Start is cleanest but loses context. Archive Access keeps legacy read-only—best for large datasets where migration cost exceeds benefits. Selective Migration exports compliance-required data—balances effort with continuity. Full Migration is necessary for strict compliance but expensive. Most enterprises benefit from Archive Access with parallel operation, letting natural aging handle transition while maintaining compliance. Key is validating approach meets regulatory requirements before decommission.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: What are the biggest risks and mitigations?</strong>
+                        <p><strong>A:</strong> Three critical risks: Detection Gap—threats undetected during transition. Mitigation: parallel operation, >95% detection parity validation. Data Loss—events dropping during cutover. Mitigation: dual ingestion, message queues, volume validation scripts. Analyst Productivity Drop—efficiency tanks while learning new platform. Mitigation: extensive training, quick reference guides, mentoring, extended parallel operation. Always ensure rollback capability—if failures emerge post-cutover, revert to legacy within minutes while resolving issues.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you translate detection rules between query languages?</strong>
+                        <p><strong>A:</strong> Systematic approach, not line-by-line. First, understand detection intent—what behavior is it catching? Second, identify data source and fields in new platform. Third, rebuild using target platform's native capabilities—often better than direct translation. For example, Splunk correlation might map to Sentinel's native Fusion rules. Maintain pattern mapping reference: stats→summarize, rex→extract, transaction→session windows. Critical step is validation—run both queries against same dataset to confirm equivalent results. Document behavioral differences like time window handling.</p>
+                    </div>
+                </div>
+
             </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - Migration Guide</p>
+                    <p>Enterprise Migration Methodology</p>
+                </div>
+            </footer>
         </div>
     </div>
+    
+    <script src="../assets/js/main.js"></script>
 </body>
 </html>

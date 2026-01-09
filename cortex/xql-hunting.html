@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>XQL Threat Hunting - Cortex XDR</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header"><h2>SOC Compendium</h2></div>
+        <ul class="nav-links">
+            <li><a href="../index.html">🏠 Home</a></li>
+            <li><a href="index.html" class="active">🟠 Cortex XDR</a></li>
+            <li><a href="../crowdstrike/index.html">🔴 CrowdStrike</a></li>
+            <li><a href="../mde/index.html">🔵 Microsoft Defender</a></li>
+            <li><a href="../xsiam/index.html">🟣 XSIAM</a></li>
+            <li><a href="../sentinel/index.html">🔷 Sentinel</a></li>
+            <li><a href="../splunk/index.html">🟢 Splunk</a></li>
+            <li><a href="../operations/index.html">⚙️ Operations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>🟠 XQL Threat Hunting</h1>
+            <p>Advanced threat hunting queries organized by MITRE ATT&CK tactics</p>
+        </div>
+
+        <section class="content-section">
+            <h2>Initial Access (TA0001)</h2>
+
+            <h3>Phishing - Office Macro Execution</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter actor_process_image_name in ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE")
+| filter action_process_image_name in ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "mshta.exe", "certutil.exe")
+| fields _time, agent_hostname, actor_process_image_name, action_process_image_name, action_process_command_line
+| limit 100</code></pre>
+            </div>
+
+            <h3>Drive-by Download Detection</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_FILE_CREATE
+| filter actor_process_image_name in ("chrome.exe", "firefox.exe", "msedge.exe", "iexplore.exe")
+| filter action_file_extension in ("exe", "dll", "ps1", "vbs", "js", "hta", "bat")
+| filter action_file_path not contains "\\Program Files\\"
+| fields _time, agent_hostname, actor_process_image_name, action_file_name, action_file_path
+| limit 100</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Execution (TA0002)</h2>
+
+            <h3>Encoded PowerShell</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name in ("powershell.exe", "pwsh.exe")
+| filter action_process_command_line contains "-enc" 
+      or action_process_command_line contains "-EncodedCommand"
+      or action_process_command_line contains "FromBase64String"
+| fields _time, agent_hostname, action_process_command_line, actor_process_image_name
+| limit 100</code></pre>
+            </div>
+
+            <h3>WMIC Remote Execution</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "wmic.exe"
+| filter action_process_command_line contains "/node:" or action_process_command_line contains "process call create"
+| fields _time, agent_hostname, action_process_command_line, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>Mshta/HTA Execution</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "mshta.exe"
+| filter action_process_command_line contains "http" or action_process_command_line contains "javascript"
+| fields _time, agent_hostname, action_process_command_line, actor_process_image_name
+| limit 100</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Persistence (TA0003)</h2>
+
+            <h3>Registry Run Key Modification</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_REGISTRY_SET_VALUE
+| filter action_registry_key_name contains "\\CurrentVersion\\Run"
+| filter action_process_image_name not in ("msiexec.exe", "TrustedInstaller.exe", "setup.exe")
+| fields _time, agent_hostname, action_registry_key_name, action_registry_value_name, action_registry_data, action_process_image_name
+| limit 100</code></pre>
+            </div>
+
+            <h3>Scheduled Task Creation</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "schtasks.exe"
+| filter action_process_command_line contains "/create"
+| fields _time, agent_hostname, action_process_command_line, actor_process_image_name, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>New Service Installation</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "sc.exe"
+| filter action_process_command_line contains "create"
+| fields _time, agent_hostname, action_process_command_line, action_process_username
+| limit 100</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Credential Access (TA0006)</h2>
+
+            <h3>LSASS Memory Access</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_OPEN_REMOTE_PROCESS_HANDLE
+| filter target_process_name = "lsass.exe"
+| filter action_process_image_name not in ("MsMpEng.exe", "csrss.exe", "svchost.exe")
+| fields _time, agent_hostname, action_process_image_name, action_process_image_path, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>SAM/SYSTEM Hive Access</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_command_line contains "reg save" 
+| filter action_process_command_line contains "sam" or action_process_command_line contains "system" or action_process_command_line contains "security"
+| fields _time, agent_hostname, action_process_command_line, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>DCSync Detection</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_NETWORK
+| filter action_remote_port = 389 or action_remote_port = 636
+| filter action_process_image_name not in ("lsass.exe", "dns.exe", "Microsoft.ActiveDirectory.WebServices.exe")
+| comp count() as requests by agent_hostname, action_process_image_name, action_remote_ip
+| filter requests > 50
+| limit 50</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Lateral Movement (TA0008)</h2>
+
+            <h3>PsExec Usage</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name in ("psexec.exe", "psexec64.exe", "PSEXESVC.exe", "paexec.exe")
+| fields _time, agent_hostname, action_process_command_line, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>WinRM Lateral Movement</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name = "wsmprovhost.exe"
+| fields _time, agent_hostname, action_process_command_line, actor_process_image_name, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>RDP Connections</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_NETWORK
+| filter action_local_port = 3389 or action_remote_port = 3389
+| comp count() as connections by agent_hostname, action_remote_ip
+| sort desc connections
+| limit 50</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Defense Evasion (TA0005)</h2>
+
+            <h3>Disabling Security Tools</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_command_line contains "stop" or action_process_command_line contains "disable"
+| filter action_process_command_line contains "defender" 
+      or action_process_command_line contains "firewall"
+      or action_process_command_line contains "antivirus"
+| fields _time, agent_hostname, action_process_image_name, action_process_command_line, action_process_username
+| limit 100</code></pre>
+            </div>
+
+            <h3>Timestomping Detection</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_FILE_MODIFICATION
+| filter action_file_modification_time != action_file_creation_time
+| filter action_file_extension in ("exe", "dll", "ps1")
+| fields _time, agent_hostname, action_file_name, action_file_path, action_process_image_name
+| limit 100</code></pre>
+            </div>
+
+            <h3>Process Injection Indicators</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_INJECTION
+| fields _time, agent_hostname, action_process_image_name, target_process_name, action_process_username
+| limit 100</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Exfiltration (TA0010)</h2>
+
+            <h3>Large Outbound Transfers</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_NETWORK
+| filter action_external_direction = "OUTBOUND"
+| filter action_remote_ip != "10.*" and action_remote_ip != "172.16.*" and action_remote_ip != "192.168.*"
+| filter action_total_bytes_sent > 52428800  // 50 MB
+| fields agent_hostname, action_process_image_name, action_remote_ip, action_remote_port, action_total_bytes_sent
+| sort desc action_total_bytes_sent
+| limit 50</code></pre>
+            </div>
+
+            <h3>Cloud Storage Uploads</h3>
+            <div class="code-block">
+                <pre><code>dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_NETWORK
+| filter action_dns_query_name contains "dropbox.com" 
+      or action_dns_query_name contains "drive.google.com"
+      or action_dns_query_name contains "onedrive.live.com"
+      or action_dns_query_name contains "mega.nz"
+| filter action_total_bytes_sent > 10485760  // 10 MB
+| fields _time, agent_hostname, action_process_image_name, action_dns_query_name, action_total_bytes_sent
+| limit 100</code></pre>
+            </div>
+        </section>
+
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            
+            <div class="interview-qa">
+                <h4>Q: How would you hunt for credential dumping in Cortex XDR?</h4>
+                <p><strong>A:</strong> I'd use multiple XQL queries targeting different credential theft techniques. First, I'd look for LSASS memory access by filtering for OPEN_REMOTE_PROCESS_HANDLE events targeting lsass.exe from non-system processes. Then I'd search for registry commands saving SAM, SYSTEM, or SECURITY hives. I'd also look for known tools like Mimikatz by searching for process names or command-line patterns. For DCSync attacks, I'd analyze LDAP traffic to domain controllers from unusual source processes. Each query helps build a picture of credential theft activity across the environment.</p>
+            </div>
+        </section>
+
+        <div class="navigation-links">
+            <a href="analytics.html">← Analytics</a>
+            <a href="xql-reference.html">XQL Reference →</a>
+        </div>
+    </main>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

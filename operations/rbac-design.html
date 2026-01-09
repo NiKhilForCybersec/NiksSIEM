@@ -3,9 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rbac-design | Nik's SIEM</title>
+    <title>RBAC Design for SIEM | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .rbac-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .rbac-table th, .rbac-table td { padding: 0.75rem; text-align: left; border: 1px solid var(--border-color); }
+        .rbac-table th { background: var(--code-bg); font-weight: 600; }
+        .rbac-table tr:hover { background: rgba(255,255,255,0.02); }
+        .role-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #0078d4; }
+        .role-card h3 { margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .role-card.l1 { border-left-color: #2ecc71; }
+        .role-card.l1 h3 { color: #2ecc71; }
+        .role-card.l2 { border-left-color: #3498db; }
+        .role-card.l2 h3 { color: #3498db; }
+        .role-card.l3 { border-left-color: #9b59b6; }
+        .role-card.l3 h3 { color: #9b59b6; }
+        .role-card.admin { border-left-color: #e74c3c; }
+        .role-card.admin h3 { color: #e74c3c; }
+        .role-card.detection { border-left-color: #f5a623; }
+        .role-card.detection h3 { color: #f5a623; }
+        .permission-matrix { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; margin: 1rem 0; }
+        .perm-item { padding: 0.5rem; border-radius: 6px; text-align: center; font-size: 0.85rem; }
+        .perm-full { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .perm-read { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .perm-none { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+        .perm-limited { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+        .platform-section { background: var(--code-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .platform-section h3 { margin-top: 0; color: #0078d4; }
+        .interview-qa { background: linear-gradient(135deg, rgba(0,120,212,0.1), rgba(0,120,212,0.05)); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; border: 1px solid rgba(0,120,212,0.3); }
+        .interview-qa h3 { color: #0078d4; margin-top: 0; }
+        .qa-item { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .qa-item strong { color: #f5a623; }
+        .best-practice { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .best-practice h4 { color: #2ecc71; margin: 0 0 0.5rem 0; }
+        .warning-box { background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .warning-box h4 { color: #e74c3c; margin: 0 0 0.5rem 0; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -19,18 +53,796 @@
                     </div>
                 </a>
             </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations Home</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Compliance</div>
+                    <a href="compliance-mapping.html" class="nav-link"><i class="fas fa-balance-scale"></i> Compliance Mapping</a>
+                    <a href="audit-preparation.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Audit Preparation</a>
+                    <a href="rbac-design.html" class="nav-link active"><i class="fas fa-user-lock"></i> RBAC Design</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SOC Operations</div>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> Operating Procedures</a>
+                    <a href="triage-handbook.html" class="nav-link"><i class="fas fa-clipboard-check"></i> Triage Handbook</a>
+                    <a href="escalation-matrix.html" class="nav-link"><i class="fas fa-level-up-alt"></i> Escalation Matrix</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Project Planning</div>
+                    <a href="siem-project-planning.html" class="nav-link"><i class="fas fa-project-diagram"></i> Project Planning</a>
+                    <a href="migration-guide.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Migration Guide</a>
+                </div>
+            </nav>
         </aside>
+        
         <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">Operations</a>
+                    <span class="separator">/</span>
+                    <span class="current">RBAC Design</span>
+                </div>
+            </header>
+            
             <main class="main-content">
                 <div class="page-header">
-                    <h1><i class="fas fa-cog"></i> rbac-design</h1>
-                    <p class="lead">Content coming soon</p>
+                    <h1><i class="fas fa-user-lock"></i> RBAC Design for SIEM</h1>
+                    <p class="lead">Role-based access control patterns for enterprise SIEM platforms with least privilege principles</p>
                 </div>
+
+                <!-- RBAC Principles -->
                 <section class="content-section">
-                    <p>This page is under construction. Check back for detailed content.</p>
+                    <h2><i class="fas fa-key"></i> RBAC Design Principles</h2>
+                    <p>Effective SIEM RBAC balances operational efficiency with security controls. Apply these principles when designing access models.</p>
+
+                    <div class="best-practice">
+                        <h4><i class="fas fa-check-circle"></i> Core Principles</h4>
+                        <ul>
+                            <li><strong>Least Privilege:</strong> Grant minimum permissions needed for job function</li>
+                            <li><strong>Separation of Duties:</strong> No single role should have end-to-end control</li>
+                            <li><strong>Need-to-Know:</strong> Data access limited to operational requirements</li>
+                            <li><strong>Regular Review:</strong> Quarterly access reviews and recertification</li>
+                            <li><strong>Audit Trail:</strong> All administrative actions logged and monitored</li>
+                        </ul>
+                    </div>
+
+                    <h3>Common Anti-Patterns to Avoid</h3>
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> RBAC Anti-Patterns</h4>
+                        <ul>
+                            <li><strong>Admin Sprawl:</strong> Too many users with administrative privileges</li>
+                            <li><strong>Shared Accounts:</strong> Multiple users sharing single service accounts</li>
+                            <li><strong>Static Permissions:</strong> Roles never reviewed or updated</li>
+                            <li><strong>Over-Privileged Service Accounts:</strong> Automation accounts with excessive rights</li>
+                            <li><strong>Missing Data Segmentation:</strong> All users can see all data regardless of need</li>
+                        </ul>
+                    </div>
                 </section>
+
+                <!-- Standard SOC Roles -->
+                <section class="content-section">
+                    <h2><i class="fas fa-users"></i> Standard SOC Role Definitions</h2>
+                    <p>These role definitions provide a foundation for SIEM access control. Customize based on organizational structure and compliance requirements.</p>
+
+                    <div class="role-card l1">
+                        <h3><i class="fas fa-user"></i> L1 Analyst (Tier 1)</h3>
+                        <p><strong>Purpose:</strong> Initial alert triage, basic investigation, escalation</p>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Permission Category</th>
+                                <th>Access Level</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>Alert Queue</td>
+                                <td>Read, Update Status</td>
+                                <td>Assigned alerts only</td>
+                            </tr>
+                            <tr>
+                                <td>Search/Query</td>
+                                <td>Read</td>
+                                <td>Last 7 days, standard indexes</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards</td>
+                                <td>Read</td>
+                                <td>SOC operational dashboards</td>
+                            </tr>
+                            <tr>
+                                <td>Response Actions</td>
+                                <td>None</td>
+                                <td>Must escalate to L2</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Rules</td>
+                                <td>Read</td>
+                                <td>View rule logic only</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="role-card l2">
+                        <h3><i class="fas fa-user-shield"></i> L2 Analyst (Tier 2)</h3>
+                        <p><strong>Purpose:</strong> Deep investigation, incident handling, limited response actions</p>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Permission Category</th>
+                                <th>Access Level</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>Alert Queue</td>
+                                <td>Read, Update, Create Incidents</td>
+                                <td>All alerts</td>
+                            </tr>
+                            <tr>
+                                <td>Search/Query</td>
+                                <td>Read</td>
+                                <td>Last 90 days, all security indexes</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards</td>
+                                <td>Read, Create Personal</td>
+                                <td>All SOC dashboards</td>
+                            </tr>
+                            <tr>
+                                <td>Response Actions</td>
+                                <td>Execute</td>
+                                <td>Isolation, block (with approval workflow)</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Rules</td>
+                                <td>Read, Suggest Tuning</td>
+                                <td>Cannot modify production rules</td>
+                            </tr>
+                            <tr>
+                                <td>Threat Intelligence</td>
+                                <td>Read, Add IOCs</td>
+                                <td>Manual indicator submission</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="role-card l3">
+                        <h3><i class="fas fa-user-secret"></i> L3 Analyst / Threat Hunter</h3>
+                        <p><strong>Purpose:</strong> Advanced investigation, threat hunting, incident lead</p>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Permission Category</th>
+                                <th>Access Level</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>Alert Queue</td>
+                                <td>Full</td>
+                                <td>All alerts and incidents</td>
+                            </tr>
+                            <tr>
+                                <td>Search/Query</td>
+                                <td>Full Read</td>
+                                <td>All data, all time ranges</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards</td>
+                                <td>Read, Create, Share</td>
+                                <td>All dashboards</td>
+                            </tr>
+                            <tr>
+                                <td>Response Actions</td>
+                                <td>Execute</td>
+                                <td>All response actions</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Rules</td>
+                                <td>Read, Propose Changes</td>
+                                <td>Submit to detection engineering</td>
+                            </tr>
+                            <tr>
+                                <td>Threat Intelligence</td>
+                                <td>Full</td>
+                                <td>Manage indicators and feeds</td>
+                            </tr>
+                            <tr>
+                                <td>Case Management</td>
+                                <td>Full</td>
+                                <td>Lead incident investigations</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="role-card detection">
+                        <h3><i class="fas fa-cogs"></i> Detection Engineer</h3>
+                        <p><strong>Purpose:</strong> Create, tune, and maintain detection rules</p>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Permission Category</th>
+                                <th>Access Level</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>Alert Queue</td>
+                                <td>Read</td>
+                                <td>For tuning analysis</td>
+                            </tr>
+                            <tr>
+                                <td>Search/Query</td>
+                                <td>Full Read</td>
+                                <td>All data for rule development</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Rules</td>
+                                <td>Full CRUD</td>
+                                <td>Create, modify, delete rules</td>
+                            </tr>
+                            <tr>
+                                <td>Parsing/Normalization</td>
+                                <td>Full</td>
+                                <td>Manage data parsing</td>
+                            </tr>
+                            <tr>
+                                <td>Data Sources</td>
+                                <td>Read</td>
+                                <td>View connector status</td>
+                            </tr>
+                            <tr>
+                                <td>Response Actions</td>
+                                <td>None</td>
+                                <td>No operational response</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="role-card admin">
+                        <h3><i class="fas fa-user-cog"></i> SIEM Administrator</h3>
+                        <p><strong>Purpose:</strong> Platform administration, not operational security</p>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Permission Category</th>
+                                <th>Access Level</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>User Management</td>
+                                <td>Full</td>
+                                <td>Create users, assign roles</td>
+                            </tr>
+                            <tr>
+                                <td>Data Sources</td>
+                                <td>Full</td>
+                                <td>Configure connectors, parsing</td>
+                            </tr>
+                            <tr>
+                                <td>System Configuration</td>
+                                <td>Full</td>
+                                <td>Platform settings, retention</td>
+                            </tr>
+                            <tr>
+                                <td>Search/Query</td>
+                                <td>Read</td>
+                                <td>For troubleshooting only</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Rules</td>
+                                <td>Read</td>
+                                <td>Should not modify detections</td>
+                            </tr>
+                            <tr>
+                                <td>Response Actions</td>
+                                <td>None</td>
+                                <td>Not an operational role</td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Permission Matrix -->
+                <section class="content-section">
+                    <h2><i class="fas fa-th"></i> Permission Matrix Summary</h2>
+                    <table class="rbac-table">
+                        <thead>
+                            <tr>
+                                <th>Capability</th>
+                                <th>L1 Analyst</th>
+                                <th>L2 Analyst</th>
+                                <th>L3/Hunter</th>
+                                <th>Detection Eng</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>View Alerts</td>
+                                <td class="perm-limited">Assigned</td>
+                                <td class="perm-full">All</td>
+                                <td class="perm-full">All</td>
+                                <td class="perm-read">Read</td>
+                                <td class="perm-read">Read</td>
+                            </tr>
+                            <tr>
+                                <td>Update Alert Status</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                            </tr>
+                            <tr>
+                                <td>Create Incidents</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                            </tr>
+                            <tr>
+                                <td>Run Searches</td>
+                                <td class="perm-limited">7 days</td>
+                                <td class="perm-limited">90 days</td>
+                                <td class="perm-full">All</td>
+                                <td class="perm-full">All</td>
+                                <td class="perm-read">Debug</td>
+                            </tr>
+                            <tr>
+                                <td>Isolate Endpoint</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-limited">Approval</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                            </tr>
+                            <tr>
+                                <td>Block IOC</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-limited">Approval</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                            </tr>
+                            <tr>
+                                <td>Modify Detection Rules</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">Propose</td>
+                                <td class="perm-full">Yes</td>
+                                <td class="perm-none">No</td>
+                            </tr>
+                            <tr>
+                                <td>Manage Users</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-full">Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Configure Data Sources</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-none">No</td>
+                                <td class="perm-read">Read</td>
+                                <td class="perm-full">Yes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Platform-Specific Implementation -->
+                <section class="content-section">
+                    <h2><i class="fas fa-laptop-code"></i> Platform-Specific Implementation</h2>
+
+                    <div class="platform-section">
+                        <h3><i class="fas fa-shield-alt"></i> Microsoft Sentinel RBAC</h3>
+                        <p>Sentinel uses Azure RBAC with custom roles and resource-level scoping.</p>
+                        
+                        <h4>Built-in Roles Mapping</h4>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>SOC Role</th>
+                                <th>Azure Role(s)</th>
+                                <th>Scope</th>
+                            </tr>
+                            <tr>
+                                <td>L1 Analyst</td>
+                                <td>Microsoft Sentinel Reader + Logic App Contributor</td>
+                                <td>Resource Group</td>
+                            </tr>
+                            <tr>
+                                <td>L2 Analyst</td>
+                                <td>Microsoft Sentinel Responder</td>
+                                <td>Resource Group</td>
+                            </tr>
+                            <tr>
+                                <td>L3/Hunter</td>
+                                <td>Microsoft Sentinel Contributor</td>
+                                <td>Resource Group</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Engineer</td>
+                                <td>Custom: Sentinel Detection Engineer</td>
+                                <td>Resource Group</td>
+                            </tr>
+                            <tr>
+                                <td>Admin</td>
+                                <td>Log Analytics Contributor + Microsoft Sentinel Contributor</td>
+                                <td>Subscription</td>
+                            </tr>
+                        </table>
+
+                        <div class="code-block">
+                            <div class="code-header">Custom Sentinel Detection Engineer Role (ARM)</div>
+                            <pre><code>{
+  "Name": "Sentinel Detection Engineer",
+  "IsCustom": true,
+  "Description": "Can manage analytics rules and hunting queries",
+  "Actions": [
+    "Microsoft.SecurityInsights/alertRules/*",
+    "Microsoft.SecurityInsights/alertRuleTemplates/read",
+    "Microsoft.SecurityInsights/huntingQueries/*",
+    "Microsoft.SecurityInsights/threatIntelligence/read",
+    "Microsoft.OperationalInsights/workspaces/query/read",
+    "Microsoft.OperationalInsights/workspaces/read"
+  ],
+  "NotActions": [
+    "Microsoft.SecurityInsights/incidents/*",
+    "Microsoft.SecurityInsights/cases/*"
+  ],
+  "AssignableScopes": ["/subscriptions/{subscription-id}"]
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="platform-section">
+                        <h3><i class="fas fa-search"></i> Splunk RBAC</h3>
+                        <p>Splunk uses capabilities assigned to roles with index-level access control.</p>
+
+                        <h4>Role Configuration</h4>
+                        <div class="code-block">
+                            <div class="code-header">authorize.conf - L2 Analyst Role</div>
+                            <pre><code>[role_l2_analyst]
+importRoles = user
+srchIndexesAllowed = main;security;network;endpoint;authentication
+srchIndexesDefault = security
+srchTimeWin = 7776000
+srchDiskQuota = 1000
+srchJobsQuota = 10
+rtSrchJobsQuota = 5
+cumulativeSrchJobsQuota = 20
+cumulativeRTSrchJobsQuota = 10
+
+# Capabilities
+schedule_search = enabled
+list_inputs = enabled
+edit_own_objects = enabled
+accelerate_datamodel = disabled
+change_own_password = enabled
+
+# ES Capabilities
+edit_notable_events = enabled
+edit_correlationsearches = disabled
+admin_all_objects = disabled</code></pre>
+                        </div>
+
+                        <h4>Index Access by Role</h4>
+                        <table class="rbac-table">
+                            <tr>
+                                <th>Index</th>
+                                <th>L1</th>
+                                <th>L2</th>
+                                <th>L3</th>
+                                <th>Detection Eng</th>
+                            </tr>
+                            <tr>
+                                <td>security</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                            </tr>
+                            <tr>
+                                <td>network</td>
+                                <td>-</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                            </tr>
+                            <tr>
+                                <td>endpoint</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                                <td>Read</td>
+                            </tr>
+                            <tr>
+                                <td>threat_intel</td>
+                                <td>-</td>
+                                <td>Read</td>
+                                <td>Read/Write</td>
+                                <td>Read</td>
+                            </tr>
+                            <tr>
+                                <td>audit (internal)</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>Read</td>
+                                <td>-</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="platform-section">
+                        <h3><i class="fas fa-fire"></i> Cortex XSIAM/XSOAR RBAC</h3>
+                        <p>XSIAM uses role-based permissions with granular capability assignment.</p>
+
+                        <h4>Role Permissions</h4>
+                        <div class="code-block">
+                            <div class="code-header">L2 Analyst Role Configuration</div>
+                            <pre><code>{
+  "name": "L2_Analyst",
+  "permissions": {
+    "incidents": {
+      "view": true,
+      "edit": true,
+      "create": true,
+      "delete": false,
+      "run_playbooks": true
+    },
+    "alerts": {
+      "view": true,
+      "edit": true,
+      "exclude": true
+    },
+    "search": {
+      "xql_query": true,
+      "time_range_days": 90,
+      "export_results": true
+    },
+    "response_actions": {
+      "isolate_endpoint": "approval_required",
+      "block_ip": "approval_required",
+      "disable_user": false
+    },
+    "playbooks": {
+      "view": true,
+      "execute": true,
+      "edit": false
+    },
+    "analytics": {
+      "view_rules": true,
+      "edit_rules": false,
+      "create_rules": false
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Segmentation -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> Data Segmentation Strategies</h2>
+                    <p>Beyond role-based access, segment data access based on business units, regions, or sensitivity levels.</p>
+
+                    <h3>Segmentation Models</h3>
+                    <table class="rbac-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Use Case</th>
+                                <th>Implementation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Business Unit</strong></td>
+                                <td>Multi-tenant enterprise, MSSP</td>
+                                <td>Separate workspaces/indexes per BU</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Geographic</strong></td>
+                                <td>GDPR, data residency requirements</td>
+                                <td>Regional workspace deployment</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sensitivity</strong></td>
+                                <td>Crown jewel systems, executive monitoring</td>
+                                <td>Restricted indexes with elevated access</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Compliance</strong></td>
+                                <td>PCI, HIPAA audit scope</td>
+                                <td>Dedicated compliance workspace</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">Sentinel - Workspace-Level RBAC for Multi-Tenant</div>
+                        <pre><code># Assign analyst to specific workspace only
+az role assignment create \
+  --role "Microsoft Sentinel Responder" \
+  --assignee "analyst@company.com" \
+  --scope "/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspace}"
+
+# Cross-workspace query requires explicit permissions on both workspaces
+# Use Azure Lighthouse for MSSP scenarios</code></pre>
+                    </div>
+                </section>
+
+                <!-- Service Account Management -->
+                <section class="content-section">
+                    <h2><i class="fas fa-robot"></i> Service Account Management</h2>
+                    <p>Automation and integration accounts require careful permission scoping.</p>
+
+                    <h3>Service Account Types</h3>
+                    <table class="rbac-table">
+                        <thead>
+                            <tr>
+                                <th>Account Type</th>
+                                <th>Purpose</th>
+                                <th>Permissions</th>
+                                <th>Rotation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SOAR Integration</td>
+                                <td>Playbook execution, incident updates</td>
+                                <td>Sentinel Responder + specific Logic App</td>
+                                <td>90 days</td>
+                            </tr>
+                            <tr>
+                                <td>Ticketing Integration</td>
+                                <td>ServiceNow/Jira sync</td>
+                                <td>Incident read/write only</td>
+                                <td>90 days</td>
+                            </tr>
+                            <tr>
+                                <td>Threat Intel Feed</td>
+                                <td>IOC ingestion</td>
+                                <td>ThreatIntelligence write</td>
+                                <td>180 days</td>
+                            </tr>
+                            <tr>
+                                <td>Reporting Service</td>
+                                <td>Dashboard data export</td>
+                                <td>Read-only query access</td>
+                                <td>180 days</td>
+                            </tr>
+                            <tr>
+                                <td>Log Collector</td>
+                                <td>Syslog/agent data ingestion</td>
+                                <td>Data ingestion only</td>
+                                <td>365 days</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="best-practice">
+                        <h4><i class="fas fa-shield-alt"></i> Service Account Best Practices</h4>
+                        <ul>
+                            <li>Use managed identities where possible (Azure, GCP)</li>
+                            <li>Scope permissions to minimum required operations</li>
+                            <li>Implement secret rotation automation</li>
+                            <li>Monitor service account usage for anomalies</li>
+                            <li>Document account ownership and purpose</li>
+                            <li>Separate accounts per integration (no shared accounts)</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Access Review -->
+                <section class="content-section">
+                    <h2><i class="fas fa-clipboard-check"></i> Access Review Process</h2>
+                    <p>Regular access reviews ensure permissions remain appropriate as roles change.</p>
+
+                    <h3>Review Schedule</h3>
+                    <table class="rbac-table">
+                        <thead>
+                            <tr>
+                                <th>Review Type</th>
+                                <th>Frequency</th>
+                                <th>Reviewer</th>
+                                <th>Scope</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>User Access Review</td>
+                                <td>Quarterly</td>
+                                <td>SOC Manager</td>
+                                <td>All analyst accounts</td>
+                            </tr>
+                            <tr>
+                                <td>Privileged Access Review</td>
+                                <td>Monthly</td>
+                                <td>Security Manager</td>
+                                <td>Admin and elevated roles</td>
+                            </tr>
+                            <tr>
+                                <td>Service Account Review</td>
+                                <td>Quarterly</td>
+                                <td>Platform Owner</td>
+                                <td>All service accounts</td>
+                            </tr>
+                            <tr>
+                                <td>Role Definition Review</td>
+                                <td>Semi-Annual</td>
+                                <td>Security Architecture</td>
+                                <td>Role permissions and scope</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="code-block">
+                        <div class="code-header">Sentinel - Query for Access Audit</div>
+                        <pre><code>// List all role assignments for Sentinel resources
+AzureActivity
+| where OperationNameValue contains "Microsoft.Authorization/roleAssignments"
+| where ResourceProviderValue == "Microsoft.SecurityInsights" 
+    or ResourceProviderValue == "Microsoft.OperationalInsights"
+| project TimeGenerated, Caller, OperationNameValue, 
+    ActivityStatusValue, Properties
+| sort by TimeGenerated desc</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">Splunk - Audit User Actions</div>
+                        <pre><code>index=_audit action=* user=*
+| stats count by user, action, info
+| sort -count
+| where action IN ("search", "login", "edit_*", "delete_*")</code></pre>
+                    </div>
+                </section>
+
+                <!-- Interview Q&A -->
+                <div class="interview-qa">
+                    <h3><i class="fas fa-user-tie"></i> Interview Q&A: SIEM RBAC</h3>
+                    
+                    <div class="qa-item">
+                        <strong>Q: How do you design RBAC for a SOC with multiple analyst tiers?</strong>
+                        <p><strong>A:</strong> I apply least privilege and separation of duties. L1 analysts get read access to assigned alerts and limited search scope (7 days, standard indexes). L2 gets broader search (90 days), incident creation, and response actions with approval workflows. L3/hunters get full search access and direct response capabilities. Detection engineers can modify rules but not handle operational incidents. Admins manage platform but not security operations. Key is ensuring no single role has end-to-end control—L3 can respond but can't modify detection rules, engineers can tune detections but can't execute responses.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you handle data segmentation in a multi-tenant SIEM?</strong>
+                        <p><strong>A:</strong> Depends on platform and requirements. In Sentinel, use separate workspaces per tenant with Azure Lighthouse for MSSP management. In Splunk, create dedicated indexes per tenant with role-based index access. For compliance scenarios like PCI, isolate cardholder data in restricted workspace with elevated access requirements. Always implement at the data layer, not just UI—analysts should be unable to query data outside their scope even with direct API access. Regular audits verify segmentation remains effective.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: What's your approach to service account security in SIEM integrations?</strong>
+                        <p><strong>A:</strong> Principle is minimal, scoped, audited access. Each integration gets its own service account—never share accounts across integrations. Scope permissions to exactly what's needed: SOAR needs incident update capability, reporting needs read-only query access. Use managed identities where possible to eliminate credential management. Implement automated rotation (90 days for high-privilege, 180 for read-only). Monitor service account activity for anomalies—alert on unusual query patterns or access outside expected times. Document ownership so accounts don't become orphaned when team members leave.</p>
+                    </div>
+
+                    <div class="qa-item">
+                        <strong>Q: How do you conduct access reviews for SIEM platforms?</strong>
+                        <p><strong>A:</strong> Quarterly reviews for standard users, monthly for privileged accounts. Process: export current role assignments, compare against HR records for valid employment and role, verify permissions match job function, check for dormant accounts (no login in 30+ days), review service accounts for continued need. Use SIEM's own audit logs to verify actual usage matches assigned permissions. Attestation workflow requires manager sign-off for each account. Findings tracked in GRC platform with remediation deadlines. Semi-annual review of role definitions themselves to ensure they still reflect operational needs.</p>
+                    </div>
+                </div>
+
             </main>
+            
+            <footer class="content-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM - RBAC Design</p>
+                    <p>Role-Based Access Control Patterns</p>
+                </div>
+            </footer>
         </div>
     </div>
+    
+    <script src="../assets/js/main.js"></script>
 </body>
 </html>

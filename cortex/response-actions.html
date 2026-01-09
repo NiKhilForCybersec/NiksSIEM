@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Response Actions - Cortex XDR</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>SOC Compendium</h2>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">🏠 Home</a></li>
+            <li><a href="index.html" class="active">🟠 Cortex XDR</a></li>
+            <li><a href="../crowdstrike/index.html">🔴 CrowdStrike</a></li>
+            <li><a href="../mde/index.html">🔵 Microsoft Defender</a></li>
+            <li><a href="../xsiam/index.html">🟣 XSIAM</a></li>
+            <li><a href="../sentinel/index.html">🔷 Sentinel</a></li>
+            <li><a href="../splunk/index.html">🟢 Splunk</a></li>
+            <li><a href="../operations/index.html">⚙️ Operations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>🟠 Response Actions</h1>
+            <p>Execute incident response actions directly from Cortex XDR console</p>
+        </div>
+
+        <section class="content-section">
+            <h2>Response Action Categories</h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Actions</th>
+                        <th>Impact Level</th>
+                        <th>Reversible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Containment</strong></td>
+                        <td>Isolate, Block IP/Hash/Domain</td>
+                        <td>High</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Remediation</strong></td>
+                        <td>Kill Process, Delete File, Quarantine</td>
+                        <td>Medium-High</td>
+                        <td>Partial</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Investigation</strong></td>
+                        <td>Retrieve File, Live Terminal, Scan</td>
+                        <td>Low</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Collection</strong></td>
+                        <td>Memory Dump, File Acquisition</td>
+                        <td>Low</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>Endpoint Isolation</h2>
+            
+            <div class="info-box warning">
+                <h4>⚠️ High-Impact Action</h4>
+                <p>Endpoint isolation cuts off all network connectivity except for Cortex XDR management traffic. Use only for confirmed compromises.</p>
+            </div>
+
+            <h3>Isolation Behavior</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Traffic Type</th>
+                        <th>Isolated State</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cortex XDR Cloud</td>
+                        <td>✅ Allowed</td>
+                        <td>Agent communication, policy updates</td>
+                    </tr>
+                    <tr>
+                        <td>DNS Resolution</td>
+                        <td>⚠️ Limited</td>
+                        <td>Only for XDR domains</td>
+                    </tr>
+                    <tr>
+                        <td>DHCP</td>
+                        <td>✅ Allowed</td>
+                        <td>Maintains IP configuration</td>
+                    </tr>
+                    <tr>
+                        <td>Internal Network</td>
+                        <td>❌ Blocked</td>
+                        <td>Prevents lateral movement</td>
+                    </tr>
+                    <tr>
+                        <td>Internet Access</td>
+                        <td>❌ Blocked</td>
+                        <td>Prevents C2, exfiltration</td>
+                    </tr>
+                    <tr>
+                        <td>Active Directory</td>
+                        <td>❌ Blocked</td>
+                        <td>May cause login issues</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Isolation Commands</h3>
+            <div class="code-block">
+                <pre><code># Via Console
+Endpoints → Select Endpoint → Actions → Isolate
+
+# Via API
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/endpoints/isolate" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "endpoint_id": "abc123def456"
+    }
+  }'
+
+# Via cytool (on endpoint)
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate enable
+
+# Remove Isolation
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/endpoints/unisolate" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "endpoint_id": "abc123def456"
+    }
+  }'</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Live Terminal</h2>
+            
+            <p>Live Terminal provides interactive command-line access to endpoints for investigation and remediation.</p>
+
+            <h3>Available Commands</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>ps</code></td>
+                        <td>List running processes</td>
+                        <td><code>ps -tree</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>netstat</code></td>
+                        <td>Show network connections</td>
+                        <td><code>netstat -ano</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>ls</code> / <code>dir</code></td>
+                        <td>List directory contents</td>
+                        <td><code>ls C:\Users\*\AppData\</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>cat</code> / <code>type</code></td>
+                        <td>Display file contents</td>
+                        <td><code>cat /etc/hosts</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>hash</code></td>
+                        <td>Calculate file hash</td>
+                        <td><code>hash C:\Windows\Temp\suspect.exe</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>reg</code></td>
+                        <td>Query registry (Windows)</td>
+                        <td><code>reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>kill</code></td>
+                        <td>Terminate process</td>
+                        <td><code>kill 1234</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>delete</code></td>
+                        <td>Delete file</td>
+                        <td><code>delete C:\Temp\malware.exe</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>download</code></td>
+                        <td>Retrieve file for analysis</td>
+                        <td><code>download C:\Windows\Temp\suspect.exe</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>upload</code></td>
+                        <td>Push file to endpoint</td>
+                        <td><code>upload cleanup_script.ps1 C:\Temp\</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>script</code></td>
+                        <td>Execute script</td>
+                        <td><code>script run cleanup.py</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Investigation Script Examples</h3>
+            <div class="code-block">
+                <pre><code># Check for persistence mechanisms (Windows)
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+reg query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+schtasks /query /fo LIST /v
+
+# Check suspicious network connections
+netstat -ano | findstr ESTABLISHED
+netstat -ano | findstr LISTENING
+
+# Find recently modified files
+dir /s /b /o-d C:\Users\*\AppData\Local\Temp\*.exe
+dir /s /b /o-d C:\Users\*\Downloads\*.exe
+
+# Check running services
+sc query state= all | findstr /i "running"
+
+# Memory dump of suspicious process
+procdump -ma 1234 C:\forensics\
+
+# Linux - Check crontabs
+cat /etc/crontab
+ls -la /etc/cron.*
+crontab -l
+
+# Linux - Check for suspicious processes
+ps auxf
+lsof -i -P -n</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>File Operations</h2>
+
+            <h3>Quarantine</h3>
+            <div class="code-block">
+                <pre><code># Quarantine file via API
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/endpoints/quarantine" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "endpoint_id": "abc123def456",
+      "file_path": "C:\\Users\\victim\\Downloads\\malware.exe",
+      "file_hash": "a1b2c3d4e5f6..."
+    }
+  }'
+
+# Restore from quarantine
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/endpoints/restore" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "file_hash": "a1b2c3d4e5f6..."
+    }
+  }'</code></pre>
+            </div>
+
+            <h3>File Retrieval</h3>
+            <div class="code-block">
+                <pre><code># Retrieve file for forensic analysis
+# Via Console: Select incident → Files tab → Download
+
+# Via Live Terminal
+download C:\Users\victim\AppData\Local\Temp\suspicious.dll
+
+# Via API - Initiate file retrieval
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/endpoints/file_retrieval" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "endpoint_id": "abc123def456",
+      "files": [
+        {"file_path": "C:\\Windows\\Temp\\suspect.exe"},
+        {"file_path": "C:\\Users\\admin\\Documents\\data.xlsx"}
+      ]
+    }
+  }'</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Block Lists</h2>
+
+            <h3>Block Hash</h3>
+            <div class="code-block">
+                <pre><code># Block malicious file hash globally
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/hash_exceptions/blocklist" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "hash_list": [
+        {
+          "indicator": "abc123def456789...",
+          "comment": "Ransomware sample - Incident #12345"
+        }
+      ]
+    }
+  }'
+
+# Add to allowlist (false positive)
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/hash_exceptions/allowlist" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "hash_list": [
+        {
+          "indicator": "xyz789abc123...",
+          "comment": "Legitimate admin tool - Approved by security"
+        }
+      ]
+    }
+  }'</code></pre>
+            </div>
+
+            <h3>Network Indicators</h3>
+            <div class="code-block">
+                <pre><code># Block malicious domain
+curl -X POST "https://api.xdr.paloaltonetworks.com/public_api/v1/indicators" \
+  -H "x-xdr-auth-id: <API_KEY_ID>" \
+  -H "Authorization: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_data": {
+      "indicators": [
+        {
+          "indicator": "malicious-c2-server.com",
+          "type": "DOMAIN",
+          "severity": "high",
+          "comment": "C2 domain - Incident #12345"
+        },
+        {
+          "indicator": "45.33.32.156",
+          "type": "IP",
+          "severity": "high",
+          "comment": "Attacker infrastructure"
+        }
+      ]
+    }
+  }'</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Automated Response (XSOAR Integration)</h2>
+
+            <h3>Common Automated Playbook Actions</h3>
+            <div class="code-block">
+                <pre><code># XSOAR Playbook - Auto-Isolate on High Severity
+playbook:
+  name: "Auto-Isolate Critical Endpoint"
+  trigger:
+    - alert_severity: critical
+    - alert_category: malware
+  tasks:
+    - name: "Isolate Endpoint"
+      action: xdr-isolate-endpoint
+      args:
+        endpoint_id: ${incident.endpoint_id}
+    
+    - name: "Collect Forensic Data"
+      action: xdr-get-endpoint-details
+      
+    - name: "Notify SOC"
+      action: send-email
+      args:
+        to: soc@company.com
+        subject: "Critical: Endpoint Isolated - ${incident.hostname}"
+        
+    - name: "Create Ticket"
+      action: servicenow-create-incident
+      args:
+        category: security
+        priority: 1
+
+# XSOAR Playbook - Hash Block Automation
+playbook:
+  name: "Block Malicious Hash"
+  trigger:
+    - alert_verdict: malicious
+  tasks:
+    - name: "Check VirusTotal"
+      action: vt-check-hash
+      args:
+        hash: ${alert.file_sha256}
+    
+    - name: "Add to Blocklist"
+      action: xdr-blocklist-add
+      args:
+        hash: ${alert.file_sha256}
+        comment: "Auto-blocked - VT score: ${vt.positives}"
+      condition:
+        - vt.positives > 10</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>Response Workflow</h2>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Alert Triage</h4>
+                    <p>Review alert details, severity, and affected assets</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Initial Assessment</h4>
+                    <p>Determine if threat is active, scope of impact</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Containment</h4>
+                    <p>Isolate endpoint if active threat confirmed</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Evidence Collection</h4>
+                    <p>Retrieve files, memory dumps, logs via Live Terminal</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Remediation</h4>
+                    <p>Kill processes, delete malware, remove persistence</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">6</span>
+                    <h4>Recovery</h4>
+                    <p>Remove isolation, verify clean state, monitor</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            
+            <div class="interview-qa">
+                <h4>Q: Walk me through how you would respond to a ransomware alert in Cortex XDR.</h4>
+                <p><strong>A:</strong> First, I would immediately isolate the affected endpoint to prevent lateral movement and further encryption. Then I'd use the Causality Chain to understand how the ransomware entered, looking for the initial access vector like a phishing email or drive-by download. Using Live Terminal, I'd collect memory dumps and retrieve samples of the encrypted files and ransom notes for analysis. I'd check for any scheduled tasks or registry persistence mechanisms and remove them. I'd block the file hash globally across all endpoints and add any C2 domains to the blocklist. After confirming remediation, I'd work with IT to restore the system from backup if needed, remove isolation, and continue monitoring. Finally, I'd document the entire incident and create detection rules for similar attack patterns.</p>
+            </div>
+
+            <div class="interview-qa">
+                <h4>Q: When would you use endpoint isolation versus other containment methods?</h4>
+                <p><strong>A:</strong> I use endpoint isolation for confirmed active threats where preventing lateral movement is critical, such as ransomware, active C2 communication, or credential theft in progress. However, isolation is disruptive because it cuts off all network access. For less critical situations, I might use network containment at the firewall level to block specific IPs while maintaining some connectivity. For targeted remediation, I'd use Live Terminal to kill specific malicious processes and delete malware without isolating. If I just need to prevent execution of a known bad file, adding the hash to the blocklist is sufficient. The key is matching the response level to the threat severity while minimizing business disruption.</p>
+            </div>
+        </section>
+
+        <div class="navigation-links">
+            <a href="index.html">← Back to Cortex XDR</a>
+            <a href="causality.html">Causality Analysis →</a>
+        </div>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

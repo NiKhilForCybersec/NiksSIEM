@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>BIOC Rules - Cortex XDR</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>SOC Compendium</h2>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">🏠 Home</a></li>
+            <li><a href="index.html" class="active">🟠 Cortex XDR</a></li>
+            <li><a href="../crowdstrike/index.html">🔴 CrowdStrike</a></li>
+            <li><a href="../mde/index.html">🔵 Microsoft Defender</a></li>
+            <li><a href="../xsiam/index.html">🟣 XSIAM</a></li>
+            <li><a href="../sentinel/index.html">🔷 Sentinel</a></li>
+            <li><a href="../splunk/index.html">🟢 Splunk</a></li>
+            <li><a href="../operations/index.html">⚙️ Operations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>🟠 BIOC (Behavioral IOC) Rules</h1>
+            <p>Create custom behavioral detection rules using XQL to detect advanced threats</p>
+        </div>
+
+        <section class="content-section">
+            <h2>BIOC Rule Architecture</h2>
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           BIOC RULE PROCESSING FLOW                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │   Endpoint   │───▶│  Data Lake   │───▶│ BIOC Engine  │───▶│    Alert     │  │
+│  │   Events     │    │  (Raw Data)  │    │ (XQL Match)  │    │  Generation  │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │                          BIOC RULE COMPONENTS                            │    │
+│  ├─────────────────────────────────────────────────────────────────────────┤    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │    │
+│  │  │   Filter    │  │  Condition  │  │   Scope     │  │   Action    │     │    │
+│  │  │  (dataset)  │  │ (XQL logic) │  │ (endpoint)  │  │  (alert)    │     │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘     │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>BIOC Rule Structure</h2>
+            
+            <div class="info-box">
+                <h4>Rule Components</h4>
+                <p>Every BIOC rule consists of the following elements:</p>
+            </div>
+
+            <div class="code-block">
+                <pre><code># BIOC Rule JSON Structure
+{
+    "name": "Rule Name",
+    "description": "Detailed description of what the rule detects",
+    "severity": "high",  // critical, high, medium, low, informational
+    "category": "malware",  // malware, exploitation, persistence, etc.
+    "mitre_tactic": "TA0003",
+    "mitre_technique": "T1059.001",
+    "xql_query": "dataset = xdr_data | filter ...",
+    "enabled": true,
+    "alert_config": {
+        "group_by": ["agent_hostname"],
+        "time_window": "5m",
+        "threshold": 1
+    }
+}</code></pre>
+            </div>
+
+            <h3>Severity Levels</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Description</th>
+                        <th>Response Time</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="severity-critical">Critical</span></td>
+                        <td>Confirmed active threat</td>
+                        <td>Immediate</td>
+                        <td>Ransomware execution, C2 communication</td>
+                    </tr>
+                    <tr>
+                        <td><span class="severity-high">High</span></td>
+                        <td>Likely malicious activity</td>
+                        <td>15 minutes</td>
+                        <td>Credential dumping, lateral movement</td>
+                    </tr>
+                    <tr>
+                        <td><span class="severity-medium">Medium</span></td>
+                        <td>Suspicious behavior</td>
+                        <td>1 hour</td>
+                        <td>Unusual PowerShell, persistence mechanism</td>
+                    </tr>
+                    <tr>
+                        <td><span class="severity-low">Low</span></td>
+                        <td>Anomalous activity</td>
+                        <td>4 hours</td>
+                        <td>Policy violation, minor deviation</td>
+                    </tr>
+                    <tr>
+                        <td><span class="severity-info">Informational</span></td>
+                        <td>For tracking/audit</td>
+                        <td>24 hours</td>
+                        <td>Administrative action, compliance log</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>BIOC Rule Examples</h2>
+
+            <h3>Credential Access Detection</h3>
+            <div class="code-block">
+                <pre><code># BIOC: LSASS Memory Access Detection
+# Detects processes accessing LSASS memory (credential dumping indicator)
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_OPEN_REMOTE_PROCESS_HANDLE
+| filter target_process_name contains "lsass"
+| filter action_process_image_name not in (
+    "MsMpEng.exe",
+    "csrss.exe",
+    "svchost.exe",
+    "lsass.exe",
+    "wininit.exe"
+)
+| filter action_process_requested_access contains "PROCESS_VM_READ"
+| fields agent_hostname, 
+         action_process_image_name,
+         action_process_image_path,
+         action_process_command_line,
+         target_process_name,
+         action_process_username,
+         action_process_sha256
+| limit 100
+
+# Rule Configuration
+{
+    "name": "LSASS Memory Access - Possible Credential Dumping",
+    "severity": "high",
+    "mitre_tactic": "TA0006",
+    "mitre_technique": "T1003.001"
+}</code></pre>
+            </div>
+
+            <h3>Execution - Encoded PowerShell</h3>
+            <div class="code-block">
+                <pre><code># BIOC: Encoded PowerShell Command Detection
+# Detects base64 encoded PowerShell commands often used by attackers
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_image_name in ("powershell.exe", "pwsh.exe")
+| filter action_process_command_line contains "-enc" or
+         action_process_command_line contains "-EncodedCommand" or
+         action_process_command_line contains "FromBase64String"
+| filter action_process_command_line length > 500
+| fields agent_hostname,
+         action_process_image_path,
+         action_process_command_line,
+         actor_process_image_name,
+         actor_process_command_line,
+         action_process_username
+| limit 100
+
+# Rule Configuration
+{
+    "name": "Encoded PowerShell Execution",
+    "severity": "medium",
+    "mitre_tactic": "TA0002",
+    "mitre_technique": "T1059.001"
+}</code></pre>
+            </div>
+
+            <h3>Persistence - Registry Run Keys</h3>
+            <div class="code-block">
+                <pre><code># BIOC: Suspicious Registry Run Key Modification
+# Detects additions to registry run keys for persistence
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_REGISTRY_SET_VALUE
+| filter action_registry_key_name contains "\\CurrentVersion\\Run" or
+         action_registry_key_name contains "\\CurrentVersion\\RunOnce"
+| filter action_process_image_name not in (
+    "msiexec.exe",
+    "setup.exe",
+    "TrustedInstaller.exe"
+)
+| fields agent_hostname,
+         action_registry_key_name,
+         action_registry_value_name,
+         action_registry_data,
+         action_process_image_name,
+         action_process_image_path,
+         action_process_username
+| limit 100
+
+# Rule Configuration
+{
+    "name": "Registry Run Key Persistence",
+    "severity": "medium",
+    "mitre_tactic": "TA0003",
+    "mitre_technique": "T1547.001"
+}</code></pre>
+            </div>
+
+            <h3>Lateral Movement - PsExec Activity</h3>
+            <div class="code-block">
+                <pre><code># BIOC: PsExec Remote Execution Detection
+# Detects PsExec or similar remote execution tools
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter (action_process_image_name = "psexec.exe" or
+          action_process_image_name = "psexec64.exe" or
+          action_process_image_name = "paexec.exe") or
+         (action_process_image_name = "PSEXESVC.exe")
+| fields agent_hostname,
+         action_process_image_name,
+         action_process_command_line,
+         actor_process_image_name,
+         action_process_username,
+         action_remote_ip,
+         action_process_sha256
+| limit 100
+
+# Rule Configuration
+{
+    "name": "PsExec Remote Execution Detected",
+    "severity": "high",
+    "mitre_tactic": "TA0008",
+    "mitre_technique": "T1570"
+}</code></pre>
+            </div>
+
+            <h3>Defense Evasion - Security Tool Tampering</h3>
+            <div class="code-block">
+                <pre><code># BIOC: Security Tool Termination Attempt
+# Detects attempts to stop security services or kill security processes
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_PROCESS
+| filter action_process_command_line contains "stop" or
+         action_process_command_line contains "disable" or
+         action_process_command_line contains "taskkill"
+| filter action_process_command_line contains "defender" or
+         action_process_command_line contains "sophos" or
+         action_process_command_line contains "symantec" or
+         action_process_command_line contains "crowdstrike" or
+         action_process_command_line contains "carbon" or
+         action_process_command_line contains "sentinel" or
+         action_process_command_line contains "mcafee" or
+         action_process_command_line contains "cortex" or
+         action_process_command_line contains "traps"
+| fields agent_hostname,
+         action_process_image_name,
+         action_process_command_line,
+         actor_process_image_name,
+         action_process_username
+| limit 100
+
+# Rule Configuration
+{
+    "name": "Security Tool Tampering Attempt",
+    "severity": "critical",
+    "mitre_tactic": "TA0005",
+    "mitre_technique": "T1562.001"
+}</code></pre>
+            </div>
+
+            <h3>Exfiltration - Large Data Transfer</h3>
+            <div class="code-block">
+                <pre><code># BIOC: Large Outbound Data Transfer
+# Detects unusually large data transfers to external IPs
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_NETWORK
+| filter action_external_direction = "OUTBOUND"
+| filter action_remote_ip != "10.*" and 
+         action_remote_ip != "172.16.*" and 
+         action_remote_ip != "192.168.*"
+| filter action_total_bytes_sent > 104857600  // 100 MB
+| fields agent_hostname,
+         action_process_image_name,
+         action_remote_ip,
+         action_remote_port,
+         action_total_bytes_sent,
+         action_process_username
+| sort desc action_total_bytes_sent
+| limit 50
+
+# Rule Configuration
+{
+    "name": "Large Outbound Data Transfer",
+    "severity": "high",
+    "mitre_tactic": "TA0010",
+    "mitre_technique": "T1048"
+}</code></pre>
+            </div>
+
+            <h3>Command and Control - Suspicious DNS</h3>
+            <div class="code-block">
+                <pre><code># BIOC: DNS Tunneling Detection
+# Detects unusually long DNS queries that may indicate DNS tunneling
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_TYPE_DNS
+| filter action_query_type = "TXT" or 
+         action_dns_query_name length > 50
+| filter action_dns_query_name not contains "microsoft.com" and
+         action_dns_query_name not contains "windows.com" and
+         action_dns_query_name not contains "office.com"
+| alter query_length = length(action_dns_query_name)
+| filter query_length > 60
+| fields agent_hostname,
+         action_dns_query_name,
+         query_length,
+         action_process_image_name,
+         action_remote_ip
+| sort desc query_length
+| limit 100
+
+# Rule Configuration
+{
+    "name": "Possible DNS Tunneling",
+    "severity": "high",
+    "mitre_tactic": "TA0011",
+    "mitre_technique": "T1071.004"
+}</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>MITRE ATT&CK Coverage</h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Tactic</th>
+                        <th>ID</th>
+                        <th>Common Techniques</th>
+                        <th>BIOC Detection Approach</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Initial Access</strong></td>
+                        <td>TA0001</td>
+                        <td>Phishing (T1566), Drive-by (T1189)</td>
+                        <td>Office spawning suspicious child, browser downloads</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Execution</strong></td>
+                        <td>TA0002</td>
+                        <td>PowerShell (T1059.001), WMI (T1047)</td>
+                        <td>Encoded commands, unusual script execution</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Persistence</strong></td>
+                        <td>TA0003</td>
+                        <td>Registry Keys (T1547), Scheduled Tasks (T1053)</td>
+                        <td>Registry modifications, task creation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Privilege Escalation</strong></td>
+                        <td>TA0004</td>
+                        <td>UAC Bypass (T1548), Token Manipulation (T1134)</td>
+                        <td>Process elevation, token access</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Defense Evasion</strong></td>
+                        <td>TA0005</td>
+                        <td>Disable Tools (T1562), Masquerading (T1036)</td>
+                        <td>Service stops, process name anomalies</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Credential Access</strong></td>
+                        <td>TA0006</td>
+                        <td>LSASS Dump (T1003), Keylogging (T1056)</td>
+                        <td>Memory access to LSASS, input capture</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lateral Movement</strong></td>
+                        <td>TA0008</td>
+                        <td>Remote Services (T1021), PsExec (T1570)</td>
+                        <td>Remote execution tools, WMI/SMB activity</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Exfiltration</strong></td>
+                        <td>TA0010</td>
+                        <td>Over C2 (T1041), Over Web (T1048)</td>
+                        <td>Large transfers, unusual destinations</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Command & Control</strong></td>
+                        <td>TA0011</td>
+                        <td>DNS (T1071.004), Web Protocols (T1071.001)</td>
+                        <td>DNS tunneling, beaconing patterns</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section">
+            <h2>Best Practices</h2>
+
+            <h3>Rule Development Workflow</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Research</h4>
+                    <p>Study the threat behavior, MITRE technique, and available telemetry</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Query Development</h4>
+                    <p>Write XQL query in Investigation module, test against historical data</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Validate</h4>
+                    <p>Review results for false positives, refine filters and exclusions</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Deploy</h4>
+                    <p>Create BIOC rule with appropriate severity and alerting config</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Monitor</h4>
+                    <p>Track alert volume, false positive rate, and detection efficacy</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">6</span>
+                    <h4>Tune</h4>
+                    <p>Add exclusions, adjust thresholds, update based on feedback</p>
+                </div>
+            </div>
+
+            <h3>Common Exclusion Patterns</h3>
+            <div class="code-block">
+                <pre><code># Exclude known legitimate tools
+| filter action_process_image_name not in (
+    "MsMpEng.exe",      # Windows Defender
+    "CylanceSvc.exe",   # Cylance
+    "CrowdStrike*",     # CrowdStrike
+    "SentinelOne*"      # SentinelOne
+)
+
+# Exclude trusted paths
+| filter action_process_image_path not contains "\\Windows\\System32\\"
+| filter action_process_image_path not contains "\\Program Files\\Microsoft\\"
+
+# Exclude service accounts
+| filter action_process_username not in (
+    "NT AUTHORITY\\SYSTEM",
+    "NT AUTHORITY\\LOCAL SERVICE",
+    "NT AUTHORITY\\NETWORK SERVICE"
+)
+
+# Exclude by hash (verified safe)
+| filter action_process_sha256 not in (
+    "abc123...",  # Known good hash
+    "def456..."   # Known good hash
+)
+
+# Exclude signed binaries (use with caution)
+| filter action_process_signature_status != "Signed"</code></pre>
+            </div>
+        </section>
+
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            
+            <div class="interview-qa">
+                <h4>Q: How do you create and tune custom detection rules in Cortex XDR?</h4>
+                <p><strong>A:</strong> I follow a structured approach. First, I research the threat behavior I want to detect and identify which MITRE ATT&CK technique it maps to. Then I use the Investigation module to write and test XQL queries against historical data to ensure the logic captures the behavior. I analyze the results for false positives and add appropriate exclusions for legitimate tools and processes. Once validated, I create a BIOC rule with the appropriate severity level and configure alerting thresholds. After deployment, I monitor the alert volume and false positive rate, continuously tuning the rule based on analyst feedback. I also maintain documentation linking each rule to its MITRE technique for coverage analysis.</p>
+            </div>
+
+            <div class="interview-qa">
+                <h4>Q: What's the difference between IOCs and BIOCs in Cortex XDR?</h4>
+                <p><strong>A:</strong> IOCs (Indicators of Compromise) are static indicators like file hashes, IP addresses, or domain names that represent known threats. They're reactive, meaning you need to already know about a threat to detect it. BIOCs (Behavioral Indicators of Compromise) detect suspicious behaviors regardless of the specific malware or tool used. For example, instead of blocking a known Mimikatz hash (IOC), a BIOC rule detects any process accessing LSASS memory for reading, which would catch both Mimikatz and any new credential dumping tool. BIOCs are more resilient against attackers who modify their tools to evade hash-based detection.</p>
+            </div>
+        </section>
+
+        <div class="navigation-links">
+            <a href="index.html">← Back to Cortex XDR</a>
+            <a href="analytics.html">Analytics →</a>
+        </div>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

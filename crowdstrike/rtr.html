@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Time Response (RTR) - Remote Investigation & Remediation | CrowdStrike Falcon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .permission-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .permission-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; border-top: 4px solid #3498db; }
+        .permission-card.active { border-top-color: #f5a623; }
+        .permission-card.admin { border-top-color: #e74c3c; }
+        .permission-card h3 { margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .permission-card .badge { font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 4px; }
+        .permission-card .badge.read { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .permission-card .badge.write { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+        .permission-card .badge.full { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .command-section { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .command-section h3 { margin-top: 0; color: #e74c3c; display: flex; align-items: center; gap: 0.5rem; }
+        .command-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; overflow-x: auto; }
+        .command-block .prompt { color: #e74c3c; }
+        .command-block .comment { color: #6a9955; }
+        .command-block .output { color: #9cdcfe; }
+        .command-block .highlight { color: #f5a623; }
+        .command-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .command-table th, .command-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .command-table th { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+        .command-table code { background: rgba(0,0,0,0.3); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85rem; }
+        .playbook-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #9b59b6; }
+        .playbook-card h3 { margin-top: 0; color: #9b59b6; }
+        .playbook-step { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .playbook-step:last-child { border-bottom: none; }
+        .playbook-step .step-num { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #9b59b6, #8e44ad); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; flex-shrink: 0; }
+        .tip-box { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .tip-box .tip-title { color: #2ecc71; font-weight: bold; margin-bottom: 0.5rem; }
+        .warning-box { background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .warning-box .warning-title { color: #e74c3c; font-weight: bold; margin-bottom: 0.5rem; }
+        .script-example { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .script-example h4 { margin-top: 0; color: #3498db; }
+        .use-case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .use-case-item { background: var(--card-bg); border-radius: 8px; padding: 1rem; text-align: center; }
+        .use-case-item i { font-size: 2rem; color: #e74c3c; margin-bottom: 0.5rem; }
+        .use-case-item h4 { margin: 0.5rem 0; color: #fff; }
+        .use-case-item p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+        .interview-qa { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; border-left: 4px solid #e74c3c; }
+        .interview-qa h3 { margin-top: 0; color: #e74c3c; }
+        .qa-item { margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .qa-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .qa-item .question { font-weight: bold; color: #3498db; margin-bottom: 0.75rem; }
+        .qa-item .answer { color: var(--text-secondary); line-height: 1.6; }
+        .comparison-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; padding: 0.5rem 0; }
+        .comparison-row.header { font-weight: bold; color: #e74c3c; border-bottom: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                    </div>
+                </a>
+            </div>
+            <div class="platform-selector">
+                <div class="platform-tabs">
+                    <a href="../xsiam/index.html" class="platform-tab xsiam"><i class="fas fa-fire"></i> XSIAM</a>
+                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
+                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
+                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-shield-virus"></i> IOA Rules</a>
+                    <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-title">
+                    <h1><i class="fas fa-terminal" style="color: #e74c3c;"></i> Real Time Response (RTR)</h1>
+                    <p class="subtitle">Remote Investigation and Remediation in CrowdStrike Falcon</p>
+                </div>
+                <div class="header-meta">
+                    <span class="last-updated"><i class="fas fa-calendar-alt"></i> Updated: January 2026</span>
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                        <i class="fas fa-crow"></i> CrowdStrike Falcon
+                    </span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-info-circle"></i> RTR Overview</h2>
+                    <p>Real Time Response (RTR) provides secure, interactive remote shell access to endpoints for live investigation and remediation. It enables responders to collect forensic data, analyze running processes, and execute remediation actions without physical access to the machine.</p>
+
+                    <!-- RTR Architecture Diagram -->
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              REAL TIME RESPONSE (RTR) ARCHITECTURE                               │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ANALYST WORKSTATION                  FALCON CLOUD                    TARGET ENDPOINT          │
+│   ──────────────────                   ───────────                     ───────────────          │
+│                                                                                                  │
+│   ┌─────────────────┐                ┌─────────────────┐              ┌─────────────────┐       │
+│   │  Falcon UI      │    HTTPS/443   │   RTR Session   │   HTTPS/443  │  Falcon Sensor  │       │
+│   │  ┌───────────┐  │ ─────────────▶ │    Manager      │ ────────────▶│  ┌───────────┐  │       │
+│   │  │ RTR Shell │  │                │                 │              │  │ RTR Agent │  │       │
+│   │  │           │  │ ◀───────────── │  • Auth/RBAC    │ ◀──────────── │  │           │  │       │
+│   │  │ Commands  │  │    Results     │  • Audit Log    │    Results   │  │ • Execute │  │       │
+│   │  │ Results   │  │                │  • Rate Limit   │              │  │ • Collect │  │       │
+│   │  └───────────┘  │                │                 │              │  │ • Return  │  │       │
+│   └─────────────────┘                └─────────────────┘              └─────────────────┘       │
+│                                                                                                  │
+│                                              │                                                   │
+│                                              ▼                                                   │
+│                                    ┌─────────────────┐                                          │
+│                                    │   AUDIT LOG     │                                          │
+│                                    │  • All commands │                                          │
+│                                    │  • User identity│                                          │
+│                                    │  • Timestamp    │                                          │
+│                                    │  • Target host  │                                          │
+│                                    └─────────────────┘                                          │
+│                                                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│   KEY SECURITY FEATURES:                                                                         │
+│   ✓ End-to-end encryption                    ✓ Role-based access control (Read/Active/Admin)   │
+│   ✓ Complete audit trail                     ✓ Works through NAT/Firewalls (outbound only)     │
+│   ✓ No direct network path needed            ✓ Session timeout controls                        │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <!-- RTR Investigation Workflow -->
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              RTR INVESTIGATION WORKFLOW                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐       │
+│   │ DETECT  │───▶│ TRIAGE  │───▶│ CONNECT │───▶│ ANALYZE │───▶│REMEDIATE│───▶│ VERIFY  │       │
+│   └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘       │
+│       │              │              │              │              │              │              │
+│       ▼              ▼              ▼              ▼              ▼              ▼              │
+│   Alert fires    Review        Start RTR      Investigate     Take action    Confirm          │
+│   in Falcon      detection     session        with commands   to remove      threat           │
+│                  details                                       threat        eliminated        │
+│                                                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   STEP 3: ANALYZE                                    STEP 4: REMEDIATE                          │
+│   ───────────────                                    ─────────────────                          │
+│                                                                                                  │
+│   ┌─────────────────────────────────────┐           ┌─────────────────────────────────────┐    │
+│   │ 1. ps                               │           │ 1. kill [PID]                       │    │
+│   │    └─▶ List running processes       │           │    └─▶ Terminate malicious process  │    │
+│   │                                     │           │                                     │    │
+│   │ 2. netstat                          │           │ 2. rm -path [filepath]              │    │
+│   │    └─▶ Check network connections    │           │    └─▶ Delete malware file          │    │
+│   │                                     │           │                                     │    │
+│   │ 3. filehash [path]                  │           │ 3. reg delete [key]                 │    │
+│   │    └─▶ Get file hash for IOC check  │           │    └─▶ Remove persistence           │    │
+│   │                                     │           │                                     │    │
+│   │ 4. get [filepath]                   │           │ 4. contain                          │    │
+│   │    └─▶ Download file for analysis   │           │    └─▶ Network isolate if needed    │    │
+│   │                                     │           │                                     │    │
+│   │ 5. memdump [PID]                    │           │ 5. runscript -CloudFile=[name]      │    │
+│   │    └─▶ Capture process memory       │           │    └─▶ Execute remediation script   │    │
+│   └─────────────────────────────────────┘           └─────────────────────────────────────┘    │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+
+                    <div class="use-case-grid">
+                        <div class="use-case-item">
+                            <i class="fas fa-search"></i>
+                            <h4>Live Investigation</h4>
+                            <p>Query running processes, network connections, and system state in real-time</p>
+                        </div>
+                        <div class="use-case-item">
+                            <i class="fas fa-file-download"></i>
+                            <h4>Evidence Collection</h4>
+                            <p>Retrieve files, memory dumps, and artifacts for forensic analysis</p>
+                        </div>
+                        <div class="use-case-item">
+                            <i class="fas fa-virus-slash"></i>
+                            <h4>Threat Remediation</h4>
+                            <p>Kill malicious processes, delete malware files, remove persistence</p>
+                        </div>
+                        <div class="use-case-item">
+                            <i class="fas fa-network-wired"></i>
+                            <h4>Network Containment</h4>
+                            <p>Isolate compromised hosts from the network while maintaining management</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RTR Command Categories -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> RTR Command Categories</h2>
+                    <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              RTR COMMAND CATEGORIES BY PERMISSION LEVEL                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   READ ONLY                      ACTIVE RESPONDER                 RTR ADMIN                     │
+│   ─────────                      ────────────────                 ─────────                     │
+│   [Investigation]                [+ Remediation]                  [+ Scripts]                   │
+│                                                                                                  │
+│   ┌─────────────────┐           ┌─────────────────┐              ┌─────────────────┐           │
+│   │ PROCESS         │           │ PROCESS         │              │ CUSTOM SCRIPTS  │           │
+│   │ • ps            │           │ • kill          │              │ • runscript     │           │
+│   │ • pstree        │           │                 │              │ • put           │           │
+│   └─────────────────┘           └─────────────────┘              │ • run           │           │
+│                                                                   │ • zip           │           │
+│   ┌─────────────────┐           ┌─────────────────┐              └─────────────────┘           │
+│   │ FILESYSTEM      │           │ FILESYSTEM      │                                            │
+│   │ • ls            │           │ • rm            │              ┌─────────────────┐           │
+│   │ • cat           │           │ • mkdir         │              │ ADVANCED OPS    │           │
+│   │ • filehash      │           │ • xmemdump      │              │ • mount         │           │
+│   │ • get           │           │                 │              │ • map           │           │
+│   └─────────────────┘           └─────────────────┘              │ • csrutil       │           │
+│                                                                   └─────────────────┘           │
+│   ┌─────────────────┐           ┌─────────────────┐                                            │
+│   │ NETWORK         │           │ CONTAINMENT     │                                            │
+│   │ • netstat       │           │ • contain       │              USE CASES:                    │
+│   │ • ipconfig      │           │ • uncontain     │              ─────────                     │
+│   └─────────────────┘           └─────────────────┘              Read: Triage, Evidence        │
+│                                                                   Active: Remediation           │
+│   ┌─────────────────┐           ┌─────────────────┐              Admin: Complex IR             │
+│   │ REGISTRY        │           │ REGISTRY        │                                            │
+│   │ • reg query     │           │ • reg set       │                                            │
+│   │                 │           │ • reg delete    │                                            │
+│   └─────────────────┘           └─────────────────┘                                            │
+│                                                                                                  │
+│   ┌─────────────────┐           ┌─────────────────┐                                            │
+│   │ SERVICES        │           │ SERVICES        │              BEST PRACTICE:                │
+│   │ • cswindiag     │           │ • restart       │              ─────────────                 │
+│   │ • history       │           │ • shutdown      │              Assign minimum                │
+│   │ • users         │           │ • clearBuffer   │              permission level              │
+│   └─────────────────┘           └─────────────────┘              needed for role               │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+
+                <!-- Permission Levels -->
+                <section class="content-section">
+                    <h2><i class="fas fa-user-shield"></i> RTR Permission Levels</h2>
+                    <p>RTR access is controlled through three permission levels, each with increasing capabilities. Assign the minimum level necessary for each user's role.</p>
+
+                    <div class="permission-cards">
+                        <div class="permission-card">
+                            <h3><i class="fas fa-eye"></i> Read Only <span class="badge read">Investigate</span></h3>
+                            <p><strong>Use Case:</strong> Initial investigation, evidence collection, triage</p>
+                            <h4>Capabilities:</h4>
+                            <ul>
+                                <li>View running processes (<code>ps</code>)</li>
+                                <li>List files and directories (<code>ls</code>, <code>filehash</code>)</li>
+                                <li>View network connections (<code>netstat</code>)</li>
+                                <li>Query registry (<code>reg query</code>)</li>
+                                <li>Get file contents (<code>cat</code>, <code>get</code>)</li>
+                                <li>View scheduled tasks and services</li>
+                            </ul>
+                            <h4>Cannot:</h4>
+                            <ul>
+                                <li>Kill processes or delete files</li>
+                                <li>Modify system configuration</li>
+                                <li>Execute custom scripts</li>
+                            </ul>
+                        </div>
+
+                        <div class="permission-card active">
+                            <h3><i class="fas fa-wrench"></i> Active Responder <span class="badge write">Remediate</span></h3>
+                            <p><strong>Use Case:</strong> Threat containment, malware removal, basic remediation</p>
+                            <h4>Additional Capabilities:</h4>
+                            <ul>
+                                <li>Kill processes (<code>kill</code>)</li>
+                                <li>Delete files (<code>rm</code>)</li>
+                                <li>Network contain/uncontain</li>
+                                <li>Clear browser data</li>
+                                <li>Modify registry values</li>
+                                <li>Remediate detections</li>
+                            </ul>
+                            <h4>Cannot:</h4>
+                            <ul>
+                                <li>Upload and execute custom scripts</li>
+                                <li>Run arbitrary executables</li>
+                            </ul>
+                        </div>
+
+                        <div class="permission-card admin">
+                            <h3><i class="fas fa-crown"></i> RTR Admin <span class="badge full">Full Access</span></h3>
+                            <p><strong>Use Case:</strong> Advanced response, custom tooling, complex remediation</p>
+                            <h4>Additional Capabilities:</h4>
+                            <ul>
+                                <li>Upload and execute custom scripts</li>
+                                <li>Run PowerShell commands (<code>runscript</code>)</li>
+                                <li>Execute put files (<code>put</code>)</li>
+                                <li>Run binaries (<code>run</code>)</li>
+                                <li>Memory forensics with custom tools</li>
+                                <li>Deploy remediation packages</li>
+                            </ul>
+                            <div class="warning-box" style="margin-top: 1rem;">
+                                <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> High Risk</div>
+                                <p>RTR Admin has full system access. Limit to experienced responders. All actions are logged.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Essential Commands -->
+                <section class="content-section">
+                    <h2><i class="fas fa-terminal"></i> Essential RTR Commands</h2>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-search"></i> Information Gathering</h3>
+                        <div class="command-block">
+<span class="comment"># List running processes</span>
+<span class="prompt">$</span> ps
+<span class="output">PID    PPID   ImageFileName            CommandLine
+1234   789    chrome.exe               "C:\Program Files\Google\Chrome\..."
+5678   1      svchost.exe              C:\Windows\system32\svchost.exe -k...</span>
+
+<span class="comment"># Show process tree (parent-child relationships)</span>
+<span class="prompt">$</span> ps -tree
+
+<span class="comment"># Get detailed info for specific process</span>
+<span class="prompt">$</span> ps -pid 1234
+
+<span class="comment"># Network connections</span>
+<span class="prompt">$</span> netstat
+<span class="output">Proto  LocalAddress       RemoteAddress      State       PID
+TCP    192.168.1.10:443   52.96.189.77:443   ESTABLISHED 1234
+TCP    192.168.1.10:445   0.0.0.0:0          LISTENING   4</span>
+
+<span class="comment"># Network configuration</span>
+<span class="prompt">$</span> ifconfig
+
+<span class="comment"># Logged-in users</span>
+<span class="prompt">$</span> users
+
+<span class="comment"># System information</span>
+<span class="prompt">$</span> sysinfo
+                        </div>
+
+                        <table class="command-table">
+                            <thead>
+                                <tr><th>Command</th><th>Description</th><th>Permission</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>ps</code></td><td>List running processes</td><td>Read Only</td></tr>
+                                <tr><td><code>ps -tree</code></td><td>Process tree with relationships</td><td>Read Only</td></tr>
+                                <tr><td><code>netstat</code></td><td>Active network connections</td><td>Read Only</td></tr>
+                                <tr><td><code>ifconfig</code></td><td>Network interface configuration</td><td>Read Only</td></tr>
+                                <tr><td><code>users</code></td><td>Logged-in users</td><td>Read Only</td></tr>
+                                <tr><td><code>sysinfo</code></td><td>System information</td><td>Read Only</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-folder-open"></i> File System Operations</h3>
+                        <div class="command-block">
+<span class="comment"># List directory contents</span>
+<span class="prompt">$</span> ls C:\Users\victim\AppData\Local\Temp\
+<span class="output">Mode    Size      Modified            Name
+-a---   15234     2024-01-15 14:22    malware.exe
+-a---   8192      2024-01-15 14:23    config.dat</span>
+
+<span class="comment"># View file contents (text files)</span>
+<span class="prompt">$</span> cat C:\Users\victim\Desktop\readme.txt
+
+<span class="comment"># Calculate file hash</span>
+<span class="prompt">$</span> filehash C:\Users\victim\AppData\Local\Temp\malware.exe
+<span class="output">SHA256: 7a8f3b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a</span>
+
+<span class="comment"># Download file from endpoint (for analysis)</span>
+<span class="prompt">$</span> get C:\Users\victim\AppData\Local\Temp\malware.exe
+<span class="output">File queued for retrieval. Check Response Files in Falcon UI.</span>
+
+<span class="comment"># Delete file (Active Responder+)</span>
+<span class="prompt">$</span> rm C:\Users\victim\AppData\Local\Temp\malware.exe
+
+<span class="comment"># Create directory</span>
+<span class="prompt">$</span> mkdir C:\Temp\Quarantine
+
+<span class="comment"># Move file (useful for quarantine)</span>
+<span class="prompt">$</span> mv C:\Users\victim\Downloads\suspicious.exe C:\Temp\Quarantine\
+                        </div>
+
+                        <table class="command-table">
+                            <thead>
+                                <tr><th>Command</th><th>Description</th><th>Permission</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>ls [path]</code></td><td>List directory contents</td><td>Read Only</td></tr>
+                                <tr><td><code>cat [file]</code></td><td>Display file contents</td><td>Read Only</td></tr>
+                                <tr><td><code>filehash [file]</code></td><td>Calculate SHA256 hash</td><td>Read Only</td></tr>
+                                <tr><td><code>get [file]</code></td><td>Download file for analysis</td><td>Read Only</td></tr>
+                                <tr><td><code>rm [file]</code></td><td>Delete file</td><td>Active Responder</td></tr>
+                                <tr><td><code>mkdir [path]</code></td><td>Create directory</td><td>Active Responder</td></tr>
+                                <tr><td><code>mv [src] [dst]</code></td><td>Move/rename file</td><td>Active Responder</td></tr>
+                                <tr><td><code>put [file]</code></td><td>Upload file to endpoint</td><td>RTR Admin</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-database"></i> Registry Operations</h3>
+                        <div class="command-block">
+<span class="comment"># Query registry key</span>
+<span class="prompt">$</span> reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+<span class="output">Value              Type      Data
+SecurityHealth     REG_SZ    %ProgramFiles%\Windows Defender\...
+<span class="highlight">SuspiciousEntry    REG_SZ    C:\Users\victim\AppData\Local\Temp\malware.exe</span></span>
+
+<span class="comment"># Query specific value</span>
+<span class="prompt">$</span> reg query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -v SuspiciousEntry
+
+<span class="comment"># Delete registry value (Active Responder+)</span>
+<span class="prompt">$</span> reg delete HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -v SuspiciousEntry
+
+<span class="comment"># Export registry key</span>
+<span class="prompt">$</span> reg export HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run C:\Temp\run_keys.reg
+                        </div>
+
+                        <table class="command-table">
+                            <thead>
+                                <tr><th>Command</th><th>Description</th><th>Permission</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>reg query [key]</code></td><td>Query registry key values</td><td>Read Only</td></tr>
+                                <tr><td><code>reg query [key] -v [value]</code></td><td>Query specific value</td><td>Read Only</td></tr>
+                                <tr><td><code>reg export [key] [file]</code></td><td>Export registry key</td><td>Read Only</td></tr>
+                                <tr><td><code>reg delete [key] -v [value]</code></td><td>Delete registry value</td><td>Active Responder</td></tr>
+                                <tr><td><code>reg set [key] -v [name] -d [data]</code></td><td>Set registry value</td><td>Active Responder</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-cogs"></i> Process Management</h3>
+                        <div class="command-block">
+<span class="comment"># Kill process by PID</span>
+<span class="prompt">$</span> kill 1234
+
+<span class="comment"># Kill process by name (all instances)</span>
+<span class="prompt">$</span> kill -name malware.exe
+
+<span class="comment"># View scheduled tasks</span>
+<span class="prompt">$</span> schtasks
+
+<span class="comment"># Delete scheduled task</span>
+<span class="prompt">$</span> schtasks -delete -name "MaliciousTask"
+
+<span class="comment"># View services</span>
+<span class="prompt">$</span> services
+
+<span class="comment"># Stop service</span>
+<span class="prompt">$</span> sc stop "SuspiciousService"
+                        </div>
+
+                        <table class="command-table">
+                            <thead>
+                                <tr><th>Command</th><th>Description</th><th>Permission</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>kill [PID]</code></td><td>Terminate process by PID</td><td>Active Responder</td></tr>
+                                <tr><td><code>kill -name [name]</code></td><td>Terminate all processes by name</td><td>Active Responder</td></tr>
+                                <tr><td><code>schtasks</code></td><td>List scheduled tasks</td><td>Read Only</td></tr>
+                                <tr><td><code>schtasks -delete</code></td><td>Delete scheduled task</td><td>Active Responder</td></tr>
+                                <tr><td><code>services</code></td><td>List services</td><td>Read Only</td></tr>
+                                <tr><td><code>sc stop [name]</code></td><td>Stop service</td><td>Active Responder</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-network-wired"></i> Network Containment</h3>
+                        <div class="command-block">
+<span class="comment"># Network contain host (isolate from network, maintain Falcon connection)</span>
+<span class="prompt">$</span> netcontain
+
+<span class="output">Host contained successfully. 
+Network access blocked except for CrowdStrike cloud communication.</span>
+
+<span class="comment"># Check containment status</span>
+<span class="prompt">$</span> containment_status
+<span class="output">Status: Contained
+Contained Since: 2024-01-15 14:30:22 UTC
+Contained By: analyst@company.com</span>
+
+<span class="comment"># Remove network containment</span>
+<span class="prompt">$</span> netuncontain
+
+<span class="output">Host containment lifted. Network access restored.</span>
+                        </div>
+
+                        <div class="tip-box">
+                            <div class="tip-title"><i class="fas fa-lightbulb"></i> Containment Best Practice</div>
+                            <p>Network containment blocks all network traffic except CrowdStrike cloud communication. Before containing, ensure you have all necessary commands prepared. Document the time and reason for containment. Coordinate with IT before lifting containment.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Custom Scripts -->
+                <section class="content-section">
+                    <h2><i class="fas fa-code"></i> Custom Scripts (RTR Admin)</h2>
+                    <p>RTR Admin users can upload and execute custom scripts for advanced investigation and remediation. Scripts must be uploaded to the Falcon cloud before use.</p>
+
+                    <div class="script-example">
+                        <h4><i class="fas fa-file-code"></i> Running Custom Scripts</h4>
+                        <div class="command-block">
+<span class="comment"># Execute uploaded PowerShell script</span>
+<span class="prompt">$</span> runscript -CloudFile="CollectArtifacts.ps1"
+
+<span class="comment"># Execute script with parameters</span>
+<span class="prompt">$</span> runscript -CloudFile="ScanDirectory.ps1" -CommandLine="-Path C:\Users -Recursive"
+
+<span class="comment"># Execute inline PowerShell (careful!)</span>
+<span class="prompt">$</span> runscript -Raw="Get-Process | Where-Object {$_.CPU -gt 50} | Format-Table"
+
+<span class="comment"># Run uploaded executable</span>
+<span class="prompt">$</span> run -CloudFile="autoruns64.exe" -CommandLine="-a * -c -h"
+                        </div>
+                    </div>
+
+                    <div class="script-example">
+                        <h4><i class="fas fa-memory"></i> Memory Forensics Script Example</h4>
+                        <div class="command-block">
+<span class="comment"># PowerShell script: Collect-MemoryDump.ps1</span>
+<span class="comment"># Upload to Falcon cloud before use</span>
+
+param(
+    [string]$OutputPath = "C:\Temp\Forensics"
+)
+
+<span class="comment"># Create output directory</span>
+if (-not (Test-Path $OutputPath)) {
+    New-Item -ItemType Directory -Path $OutputPath -Force
+}
+
+<span class="comment"># Collect process memory for suspicious process</span>
+$targetPID = (Get-Process -Name "suspicious*" -ErrorAction SilentlyContinue).Id
+
+if ($targetPID) {
+    $dumpFile = Join-Path $OutputPath "process_$targetPID.dmp"
+    <span class="comment"># Use procdump or MiniDumpWriteDump</span>
+    rundll32.exe comsvcs.dll, MiniDump $targetPID $dumpFile full
+    Write-Output "Memory dump saved: $dumpFile"
+}
+
+<span class="comment"># Collect additional artifacts</span>
+Get-Process | Export-Csv (Join-Path $OutputPath "processes.csv")
+Get-NetTCPConnection | Export-Csv (Join-Path $OutputPath "connections.csv")
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Script Safety Guidelines</div>
+                        <ul>
+                            <li>Test all scripts in a lab environment before production use</li>
+                            <li>Use parameterized scripts rather than hardcoded values</li>
+                            <li>Include error handling and logging in scripts</li>
+                            <li>Document script purpose and expected behavior</li>
+                            <li>Avoid scripts that make permanent system changes when possible</li>
+                            <li>All script executions are logged in Falcon audit log</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Response Playbooks -->
+                <section class="content-section">
+                    <h2><i class="fas fa-book"></i> Response Playbooks</h2>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-virus"></i> Malware Investigation Playbook</h3>
+                        <p>Standard workflow for investigating suspected malware on an endpoint.</p>
+                        
+                        <div class="playbook-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <strong>Initial Assessment</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> ps -tree        <span class="comment"># View process hierarchy</span>
+<span class="prompt">$</span> netstat         <span class="comment"># Check active connections</span>
+<span class="prompt">$</span> users           <span class="comment"># Identify logged-in users</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <strong>Identify Suspicious Artifacts</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> ls C:\Users\*\AppData\Local\Temp\     <span class="comment"># Check temp directories</span>
+<span class="prompt">$</span> reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+<span class="prompt">$</span> reg query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+<span class="prompt">$</span> schtasks        <span class="comment"># Check for persistence</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <strong>Collect Evidence</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> filehash C:\Path\To\suspicious.exe   <span class="comment"># Get file hash for IOC</span>
+<span class="prompt">$</span> get C:\Path\To\suspicious.exe        <span class="comment"># Download for analysis</span>
+<span class="prompt">$</span> get C:\Windows\System32\winevt\Logs\Security.evtx
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <strong>Contain Threat (if confirmed)</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> netcontain                              <span class="comment"># Isolate from network</span>
+<span class="prompt">$</span> kill -name malware.exe                  <span class="comment"># Stop malicious process</span>
+<span class="prompt">$</span> rm C:\Path\To\suspicious.exe            <span class="comment"># Remove malware file</span>
+<span class="prompt">$</span> reg delete HKCU\...\Run -v MalEntry     <span class="comment"># Remove persistence</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">5</div>
+                            <div class="step-content">
+                                <strong>Verify Remediation</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> ps               <span class="comment"># Confirm process killed</span>
+<span class="prompt">$</span> ls C:\Path\To\   <span class="comment"># Confirm file deleted</span>
+<span class="prompt">$</span> reg query ...    <span class="comment"># Confirm persistence removed</span>
+<span class="prompt">$</span> netuncontain     <span class="comment"># Restore network (after approval)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-key"></i> Credential Theft Response Playbook</h3>
+                        <p>Respond to suspected credential theft or LSASS access.</p>
+                        
+                        <div class="playbook-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <strong>Identify Credential Access</strong>
+                                <div class="command-block">
+<span class="comment"># Check for credential dumping tools</span>
+<span class="prompt">$</span> ps | grep -i "mimikatz\|procdump\|sekurlsa"
+<span class="prompt">$</span> ls C:\Users\*\Downloads\*mimi*
+<span class="prompt">$</span> ls C:\Windows\Temp\*dump*
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <strong>Immediate Containment</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> netcontain                    <span class="comment"># CRITICAL: Contain immediately</span>
+<span class="prompt">$</span> kill -name mimikatz.exe      <span class="comment"># Kill known tools</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <strong>Collect Evidence</strong>
+                                <div class="command-block">
+<span class="prompt">$</span> get C:\Windows\System32\winevt\Logs\Security.evtx
+<span class="prompt">$</span> get C:\Windows\System32\winevt\Logs\Microsoft-Windows-Sysmon%4Operational.evtx
+<span class="comment"># Note: Preserve for forensic timeline analysis</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <strong>Escalate</strong>
+                                <p>Immediately notify IAM team for password resets. Assume all credentials on the host are compromised. Check for lateral movement from this host.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="playbook-card">
+                        <h3><i class="fas fa-lock"></i> Ransomware Response Playbook</h3>
+                        <p>Emergency response for active ransomware detection.</p>
+                        
+                        <div class="playbook-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <strong>IMMEDIATE CONTAINMENT</strong>
+                                <div class="command-block">
+<span class="comment"># First action - isolate from network</span>
+<span class="prompt">$</span> netcontain
+<span class="comment"># DO NOT delay - every second matters</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <strong>Stop Encryption Process</strong>
+                                <div class="command-block">
+<span class="comment"># Identify high CPU/disk processes</span>
+<span class="prompt">$</span> ps
+
+<span class="comment"># Kill suspicious encryption process</span>
+<span class="prompt">$</span> kill [PID of encrypting process]
+
+<span class="comment"># Kill all instances if multiple</span>
+<span class="prompt">$</span> kill -name ransomware.exe
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <strong>Preserve Evidence</strong>
+                                <div class="command-block">
+<span class="comment"># Get ransom note for variant identification</span>
+<span class="prompt">$</span> ls C:\Users\*\Desktop\*README*
+<span class="prompt">$</span> cat C:\Users\Public\Desktop\README.txt
+<span class="prompt">$</span> get C:\Users\Public\Desktop\README.txt
+
+<span class="comment"># Get malware sample if identifiable</span>
+<span class="prompt">$</span> filehash [ransomware file]
+<span class="prompt">$</span> get [ransomware file]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playbook-step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <strong>Assess Scope</strong>
+                                <div class="command-block">
+<span class="comment"># Check for network spread indicators</span>
+<span class="prompt">$</span> netstat     <span class="comment"># Look for SMB (445) connections to other hosts</span>
+
+<span class="comment"># Check recent network connections in Falcon UI</span>
+<span class="comment"># Identify all hosts this endpoint connected to</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Bulk RTR -->
+                <section class="content-section">
+                    <h2><i class="fas fa-server"></i> Bulk RTR Operations</h2>
+                    <p>Falcon supports running RTR commands across multiple hosts simultaneously for large-scale investigation or remediation.</p>
+
+                    <div class="command-section">
+                        <h3><i class="fas fa-sitemap"></i> Bulk Command Execution</h3>
+                        <p>In Falcon UI: <strong>Response → Real Time Response → Bulk Session</strong></p>
+                        <ul>
+                            <li>Select multiple hosts by hostname, tag, or host group</li>
+                            <li>Execute read-only commands across all selected hosts</li>
+                            <li>Results returned in tabular format for comparison</li>
+                            <li>Export results to CSV for further analysis</li>
+                        </ul>
+
+                        <div class="tip-box">
+                            <div class="tip-title"><i class="fas fa-lightbulb"></i> Bulk RTR Use Cases</div>
+                            <ul>
+                                <li><strong>IOC Sweep:</strong> Search for specific file hash or registry key across all endpoints</li>
+                                <li><strong>Patch Verification:</strong> Confirm security update installed across fleet</li>
+                                <li><strong>Threat Hunting:</strong> Query for suspicious process or network activity organization-wide</li>
+                                <li><strong>Mass Remediation:</strong> Deploy script to remove malware from multiple infected hosts</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Comparison with Other EDRs -->
+                <section class="content-section">
+                    <h2><i class="fas fa-balance-scale"></i> RTR vs Other EDR Response Tools</h2>
+                    
+                    <table class="command-table">
+                        <thead>
+                            <tr>
+                                <th>Capability</th>
+                                <th>CrowdStrike RTR</th>
+                                <th>MDE Live Response</th>
+                                <th>Cortex XDR Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Interactive Shell</td>
+                                <td>✅ Full terminal</td>
+                                <td>✅ Full terminal</td>
+                                <td>✅ Full terminal</td>
+                            </tr>
+                            <tr>
+                                <td>Network Containment</td>
+                                <td>✅ Native command</td>
+                                <td>✅ Via portal/API</td>
+                                <td>✅ Via portal/API</td>
+                            </tr>
+                            <tr>
+                                <td>Custom Scripts</td>
+                                <td>✅ Cloud-uploaded</td>
+                                <td>✅ Library scripts</td>
+                                <td>✅ Python scripts</td>
+                            </tr>
+                            <tr>
+                                <td>Bulk Operations</td>
+                                <td>✅ Multi-host sessions</td>
+                                <td>⚠️ Limited</td>
+                                <td>✅ Script execution</td>
+                            </tr>
+                            <tr>
+                                <td>Permission Granularity</td>
+                                <td>3 levels</td>
+                                <td>Basic/Advanced</td>
+                                <td>Role-based</td>
+                            </tr>
+                            <tr>
+                                <td>Session Timeout</td>
+                                <td>30 min default</td>
+                                <td>30 min</td>
+                                <td>Configurable</td>
+                            </tr>
+                            <tr>
+                                <td>Offline Queuing</td>
+                                <td>✅ Commands queue</td>
+                                <td>❌ Requires online</td>
+                                <td>⚠️ Limited</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Interview Q&A -->
+                <section class="content-section">
+                    <div class="interview-qa">
+                        <h3><i class="fas fa-user-tie"></i> Interview Q&A</h3>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: Describe your approach to using RTR for incident response.</div>
+                            <div class="answer">A: I follow a structured approach: First, assess the situation using read-only commands like <code>ps</code>, <code>netstat</code>, and <code>users</code> to understand what's running and who's connected. Then I check for persistence mechanisms via registry Run keys and scheduled tasks. If the threat is confirmed, I contain the host immediately with <code>netcontain</code> to prevent lateral movement. I collect evidence using <code>filehash</code> and <code>get</code> before any remediation. Only after evidence is secured do I proceed with remediation - killing processes, deleting files, and removing persistence. Finally, I verify remediation was successful before lifting containment.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: When would you use network containment vs just killing a process?</div>
+                            <div class="answer">A: Network containment is appropriate when there's risk of lateral movement or data exfiltration - credential theft, ransomware, or active C2 communication. Containment ensures the threat can't spread while we investigate. Just killing a process is sufficient for isolated incidents where we've confirmed the scope is limited to that endpoint and there's no ongoing network communication. I'd also contain if I'm uncertain about the full scope - it's better to over-contain and lift quickly than miss lateral movement. The key is containment maintains Falcon connectivity so we can continue investigation and remediation remotely.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: How do you handle RTR sessions for sensitive systems like domain controllers?</div>
+                            <div class="answer">A: Domain controllers require extra caution. I always coordinate with the AD team before any RTR session. I use read-only access initially and only escalate to Active Responder if absolutely necessary. I avoid any commands that could impact AD services - never kill LSASS or critical services without explicit approval and a rollback plan. For containment, I'd typically isolate at the network level (firewall rules) rather than using Falcon containment to maintain domain functionality. I document every command executed and have the AD team verify domain health after any remediation. Any custom scripts are tested in a lab DC first.</div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <div class="question">Q: What evidence would you collect via RTR for a forensic investigation?</div>
+                            <div class="answer">A: I collect evidence in order of volatility - memory-resident data first since it's most perishable. Using RTR, I'd capture: running processes (<code>ps -tree</code>), active network connections (<code>netstat</code>), logged-in users (<code>users</code>), open files and handles. Then move to persistent artifacts: file hashes of suspicious files (<code>filehash</code>), the actual malware samples (<code>get</code>), registry Run keys and other persistence locations, scheduled tasks, Windows event logs (Security, Sysmon, PowerShell). I ensure all file retrievals complete before any remediation that might modify evidence. Everything is documented with timestamps for chain of custody.</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

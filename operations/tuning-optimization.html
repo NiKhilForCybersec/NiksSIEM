@@ -1,36 +1,347 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tuning-optimization | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Tuning & Optimization | SOC Compendium</title>
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
-    <div class="app-container">
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">SOC Compendium</a>
+            <div class="nav-links">
+                <a href="../sentinel/index.html">Sentinel</a>
+                <a href="../splunk/index.html">Splunk</a>
+                <a href="../xsiam/index.html">XSIAM</a>
+                <a href="../mde/index.html">Defender</a>
+                <a href="../cortex/index.html">Cortex</a>
+                <a href="../crowdstrike/index.html">CrowdStrike</a>
+                <a href="../operations/index.html" class="active">Operations</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content-wrapper">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <a href="../index.html" class="sidebar-brand">
-                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-                    <div class="brand-text">
-                        <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
-                    </div>
-                </a>
+            <div class="sidebar-section">
+                <h3>SOC Operations</h3>
+                <ul>
+                    <li><a href="index.html">Operations Home</a></li>
+                    <li><a href="triage-handbook.html">Triage Handbook</a></li>
+                    <li><a href="playbook-library.html">Playbook Library</a></li>
+                    <li><a href="detection-engineering.html">Detection Engineering</a></li>
+                    <li><a href="tuning-optimization.html" class="active">Tuning & Optimization</a></li>
+                    <li><a href="soc-metrics.html">SOC Metrics</a></li>
+                </ul>
             </div>
         </aside>
-        <div class="main-wrapper">
-            <main class="main-content">
-                <div class="page-header">
-                    <h1><i class="fas fa-cog"></i> tuning-optimization</h1>
-                    <p class="lead">Content coming soon</p>
+
+        <article class="main-content">
+            <header class="content-header">
+                <h1>Tuning & Optimization</h1>
+                <p class="subtitle">Systematic approach to reducing noise while maintaining detection coverage</p>
+            </header>
+
+            <section class="content-section">
+                <h2>Tuning Philosophy</h2>
+                <p>Effective tuning balances detection sensitivity with operational efficiency. The goal is to maximize true positives while minimizing false positives without creating detection blind spots.</p>
+
+                <div class="info-box">
+                    <h4>Tuning Golden Rules</h4>
+                    <ul>
+                        <li><strong>Document everything:</strong> Every suppression needs a ticket, justification, and approval</li>
+                        <li><strong>Start narrow:</strong> Begin with specific exclusions, broaden only if necessary</li>
+                        <li><strong>Validate before suppressing:</strong> Confirm the behavior is genuinely benign</li>
+                        <li><strong>Review regularly:</strong> Quarterly review of all suppressions</li>
+                        <li><strong>Monitor coverage:</strong> Track MITRE ATT&CK coverage after tuning</li>
+                    </ul>
                 </div>
-                <section class="content-section">
-                    <p>This page is under construction. Check back for detailed content.</p>
-                </section>
-            </main>
-        </div>
-    </div>
+            </section>
+
+            <section class="content-section">
+                <h2>False Positive Analysis</h2>
+
+                <h3>FP Identification Queries</h3>
+                <div class="code-block">
+                    <pre><code>// Splunk - Find high-volume alerts
+index=notable
+| stats count by rule_name, src, user
+| where count > 50
+| sort -count
+
+// Sentinel - FP candidates by resolution
+SecurityAlert
+| where TimeGenerated > ago(30d)
+| where Status == "Resolved"
+| summarize 
+    Total = count(),
+    FP = countif(AlertSeverity == "Low"),
+    Dismissed = countif(ExtendedProperties contains "false_positive")
+    by AlertName
+| extend FP_Rate = round(todouble(FP + Dismissed) / Total * 100, 2)
+| where FP_Rate > 50
+| order by Total desc
+
+// XDR - High-volume alert sources
+dataset = xdr_data
+| filter event_type = ALERT
+| comp count() as alert_count by alert_name, endpoint_hostname, user_name
+| filter alert_count > 20
+| sort desc alert_count</code></pre>
+                </div>
+
+                <h3>FP Categories</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Example</th>
+                            <th>Tuning Approach</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Legitimate Tool</td>
+                            <td>PsExec by admin</td>
+                            <td>User/path exclusion</td>
+                        </tr>
+                        <tr>
+                            <td>Security Testing</td>
+                            <td>Vulnerability scanner</td>
+                            <td>Source IP/user exclusion</td>
+                        </tr>
+                        <tr>
+                            <td>Automation</td>
+                            <td>SCCM encoded scripts</td>
+                            <td>Process/parent exclusion</td>
+                        </tr>
+                        <tr>
+                            <td>Business Process</td>
+                            <td>Large file transfer</td>
+                            <td>Destination/time exclusion</td>
+                        </tr>
+                        <tr>
+                            <td>Detection Logic</td>
+                            <td>Overly broad rule</td>
+                            <td>Refine detection query</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Tuning Workflow</h2>
+
+                <div class="workflow-diagram">
+                    <div class="workflow-step">
+                        <span class="step-number">1</span>
+                        <h4>Identify Pattern</h4>
+                        <p>Analyze high-volume alerts, identify repeating FP patterns</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">2</span>
+                        <h4>Validate</h4>
+                        <p>Confirm behavior is benign with asset owner</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">3</span>
+                        <h4>Document</h4>
+                        <p>Create ticket with justification, risk assessment</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">4</span>
+                        <h4>Implement</h4>
+                        <p>Apply narrowest possible exclusion</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">5</span>
+                        <h4>Verify</h4>
+                        <p>Confirm alert reduction, no new gaps</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">6</span>
+                        <h4>Review</h4>
+                        <p>Quarterly review for continued validity</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Exclusion Best Practices</h2>
+
+                <h3>Exclusion Hierarchy (Most to Least Specific)</h3>
+                <ol>
+                    <li><strong>Hash + User + Host:</strong> Most specific, lowest risk</li>
+                    <li><strong>File path + User:</strong> Specific to known scenario</li>
+                    <li><strong>Process + Parent Process:</strong> Behavioral context</li>
+                    <li><strong>User or Service Account:</strong> Identity-based</li>
+                    <li><strong>File path only:</strong> Use with caution</li>
+                    <li><strong>File name only:</strong> High risk, avoid if possible</li>
+                </ol>
+
+                <h3>Exclusion Template</h3>
+                <div class="code-block">
+                    <pre><code># Tuning Request Template
+
+## Alert Information
+- Alert Name: Encoded PowerShell Execution
+- Rule ID: DET-2024-0042
+- Average Daily Volume: 150 alerts
+- False Positive Rate: 85%
+
+## Pattern Analysis
+- Source: SCCM client deployment scripts
+- User: svc_sccm
+- Host Pattern: All workstations
+- Command Pattern: powershell.exe -enc SQBmACAAKABHAGUA...
+
+## Exclusion Proposed
+- Type: Process + Parent + User
+- Conditions:
+  - ProcessName = powershell.exe
+  - ParentProcess contains "ccmexec.exe"
+  - User = svc_sccm
+
+## Risk Assessment
+- Detection Gap: Minimal - other detections cover PowerShell abuse
+- Abuse Potential: Low - requires compromised service account
+- Compensating Controls: EDR behavioral detection still active
+
+## Approvals
+- SOC Lead: [Name] - [Date]
+- Security Engineer: [Name] - [Date]
+- Ticket: SEC-2024-1234
+- Review Date: 2024-06-15</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Performance Optimization</h2>
+
+                <h3>Query Optimization</h3>
+                <div class="code-block">
+                    <pre><code>// BAD - Scanning all data
+SecurityEvent
+| where Process contains "powershell"
+
+// GOOD - Filter early, use efficient operators
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4688
+| where Process endswith "powershell.exe"
+
+// BAD - Multiple regex in OR
+SecurityEvent
+| where CommandLine matches regex "mimikatz|sekurlsa|logonpasswords"
+
+// GOOD - Use has_any for string matching
+SecurityEvent
+| where CommandLine has_any ("mimikatz", "sekurlsa", "logonpasswords")
+
+// Splunk - Use indexed fields
+index=windows EventCode=4688 process_name="powershell.exe"
+| search CommandLine="*-enc*"</code></pre>
+                </div>
+
+                <h3>Alert Aggregation</h3>
+                <div class="code-block">
+                    <pre><code>// Instead of alerting per event, aggregate related events
+SecurityEvent
+| where TimeGenerated > ago(15m)
+| where EventID == 4625  // Failed logon
+| summarize 
+    FailedAttempts = count(),
+    TargetAccounts = make_set(TargetUserName),
+    SourceIPs = make_set(IpAddress)
+    by Computer, bin(TimeGenerated, 15m)
+| where FailedAttempts > 10
+// One alert with context vs. many individual alerts</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Tuning Metrics</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Target</th>
+                            <th>Measurement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>False Positive Rate</td>
+                            <td>&lt;20%</td>
+                            <td>FP alerts / Total alerts</td>
+                        </tr>
+                        <tr>
+                            <td>Alert-to-Incident Ratio</td>
+                            <td>&gt;5%</td>
+                            <td>Incidents / Alerts investigated</td>
+                        </tr>
+                        <tr>
+                            <td>Coverage Score</td>
+                            <td>&gt;60%</td>
+                            <td>Detected techniques / Relevant techniques</td>
+                        </tr>
+                        <tr>
+                            <td>Detection Latency</td>
+                            <td>&lt;5 min</td>
+                            <td>Event time to alert time</td>
+                        </tr>
+                        <tr>
+                            <td>Exclusion Count</td>
+                            <td>Track trend</td>
+                            <td>Total active exclusions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Interview Q&A</h2>
+
+                <div class="qa-section">
+                    <h3>Q: How do you approach tuning in a new environment?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> My new environment tuning approach:</p>
+                        <ol>
+                            <li><strong>Baseline (2-4 weeks):</strong> Enable detections in audit/low-severity mode to understand normal patterns</li>
+                            <li><strong>Data analysis:</strong> Identify top 10 highest-volume alert sources using queries that group by alert type, source, and user</li>
+                            <li><strong>Quick wins:</strong> Address obvious FPs first (security scanners, backup tools, deployment automation)</li>
+                            <li><strong>Validation process:</strong> Work with IT/app owners to confirm each pattern is legitimate before suppressing</li>
+                            <li><strong>Iterative refinement:</strong> Start with narrow exclusions, monitor effectiveness, broaden only if needed</li>
+                            <li><strong>Coverage tracking:</strong> Map exclusions to MITRE ATT&CK to ensure we're not creating blind spots</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="qa-section">
+                    <h3>Q: How do you balance detection coverage with alert fatigue?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> The balance comes from several strategies:</p>
+                        <ul>
+                            <li><strong>Severity tiering:</strong> Not all detections need human review - use risk scoring to prioritize</li>
+                            <li><strong>Automation:</strong> Auto-close obvious FPs but log them for trend analysis</li>
+                            <li><strong>Correlation:</strong> Combine weak signals into stronger detections rather than alerting on each individually</li>
+                            <li><strong>Context enrichment:</strong> Add asset criticality, user risk, and threat intel context to help prioritize</li>
+                            <li><strong>Layered detection:</strong> If suppressing one detection, ensure other detections cover the same technique</li>
+                            <li><strong>Regular review:</strong> Quarterly audit of suppressions - business processes change, so should exclusions</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
 </body>
 </html>

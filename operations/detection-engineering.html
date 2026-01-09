@@ -1,36 +1,491 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>detection-engineering | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Detection Engineering | SOC Compendium</title>
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
-    <div class="app-container">
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">SOC Compendium</a>
+            <div class="nav-links">
+                <a href="../sentinel/index.html">Sentinel</a>
+                <a href="../splunk/index.html">Splunk</a>
+                <a href="../xsiam/index.html">XSIAM</a>
+                <a href="../mde/index.html">Defender</a>
+                <a href="../cortex/index.html">Cortex</a>
+                <a href="../crowdstrike/index.html">CrowdStrike</a>
+                <a href="../operations/index.html" class="active">Operations</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content-wrapper">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <a href="../index.html" class="sidebar-brand">
-                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-                    <div class="brand-text">
-                        <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
-                    </div>
-                </a>
+            <div class="sidebar-section">
+                <h3>SOC Operations</h3>
+                <ul>
+                    <li><a href="index.html">Operations Home</a></li>
+                    <li><a href="triage-handbook.html">Triage Handbook</a></li>
+                    <li><a href="playbook-library.html">Playbook Library</a></li>
+                    <li><a href="escalation-matrix.html">Escalation Matrix</a></li>
+                    <li><a href="shift-handoff.html">Shift Handoff</a></li>
+                    <li><a href="soc-metrics.html">SOC Metrics</a></li>
+                    <li><a href="detection-engineering.html" class="active">Detection Engineering</a></li>
+                    <li><a href="tuning-optimization.html">Tuning & Optimization</a></li>
+                    <li><a href="containment-procedures.html">Containment Procedures</a></li>
+                </ul>
             </div>
         </aside>
-        <div class="main-wrapper">
-            <main class="main-content">
-                <div class="page-header">
-                    <h1><i class="fas fa-cog"></i> detection-engineering</h1>
-                    <p class="lead">Content coming soon</p>
+
+        <article class="main-content">
+            <header class="content-header">
+                <h1>Detection Engineering</h1>
+                <p class="subtitle">Building and maintaining effective detection capabilities across the security stack</p>
+            </header>
+
+            <section class="content-section">
+                <h2>Detection Engineering Lifecycle</h2>
+                <p>Detection engineering is the practice of designing, building, testing, and maintaining detections that identify malicious activity. Effective detection engineering bridges threat intelligence with operational security monitoring.</p>
+
+                <div class="workflow-diagram">
+                    <div class="workflow-step">
+                        <span class="step-number">1</span>
+                        <h4>Threat Research</h4>
+                        <p>Analyze threat landscape, review intel, study attack techniques</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">2</span>
+                        <h4>Data Assessment</h4>
+                        <p>Identify required data sources, validate availability</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">3</span>
+                        <h4>Detection Design</h4>
+                        <p>Define logic, set thresholds, map to MITRE ATT&CK</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">4</span>
+                        <h4>Development</h4>
+                        <p>Write queries, build correlation rules, create playbooks</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">5</span>
+                        <h4>Testing</h4>
+                        <p>Validate against known attacks, check for FPs</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <span class="step-number">6</span>
+                        <h4>Deployment</h4>
+                        <p>Roll out gradually, monitor performance</p>
+                    </div>
                 </div>
-                <section class="content-section">
-                    <p>This page is under construction. Check back for detailed content.</p>
-                </section>
-            </main>
-        </div>
-    </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Detection Types</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Advantages</th>
+                            <th>Limitations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Signature-Based</td>
+                            <td>Match against known IOCs (hashes, IPs, domains)</td>
+                            <td>Low FP rate, fast, simple</td>
+                            <td>No zero-day detection, easy to evade</td>
+                        </tr>
+                        <tr>
+                            <td>Behavioral</td>
+                            <td>Detect patterns of malicious behavior</td>
+                            <td>Catches variants, harder to evade</td>
+                            <td>Higher FP rate, requires tuning</td>
+                        </tr>
+                        <tr>
+                            <td>Anomaly-Based</td>
+                            <td>Identify deviations from baseline</td>
+                            <td>Catches unknown threats</td>
+                            <td>Requires training, baseline shifts</td>
+                        </tr>
+                        <tr>
+                            <td>Correlation</td>
+                            <td>Combine multiple weak signals</td>
+                            <td>High confidence, context-rich</td>
+                            <td>Complex, data dependencies</td>
+                        </tr>
+                        <tr>
+                            <td>Heuristic</td>
+                            <td>Rule-based with scoring/thresholds</td>
+                            <td>Flexible, adjustable sensitivity</td>
+                            <td>Requires ongoing calibration</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Detection Development Framework</h2>
+
+                <h3>Detection Specification Template</h3>
+                <div class="code-block">
+                    <pre><code># Detection Specification
+
+## Metadata
+- **Name**: Encoded PowerShell Execution
+- **ID**: DET-2024-0042
+- **Author**: Security Engineering Team
+- **Created**: 2024-01-15
+- **Last Updated**: 2024-03-20
+- **Status**: Production
+
+## Threat Context
+- **MITRE ATT&CK**: T1059.001 (PowerShell)
+- **Kill Chain Phase**: Execution
+- **Threat Actor Groups**: APT29, FIN7, Various
+- **Description**: Detects execution of base64-encoded PowerShell commands, 
+  commonly used by attackers to obfuscate malicious scripts.
+
+## Detection Logic
+- **Data Sources**: Process Creation Events (Windows Security 4688, Sysmon 1)
+- **Query Platform**: Splunk/Sentinel/XDR
+
+### Splunk Query
+```spl
+index=windows sourcetype=WinEventLog:Security EventCode=4688
+| where process_name="powershell.exe" OR process_name="pwsh.exe"
+| where match(CommandLine, "(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})")
+| eval decoded=base64decode(mvindex(split(CommandLine," "),2))
+| table _time, host, user, CommandLine, decoded
+```
+
+### Sentinel KQL
+```kql
+SecurityEvent
+| where EventID == 4688
+| where Process endswith "powershell.exe" or Process endswith "pwsh.exe"
+| where CommandLine matches regex @"(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})"
+| project TimeGenerated, Computer, Account, CommandLine
+```
+
+## Tuning Guidance
+- **Known False Positives**: SCCM scripts, GPO deployments, legitimate admin tools
+- **Exclusions**: 
+  - Parent process: ConfigMgr\bin\ccm\*
+  - User: svc_sccm, svc_intune
+  - Encoded prefix: SQBmACAAKAAo (known SCCM pattern)
+
+## Response Playbook
+- Link: PB-2024-015 (Suspicious PowerShell Execution)
+- Severity: Medium (default), High (if download cradle detected)
+- Auto-Actions: Enrich with user context, check process tree
+
+## Testing
+- **Atomic Red Team**: T1059.001-1, T1059.001-2
+- **Manual Test**: `powershell -enc [base64-encoded whoami]`
+- **Expected Result**: Alert triggers within 5 minutes
+- **Last Validated**: 2024-03-15</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>MITRE ATT&CK-Driven Detection</h2>
+
+                <h3>Coverage Assessment</h3>
+                <p>Map existing detections to ATT&CK techniques to identify gaps:</p>
+                <div class="code-block">
+                    <pre><code>// Detection Coverage Matrix (simplified)
+| Technique | Sub-Tech | Detection Name | Platform | Confidence |
+|-----------|----------|----------------|----------|------------|
+| T1059.001 | -        | Encoded PS     | All      | High       |
+| T1059.001 | -        | PS Download    | All      | High       |
+| T1003.001 | LSASS    | LSASS Access   | EDR      | High       |
+| T1003.001 | LSASS    | Mimikatz Hash  | All      | Medium     |
+| T1547.001 | Run Keys | Registry Mod   | EDR/SIEM | Medium     |
+| T1021.002 | SMB      | Lateral SMB    | NDR/SIEM | Medium     |
+| T1021.001 | RDP      | Unusual RDP    | SIEM     | Low        |
+
+// Gap Analysis Priority
+| Tactic          | Coverage | Priority | Notes                    |
+|-----------------|----------|----------|--------------------------|
+| Initial Access  | 45%      | High     | Need email gateway int.  |
+| Execution       | 78%      | Medium   | Strong PowerShell cov.   |
+| Persistence     | 62%      | High     | Missing WMI, Services    |
+| Priv Escalation | 55%      | Medium   | Need token manipulation  |
+| Defense Evasion | 40%      | High     | Process injection gaps   |
+| Credential Acc. | 72%      | Medium   | Good LSASS coverage      |
+| Discovery       | 35%      | Low      | High FP potential        |
+| Lat. Movement   | 58%      | High     | Missing WinRM, DCOM      |
+| Collection      | 25%      | Medium   | Data staging needed      |
+| Exfiltration    | 42%      | High     | Cloud storage gaps       |
+| C2              | 48%      | High     | DNS tunneling needed     |</code></pre>
+                </div>
+
+                <h3>Detection Priority Matrix</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Weight</th>
+                            <th>Scoring Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Threat Prevalence</td>
+                            <td>25%</td>
+                            <td>How often is this technique used by threats relevant to us?</td>
+                        </tr>
+                        <tr>
+                            <td>Asset Exposure</td>
+                            <td>20%</td>
+                            <td>Which critical assets are vulnerable to this technique?</td>
+                        </tr>
+                        <tr>
+                            <td>Detection Feasibility</td>
+                            <td>20%</td>
+                            <td>Do we have the data sources? Can we build reliable detection?</td>
+                        </tr>
+                        <tr>
+                            <td>Coverage Gap</td>
+                            <td>20%</td>
+                            <td>Is this technique currently detectable by other means?</td>
+                        </tr>
+                        <tr>
+                            <td>Business Impact</td>
+                            <td>15%</td>
+                            <td>What's the potential damage if this technique succeeds?</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Testing Detections</h2>
+
+                <h3>Testing Methodologies</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Description</th>
+                            <th>Tools</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Atomic Tests</td>
+                            <td>Individual technique simulation</td>
+                            <td>Atomic Red Team, MITRE Caldera</td>
+                        </tr>
+                        <tr>
+                            <td>Attack Chains</td>
+                            <td>Multi-stage attack simulation</td>
+                            <td>MITRE ATT&CK Evaluations, Purple Team</td>
+                        </tr>
+                        <tr>
+                            <td>Replay Testing</td>
+                            <td>Replay historical attack data</td>
+                            <td>Custom scripts, log replay</td>
+                        </tr>
+                        <tr>
+                            <td>Red Team</td>
+                            <td>Adversary simulation</td>
+                            <td>Internal/external red team</td>
+                        </tr>
+                        <tr>
+                            <td>Unit Testing</td>
+                            <td>Query logic validation</td>
+                            <td>Sample datasets, test suites</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Detection Testing Checklist</h3>
+                <div class="code-block">
+                    <pre><code>## Pre-Deployment Testing
+
+### Functional Testing
+[ ] Detection triggers on known-malicious samples
+[ ] Detection triggers on Atomic Red Team test
+[ ] Detection does NOT trigger on normal activity baseline
+[ ] All required data sources are available
+[ ] Query performance is acceptable (<30 seconds)
+
+### Quality Assurance
+[ ] MITRE ATT&CK mapping is accurate
+[ ] Severity rating is appropriate
+[ ] Playbook is linked and current
+[ ] Documentation is complete
+[ ] Peer review completed
+
+### Operational Readiness
+[ ] Alert routing configured correctly
+[ ] Enrichment sources configured
+[ ] Auto-response actions tested (if applicable)
+[ ] SOC team briefed on new detection
+[ ] Runbook updated with response steps
+
+## Post-Deployment Monitoring
+[ ] Monitor FP rate for first 7 days
+[ ] Track alert volume vs. prediction
+[ ] Collect analyst feedback
+[ ] Document tuning adjustments
+[ ] Validate continued detection of test cases</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Detection-as-Code</h2>
+                <p>Treating detections as code enables version control, peer review, automated testing, and consistent deployment.</p>
+
+                <h3>Sigma Rule Example</h3>
+                <div class="code-block">
+                    <pre><code>title: Encoded PowerShell Command Execution
+id: 8d8c7a06-9e62-4c8b-8e19-8a8f8b8c8d8e
+status: production
+description: Detects execution of base64-encoded PowerShell commands
+author: Security Engineering
+date: 2024/01/15
+modified: 2024/03/20
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+tags:
+    - attack.execution
+    - attack.t1059.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - '-enc'
+            - '-encodedcommand'
+            - '-e '
+    filter_sccm:
+        ParentImage|contains: '\ccm\'
+        User|startswith: 'svc_'
+    filter_intune:
+        ParentImage|contains: 'IntuneManagementExtension'
+    condition: selection and not (filter_sccm or filter_intune)
+falsepositives:
+    - Legitimate administrative scripts
+    - Configuration management tools
+level: medium</code></pre>
+                </div>
+
+                <h3>CI/CD Pipeline for Detections</h3>
+                <div class="code-block">
+                    <pre><code># .github/workflows/detection-deploy.yml
+name: Detection Deployment Pipeline
+
+on:
+  push:
+    paths:
+      - 'detections/**/*.yml'
+  pull_request:
+    paths:
+      - 'detections/**/*.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate Sigma Rules
+        run: |
+          pip install sigma-cli
+          sigma check detections/
+      
+      - name: Run Unit Tests
+        run: |
+          python -m pytest tests/detection_tests.py
+
+  test:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Convert to Platform Format
+        run: |
+          sigma convert -t splunk detections/ -o output/splunk/
+          sigma convert -t microsoft365defender detections/ -o output/mde/
+      
+      - name: Test Against Sample Data
+        run: |
+          python scripts/test_detections.py --samples tests/samples/
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to SIEM
+        run: |
+          python scripts/deploy_detections.py --platform splunk
+          python scripts/deploy_detections.py --platform sentinel
+      
+      - name: Notify SOC
+        run: |
+          python scripts/notify_soc.py --channel detection-updates</code></pre>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Interview Q&A</h2>
+
+                <div class="qa-section">
+                    <h3>Q: How do you approach building a new detection from scratch?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> My detection development process:</p>
+                        <ol>
+                            <li><strong>Understand the threat:</strong> Research the technique deeply - read threat intel, review malware analysis, understand variations</li>
+                            <li><strong>Identify data sources:</strong> Determine what telemetry is needed and validate it's available in our environment</li>
+                            <li><strong>Define the behavior:</strong> Identify the unique/suspicious aspects that distinguish malicious from legitimate use</li>
+                            <li><strong>Draft initial logic:</strong> Write a broad detection first, run against historical data to understand the landscape</li>
+                            <li><strong>Tune iteratively:</strong> Analyze results, add exclusions for known-good patterns, refine conditions</li>
+                            <li><strong>Test with red team:</strong> Validate detection triggers on actual attack simulation</li>
+                            <li><strong>Document thoroughly:</strong> Include threat context, tuning guidance, and response procedures</li>
+                            <li><strong>Deploy gradually:</strong> Roll out to subset first, monitor for a week before full deployment</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="qa-section">
+                    <h3>Q: How do you measure detection effectiveness?</h3>
+                    <div class="answer">
+                        <p><strong>A:</strong> Key metrics for measuring detection effectiveness:</p>
+                        <ul>
+                            <li><strong>True Positive Rate:</strong> Percentage of alerts that represent actual threats</li>
+                            <li><strong>False Positive Rate:</strong> Percentage that are benign - target <20% for actionable alerts</li>
+                            <li><strong>Detection Latency:</strong> Time from attack execution to alert - target <5 minutes</li>
+                            <li><strong>Coverage Score:</strong> Percentage of relevant ATT&CK techniques with active detections</li>
+                            <li><strong>Alert-to-Incident Ratio:</strong> How many alerts lead to actual incidents</li>
+                            <li><strong>Red Team Detection Rate:</strong> Percentage of purple team exercises that trigger detections</li>
+                            <li><strong>MTTD (Mean Time to Detect):</strong> Average time to detect confirmed incidents</li>
+                        </ul>
+                        <p>I track these in dashboards and review monthly to identify detections needing improvement.</p>
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
 </body>
 </html>
