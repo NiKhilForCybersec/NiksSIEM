@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-platform="xsiam">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,7 +65,6 @@
                 </div>
             </nav>
         </aside>
-        
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
@@ -76,11 +75,9 @@
                     <span class="current">Cortex Agents</span>
                 </div>
             </header>
-            
             <main class="main-content">
                 <h1><i class="fas fa-user-secret"></i> Cortex XDR Agents</h1>
                 <p class="lead">The Cortex XDR agent provides unified endpoint protection, detection, and response capabilities, collecting rich telemetry while preventing malware, exploits, and fileless attacks.</p>
-                
                 <div class="concept-box">
                     <h3><i class="fas fa-question-circle"></i> Agent vs. Agentless</h3>
                     <p>XSIAM supports both agent-based and agentless data collection:</p>
@@ -90,9 +87,7 @@
                     </ul>
                     <p>For complete endpoint visibility and protection, the Cortex agent is essential.</p>
                 </div>
-                
                 <h2><i class="fas fa-shield-alt"></i> Agent Capabilities</h2>
-                
                 <div class="styled-table">
                     <table>
                         <thead>
@@ -141,9 +136,7 @@
                         </tbody>
                     </table>
                 </div>
-                
                 <h2><i class="fas fa-laptop"></i> Supported Platforms</h2>
-                
                 <div class="card-grid">
                     <div class="card" style="cursor: default;">
                         <div class="card-icon"><i class="fab fa-windows"></i></div>
@@ -176,9 +169,7 @@
                         <p>Container runtime security, pod-level visibility.</p>
                     </div>
                 </div>
-                
                 <h2><i class="fas fa-download"></i> Agent Deployment</h2>
-                
                 <h3>Deployment Methods</h3>
                 <div class="styled-table">
                     <table>
@@ -223,66 +214,50 @@
                         </tbody>
                     </table>
                 </div>
-                
                 <h3>Windows Installation</h3>
                 <div class="code-block">
                     <div class="code-header">Silent Installation (Command Line)</div>
                     <pre># Download installer from XSIAM console
 # Settings → Endpoints → Agent Installation
-
 # Silent install with distribution ID
 msiexec /i cortex-xdr-agent.msi /qn DISTRIBUTION_ID=&lt;YOUR_DIST_ID&gt;
-
 # With proxy configuration
 msiexec /i cortex-xdr-agent.msi /qn DISTRIBUTION_ID=&lt;ID&gt; ^
     PROXY_URL=http://proxy.corp.com:8080
-
 # Verify installation
 sc query cyserver
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info</pre>
                 </div>
-                
                 <h3>macOS Installation</h3>
                 <div class="code-block">
                     <div class="code-header">macOS Deployment</div>
                     <pre># Download PKG from XSIAM console
-
 # Install via command line
 sudo installer -pkg Cortex_XDR_Agent.pkg -target /
-
 # Grant Full Disk Access (required)
 # System Preferences → Security & Privacy → Privacy → Full Disk Access
 # Add: /Library/Application Support/PaloAltoNetworks/Traps/bin/pmd
-
 # Grant Network Extension approval
 # System Preferences → Security & Privacy → General → Allow Palo Alto
-
 # Verify installation
 /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info</pre>
                 </div>
-                
                 <h3>Linux Installation</h3>
                 <div class="code-block">
                     <div class="code-header">Linux Agent Deployment</div>
                     <pre># RHEL/CentOS
 sudo rpm -ivh cortex-xdr-agent-*.rpm
-
 # Ubuntu/Debian
 sudo dpkg -i cortex-xdr-agent-*.deb
-
 # With distribution ID
 sudo /opt/traps/bin/cytool configure distid &lt;YOUR_DIST_ID&gt;
-
 # Verify service status
 sudo systemctl status traps_pmd
-
 # Check agent connectivity
 sudo /opt/traps/bin/cytool info
 sudo /opt/traps/bin/cytool connectivity check</pre>
                 </div>
-                
                 <h2><i class="fas fa-cogs"></i> Agent Configuration</h2>
-                
                 <h3>Security Profiles</h3>
                 <div class="info-box">
                     <h4>Profile Types</h4>
@@ -294,53 +269,42 @@ sudo /opt/traps/bin/cytool connectivity check</pre>
                         <li><strong>Host Firewall Profile:</strong> Network access rules</li>
                     </ul>
                 </div>
-                
                 <h3>Common Exclusions</h3>
                 <div class="code-block">
                     <div class="code-header">Typical Exclusion Patterns</div>
                     <pre># Process Exclusions (for performance/compatibility)
 # Add via: Endpoints → Profiles → Malware → Exclusions
-
 # Backup Software
 C:\Program Files\Veeam\*
 C:\Program Files\Commvault\*
-
 # Database Engines
 C:\Program Files\Microsoft SQL Server\*\MSSQL\Binn\sqlservr.exe
 /u01/app/oracle/product/*/bin/oracle
-
 # Development Tools
 C:\Program Files\Microsoft Visual Studio\*
 /opt/jetbrains/*
-
 # Virtualization
 C:\Program Files\VMware\*
-
 # Security Tools (if compatibility issues)
 # Be cautious - verify necessity before excluding</pre>
                 </div>
-                
                 <h2><i class="fas fa-heartbeat"></i> Agent Health Monitoring</h2>
-                
                 <div class="code-block">
                     <div class="code-header">XQL: Agent Health Dashboard Queries</div>
                     <pre>// Agent connectivity status
 dataset = endpoints
 | comp count() as count by agent_status
 | alter pct = round(multiply(divide(count, sum(count)), 100), 1)
-
 // Agents not checking in (offline > 24h)
 dataset = endpoints
 | filter agent_status = "DISCONNECTED"
 | filter last_seen < ago(24h)
 | fields hostname, ip_address, os_type, last_seen, agent_version
 | sort asc last_seen
-
 // Agent version distribution
 dataset = endpoints
 | comp count() as count by agent_version
 | sort desc count
-
 // Endpoints missing agent
 dataset = asset_inventory
 | join type = left (
@@ -350,7 +314,6 @@ dataset = asset_inventory
 | filter agents.hostname = null
 | fields hostname, ip_address, os_type, asset_source</pre>
                 </div>
-                
                 <h3>Troubleshooting Commands</h3>
                 <div class="code-block">
                     <div class="code-header">Agent Diagnostic Commands</div>
@@ -358,24 +321,19 @@ dataset = asset_inventory
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connectivity check
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" log collect
-
 # Check service status
 sc query cyserver
 Get-Service -Name "Cortex XDR*"
-
 # View agent logs
 Get-Content "C:\ProgramData\Cyvera\Logs\*.log" -Tail 100
-
 # Linux
 sudo /opt/traps/bin/cytool info
 sudo /opt/traps/bin/cytool connectivity check
 sudo journalctl -u traps_pmd -f
-
 # macOS
 /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info
 /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool connectivity check</pre>
                 </div>
-                
                 <h3>Common Issues & Solutions</h3>
                 <div class="styled-table">
                     <table>
@@ -415,9 +373,7 @@ sudo journalctl -u traps_pmd -f
                         </tbody>
                     </table>
                 </div>
-                
                 <h2><i class="fas fa-terminal"></i> Live Terminal (Response)</h2>
-                
                 <div class="info-box">
                     <h4>Live Terminal Capabilities</h4>
                     <p>Remote shell access to endpoints for investigation and response:</p>
@@ -429,48 +385,37 @@ sudo journalctl -u traps_pmd -f
                         <li>Network isolation</li>
                     </ul>
                 </div>
-                
                 <div class="code-block">
                     <div class="code-header">Common Live Terminal Commands</div>
                     <pre># Process investigation
 processlist
 processlist -filter "name contains powershell"
-
 # File operations
 filelist "C:\Users\*\Downloads"
 fileinfo "C:\Windows\Temp\suspicious.exe"
 getfile "C:\Windows\Temp\suspicious.exe"
-
 # Registry investigation (Windows)
 reglist "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-
 # Network connections
 netstat
 netstat -filter "state=ESTABLISHED"
-
 # Kill malicious process
 processkill -pid 1234
-
 # Quarantine file
 filequarantine "C:\malware.exe"
-
 # Network isolation
 isolate  # Cuts all network except XSIAM communication
 unisolate  # Restores network</pre>
                 </div>
-                
                 <div class="interview-box">
                     <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you handle agent deployment at scale?"</h4>
                     <p>"For enterprise agent deployment, I use existing management infrastructure. For Windows, I create an SCCM or Intune deployment package with the MSI and distribution ID pre-configured for silent installation. I use GPO startup scripts as a fallback for machines not in SCCM. For macOS, I deploy via Jamf Pro with a PreStage enrollment that includes the Cortex agent and pre-approves the required privacy permissions via PPPC profiles. For Linux servers, I use Ansible playbooks that handle package installation and distribution ID configuration. I start with a pilot group of 5-10% of endpoints, monitor for compatibility issues for a week, then roll out in phases. I track deployment progress via XSIAM dashboards showing agent coverage percentage and any installation failures."</p>
                 </div>
-                
                 <div class="interview-box">
                     <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you troubleshoot an agent that's not connecting?"</h4>
                     <p>"I follow a systematic process. First, I verify the agent service is running - on Windows, check 'cyserver' service status. Then I run 'cytool connectivity check' to test communication with the XSIAM cloud. If that fails, I check network connectivity: can the endpoint reach the XSIAM URLs on port 443? Are there proxy requirements not configured? I review the agent logs for specific error messages. Common issues include firewall blocking outbound HTTPS, incorrect proxy settings, or certificate inspection interfering with the connection. For certificate issues, I add the XSIAM URLs to the SSL inspection bypass list. If the agent was working before, I check what changed - Windows updates, new security software, or network changes. As a last resort, I uninstall and reinstall the agent with fresh configuration."</p>
                 </div>
-                
             </main>
-            
             <footer class="main-footer">
                 <div class="footer-content">
                     <div class="footer-links">
@@ -484,7 +429,6 @@ unisolate  # Restores network</pre>
             </footer>
         </div>
     </div>
-    
     <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
     <script src="../assets/js/main.js"></script>
 </body>

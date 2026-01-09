@@ -23,20 +23,17 @@
             <li><a href="../operations/index.html">⚙️ Operations</a></li>
         </ul>
     </nav>
-
     <main class="main-content">
         <div class="content-header">
             <h1>🟠 Causality Analysis</h1>
             <p>Understand attack chains and root cause analysis using Cortex XDR's causality view</p>
         </div>
-
         <section class="content-section">
             <h2>Understanding Causality</h2>
             <div class="info-box">
                 <p>Causality Analysis automatically reconstructs the complete attack chain by linking related events across time and showing the parent-child relationships between processes, files, and network connections.</p>
             </div>
-            
-            <div class="architecture-diagram">
+            <div class="diagram-box"><div class="diagram-content">
                 <pre>
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                            CAUSALITY CHAIN EXAMPLE                               │
@@ -76,10 +73,8 @@
                 </pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Causality Chain Elements</h2>
-            
             <table class="comparison-table">
                 <thead>
                     <tr>
@@ -117,10 +112,8 @@
                 </tbody>
             </table>
         </section>
-
         <section class="content-section">
             <h2>XQL Queries for Causality Analysis</h2>
-
             <h3>Find Complete Attack Chain</h3>
             <div class="code-block">
                 <pre><code>// Get all events in a causality chain
@@ -136,7 +129,6 @@ dataset = xdr_data
          action_remote_ip
 | limit 500</code></pre>
             </div>
-
             <h3>Find Root Cause (CGO)</h3>
             <div class="code-block">
                 <pre><code>// Identify the Causality Group Owner
@@ -151,7 +143,6 @@ dataset = xdr_data
          _time
 | dedup action_process_image_name</code></pre>
             </div>
-
             <h3>Trace Process Lineage</h3>
             <div class="code-block">
                 <pre><code>// Follow process tree from suspicious child to root
@@ -170,7 +161,6 @@ dataset = xdr_data
          action_process_causality_id
 | limit 100</code></pre>
             </div>
-
             <h3>Map Attack Timeline</h3>
             <div class="code-block">
                 <pre><code>// Create timeline of attack phases
@@ -179,32 +169,24 @@ dataset = xdr_data
 | alter phase = case(
     event_type = ENUM.EVENT_TYPE_PROCESS and 
     action_process_image_name in ("outlook.exe", "chrome.exe"), "Initial Access",
-    
     event_type = ENUM.EVENT_TYPE_PROCESS and 
     actor_process_image_name contains "Office", "Execution",
-    
     event_type = ENUM.EVENT_TYPE_FILE_CREATE and
     action_file_name contains ".exe", "Payload Delivery",
-    
     event_type = ENUM.EVENT_TYPE_REGISTRY_SET_VALUE and
     action_registry_key_name contains "Run", "Persistence",
-    
     event_type = ENUM.EVENT_TYPE_OPEN_REMOTE_PROCESS_HANDLE and
     target_process_name = "lsass.exe", "Credential Access",
-    
     event_type = ENUM.EVENT_TYPE_NETWORK and
     action_remote_port in (4444, 8080, 443), "C2 Communication",
-    
     default, "Other"
 )
 | fields _time, phase, event_type, action_process_image_name, action_file_name, action_remote_ip
 | sort asc _time</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Common Attack Patterns</h2>
-
             <h3>Phishing → Macro → PowerShell</h3>
             <div class="code-block">
                 <pre><code>// Detect Office spawning suspicious children
@@ -220,7 +202,6 @@ dataset = xdr_data
          _time
 | limit 100</code></pre>
             </div>
-
             <h3>Living Off The Land (LOLBins)</h3>
             <div class="code-block">
                 <pre><code>// Detect abuse of legitimate Windows binaries
@@ -243,7 +224,6 @@ dataset = xdr_data
          _time
 | limit 100</code></pre>
             </div>
-
             <h3>Lateral Movement Chain</h3>
             <div class="code-block">
                 <pre><code>// Track lateral movement between systems
@@ -264,10 +244,8 @@ dataset = xdr_data
 | sort asc _time</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Investigation Workflow</h2>
-            
             <div class="workflow-steps">
                 <div class="workflow-step">
                     <span class="step-number">1</span>
@@ -301,27 +279,22 @@ dataset = xdr_data
                 </div>
             </div>
         </section>
-
         <section class="interview-section">
             <h2>💼 Interview Questions</h2>
-            
             <div class="interview-qa">
                 <h4>Q: How do you use Cortex XDR's causality analysis to investigate an alert?</h4>
                 <p><strong>A:</strong> When I receive an alert, I start by opening the Causality View which shows a graphical representation of the entire attack chain. I identify the Causality Group Owner (CGO) which tells me how the attack started, whether it was a phishing email, drive-by download, or compromised service. I then trace the process tree from the initial access through each phase - execution, persistence, credential access, lateral movement, etc. Each node in the chain gives me IOCs like file hashes, command lines, and network connections. I use XQL queries with the causality_id to pull all related events and build a complete timeline. This helps me understand not just what happened, but how the attacker operated and where I need to focus remediation efforts.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: What's the difference between the actor process and the action process?</h4>
                 <p><strong>A:</strong> The actor process is the parent that initiated or spawned the action. The action process is the one actually performing the suspicious activity. For example, if Word opens and runs a macro that launches PowerShell, Word is the actor process and PowerShell is the action process. Understanding this relationship is critical for root cause analysis. If I see PowerShell doing something malicious, I need to know what launched it to understand the full attack chain. In Cortex XDR, the Causality Group Owner is the ultimate root that started the entire chain, while each subsequent process has its own actor-action relationship.</p>
             </div>
         </section>
-
         <div class="navigation-links">
             <a href="response-actions.html">← Response Actions</a>
             <a href="analytics.html">Analytics →</a>
         </div>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>

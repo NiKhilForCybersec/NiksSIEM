@@ -21,18 +21,15 @@
             <li><a href="../operations/index.html">⚙️ Operations</a></li>
         </ul>
     </nav>
-
     <main class="main-content">
         <div class="content-header">
             <h1>🔴 Threat Hunting</h1>
             <p>Proactive threat detection using CrowdStrike Falcon's hunting capabilities</p>
         </div>
-
         <!-- Threat Hunting Overview -->
         <section class="content-section">
             <h2>Threat Hunting Overview</h2>
             <p>Threat hunting is the proactive, iterative search through networks and datasets to detect threats that evade existing security solutions. CrowdStrike Falcon provides powerful hunting capabilities through Event Search, scheduled searches, and integration with threat intelligence.</p>
-            
             <!-- Hunting Process Flow -->
             <div class="diagram-box">
 <pre>
@@ -54,7 +51,6 @@
 │   ◄────────────────────────────────────── ITERATE ──────────────────────────────────────────►  │
 │                                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
-
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                              CROWDSTRIKE TELEMETRY SOURCES                                       │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -85,7 +81,6 @@
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 </pre>
             </div>
-            
             <div class="grid-container">
                 <div class="grid-item highlight-card">
                     <h3>🎯 Hunting Objectives</h3>
@@ -106,7 +101,6 @@
                     </ul>
                 </div>
             </div>
-
             <h3>CrowdStrike Hunting Tools</h3>
             <table class="comparison-table">
                 <thead>
@@ -146,12 +140,10 @@
                 </tbody>
             </table>
         </section>
-
         <!-- Hunting Data Sources -->
         <section class="content-section">
             <h2>Hunting Data Sources</h2>
             <p>Understanding available telemetry is crucial for effective hunting. CrowdStrike collects comprehensive endpoint data across multiple categories.</p>
-
             <h3>Event Categories</h3>
             <table class="comparison-table">
                 <thead>
@@ -195,7 +187,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <h3>Key Telemetry Fields</h3>
             <div class="code-block">
                 <pre><code># Process Event Fields
@@ -211,33 +202,28 @@ GrandparentBaseFileName - Grandparent process
 UserName             - User context
 SHA256HashData       - File hash
 ImageSubsystem       - GUI/Console/Native
-
 # Network Event Fields
 RemoteAddressIP4     - Destination IP
 RemotePort           - Destination port
 LocalPort            - Source port
 Protocol             - Network protocol
 ConnectionDirection  - Inbound/Outbound
-
 # File Event Fields
 TargetFileName       - File path
 TargetDirectoryName  - Directory path
 FileExtension        - File extension
 MD5HashData          - MD5 hash
 SourceFileName       - Original file (for renames)
-
 # DNS Event Fields
 DomainName           - Queried domain
 QueryType            - DNS record type
 ResponseType         - Response code</code></pre>
             </div>
         </section>
-
         <!-- Hunting Methodology -->
         <section class="content-section">
             <h2>Hunting Methodology</h2>
             <p>Follow a structured approach to maximize hunting effectiveness and ensure comprehensive coverage.</p>
-
             <h3>MITRE ATT&CK-Based Hunting</h3>
             <div class="workflow-steps">
                 <div class="workflow-step">
@@ -271,46 +257,38 @@ ResponseType         - Response code</code></pre>
                     <p>Convert to scheduled search or custom IOA</p>
                 </div>
             </div>
-
             <h3>Intelligence-Led Hunting</h3>
             <div class="code-block">
                 <pre><code># Hunting Workflow for New Threat Intel
-
 # 1. Receive intelligence report (e.g., new ransomware campaign)
 # 2. Extract IOCs and TTPs from report
 # 3. Build queries for each indicator type
-
 # Hash-based IOC sweep
 #event_simpleName=ProcessRollup2 SHA256HashData IN (
     "a1b2c3d4e5f6...",
     "b2c3d4e5f6g7...",
     "c3d4e5f6g7h8..."
 )
-
 # Domain-based sweep
 #event_simpleName=DnsRequest DomainName IN (
     "malicious-c2.com",
     "*.evil-domain.net",
     "data-exfil.org"
 )
-
 # IP-based sweep  
 #event_simpleName=NetworkConnectIP4 RemoteAddressIP4 IN (
     "192.168.1.100",
     "10.0.0.50"
 )
-
 # 4. Investigate any matches
 # 5. Expand hunt to related activity
 # 6. Document and share findings</code></pre>
             </div>
         </section>
-
         <!-- Initial Access Hunting -->
         <section class="content-section">
             <h2>Initial Access Hunting</h2>
             <p>Detect techniques used by adversaries to gain initial foothold in the environment.</p>
-
             <h3>T1566 - Phishing Detection</h3>
             <div class="code-block">
                 <pre><code># Office applications spawning suspicious processes (T1566.001)
@@ -320,7 +298,6 @@ ResponseType         - Response code</code></pre>
                      "mshta.exe", "rundll32.exe", "regsvr32.exe", "certutil.exe")
 | stats count by ComputerName, UserName, ParentBaseFileName, FileName, CommandLine
 | sort -count
-
 # Macro-enabled document opens followed by network connection
 #event_simpleName=ProcessRollup2 FileName="WINWORD.EXE"
 | join aid, TargetProcessId_decimal [
@@ -328,7 +305,6 @@ ResponseType         - Response code</code></pre>
     | where RemotePort IN (80, 443, 8080, 8443)
 ]
 | stats count by ComputerName, RemoteAddressIP4, RemotePort
-
 # HTML smuggling detection
 #event_simpleName=ProcessRollup2
 | where ParentBaseFileName IN ("msedge.exe", "chrome.exe", "firefox.exe", "iexplore.exe")
@@ -336,7 +312,6 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ParentBaseFileName, FileName, CommandLine
 | where count < 10</code></pre>
             </div>
-
             <h3>T1189 - Drive-by Compromise</h3>
             <div class="code-block">
                 <pre><code># Browser spawning suspicious child processes
@@ -347,19 +322,16 @@ ResponseType         - Response code</code></pre>
 | where FilePath NOT LIKE "%\\Google\\*" AND FilePath NOT LIKE "%\\Mozilla\\*"
 | stats count by ComputerName, ParentBaseFileName, FileName, FilePath, CommandLine
 | sort -count
-
 # Exploit kit landing page patterns (suspicious JavaScript execution)
 #event_simpleName=ProcessRollup2 ParentBaseFileName="wscript.exe"
 | where FilePath LIKE "%\\Temp\\*" OR FilePath LIKE "%\\Downloads\\*"
 | stats count by ComputerName, FileName, FilePath, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Execution Hunting -->
         <section class="content-section">
             <h2>Execution Hunting</h2>
             <p>Detect techniques adversaries use to run malicious code.</p>
-
             <h3>T1059.001 - PowerShell</h3>
             <div class="code-block">
                 <pre><code># Encoded PowerShell commands
@@ -368,20 +340,17 @@ ResponseType         - Response code</code></pre>
     OR CommandLine LIKE "*encodedcommand*" OR CommandLine LIKE "*FromBase64*"
 | stats count by ComputerName, UserName, ParentBaseFileName, CommandLine
 | sort -count
-
 # PowerShell download cradles
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*DownloadString*" OR CommandLine LIKE "*DownloadFile*"
     OR CommandLine LIKE "*WebClient*" OR CommandLine LIKE "*Invoke-WebRequest*"
     OR CommandLine LIKE "*iwr *" OR CommandLine LIKE "*wget *" OR CommandLine LIKE "*curl *"
 | stats count by ComputerName, UserName, ParentBaseFileName, CommandLine
-
 # PowerShell with suspicious flags
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*-nop*" AND CommandLine LIKE "*-w hidden*"
 | where CommandLine LIKE "*-exec bypass*" OR CommandLine LIKE "*-ep bypass*"
 | stats count by ComputerName, ParentBaseFileName, CommandLine
-
 # PowerShell spawned by unusual parents
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where ParentBaseFileName NOT IN ("explorer.exe", "cmd.exe", "powershell.exe", 
@@ -390,7 +359,6 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ParentBaseFileName, CommandLine
 | sort -count</code></pre>
             </div>
-
             <h3>T1059.003 - Windows Command Shell</h3>
             <div class="code-block">
                 <pre><code># CMD with suspicious command patterns
@@ -398,7 +366,6 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*echo*|*" OR CommandLine LIKE "*&*&*"
     OR CommandLine LIKE "*>*>*" OR CommandLine LIKE "*^*^*"
 | stats count by ComputerName, ParentBaseFileName, CommandLine
-
 # CMD spawning reconnaissance commands
 #event_simpleName=ProcessRollup2 ParentBaseFileName="cmd.exe"
 | where FileName IN ("whoami.exe", "net.exe", "nltest.exe", "ipconfig.exe",
@@ -407,13 +374,11 @@ ResponseType         - Response code</code></pre>
 | stats count, dc(FileName) as UniqueCommands by _time, ComputerName, UserName
 | where UniqueCommands > 3
 | sort -count
-
 # Obfuscated CMD commands
 #event_simpleName=ProcessRollup2 FileName="cmd.exe"
 | where CommandLine LIKE "*%*%*" AND CommandLine LIKE "*:~*"
 | stats count by ComputerName, CommandLine</code></pre>
             </div>
-
             <h3>T1218 - System Binary Proxy Execution</h3>
             <div class="code-block">
                 <pre><code># Mshta executing remote content (T1218.005)
@@ -421,26 +386,22 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*http*" OR CommandLine LIKE "*javascript*"
     OR CommandLine LIKE "*vbscript*"
 | stats count by ComputerName, ParentBaseFileName, CommandLine
-
 # Regsvr32 Squiblydoo technique (T1218.010)
 #event_simpleName=ProcessRollup2 FileName="regsvr32.exe"
 | where CommandLine LIKE "*/s*" AND (CommandLine LIKE "*/i:http*" 
     OR CommandLine LIKE "*scrobj.dll*")
 | stats count by ComputerName, CommandLine
-
 # Rundll32 with suspicious execution (T1218.011)
 #event_simpleName=ProcessRollup2 FileName="rundll32.exe"
 | where CommandLine LIKE "*javascript:*" OR CommandLine LIKE "*vbscript:*"
     OR CommandLine LIKE "*shell32.dll,Control_RunDLL*" OR CommandLine LIKE "*.dll,#*"
     OR FilePath LIKE "%\\Temp\\*" OR FilePath LIKE "%\\Downloads\\*"
 | stats count by ComputerName, ParentBaseFileName, CommandLine
-
 # Certutil for download (T1218)
 #event_simpleName=ProcessRollup2 FileName="certutil.exe"
 | where CommandLine LIKE "*-urlcache*" OR CommandLine LIKE "*-split*"
     OR CommandLine LIKE "*http*"
 | stats count by ComputerName, UserName, CommandLine
-
 # WMIC suspicious execution (T1218)
 #event_simpleName=ProcessRollup2 FileName="wmic.exe"
 | where CommandLine LIKE "*process call create*" OR CommandLine LIKE "*/format:*http*"
@@ -448,12 +409,10 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ParentBaseFileName, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Persistence Hunting -->
         <section class="content-section">
             <h2>Persistence Hunting</h2>
             <p>Detect techniques used to maintain access across system restarts.</p>
-
             <h3>T1547.001 - Registry Run Keys</h3>
             <div class="code-block">
                 <pre><code># New Run key entries
@@ -462,14 +421,12 @@ ResponseType         - Response code</code></pre>
     OR RegObjectName LIKE "*\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run*"
 | stats count by ComputerName, RegObjectName, RegValueName, RegStringValue
 | sort -count
-
 # Suspicious Run key values (executables in unusual locations)
 #event_simpleName=AsepValueUpdate
 | where RegObjectName LIKE "*\\Run*"
 | where RegStringValue LIKE "%\\Temp\\*" OR RegStringValue LIKE "%\\AppData\\Local\\Temp\\*"
     OR RegStringValue LIKE "%\\Downloads\\*" OR RegStringValue LIKE "%\\ProgramData\\*"
 | stats count by ComputerName, RegValueName, RegStringValue
-
 # Run key modification by non-standard processes
 #event_simpleName=AsepValueUpdate
 | where RegObjectName LIKE "*\\Run*"
@@ -477,7 +434,6 @@ ResponseType         - Response code</code></pre>
                                     "installer.exe", "chrome.exe", "msedge.exe")
 | stats count by ComputerName, ContextBaseFileName, RegValueName, RegStringValue</code></pre>
             </div>
-
             <h3>T1053.005 - Scheduled Tasks</h3>
             <div class="code-block">
                 <pre><code># Scheduled task creation events
@@ -485,39 +441,33 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*/create*"
 | stats count by ComputerName, UserName, CommandLine
 | sort -count
-
 # Tasks running executables from suspicious locations
 #event_simpleName=ProcessRollup2 ParentBaseFileName="taskeng.exe" OR ParentBaseFileName="taskhostw.exe"
 | where FilePath LIKE "%\\Temp\\*" OR FilePath LIKE "%\\AppData\\*"
     OR FilePath LIKE "%\\ProgramData\\*" OR FilePath LIKE "%\\Users\\Public\\*"
 | stats count by ComputerName, FileName, FilePath, CommandLine
-
 # Scheduled task file creation
 #event_simpleName=FileWritten
 | where TargetFileName LIKE "*\\Windows\\System32\\Tasks\\*"
 | stats count by ComputerName, ContextBaseFileName, TargetFileName</code></pre>
             </div>
-
             <h3>T1543.003 - Windows Services</h3>
             <div class="code-block">
                 <pre><code># New service creation via sc.exe
 #event_simpleName=ProcessRollup2 FileName="sc.exe"
 | where CommandLine LIKE "*create*" OR CommandLine LIKE "*config*"
 | stats count by ComputerName, UserName, CommandLine
-
 # Services running from unusual locations
 #event_simpleName=ProcessRollup2 ParentBaseFileName="services.exe"
 | where FilePath NOT LIKE "%\\Windows\\*" AND FilePath NOT LIKE "%\\Program Files*"
 | stats count by ComputerName, FileName, FilePath, CommandLine
 | sort -count
-
 # PowerShell service manipulation
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*New-Service*" OR CommandLine LIKE "*Set-Service*"
     OR CommandLine LIKE "*sc.exe*create*"
 | stats count by ComputerName, CommandLine</code></pre>
             </div>
-
             <h3>T1546.003 - WMI Event Subscription</h3>
             <div class="code-block">
                 <pre><code># WMI event subscription creation
@@ -526,19 +476,16 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*__EventFilter*" OR CommandLine LIKE "*__EventConsumer*"
     OR CommandLine LIKE "*__FilterToConsumerBinding*"
 | stats count by ComputerName, UserName, CommandLine
-
 # WMI scrcons.exe execution (WMI script consumer)
 #event_simpleName=ProcessRollup2 ParentBaseFileName="wmiprvse.exe"
 | where FileName="scrcons.exe" OR FileName IN ("powershell.exe", "cmd.exe", "wscript.exe")
 | stats count by ComputerName, FileName, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Privilege Escalation Hunting -->
         <section class="content-section">
             <h2>Privilege Escalation Hunting</h2>
             <p>Detect techniques to gain elevated permissions.</p>
-
             <h3>T1055 - Process Injection</h3>
             <div class="code-block">
                 <pre><code># Process injection indicators (CreateRemoteThread)
@@ -546,14 +493,12 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ContextProcessId_decimal, ContextBaseFileName, 
                   TargetProcessId_decimal, TargetProcessFileName
 | sort -count
-
 # Unusual process spawning SYSTEM processes
 #event_simpleName=ProcessRollup2
 | where UserName="SYSTEM" AND UserSid_readable NOT LIKE "*S-1-5-18*"
 | where ParentBaseFileName NOT IN ("services.exe", "lsass.exe", "svchost.exe", 
                                    "wininit.exe", "smss.exe", "csrss.exe")
 | stats count by ComputerName, ParentBaseFileName, FileName, CommandLine
-
 # Hollowing indicators - process with mismatched image
 #event_simpleName=ProcessRollup2
 | where ImageSubsystem="Windows_GUI" 
@@ -561,7 +506,6 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, FileName, ParentBaseFileName, CommandLine
 | where CommandLine="" OR CommandLine NOT LIKE "*-k *"</code></pre>
             </div>
-
             <h3>T1548.002 - UAC Bypass</h3>
             <div class="code-block">
                 <pre><code># Known UAC bypass techniques
@@ -571,14 +515,12 @@ ResponseType         - Response code</code></pre>
     OR (FileName="computerdefaults.exe")
     OR (FileName="sdclt.exe" AND CommandLine LIKE "*/kickoffelev*")
 | stats count by ComputerName, FileName, ParentBaseFileName, CommandLine
-
 # Auto-elevated processes spawning suspicious children
 #event_simpleName=ProcessRollup2
 | where ParentBaseFileName IN ("eventvwr.exe", "fodhelper.exe", "sdclt.exe", 
                                "computerdefaults.exe", "cmstp.exe")
 | where FileName IN ("cmd.exe", "powershell.exe", "mshta.exe")
 | stats count by ComputerName, ParentBaseFileName, FileName, CommandLine
-
 # Registry key modifications for UAC bypass
 #event_simpleName=RegGenericValueCreate
 | where RegObjectName LIKE "*\\mscfile\\shell\\open\\command*"
@@ -586,12 +528,10 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ContextBaseFileName, RegObjectName, RegStringValue</code></pre>
             </div>
         </section>
-
         <!-- Defense Evasion Hunting -->
         <section class="content-section">
             <h2>Defense Evasion Hunting</h2>
             <p>Detect techniques used to avoid security controls.</p>
-
             <h3>T1562.001 - Disable Security Tools</h3>
             <div class="code-block">
                 <pre><code># Attempts to stop security services
@@ -602,7 +542,6 @@ ResponseType         - Response code</code></pre>
     OR CommandLine LIKE "*security*" OR CommandLine LIKE "*antivirus*"
     OR CommandLine LIKE "*falcon*" OR CommandLine LIKE "*crowdstrike*"
 | stats count by ComputerName, UserName, FileName, CommandLine
-
 # Registry tampering with security settings
 #event_simpleName=RegGenericValueSet
 | where RegObjectName LIKE "*\\Windows Defender\\*"
@@ -610,40 +549,34 @@ ResponseType         - Response code</code></pre>
 | where RegValueName IN ("DisableAntiSpyware", "DisableRealtimeMonitoring",
                          "DisableBehaviorMonitoring", "DisableOnAccessProtection")
 | stats count by ComputerName, RegObjectName, RegValueName, RegNumericValue
-
 # PowerShell disabling AMSI
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*AmsiUtils*" OR CommandLine LIKE "*amsiContext*"
     OR CommandLine LIKE "*amsiInitFailed*"
 | stats count by ComputerName, UserName, CommandLine</code></pre>
             </div>
-
             <h3>T1070 - Indicator Removal</h3>
             <div class="code-block">
                 <pre><code># Event log clearing (T1070.001)
 #event_simpleName=ProcessRollup2
 | where FileName="wevtutil.exe" AND CommandLine LIKE "*cl *"
 | stats count by ComputerName, UserName, CommandLine
-
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*Clear-EventLog*" OR CommandLine LIKE "*Remove-EventLog*"
     OR CommandLine LIKE "*wevtutil*cl*"
 | stats count by ComputerName, CommandLine
-
 # File deletion of logs or evidence (T1070.004)
 #event_simpleName=ProcessRollup2
 | where FileName IN ("del.exe", "erase.exe", "rm.exe", "sdelete.exe", "cipher.exe")
 | where CommandLine LIKE "*\\Windows\\Logs\\*" OR CommandLine LIKE "*\\System32\\winevt\\*"
     OR CommandLine LIKE "*\\.log*" OR CommandLine LIKE "*/p*" OR CommandLine LIKE "*/w*"
 | stats count by ComputerName, FileName, CommandLine
-
 # Timestomping indicators (T1070.006)
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*[System.IO.File]::SetCreationTime*"
     OR CommandLine LIKE "*[System.IO.File]::SetLastWriteTime*"
 | stats count by ComputerName, CommandLine</code></pre>
             </div>
-
             <h3>T1036 - Masquerading</h3>
             <div class="code-block">
                 <pre><code># Process name typosquatting
@@ -651,32 +584,27 @@ ResponseType         - Response code</code></pre>
 | where FileName IN ("svch0st.exe", "scvhost.exe", "svchosts.exe", "svchost.exe.exe",
                      "csrs.exe", "lsas.exe", "explore.exe", "expiorer.exe")
 | stats count by ComputerName, FileName, FilePath, CommandLine
-
 # Legitimate names from wrong locations
 #event_simpleName=ProcessRollup2
 | where FileName IN ("svchost.exe", "csrss.exe", "lsass.exe", "services.exe", "smss.exe")
 | where FilePath NOT LIKE "%\\Windows\\System32\\*" 
     AND FilePath NOT LIKE "%\\Windows\\SysWOW64\\*"
 | stats count by ComputerName, FileName, FilePath
-
 # Double file extensions
 #event_simpleName=FileWritten
 | where TargetFileName LIKE "%.pdf.exe" OR TargetFileName LIKE "%.doc.exe"
     OR TargetFileName LIKE "%.jpg.exe" OR TargetFileName LIKE "%.txt.exe"
 | stats count by ComputerName, ContextBaseFileName, TargetFileName
-
 # Right-to-left override character in filenames
 #event_simpleName=ProcessRollup2
 | where FileName LIKE "*\\u202e*" OR CommandLine LIKE "*\\u202e*"
 | stats count by ComputerName, FileName, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Credential Access Hunting -->
         <section class="content-section">
             <h2>Credential Access Hunting</h2>
             <p>Detect techniques to steal credentials.</p>
-
             <h3>T1003.001 - LSASS Memory Dumping</h3>
             <div class="code-block">
                 <pre><code># LSASS access by non-standard processes
@@ -686,19 +614,16 @@ ResponseType         - Response code</code></pre>
                                     "MsMpEng.exe", "vmtoolsd.exe", "WmiPrvSE.exe")
 | stats count by ComputerName, ContextBaseFileName, AccessMask_decimal
 | sort -count
-
 # Credential dumping tools
 #event_simpleName=ProcessRollup2
 | where FileName IN ("mimikatz.exe", "procdump.exe", "sqldumper.exe") 
     OR CommandLine LIKE "*sekurlsa*" OR CommandLine LIKE "*lsadump*"
     OR CommandLine LIKE "*minidump*" OR CommandLine LIKE "*MiniDumpWriteDump*"
 | stats count by ComputerName, FileName, CommandLine
-
 # Comsvcs.dll for LSASS dump
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*comsvcs*" AND CommandLine LIKE "*MiniDump*"
 | stats count by ComputerName, ParentBaseFileName, CommandLine
-
 # Task Manager LSASS dump
 #event_simpleName=ProcessRollup2 FileName="taskmgr.exe"
 | join aid, TargetProcessId_decimal [
@@ -706,7 +631,6 @@ ResponseType         - Response code</code></pre>
 ]
 | stats count by ComputerName</code></pre>
             </div>
-
             <h3>T1555.003 - Credentials from Web Browsers</h3>
             <div class="code-block">
                 <pre><code># Access to browser credential stores
@@ -718,14 +642,12 @@ ResponseType         - Response code</code></pre>
 | where ContextBaseFileName NOT IN ("chrome.exe", "msedge.exe", "firefox.exe", 
                                     "brave.exe", "opera.exe")
 | stats count by ComputerName, ContextBaseFileName, TargetFileName
-
 # Suspicious SQLite access (browser databases)
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*Login Data*" OR CommandLine LIKE "*Web Data*"
     OR CommandLine LIKE "*Cookies*"
 | stats count by ComputerName, FileName, CommandLine</code></pre>
             </div>
-
             <h3>T1558 - Kerberos Attacks</h3>
             <div class="code-block">
                 <pre><code># Kerberoasting indicators
@@ -733,13 +655,11 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*GetUserSPNs*" OR CommandLine LIKE "*kerberoast*"
     OR CommandLine LIKE "*Invoke-Kerberoast*" OR CommandLine LIKE "*-request*spn*"
 | stats count by ComputerName, UserName, CommandLine
-
 # Rubeus execution
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*rubeus*" OR CommandLine LIKE "*asreproast*"
     OR CommandLine LIKE "*kerberoast*" OR CommandLine LIKE "*harvest*"
 | stats count by ComputerName, UserName, FileName, CommandLine
-
 # Mimikatz Kerberos commands
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*kerberos::*" OR CommandLine LIKE "*golden*"
@@ -747,34 +667,28 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Lateral Movement Hunting -->
         <section class="content-section">
             <h2>Lateral Movement Hunting</h2>
             <p>Detect techniques for moving across systems.</p>
-
             <h3>T1021.002 - SMB/Windows Admin Shares</h3>
             <div class="code-block">
                 <pre><code># PsExec and similar tool usage
 #event_simpleName=ProcessRollup2 FileName="psexec.exe" OR FileName="psexec64.exe"
 | stats count by ComputerName, UserName, CommandLine
-
 # PSEXESVC service indicators
 #event_simpleName=ProcessRollup2 FileName="psexesvc.exe"
 | stats count by ComputerName, UserName, CommandLine
-
 # Remote service creation via SCM
 #event_simpleName=ProcessRollup2 FileName="sc.exe"
 | where CommandLine LIKE "*\\\\*" AND CommandLine LIKE "*create*"
 | stats count by ComputerName, UserName, CommandLine
-
 # File copies to admin shares
 #event_simpleName=ProcessRollup2
 | where CommandLine LIKE "*\\\\*\\C$*" OR CommandLine LIKE "*\\\\*\\ADMIN$*"
     OR CommandLine LIKE "*\\\\*\\IPC$*"
 | stats count by ComputerName, FileName, CommandLine</code></pre>
             </div>
-
             <h3>T1021.006 - WinRM</h3>
             <div class="code-block">
                 <pre><code># PowerShell remoting usage
@@ -782,49 +696,41 @@ ResponseType         - Response code</code></pre>
 | where CommandLine LIKE "*Enter-PSSession*" OR CommandLine LIKE "*Invoke-Command*"
     OR CommandLine LIKE "*New-PSSession*" OR CommandLine LIKE "*-ComputerName*"
 | stats count by ComputerName, UserName, CommandLine
-
 # WinRM service host spawning processes
 #event_simpleName=ProcessRollup2 ParentBaseFileName="wsmprovhost.exe"
 | stats count by ComputerName, FileName, CommandLine
 | sort -count
-
 # WinRS remote execution
 #event_simpleName=ProcessRollup2 FileName="winrs.exe"
 | stats count by ComputerName, UserName, CommandLine</code></pre>
             </div>
-
             <h3>T1021.001 - RDP</h3>
             <div class="code-block">
                 <pre><code># RDP connections initiated
 #event_simpleName=ProcessRollup2 FileName="mstsc.exe"
 | stats count, dc(CommandLine) as UniqueTargets by ComputerName, UserName
 | sort -count
-
 # RDP session starts (Event ID 21, 25 equivalent)
 #event_simpleName=UserLogon LogonType_decimal=10
 | stats count by ComputerName, UserName, RemoteAddressIP4
 | sort -count
-
 # Unusual RDP authentication times
 #event_simpleName=UserLogon LogonType_decimal=10
 | bucket _time span=1h
 | stats count by _time, ComputerName
 | where count > 5</code></pre>
             </div>
-
             <h3>T1047 - WMI</h3>
             <div class="code-block">
                 <pre><code># Remote WMI execution
 #event_simpleName=ProcessRollup2 FileName="wmic.exe"
 | where CommandLine LIKE "*/node:*"
 | stats count by ComputerName, UserName, CommandLine
-
 # WMI provider host spawning suspicious processes
 #event_simpleName=ProcessRollup2 ParentBaseFileName="wmiprvse.exe"
 | where FileName NOT IN ("scrcons.exe", "mofcomp.exe", "wmiperfclass.dll")
 | stats count by ComputerName, FileName, CommandLine
 | sort -count
-
 # PowerShell WMI execution
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
 | where CommandLine LIKE "*Invoke-WmiMethod*" OR CommandLine LIKE "*Get-WmiObject*"
@@ -833,12 +739,10 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, CommandLine</code></pre>
             </div>
         </section>
-
         <!-- Exfiltration Hunting -->
         <section class="content-section">
             <h2>Exfiltration & C2 Hunting</h2>
             <p>Detect data theft and command-and-control communications.</p>
-
             <h3>T1071 - Application Layer Protocol</h3>
             <div class="code-block">
                 <pre><code># Unusual DNS query volumes (potential DNS tunneling)
@@ -847,20 +751,17 @@ ResponseType         - Response code</code></pre>
 | stats count, dc(DomainName) as UniqueDomains by _time, ComputerName
 | where count > 1000 OR UniqueDomains > 500
 | sort -count
-
 # Long subdomain queries (DNS tunneling indicator)
 #event_simpleName=DnsRequest
 | eval SubdomainLength=length(DomainName)
 | where SubdomainLength > 50
 | stats count by ComputerName, DomainName
 | sort -count
-
 # Connections to rare domains
 #event_simpleName=DnsRequest
 | stats count, dc(aid) as UniqueHosts by DomainName
 | where UniqueHosts = 1 AND count > 100
 | sort -count
-
 # Non-browser HTTP traffic on unusual ports
 #event_simpleName=NetworkConnectIP4
 | where RemotePort NOT IN (80, 443, 8080, 8443)
@@ -869,7 +770,6 @@ ResponseType         - Response code</code></pre>
 | stats count by ComputerName, ContextBaseFileName, RemotePort, RemoteAddressIP4
 | sort -count</code></pre>
             </div>
-
             <h3>T1567 - Exfiltration Over Web Service</h3>
             <div class="code-block">
                 <pre><code># Connections to known file sharing services
@@ -879,14 +779,12 @@ ResponseType         - Response code</code></pre>
                        "*.ngrok.io", "*.serveo.net")
 | stats count by ComputerName, ContextBaseFileName, DomainName
 | sort -count
-
 # Large outbound transfers
 #event_simpleName=NetworkConnectIP4
 | where BytesSent_decimal > 50000000  # 50MB
 | stats count, sum(BytesSent_decimal) as TotalBytes by ComputerName, 
        ContextBaseFileName, RemoteAddressIP4
 | sort -TotalBytes
-
 # Cloud storage uploads from unusual processes
 #event_simpleName=NetworkConnectIP4
 | where ContextBaseFileName NOT IN ("OneDrive.exe", "Dropbox.exe", "googledrivesync.exe")
@@ -897,7 +795,6 @@ ResponseType         - Response code</code></pre>
 ]
 | stats count by ComputerName, ContextBaseFileName, DomainName</code></pre>
             </div>
-
             <h3>Beaconing Detection</h3>
             <div class="code-block">
                 <pre><code># Periodic network connections (beaconing)
@@ -909,7 +806,6 @@ ResponseType         - Response code</code></pre>
 | where std_count < 0.5 AND avg_count > 0
 | stats count by ComputerName, ContextBaseFileName, RemoteAddressIP4, RemotePort
 | where count > 50
-
 # Jitter analysis for C2 detection
 #event_simpleName=NetworkConnectIP4
 | transaction ComputerName, RemoteAddressIP4 maxspan=1h
@@ -920,29 +816,24 @@ ResponseType         - Response code</code></pre>
 | sort -count</code></pre>
             </div>
         </section>
-
         <!-- Scheduled Hunts -->
         <section class="content-section">
             <h2>Operationalizing Hunts</h2>
             <p>Convert successful hunts into automated detection.</p>
-
             <h3>Creating Scheduled Searches</h3>
             <div class="code-block">
                 <pre><code># Navigate to Scheduled Searches
 Investigate → Scheduled Searches → Create Search
-
 # Configuration Example
 Name: Hunt - Encoded PowerShell Commands
 Description: Detect base64-encoded PowerShell execution
 Query: #event_simpleName=ProcessRollup2 FileName="powershell.exe"
        | where CommandLine LIKE "*-enc*" OR CommandLine LIKE "*encodedcommand*"
        | stats count by ComputerName, UserName, ParentBaseFileName, CommandLine
-
 Schedule: Every 4 hours
 Notification: SOC-alerts@company.com
 Alert threshold: Any results
 Time range: Last 4 hours
-
 # Best Practices:
 - Match schedule interval to time range
 - Set appropriate alert thresholds
@@ -950,23 +841,18 @@ Time range: Last 4 hours
 - Include description of detection purpose
 - Test query before scheduling</code></pre>
             </div>
-
             <h3>Converting to Custom IOA</h3>
             <div class="code-block">
                 <pre><code># Hunt Finding → Custom IOA Workflow
-
 # 1. Document successful hunt query
 Hunt Query: #event_simpleName=ProcessRollup2
             | where ParentBaseFileName="mshta.exe" 
             | where FileName IN ("powershell.exe", "cmd.exe")
-
 # 2. Extract detection logic
 Pattern: mshta.exe spawning PowerShell or cmd
 MITRE: T1218.005 - Mshta
-
 # 3. Create Custom IOA Rule
 Navigate: Configuration → Custom IOA → Create Rule Group (or add to existing)
-
 Rule Configuration:
 - Name: Mshta Spawning Command Shell
 - Description: Detects mshta.exe spawning PowerShell or CMD (T1218.005)
@@ -974,39 +860,32 @@ Rule Configuration:
 - Rule Type: Process Creation
 - Severity: High
 - Action: Detect (initially), then Block after testing
-
 Conditions:
 - ParentImageFileName Contains: mshta.exe
 - ImageFileName In: cmd.exe, powershell.exe
-
 # 4. Test in detect-only mode
 # 5. Review alerts for 1-2 weeks
 # 6. Create exclusions for legitimate use
 # 7. Enable blocking action
 # 8. Document in detection catalog</code></pre>
             </div>
-
             <h3>Hunt Documentation Template</h3>
             <div class="code-block">
                 <pre><code># Threat Hunt Report Template
-
 ## Hunt Metadata
 Hunt ID: HUNT-2025-0042
 Hunter: [Analyst Name]
 Date: 2025-01-15
 Duration: 4 hours
 Scope: All Windows endpoints (15,000 hosts)
-
 ## Hypothesis
 Adversaries may use encoded PowerShell commands to evade detection
 when executing malicious payloads. This hunt aims to identify
 encoded command execution patterns.
-
 ## MITRE ATT&CK Mapping
 - Tactic: Execution (TA0002)
 - Technique: T1059.001 - PowerShell
 - Sub-technique: Encoded Commands
-
 ## Hunt Query
 ```
 #event_simpleName=ProcessRollup2 FileName="powershell.exe"
@@ -1014,13 +893,11 @@ encoded command execution patterns.
 | where ParentBaseFileName NOT IN ("svchost.exe", "CcmExec.exe")
 | stats count by ComputerName, UserName, ParentBaseFileName, CommandLine
 ```
-
 ## Results Summary
 - Total results: 47
 - True positives: 2
 - False positives: 45
 - Hosts affected: 3
-
 ## Findings
 ### Finding 1: Suspicious Encoded PowerShell
 - Host: WORKSTATION-042
@@ -1028,18 +905,15 @@ encoded command execution patterns.
 - Parent: outlook.exe
 - Assessment: TRUE POSITIVE - Possible phishing
 - Action: Escalated to IR team (INC-2025-0789)
-
 ### Finding 2: SCCM Deployment Script
 - Hosts: Multiple (43)
 - Assessment: FALSE POSITIVE - Legitimate deployment
 - Action: Added IOA exclusion for CcmExec.exe parent
-
 ## Recommendations
 1. Create scheduled search for continuous monitoring
 2. Update IOA rule to include decoded command analysis
 3. Exclude SCCM deployment pattern
 4. Consider blocking encoded commands from Office apps
-
 ## Follow-up Actions
 - [ ] Create scheduled search
 - [ ] Update detection rules
@@ -1047,40 +921,32 @@ encoded command execution patterns.
 - [ ] Brief SOC team</code></pre>
             </div>
         </section>
-
         <!-- Interview Questions -->
         <section class="interview-section">
             <h2>💼 Interview Questions</h2>
-            
             <div class="interview-qa">
                 <h4>Q: How do you approach threat hunting in CrowdStrike?</h4>
                 <p><strong>A:</strong> I use a structured methodology. First, I develop a hypothesis based on threat intelligence, MITRE ATT&CK techniques, or environmental concerns. For example, "Are there any indicators of Kerberoasting in our environment?" Then I identify relevant data sources - for Kerberoasting, I'd look at ProcessRollup2 events with specific command patterns. I build Event Search queries to test the hypothesis, starting broad then narrowing down. I analyze results to identify anomalies vs. legitimate activity. For any suspicious findings, I pivot to related events - process trees, network connections, file operations. I document findings and either escalate true positives to IR or convert the query into a scheduled search or custom IOA for ongoing monitoring. The key is iterating based on results.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: What data sources do you prioritize when hunting for lateral movement?</h4>
                 <p><strong>A:</strong> For lateral movement, I focus on several key event types. ProcessRollup2 for execution of remote administration tools like PsExec, WinRM, and WMI commands. I look for wsmprovhost.exe and wmiprvse.exe spawning child processes which indicates remote PowerShell or WMI execution. NetworkConnectIP4 events for internal SMB connections (port 445) and WinRM (5985/5986). UserLogon events with LogonType 3 (network) or 10 (RDP) help identify authentication patterns. I correlate these - for example, a new network logon followed quickly by process execution is suspicious. I also watch for lateral tool transfer - files written to admin shares (C$, ADMIN$). The pattern of activity across hosts tells the story of lateral movement.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: How do you detect living-off-the-land (LOTL) attacks?</h4>
                 <p><strong>A:</strong> LOTL attacks use legitimate system tools maliciously, so context is everything. I look for unusual parent-child process relationships - like WMI spawning PowerShell, or Office applications spawning cmd.exe. I analyze command line arguments for suspicious patterns - encoded commands, download cradles, or reconnaissance commands. I check process execution from unusual locations - legitimate tools should run from System32, not Temp folders. I look for chained execution - multiple reconnaissance commands in sequence suggests enumeration. I monitor for misuse of specific binaries: certutil for downloads, mshta for script execution, regsvr32 for DLL loading. Baseline normal behavior first, then flag deviations. Event Search with parent process context is invaluable here.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: How do you operationalize a successful threat hunt?</h4>
                 <p><strong>A:</strong> When a hunt identifies a genuine detection opportunity, I follow a process to operationalize it. First, document the hunt thoroughly - hypothesis, query, results, analysis. Refine the query to reduce false positives while maintaining detection capability. Create a scheduled search that runs automatically - I match the schedule interval to the query's time range. Set appropriate alerting thresholds. If the pattern is suitable for real-time detection, I convert it to a custom IOA rule - start in detect mode, monitor for false positives, add exclusions as needed, then enable blocking if appropriate. I add the detection to our coverage matrix mapped to MITRE ATT&CK. Finally, brief the SOC team on the new detection and update runbooks with analysis guidance. The goal is making the hunt's findings persistent and automated.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: How do you hunt for command and control (C2) activity?</h4>
                 <p><strong>A:</strong> C2 hunting requires multiple approaches. For network-based detection, I analyze DNS queries for high volumes, long subdomains (possible tunneling), or connections to newly registered domains. I look for beaconing patterns - regular periodic connections with consistent intervals and low jitter. I check for connections to unusual ports or protocols by non-browser processes. For host-based indicators, I look for persistent processes making regular network connections, especially those spawned by suspicious parent processes. I watch for connections to cloud services that could be used for C2 - Slack, Discord, cloud storage. I correlate network events with process context - what process is making the connection? I use threat intelligence feeds to hunt for known C2 infrastructure. The combination of timing patterns, destination analysis, and process context helps identify C2.</p>
             </div>
         </section>
-
         <div class="navigation-links">
             <a href="detection-tuning.html">← Detection Tuning</a>
-            
         </div>
     </main>
     <script src="../assets/js/main.js"></script>

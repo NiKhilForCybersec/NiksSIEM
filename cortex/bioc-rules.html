@@ -23,16 +23,14 @@
             <li><a href="../operations/index.html">⚙️ Operations</a></li>
         </ul>
     </nav>
-
     <main class="main-content">
         <div class="content-header">
             <h1>🟠 BIOC (Behavioral IOC) Rules</h1>
             <p>Create custom behavioral detection rules using XQL to detect advanced threats</p>
         </div>
-
         <section class="content-section">
             <h2>BIOC Rule Architecture</h2>
-            <div class="architecture-diagram">
+            <div class="diagram-box"><div class="diagram-content">
                 <pre>
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                           BIOC RULE PROCESSING FLOW                              │
@@ -56,15 +54,12 @@
                 </pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>BIOC Rule Structure</h2>
-            
             <div class="info-box">
                 <h4>Rule Components</h4>
                 <p>Every BIOC rule consists of the following elements:</p>
             </div>
-
             <div class="code-block">
                 <pre><code># BIOC Rule JSON Structure
 {
@@ -83,7 +78,6 @@
     }
 }</code></pre>
             </div>
-
             <h3>Severity Levels</h3>
             <table class="comparison-table">
                 <thead>
@@ -128,15 +122,12 @@
                 </tbody>
             </table>
         </section>
-
         <section class="content-section">
             <h2>BIOC Rule Examples</h2>
-
             <h3>Credential Access Detection</h3>
             <div class="code-block">
                 <pre><code># BIOC: LSASS Memory Access Detection
 # Detects processes accessing LSASS memory (credential dumping indicator)
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_OPEN_REMOTE_PROCESS_HANDLE
 | filter target_process_name contains "lsass"
@@ -156,7 +147,6 @@ dataset = xdr_data
          action_process_username,
          action_process_sha256
 | limit 100
-
 # Rule Configuration
 {
     "name": "LSASS Memory Access - Possible Credential Dumping",
@@ -165,12 +155,10 @@ dataset = xdr_data
     "mitre_technique": "T1003.001"
 }</code></pre>
             </div>
-
             <h3>Execution - Encoded PowerShell</h3>
             <div class="code-block">
                 <pre><code># BIOC: Encoded PowerShell Command Detection
 # Detects base64 encoded PowerShell commands often used by attackers
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_PROCESS
 | filter action_process_image_name in ("powershell.exe", "pwsh.exe")
@@ -185,7 +173,6 @@ dataset = xdr_data
          actor_process_command_line,
          action_process_username
 | limit 100
-
 # Rule Configuration
 {
     "name": "Encoded PowerShell Execution",
@@ -194,12 +181,10 @@ dataset = xdr_data
     "mitre_technique": "T1059.001"
 }</code></pre>
             </div>
-
             <h3>Persistence - Registry Run Keys</h3>
             <div class="code-block">
                 <pre><code># BIOC: Suspicious Registry Run Key Modification
 # Detects additions to registry run keys for persistence
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_REGISTRY_SET_VALUE
 | filter action_registry_key_name contains "\\CurrentVersion\\Run" or
@@ -217,7 +202,6 @@ dataset = xdr_data
          action_process_image_path,
          action_process_username
 | limit 100
-
 # Rule Configuration
 {
     "name": "Registry Run Key Persistence",
@@ -226,12 +210,10 @@ dataset = xdr_data
     "mitre_technique": "T1547.001"
 }</code></pre>
             </div>
-
             <h3>Lateral Movement - PsExec Activity</h3>
             <div class="code-block">
                 <pre><code># BIOC: PsExec Remote Execution Detection
 # Detects PsExec or similar remote execution tools
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_PROCESS
 | filter (action_process_image_name = "psexec.exe" or
@@ -246,7 +228,6 @@ dataset = xdr_data
          action_remote_ip,
          action_process_sha256
 | limit 100
-
 # Rule Configuration
 {
     "name": "PsExec Remote Execution Detected",
@@ -255,12 +236,10 @@ dataset = xdr_data
     "mitre_technique": "T1570"
 }</code></pre>
             </div>
-
             <h3>Defense Evasion - Security Tool Tampering</h3>
             <div class="code-block">
                 <pre><code># BIOC: Security Tool Termination Attempt
 # Detects attempts to stop security services or kill security processes
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_PROCESS
 | filter action_process_command_line contains "stop" or
@@ -281,7 +260,6 @@ dataset = xdr_data
          actor_process_image_name,
          action_process_username
 | limit 100
-
 # Rule Configuration
 {
     "name": "Security Tool Tampering Attempt",
@@ -290,12 +268,10 @@ dataset = xdr_data
     "mitre_technique": "T1562.001"
 }</code></pre>
             </div>
-
             <h3>Exfiltration - Large Data Transfer</h3>
             <div class="code-block">
                 <pre><code># BIOC: Large Outbound Data Transfer
 # Detects unusually large data transfers to external IPs
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_NETWORK
 | filter action_external_direction = "OUTBOUND"
@@ -311,7 +287,6 @@ dataset = xdr_data
          action_process_username
 | sort desc action_total_bytes_sent
 | limit 50
-
 # Rule Configuration
 {
     "name": "Large Outbound Data Transfer",
@@ -320,12 +295,10 @@ dataset = xdr_data
     "mitre_technique": "T1048"
 }</code></pre>
             </div>
-
             <h3>Command and Control - Suspicious DNS</h3>
             <div class="code-block">
                 <pre><code># BIOC: DNS Tunneling Detection
 # Detects unusually long DNS queries that may indicate DNS tunneling
-
 dataset = xdr_data 
 | filter event_type = ENUM.EVENT_TYPE_DNS
 | filter action_query_type = "TXT" or 
@@ -342,7 +315,6 @@ dataset = xdr_data
          action_remote_ip
 | sort desc query_length
 | limit 100
-
 # Rule Configuration
 {
     "name": "Possible DNS Tunneling",
@@ -352,10 +324,8 @@ dataset = xdr_data
 }</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>MITRE ATT&CK Coverage</h2>
-            
             <table class="comparison-table">
                 <thead>
                     <tr>
@@ -423,10 +393,8 @@ dataset = xdr_data
                 </tbody>
             </table>
         </section>
-
         <section class="content-section">
             <h2>Best Practices</h2>
-
             <h3>Rule Development Workflow</h3>
             <div class="workflow-steps">
                 <div class="workflow-step">
@@ -460,7 +428,6 @@ dataset = xdr_data
                     <p>Add exclusions, adjust thresholds, update based on feedback</p>
                 </div>
             </div>
-
             <h3>Common Exclusion Patterns</h3>
             <div class="code-block">
                 <pre><code># Exclude known legitimate tools
@@ -470,49 +437,40 @@ dataset = xdr_data
     "CrowdStrike*",     # CrowdStrike
     "SentinelOne*"      # SentinelOne
 )
-
 # Exclude trusted paths
 | filter action_process_image_path not contains "\\Windows\\System32\\"
 | filter action_process_image_path not contains "\\Program Files\\Microsoft\\"
-
 # Exclude service accounts
 | filter action_process_username not in (
     "NT AUTHORITY\\SYSTEM",
     "NT AUTHORITY\\LOCAL SERVICE",
     "NT AUTHORITY\\NETWORK SERVICE"
 )
-
 # Exclude by hash (verified safe)
 | filter action_process_sha256 not in (
     "abc123...",  # Known good hash
     "def456..."   # Known good hash
 )
-
 # Exclude signed binaries (use with caution)
 | filter action_process_signature_status != "Signed"</code></pre>
             </div>
         </section>
-
         <section class="interview-section">
             <h2>💼 Interview Questions</h2>
-            
             <div class="interview-qa">
                 <h4>Q: How do you create and tune custom detection rules in Cortex XDR?</h4>
                 <p><strong>A:</strong> I follow a structured approach. First, I research the threat behavior I want to detect and identify which MITRE ATT&CK technique it maps to. Then I use the Investigation module to write and test XQL queries against historical data to ensure the logic captures the behavior. I analyze the results for false positives and add appropriate exclusions for legitimate tools and processes. Once validated, I create a BIOC rule with the appropriate severity level and configure alerting thresholds. After deployment, I monitor the alert volume and false positive rate, continuously tuning the rule based on analyst feedback. I also maintain documentation linking each rule to its MITRE technique for coverage analysis.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: What's the difference between IOCs and BIOCs in Cortex XDR?</h4>
                 <p><strong>A:</strong> IOCs (Indicators of Compromise) are static indicators like file hashes, IP addresses, or domain names that represent known threats. They're reactive, meaning you need to already know about a threat to detect it. BIOCs (Behavioral Indicators of Compromise) detect suspicious behaviors regardless of the specific malware or tool used. For example, instead of blocking a known Mimikatz hash (IOC), a BIOC rule detects any process accessing LSASS memory for reading, which would catch both Mimikatz and any new credential dumping tool. BIOCs are more resilient against attackers who modify their tools to evade hash-based detection.</p>
             </div>
         </section>
-
         <div class="navigation-links">
             <a href="index.html">← Back to Cortex XDR</a>
             <a href="analytics.html">Analytics →</a>
         </div>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>

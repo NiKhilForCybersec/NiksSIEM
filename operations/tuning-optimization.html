@@ -22,7 +22,6 @@
             </div>
         </div>
     </nav>
-
     <main class="content-wrapper">
         <aside class="sidebar">
             <div class="sidebar-section">
@@ -37,17 +36,14 @@
                 </ul>
             </div>
         </aside>
-
         <article class="main-content">
             <header class="content-header">
                 <h1>Tuning & Optimization</h1>
                 <p class="subtitle">Systematic approach to reducing noise while maintaining detection coverage</p>
             </header>
-
             <section class="content-section">
                 <h2>Tuning Philosophy</h2>
                 <p>Effective tuning balances detection sensitivity with operational efficiency. The goal is to maximize true positives while minimizing false positives without creating detection blind spots.</p>
-
                 <div class="info-box">
                     <h4>Tuning Golden Rules</h4>
                     <ul>
@@ -59,10 +55,8 @@
                     </ul>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>False Positive Analysis</h2>
-
                 <h3>FP Identification Queries</h3>
                 <div class="code-block">
                     <pre><code>// Splunk - Find high-volume alerts
@@ -70,7 +64,6 @@ index=notable
 | stats count by rule_name, src, user
 | where count > 50
 | sort -count
-
 // Sentinel - FP candidates by resolution
 SecurityAlert
 | where TimeGenerated > ago(30d)
@@ -83,7 +76,6 @@ SecurityAlert
 | extend FP_Rate = round(todouble(FP + Dismissed) / Total * 100, 2)
 | where FP_Rate > 50
 | order by Total desc
-
 // XDR - High-volume alert sources
 dataset = xdr_data
 | filter event_type = ALERT
@@ -91,7 +83,6 @@ dataset = xdr_data
 | filter alert_count > 20
 | sort desc alert_count</code></pre>
                 </div>
-
                 <h3>FP Categories</h3>
                 <table class="data-table">
                     <thead>
@@ -130,10 +121,8 @@ dataset = xdr_data
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Tuning Workflow</h2>
-
                 <div class="workflow-diagram">
                     <div class="workflow-step">
                         <span class="step-number">1</span>
@@ -172,10 +161,8 @@ dataset = xdr_data
                     </div>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Exclusion Best Practices</h2>
-
                 <h3>Exclusion Hierarchy (Most to Least Specific)</h3>
                 <ol>
                     <li><strong>Hash + User + Host:</strong> Most specific, lowest risk</li>
@@ -185,35 +172,29 @@ dataset = xdr_data
                     <li><strong>File path only:</strong> Use with caution</li>
                     <li><strong>File name only:</strong> High risk, avoid if possible</li>
                 </ol>
-
                 <h3>Exclusion Template</h3>
                 <div class="code-block">
                     <pre><code># Tuning Request Template
-
 ## Alert Information
 - Alert Name: Encoded PowerShell Execution
 - Rule ID: DET-2024-0042
 - Average Daily Volume: 150 alerts
 - False Positive Rate: 85%
-
 ## Pattern Analysis
 - Source: SCCM client deployment scripts
 - User: svc_sccm
 - Host Pattern: All workstations
 - Command Pattern: powershell.exe -enc SQBmACAAKABHAGUA...
-
 ## Exclusion Proposed
 - Type: Process + Parent + User
 - Conditions:
   - ProcessName = powershell.exe
   - ParentProcess contains "ccmexec.exe"
   - User = svc_sccm
-
 ## Risk Assessment
 - Detection Gap: Minimal - other detections cover PowerShell abuse
 - Abuse Potential: Low - requires compromised service account
 - Compensating Controls: EDR behavioral detection still active
-
 ## Approvals
 - SOC Lead: [Name] - [Date]
 - Security Engineer: [Name] - [Date]
@@ -221,35 +202,28 @@ dataset = xdr_data
 - Review Date: 2024-06-15</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Performance Optimization</h2>
-
                 <h3>Query Optimization</h3>
                 <div class="code-block">
                     <pre><code>// BAD - Scanning all data
 SecurityEvent
 | where Process contains "powershell"
-
 // GOOD - Filter early, use efficient operators
 SecurityEvent
 | where TimeGenerated > ago(1h)
 | where EventID == 4688
 | where Process endswith "powershell.exe"
-
 // BAD - Multiple regex in OR
 SecurityEvent
 | where CommandLine matches regex "mimikatz|sekurlsa|logonpasswords"
-
 // GOOD - Use has_any for string matching
 SecurityEvent
 | where CommandLine has_any ("mimikatz", "sekurlsa", "logonpasswords")
-
 // Splunk - Use indexed fields
 index=windows EventCode=4688 process_name="powershell.exe"
 | search CommandLine="*-enc*"</code></pre>
                 </div>
-
                 <h3>Alert Aggregation</h3>
                 <div class="code-block">
                     <pre><code>// Instead of alerting per event, aggregate related events
@@ -265,7 +239,6 @@ SecurityEvent
 // One alert with context vs. many individual alerts</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Tuning Metrics</h2>
                 <table class="data-table">
@@ -305,10 +278,8 @@ SecurityEvent
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Interview Q&A</h2>
-
                 <div class="qa-section">
                     <h3>Q: How do you approach tuning in a new environment?</h3>
                     <div class="answer">
@@ -323,7 +294,6 @@ SecurityEvent
                         </ol>
                     </div>
                 </div>
-
                 <div class="qa-section">
                     <h3>Q: How do you balance detection coverage with alert fatigue?</h3>
                     <div class="answer">
@@ -341,7 +311,6 @@ SecurityEvent
             </section>
         </article>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>

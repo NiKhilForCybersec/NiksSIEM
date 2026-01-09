@@ -22,7 +22,6 @@
             </div>
         </div>
     </nav>
-
     <main class="content-wrapper">
         <aside class="sidebar">
             <div class="sidebar-section">
@@ -40,17 +39,14 @@
                 </ul>
             </div>
         </aside>
-
         <article class="main-content">
             <header class="content-header">
                 <h1>Containment Procedures</h1>
                 <p class="subtitle">Rapid containment strategies to limit threat spread and impact</p>
             </header>
-
             <section class="content-section">
                 <h2>Containment Decision Framework</h2>
                 <p>Containment actions must balance the need to stop threat propagation with business continuity requirements. The severity and type of threat determines the appropriate containment level.</p>
-
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -106,40 +102,31 @@
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Endpoint Containment</h2>
-
                 <h3>Network Isolation</h3>
                 <p>Completely disconnect endpoint from network while maintaining EDR connectivity.</p>
-
                 <div class="code-block">
                     <pre><code># Microsoft Defender for Endpoint
 POST https://api.securitycenter.microsoft.com/api/machines/{id}/isolate
 { "Comment": "Incident #12345 - Active ransomware", "IsolationType": "Full" }
-
 # CrowdStrike Falcon
 POST /devices/entities/devices-actions/v2?action_name=contain
 { "ids": ["device_id"] }
-
 # Cortex XDR
 POST /public_api/v1/endpoints/isolate
 { "request_data": { "endpoint_id_list": ["endpoint_id"] } }
-
 # Manual (if EDR unavailable)
 # Windows Firewall - Block all except EDR
 netsh advfirewall set allprofiles firewallpolicy blockinbound,blockoutbound
 netsh advfirewall firewall add rule name="Allow EDR" dir=out action=allow program="C:\Program Files\EDR\agent.exe"</code></pre>
                 </div>
-
                 <h3>Process Termination</h3>
                 <div class="code-block">
                     <pre><code># Kill malicious process by name
 taskkill /F /IM malware.exe /T
-
 # Kill by PID
 taskkill /F /PID 1234
-
 # Via PowerShell with logging
 $proc = Get-Process -Name "suspicious" -ErrorAction SilentlyContinue
 if ($proc) {
@@ -147,13 +134,11 @@ if ($proc) {
     Write-EventLog -LogName Application -Source "SOC" -EventId 1001 -Message "Terminated process: $($proc.Name) PID: $($proc.Id)"
 }</code></pre>
                 </div>
-
                 <h3>File Quarantine</h3>
                 <div class="code-block">
                     <pre><code># MDE - Stop and Quarantine
 POST /api/machines/{id}/StopAndQuarantineFile
 { "Comment": "Quarantine ransomware", "Sha1": "abc123..." }
-
 # Manual quarantine with hash preservation
 $file = "C:\temp\malware.exe"
 $hash = (Get-FileHash $file -Algorithm SHA256).Hash
@@ -163,29 +148,23 @@ Set-ItemProperty $quarantine -Name Attributes -Value ([System.IO.FileAttributes]
 Write-Output "Quarantined: $file -> $quarantine (SHA256: $hash)"</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Network Containment</h2>
-
                 <h3>Block External IOCs</h3>
                 <div class="code-block">
                     <pre><code># Firewall - Block IP
 # Palo Alto
 set address C2-Server ip-netmask 192.0.2.100/32
 set security policies rules Block-C2 from any to untrust destination C2-Server action deny
-
 # Cisco ASA
 access-list BLOCK_C2 extended deny ip any host 192.0.2.100
 access-group BLOCK_C2 in interface outside
-
 # Windows Firewall (endpoint level)
 netsh advfirewall firewall add rule name="Block C2" dir=out action=block remoteip=192.0.2.100
-
 # DNS Sinkhole (Infoblox/AD DNS)
 # Add malicious domain to sinkhole zone
 dnscmd /RecordAdd sinkhole.local malicious-domain.com A 0.0.0.0</code></pre>
                 </div>
-
                 <h3>Segment Affected Systems</h3>
                 <div class="code-block">
                     <pre><code># VLAN Quarantine (Cisco)
@@ -193,26 +172,21 @@ interface GigabitEthernet0/1
  description Quarantined-Host
  switchport access vlan 999
  switchport mode access
-
 # SDN/NSX Micro-segmentation
 # Apply emergency quarantine policy to VM
 # Block all east-west traffic, allow management
-
 # NAC (ISE) Quarantine
 # Apply quarantine authorization policy
 # Move to restricted VLAN with only AV/patch access</code></pre>
                 </div>
-
                 <h3>Network Flow Blocking</h3>
                 <div class="code-block">
                     <pre><code># Block lateral movement protocols from infected segment
 # SMB (445), RPC (135), WinRM (5985/5986), RDP (3389)
-
 # Palo Alto - Inter-zone blocking
 set security policies rules Block-Lateral from infected-zone to any application smb action deny
 set security policies rules Block-Lateral application ms-rpc action deny
 set security policies rules Block-Lateral application ms-rdp action deny
-
 # Segment isolation ACL
 access-list QUARANTINE deny tcp 10.10.10.0 0.0.0.255 any eq 445
 access-list QUARANTINE deny tcp 10.10.10.0 0.0.0.255 any eq 135
@@ -221,89 +195,67 @@ access-list QUARANTINE permit ip 10.10.10.0 0.0.0.255 host 10.0.0.5  # Allow to 
 access-list QUARANTINE deny ip 10.10.10.0 0.0.0.255 any</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Identity Containment</h2>
-
                 <h3>Account Disable/Lockout</h3>
                 <div class="code-block">
                     <pre><code># Active Directory - Disable Account
 Disable-ADAccount -Identity "compromised_user"
-
 # Force password change at next logon
 Set-ADUser -Identity "compromised_user" -ChangePasswordAtLogon $true
-
 # Azure AD - Block Sign-in
 Set-AzureADUser -ObjectId user@domain.com -AccountEnabled $false
-
 # Revoke all sessions (Azure AD)
 Revoke-AzureADUserAllRefreshToken -ObjectId user@domain.com
-
 # Microsoft 365 - Sign out all sessions
 Connect-MgGraph -Scopes "User.ReadWrite.All"
 Revoke-MgUserSignInSession -UserId user@domain.com</code></pre>
                 </div>
-
                 <h3>Service Account Containment</h3>
                 <div class="code-block">
                     <pre><code># Identify services using the account
 Get-WmiObject Win32_Service | Where-Object { $_.StartName -like "*svc_compromised*" }
-
 # Stop dependent services first, then disable account
 Stop-Service -Name "DependentService" -Force
 Disable-ADAccount -Identity "svc_compromised"
-
 # Rotate service account credentials
 $newPassword = [System.Web.Security.Membership]::GeneratePassword(24,4)
 Set-ADAccountPassword -Identity "svc_compromised" -Reset -NewPassword (ConvertTo-SecureString $newPassword -AsPlainText -Force)
-
 # Update service credentials (after incident)
 sc.exe config "ServiceName" obj= "domain\svc_new" password= "newpassword"</code></pre>
                 </div>
-
                 <h3>MFA Reset / Conditional Access</h3>
                 <div class="code-block">
                     <pre><code># Reset MFA registration
 Remove-MsolUser -UserPrincipalName user@domain.com -RemoveFromRecycleBin
-
 # Force MFA re-registration via Azure AD
 Set-MsolUser -UserPrincipalName user@domain.com -StrongAuthenticationMethods @()
-
 # Apply Conditional Access - Require compliant device
 # Azure Portal: Azure AD → Security → Conditional Access
 # Create policy requiring device compliance for compromised user</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Email Containment</h2>
-
                 <h3>Purge Malicious Emails</h3>
                 <div class="code-block">
                     <pre><code># Microsoft 365 - Content Search and Purge
 New-ComplianceSearch -Name "Malicious Campaign" -ExchangeLocation All `
     -ContentMatchQuery 'subject:"Invoice" AND from:attacker@evil.com AND received>=2024-01-01'
-
 Start-ComplianceSearch -Identity "Malicious Campaign"
-
 # Soft Delete (recoverable)
 New-ComplianceSearchAction -SearchName "Malicious Campaign" -Purge -PurgeType SoftDelete
-
 # Hard Delete (permanent)
 New-ComplianceSearchAction -SearchName "Malicious Campaign" -Purge -PurgeType HardDelete
-
 # Check purge status
 Get-ComplianceSearchAction -Identity "Malicious Campaign_Purge" | FL</code></pre>
                 </div>
-
                 <h3>Block Sender/Domain</h3>
                 <div class="code-block">
                     <pre><code># Exchange Online - Block Sender
 Set-HostedContentFilterPolicy -Identity Default -BlockedSenders @{Add="attacker@evil.com"}
-
 # Block Domain
 Set-HostedContentFilterPolicy -Identity Default -BlockedSenderDomains @{Add="evil.com"}
-
 # Transport Rule - Block with notification
 New-TransportRule -Name "Block Evil Campaign" `
     -FromAddressMatchesPatterns ".*@evil\.com" `
@@ -311,17 +263,14 @@ New-TransportRule -Name "Block Evil Campaign" `
     -GenerateIncidentReport "security@company.com" `
     -IncidentReportContent Sender,Subject,Recipients</code></pre>
                 </div>
-
                 <h3>Review Mail Rules</h3>
                 <div class="code-block">
                     <pre><code># Check for suspicious forwarding rules
 Get-InboxRule -Mailbox user@domain.com | Where-Object { 
     $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo 
 } | Format-List Name, ForwardTo, RedirectTo, Enabled
-
 # Remove malicious rules
 Remove-InboxRule -Mailbox user@domain.com -Identity "Suspicious Rule"
-
 # Check all mailboxes for suspicious rules (large orgs)
 $mailboxes = Get-Mailbox -ResultSize Unlimited
 foreach ($mbx in $mailboxes) {
@@ -331,32 +280,26 @@ foreach ($mbx in $mailboxes) {
 }</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Cloud Containment</h2>
-
                 <h3>AWS</h3>
                 <div class="code-block">
                     <pre><code># Isolate EC2 Instance - Apply restrictive security group
 aws ec2 modify-instance-attribute \
     --instance-id i-1234567890abcdef0 \
     --groups sg-quarantine
-
 # Create quarantine security group (if not exists)
 aws ec2 create-security-group \
     --group-name quarantine-sg \
     --description "Incident quarantine - no inbound/outbound"
-
 # Revoke IAM User Access
 aws iam delete-login-profile --user-name compromised-user
 aws iam list-access-keys --user-name compromised-user | \
     jq -r '.AccessKeyMetadata[].AccessKeyId' | \
     xargs -I {} aws iam delete-access-key --user-name compromised-user --access-key-id {}
-
 # Snapshot for forensics
 aws ec2 create-snapshot --volume-id vol-1234567890abcdef0 --description "Incident snapshot"</code></pre>
                 </div>
-
                 <h3>Azure</h3>
                 <div class="code-block">
                     <pre><code># Isolate VM - Apply NSG blocking all traffic
@@ -364,11 +307,9 @@ $nsg = New-AzNetworkSecurityGroup -ResourceGroupName "RG" -Name "Quarantine-NSG"
 $nsg | Add-AzNetworkSecurityRuleConfig -Name "DenyAll" -Priority 100 -Direction Inbound `
     -Access Deny -Protocol * -SourcePortRange * -DestinationPortRange * `
     -SourceAddressPrefix * -DestinationAddressPrefix *
-
 $nic = Get-AzNetworkInterface -Name "vm-nic"
 $nic.NetworkSecurityGroup = $nsg
 $nic | Set-AzNetworkInterface
-
 # Snapshot disk for forensics
 $vm = Get-AzVM -Name "compromised-vm"
 $disk = Get-AzDisk -ResourceGroupName $vm.ResourceGroupName -DiskName $vm.StorageProfile.OsDisk.Name
@@ -376,7 +317,6 @@ $snapshotConfig = New-AzSnapshotConfig -SourceUri $disk.Id -Location $disk.Locat
 New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -ResourceGroupName $vm.ResourceGroupName</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Containment Checklist</h2>
                 <div class="code-block">
@@ -386,20 +326,17 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
 [ ] Obtain authorization if needed
 [ ] Execute primary containment action
 [ ] Document time and action taken
-
 ## Secondary Actions (15-60 minutes)
 [ ] Identify all affected systems
 [ ] Apply containment to additional systems
 [ ] Block known IOCs at network level
 [ ] Disable compromised accounts
 [ ] Preserve evidence before changes
-
 ## Validation
 [ ] Verify containment is effective
 [ ] Confirm no ongoing malicious activity
 [ ] Check for spread to other systems
 [ ] Document containment scope
-
 ## Communication
 [ ] Notify incident manager
 [ ] Update ticket with containment details
@@ -407,10 +344,8 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
 [ ] Schedule containment release review</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Interview Q&A</h2>
-
                 <div class="qa-section">
                     <h3>Q: You detect active ransomware encryption on a server. Walk me through your containment steps.</h3>
                     <div class="answer">
@@ -427,7 +362,6 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
                         <p>The key is speed - every minute of delay means more encrypted files.</p>
                     </div>
                 </div>
-
                 <div class="qa-section">
                     <h3>Q: How do you handle containment for a critical production server?</h3>
                     <div class="answer">
@@ -445,7 +379,6 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
             </section>
         </article>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>

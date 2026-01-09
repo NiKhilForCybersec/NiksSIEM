@@ -3,800 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Hunting | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>MDE KQL Threat Hunting | SOC Compendium</title>
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
-    <nav class="top-nav">
-        <div class="nav-container">
-            <a href="../index.html" class="nav-logo">SOC Compendium</a>
-            <div class="nav-links">
-                <a href="../sentinel/index.html">Sentinel</a>
-                <a href="../splunk/index.html">Splunk</a>
-                <a href="../xsiam/index.html">XSIAM</a>
-                <a href="../mde/index.html" class="active">Defender</a>
-                <a href="../cortex/index.html">Cortex</a>
-                <a href="../crowdstrike/index.html">CrowdStrike</a>
-                <a href="../operations/index.html">Operations</a>
-            </div>
-        </div>
-    </nav>
-
-    <main class="content-wrapper">
+    <div class="app-container">
         <aside class="sidebar">
-            <div class="sidebar-section">
-                <h3>Microsoft Defender</h3>
-                <ul>
-                    <li><a href="index.html">Overview</a></li>
-                    <li><a href="onboarding-windows.html">Windows Onboarding</a></li>
-                    <li><a href="onboarding-macos.html">macOS Onboarding</a></li>
-                    <li><a href="onboarding-linux.html">Linux Onboarding</a></li>
-                    <li><a href="kql-hunting.html" class="active">KQL Threat Hunting</a></li>
-                    <li><a href="response-actions.html">Response Actions</a></li>
-                    <li><a href="alert-tuning.html">Alert Tuning</a></li>
-                    <li><a href="troubleshooting.html">Troubleshooting</a></li>
-                </ul>
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
             </div>
+            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">MDE</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a></div>
+                <div class="nav-section"><div class="nav-section-title">Onboarding</div>
+                    <a href="onboarding-windows.html" class="nav-link"><i class="fab fa-windows"></i> Windows</a>
+                    <a href="onboarding-linux.html" class="nav-link"><i class="fab fa-linux"></i> Linux</a>
+                    <a href="onboarding-macos.html" class="nav-link"><i class="fab fa-apple"></i> macOS</a></div>
+                <div class="nav-section"><div class="nav-section-title">Operations</div>
+                    <a href="kql-hunting.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Hunting</a>
+                    <a href="alert-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Alert Tuning</a>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-bug"></i> Troubleshooting</a></div></nav>
         </aside>
-
-        <article class="main-content">
-            <header class="content-header">
-                <h1>MDE KQL Threat Hunting</h1>
-                <p class="subtitle">Advanced hunting queries for Microsoft Defender for Endpoint</p>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">MDE</a><span class="separator">/</span>
+                    <span class="current">Advanced Hunting</span>
+                </div>
             </header>
+            <main class="main-content">
+                <h1><i class="fas fa-terminal"></i> Advanced Hunting</h1>
+                <p class="lead">Use KQL in Microsoft Defender to hunt for threats across devices, emails, identities, and cloud apps. Same query language as Sentinel.</p>
 
-            <section class="content-section">
-                <h2>Advanced Hunting Overview</h2>
-                <p>Microsoft Defender for Endpoint Advanced Hunting provides powerful KQL-based threat hunting capabilities across endpoint telemetry. The unified hunting experience in Microsoft 365 Defender extends this to include identity, email, and cloud app data.</p>
-
-                <div class="info-box">
-                    <h4>Key Tables for Endpoint Hunting</h4>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Table</th>
-                                <th>Description</th>
-                                <th>Retention</th>
-                            </tr>
-                        </thead>
+                <h2><i class="fas fa-code"></i> Key Tables</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Table</th><th>Contains</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>DeviceProcessEvents</code></td>
-                                <td>Process creation and related events</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceNetworkEvents</code></td>
-                                <td>Network connections and DNS queries</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceFileEvents</code></td>
-                                <td>File creation, modification, deletion</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceRegistryEvents</code></td>
-                                <td>Registry modifications</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceLogonEvents</code></td>
-                                <td>User logon activities</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceImageLoadEvents</code></td>
-                                <td>DLL and driver loading</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceEvents</code></td>
-                                <td>Security events (ASR, tamper, etc.)</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>DeviceInfo</code></td>
-                                <td>Device inventory and health</td>
-                                <td>30 days</td>
-                            </tr>
-                            <tr>
-                                <td><code>AlertEvidence</code></td>
-                                <td>Evidence associated with alerts</td>
-                                <td>30 days</td>
-                            </tr>
+                            <tr><td><strong>DeviceProcessEvents</strong></td><td>Process creation and execution</td></tr>
+                            <tr><td><strong>DeviceNetworkEvents</strong></td><td>Network connections</td></tr>
+                            <tr><td><strong>DeviceFileEvents</strong></td><td>File creation, modification, deletion</td></tr>
+                            <tr><td><strong>DeviceRegistryEvents</strong></td><td>Registry changes</td></tr>
+                            <tr><td><strong>DeviceLogonEvents</strong></td><td>Authentication events</td></tr>
+                            <tr><td><strong>AlertInfo/AlertEvidence</strong></td><td>Alert details and evidence</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </section>
 
-            <section class="content-section">
-                <h2>Initial Access (TA0001)</h2>
-
-                <h3>Phishing - Macro Execution from Office</h3>
+                <h2><i class="fas fa-code"></i> Hunting Queries</h2>
                 <div class="code-block">
-                    <pre><code>// Office applications spawning suspicious processes
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName in~ ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe")
-| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe", 
-                      "regsvr32.exe", "rundll32.exe", "certutil.exe", "bitsadmin.exe")
-| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, 
-          ProcessCommandLine, AccountName, FolderPath
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Drive-By Downloads</h3>
-                <div class="code-block">
-                    <pre><code>// Browser spawning executables or scripts
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName in~ ("chrome.exe", "msedge.exe", "firefox.exe", "iexplore.exe")
-| where FileName endswith ".exe" or FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe")
-| where not(FolderPath has_any ("\\Program Files", "\\Windows\\System32"))
-| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, 
-          ProcessCommandLine, FolderPath, SHA256
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>HTML Smuggling Detection</h3>
-                <div class="code-block">
-                    <pre><code>// Files created by browsers in suspicious locations
-DeviceFileEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName in~ ("chrome.exe", "msedge.exe", "firefox.exe")
-| where FolderPath has_any ("\\Downloads\\", "\\Temp\\", "\\AppData\\Local\\")
-| where FileName endswith_cs ".iso" or FileName endswith_cs ".img" 
-        or FileName endswith_cs ".vhd" or FileName endswith_cs ".zip"
-| project Timestamp, DeviceName, FileName, FolderPath, SHA256, 
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Execution (TA0002)</h2>
-
-                <h3>Encoded PowerShell Commands</h3>
-                <div class="code-block">
-                    <pre><code>// Base64 encoded PowerShell execution
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
-| where ProcessCommandLine has_any ("-enc", "-encodedcommand", "-e ", "-ec ")
-        or ProcessCommandLine matches regex @"[A-Za-z0-9+/=]{50,}"
-| extend DecodedCommand = base64_decode_tostring(
-    extract(@"[A-Za-z0-9+/=]{50,}", 0, ProcessCommandLine))
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine, 
-          DecodedCommand, InitiatingProcessFileName, FolderPath
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>PowerShell Download Cradles</h3>
-                <div class="code-block">
-                    <pre><code>// PowerShell downloading and executing content
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
-| where ProcessCommandLine has_any ("downloadstring", "downloadfile", "downloaddata",
-        "invoke-webrequest", "iwr ", "wget ", "curl ", "start-bitstransfer",
-        "invoke-restmethod", "irm ", "net.webclient", "bitstransfer")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine, 
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>WMIC Process Creation</h3>
-                <div class="code-block">
-                    <pre><code>// WMIC used for process execution
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "wmic.exe"
-| where ProcessCommandLine has_any ("process call create", "shadowcopy delete", 
-        "/node:", "computersystem", "os get")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessFolderPath
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>MSHTA Execution</h3>
-                <div class="code-block">
-                    <pre><code>// MSHTA executing HTA files or inline scripts
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "mshta.exe"
-| where ProcessCommandLine has_any ("http://", "https://", "javascript:", "vbscript:", ".hta")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Regsvr32 Abuse (Squiblydoo)</h3>
-                <div class="code-block">
-                    <pre><code>// Regsvr32 loading remote or suspicious content
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "regsvr32.exe"
-| where ProcessCommandLine has_any ("/s /n /u /i:", "scrobj.dll", "http://", "https://")
-        or ProcessCommandLine matches regex @"regsvr32.*\/i:.*\.sct"
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine,
-          InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>LOLBin Execution Summary</h3>
-                <div class="code-block">
-                    <pre><code>// Living Off the Land Binary usage
-let LOLBins = dynamic(["certutil.exe", "bitsadmin.exe", "mshta.exe", "regsvr32.exe",
-    "rundll32.exe", "msiexec.exe", "installutil.exe", "regasm.exe", "regsvcs.exe",
-    "msbuild.exe", "cmstp.exe", "presentationhost.exe", "ieexec.exe", "msconfig.exe",
-    "control.exe", "csc.exe", "dnscmd.exe", "ftp.exe", "nltest.exe"]);
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ (LOLBins)
-| where ProcessCommandLine has_any ("http://", "https://", "/c ", "-enc", "bypass",
-        "hidden", "/transfer", "decode", "/i:", "scriptblock")
-| summarize Count = count(), 
-            Devices = dcount(DeviceName),
-            Users = dcount(AccountName),
-            Examples = make_set(ProcessCommandLine, 3)
-    by FileName
-| order by Count desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Persistence (TA0003)</h2>
-
-                <h3>Registry Run Key Modifications</h3>
-                <div class="code-block">
-                    <pre><code>// Persistence via registry run keys
-DeviceRegistryEvents
-| where Timestamp > ago(7d)
-| where ActionType == "RegistryValueSet"
-| where RegistryKey has_any (
-    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-    @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce",
-    @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run",
-    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run")
-| where RegistryValueData has_any (".exe", ".dll", ".bat", ".ps1", ".vbs", ".js", "cmd", "powershell")
-| project Timestamp, DeviceName, ActionType, RegistryKey, RegistryValueName, 
-          RegistryValueData, InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Scheduled Task Creation</h3>
-                <div class="code-block">
-                    <pre><code>// New scheduled tasks created
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "schtasks.exe" and ProcessCommandLine has "/create"
-| parse ProcessCommandLine with * "/tn" TaskName "/tr" TaskAction *
-| project Timestamp, DeviceName, AccountName, TaskName = trim(@'["\s]', TaskName),
-          TaskAction = trim(@'["\s]', TaskAction), ProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>New Services Created</h3>
-                <div class="code-block">
-                    <pre><code>// Service creation via sc.exe
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "sc.exe" and ProcessCommandLine has_any ("create", "config")
-| parse ProcessCommandLine with * "binPath=" BinPath *
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine, 
-          BinPath = trim(@'["\s]', BinPath), InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Startup Folder Modifications</h3>
-                <div class="code-block">
-                    <pre><code>// Files added to startup folders
-DeviceFileEvents
-| where Timestamp > ago(7d)
-| where ActionType == "FileCreated"
-| where FolderPath has_any (
-    @"\Start Menu\Programs\Startup",
-    @"\Microsoft\Windows\Start Menu\Programs\Startup")
-| project Timestamp, DeviceName, FileName, FolderPath, SHA256,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>WMI Persistence</h3>
-                <div class="code-block">
-                    <pre><code>// WMI event subscription persistence
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName =~ "wmiprvse.exe"
-| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe")
-| project Timestamp, DeviceName, FileName, ProcessCommandLine, 
-          InitiatingProcessFileName, AccountName
-| order by Timestamp desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Credential Access (TA0006)</h2>
-
-                <h3>LSASS Access Detection</h3>
-                <div class="code-block">
-                    <pre><code>// Processes accessing LSASS memory
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "lsass.exe"
-// Alternative: check events targeting LSASS
-| join kind=inner (
-    DeviceEvents
-    | where ActionType == "OpenProcessApiCall"
-    | where FileName =~ "lsass.exe"
-) on DeviceId, $left.ProcessId == $right.TargetProcessId
-| project Timestamp, DeviceName, InitiatingProcessFileName, 
-          InitiatingProcessCommandLine, InitiatingProcessAccountName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Credential Dumping Tools</h3>
-                <div class="code-block">
-                    <pre><code>// Known credential dumping tool indicators
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any ("mimikatz", "sekurlsa", "logonpasswords", 
-        "kerberos::list", "lsadump::dcsync", "lsadump::sam", "privilege::debug",
-        "procdump", "-ma lsass", "comsvcs.dll", "MiniDump", "#24",
-        "ntdsutil", "ifm", "create full")
-        or FileName in~ ("mimikatz.exe", "procdump.exe", "procdump64.exe")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName, SHA256
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>SAM/SYSTEM/SECURITY Hive Access</h3>
-                <div class="code-block">
-                    <pre><code>// Registry hive extraction attempts
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "reg.exe"
-| where ProcessCommandLine has_any ("save", "export")
-| where ProcessCommandLine has_any ("sam", "system", "security", "hklm\\sam", 
-        "hklm\\system", "hklm\\security")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine,
-          InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>DCSync Attack Detection</h3>
-                <div class="code-block">
-                    <pre><code>// DCSync indicators from endpoint perspective
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any ("dcsync", "drsuapi", "/all /csv", 
-        "get-domainhash", "get-adrepl", "lsadump::dcsync")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>NTDS.dit Access</h3>
-                <div class="code-block">
-                    <pre><code>// Access to Active Directory database
-DeviceFileEvents
-| where Timestamp > ago(7d)
-| where FileName =~ "ntds.dit"
-| project Timestamp, DeviceName, ActionType, FolderPath, 
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc
-// Also check for shadow copy access
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any ("vssadmin", "wmic shadowcopy", "ntdsutil")
-| where ProcessCommandLine has_any ("create", "list", "ifm", "snapshot")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Lateral Movement (TA0008)</h2>
-
-                <h3>PsExec Usage</h3>
-                <div class="code-block">
-                    <pre><code>// PsExec and similar remote execution tools
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ ("psexec.exe", "psexesvc.exe", "paexec.exe")
-        or (FileName =~ "cmd.exe" and ProcessCommandLine has "psexec")
-        or InitiatingProcessFileName in~ ("psexec.exe", "psexesvc.exe")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>WMI Remote Execution</h3>
-                <div class="code-block">
-                    <pre><code>// WMI used for remote process creation
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName =~ "wmiprvse.exe"
-| where FileName in~ ("powershell.exe", "cmd.exe", "mshta.exe")
-| project Timestamp, DeviceName, FileName, ProcessCommandLine, AccountName
-| order by Timestamp desc
-// Also check outbound WMI
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where InitiatingProcessFileName =~ "wmic.exe"
-| where RemotePort == 135 or RemotePort == 5985 or RemotePort == 5986
-| project Timestamp, DeviceName, RemoteIP, RemotePort, InitiatingProcessCommandLine</code></pre>
-                </div>
-
-                <h3>Remote Desktop Connections</h3>
-                <div class="code-block">
-                    <pre><code>// RDP connection events
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where LocalPort == 3389 or RemotePort == 3389
-| where ActionType == "ConnectionSuccess"
-| project Timestamp, DeviceName, LocalIP, LocalPort, RemoteIP, RemotePort,
-          InitiatingProcessFileName
-| order by Timestamp desc
-// Correlate with logon events
-DeviceLogonEvents
-| where Timestamp > ago(7d)
-| where LogonType == "RemoteInteractive"
-| project Timestamp, DeviceName, AccountName, AccountDomain, 
-          LogonType, RemoteIP, RemoteDeviceName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>SMB/Admin Share Access</h3>
-                <div class="code-block">
-                    <pre><code>// SMB connections to admin shares
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where RemotePort == 445
-| where ActionType == "ConnectionSuccess"
-| summarize ConnectionCount = count(), 
-            UniqueTargets = dcount(RemoteIP),
-            Targets = make_set(RemoteIP, 10)
-    by DeviceName, InitiatingProcessFileName, bin(Timestamp, 1h)
-| where ConnectionCount > 5 or UniqueTargets > 3
-| order by ConnectionCount desc</code></pre>
-                </div>
-
-                <h3>WinRM Remote Execution</h3>
-                <div class="code-block">
-                    <pre><code>// WinRM/PowerShell remoting activity
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where RemotePort in (5985, 5986)
-| where ActionType == "ConnectionSuccess"
-| project Timestamp, DeviceName, RemoteIP, RemotePort, 
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc
-// Check for PowerShell remoting
+                    <div class="code-header"><i class="fas fa-code"></i> Common Hunting Scenarios</div>
+<pre>
+// PowerShell with encoded commands
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where FileName =~ "powershell.exe"
-| where ProcessCommandLine has_any ("invoke-command", "enter-pssession", 
-        "new-pssession", "-computername", "enable-psremoting")
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Defense Evasion (TA0005)</h2>
-
-                <h3>Security Tool Tampering</h3>
-                <div class="code-block">
-                    <pre><code>// Attempts to disable security tools
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any (
-    "Set-MpPreference", "DisableRealtimeMonitoring",
-    "sc stop", "sc delete", "net stop",
-    "taskkill /f /im", "wmic process", "terminate")
-| where ProcessCommandLine has_any ("defender", "sense", "wdfilter", 
-    "mpssvc", "wscsvc", "windefend", "mssense", "securityhealthservice")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>AMSI Bypass Attempts</h3>
-                <div class="code-block">
-                    <pre><code>// AMSI bypass indicators
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any (
-    "amsicontext", "amsiinitfailed", "amsiutils", "amsiscanbuffer",
-    "setvalue", "amsi.dll", "bypass", "[ref].assembly.gettype",
-    "management.automation.amsi")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Process Injection Indicators</h3>
-                <div class="code-block">
-                    <pre><code>// Potential process injection activity
-DeviceEvents
-| where Timestamp > ago(7d)
-| where ActionType in ("CreateRemoteThreadApiCall", "QueueUserApcRemoteApiCall",
-        "SetThreadContextRemoteApiCall", "WriteProcessMemoryRemoteApiCall",
-        "NtMapViewOfSectionRemoteApiCall")
-| project Timestamp, DeviceName, ActionType, FileName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Timestomping Detection</h3>
-                <div class="code-block">
-                    <pre><code>// File timestamp manipulation
-DeviceFileEvents
-| where Timestamp > ago(7d)
-| where ActionType == "FileTimestampModified"
-| where InitiatingProcessFileName !in~ ("explorer.exe", "svchost.exe", "system")
-| project Timestamp, DeviceName, FileName, FolderPath, 
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Masquerading Detection</h3>
-                <div class="code-block">
-                    <pre><code>// Executables with suspicious names or locations
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ ("svchost.exe", "csrss.exe", "lsass.exe", "services.exe",
-        "smss.exe", "winlogon.exe", "wininit.exe", "taskhost.exe", "explorer.exe")
-| where not(FolderPath startswith @"C:\Windows\System32\" 
-        or FolderPath startswith @"C:\Windows\SysWOW64\")
-| project Timestamp, DeviceName, FileName, FolderPath, SHA256,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Exfiltration (TA0010)</h2>
-
-                <h3>Large Data Transfers</h3>
-                <div class="code-block">
-                    <pre><code>// Unusually large outbound transfers
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where ActionType == "ConnectionSuccess"
-| where RemoteIPType == "Public"
-| summarize TotalBytesSent = sum(SentBytes), 
-            ConnectionCount = count()
-    by DeviceName, RemoteIP, InitiatingProcessFileName, bin(Timestamp, 1h)
-| where TotalBytesSent > 100000000 // 100MB
-| order by TotalBytesSent desc</code></pre>
-                </div>
-
-                <h3>Cloud Storage Uploads</h3>
-                <div class="code-block">
-                    <pre><code>// Data transfer to cloud storage services
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where RemoteUrl has_any ("dropbox.com", "drive.google.com", "onedrive.live.com",
-        "box.com", "mega.nz", "wetransfer.com", "sendspace.com", "mediafire.com",
-        "anonfiles.com", "gofile.io", "transfer.sh")
-| summarize TotalBytesSent = sum(SentBytes), 
-            ConnectionCount = count()
-    by DeviceName, RemoteUrl, InitiatingProcessFileName
-| where TotalBytesSent > 10000000 // 10MB
-| order by TotalBytesSent desc</code></pre>
-                </div>
-
-                <h3>Archive Creation Before Transfer</h3>
-                <div class="code-block">
-                    <pre><code>// Suspicious archive creation
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ ("7z.exe", "7za.exe", "winrar.exe", "rar.exe", "zip.exe", "tar.exe")
-        or (FileName =~ "powershell.exe" and ProcessCommandLine has "Compress-Archive")
-| where ProcessCommandLine has_any ("-p", "password", "-hp", "documents", "desktop",
-        "users", "\\\\", "-r", "-s", "confidential", "sensitive")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>DNS Tunneling Indicators</h3>
-                <div class="code-block">
-                    <pre><code>// Potential DNS tunneling activity
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where ActionType == "DnsQuery"
-| extend QueryLength = strlen(RemoteUrl)
-| where QueryLength > 50
-| summarize QueryCount = count(),
-            AvgQueryLength = avg(QueryLength),
-            UniqueQueries = dcount(RemoteUrl)
-    by DeviceName, tostring(split(RemoteUrl, ".")[-2])
-| where QueryCount > 100 or AvgQueryLength > 60
-| order by QueryCount desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Discovery (TA0007)</h2>
-
-                <h3>Network Reconnaissance</h3>
-                <div class="code-block">
-                    <pre><code>// Network discovery commands
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ ("net.exe", "net1.exe", "nltest.exe", "dsquery.exe", 
-        "arp.exe", "nbtstat.exe", "netstat.exe", "nslookup.exe")
-| where ProcessCommandLine has_any ("view", "share", "user", "group", "domain",
-        "trusts", "dclist", "/domain", "localgroup", "administrators")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-
-                <h3>Active Directory Enumeration</h3>
-                <div class="code-block">
-                    <pre><code>// AD enumeration via PowerShell
-DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any (
-    "get-aduser", "get-adcomputer", "get-adgroup", "get-adgroupmember",
-    "get-addomain", "get-adforest", "get-adtrust", "get-adobject",
-    "[adsisearcher]", "directoryservices", "ldap://", "get-netuser",
-    "get-netgroup", "get-netdomain", "get-netcomputer", "invoke-bloodhound")
+| where ProcessCommandLine contains "-enc" or ProcessCommandLine contains "-encoded"
 | project Timestamp, DeviceName, AccountName, ProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
 
-                <h3>Security Software Discovery</h3>
-                <div class="code-block">
-                    <pre><code>// Enumeration of security software
+// Suspicious process parent-child
 DeviceProcessEvents
-| where Timestamp > ago(7d)
-| where ProcessCommandLine has_any (
-    "get-wmiobject", "get-ciminstance", "wmic", "product get",
-    "antivirus", "firewall", "securitycenter")
-| where ProcessCommandLine has_any ("antivirusproduct", "firewallproduct",
-        "antispywareproduct", "win32_product")
-| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by Timestamp desc</code></pre>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Command and Control (TA0011)</h2>
-
-                <h3>Beaconing Detection</h3>
-                <div class="code-block">
-                    <pre><code>// Regular interval connections (beaconing)
-DeviceNetworkEvents
 | where Timestamp > ago(24h)
-| where ActionType == "ConnectionSuccess"
-| where RemoteIPType == "Public"
-| summarize ConnectionTimes = make_list(Timestamp) 
-    by DeviceName, RemoteIP, InitiatingProcessFileName
-| extend Intervals = array_sort_asc(ConnectionTimes)
-| mv-apply Intervals to typeof(datetime) on (
-    extend NextConnection = next(Intervals)
-    | extend Interval = datetime_diff('second', NextConnection, Intervals)
-)
-| summarize AvgInterval = avg(Interval), StdDev = stdev(Interval), Count = count()
-    by DeviceName, RemoteIP, InitiatingProcessFileName
-| where Count > 10 and StdDev < 30 // Regular intervals with low variance
-| order by Count desc</code></pre>
-                </div>
+| where InitiatingProcessFileName in~ ("outlook.exe", "excel.exe", "word.exe")
+| where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe")
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, ProcessCommandLine
 
-                <h3>Suspicious User Agents</h3>
-                <div class="code-block">
-                    <pre><code>// Unusual or suspicious HTTP user agents
+// Lateral movement detection
 DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where ActionType == "HttpConnectionInspected"
-| where isnotempty(AdditionalFields)
-| extend UserAgent = tostring(parse_json(AdditionalFields).UserAgent)
-| where UserAgent has_any ("curl", "wget", "python", "powershell", "httpbot",
-        "bot", "spider", "scanner") or strlen(UserAgent) < 20
-| summarize Count = count(), Devices = dcount(DeviceName)
-    by UserAgent, RemoteUrl
-| order by Count desc</code></pre>
-                </div>
-
-                <h3>Non-Standard Port Usage</h3>
-                <div class="code-block">
-                    <pre><code>// HTTP/HTTPS on non-standard ports
-DeviceNetworkEvents
-| where Timestamp > ago(7d)
-| where ActionType == "ConnectionSuccess"
-| where RemoteIPType == "Public"
-| where RemotePort !in (80, 443, 8080, 8443)
-| where InitiatingProcessFileName !in~ ("svchost.exe", "microsoftedge.exe", "chrome.exe")
-| summarize ConnectionCount = count(),
-            UniqueIPs = dcount(RemoteIP)
-    by DeviceName, RemotePort, InitiatingProcessFileName
+| where Timestamp > ago(1h)
+| where RemotePort in (445, 135, 5985, 5986)
+| summarize ConnectionCount = count() by DeviceName, RemoteIP
 | where ConnectionCount > 5
-| order by ConnectionCount desc</code></pre>
+</pre>
                 </div>
-            </section>
-
-            <section class="content-section">
-                <h2>Interview Q&A</h2>
-
-                <div class="qa-section">
-                    <h3>Q: How would you hunt for lateral movement using MDE Advanced Hunting?</h3>
-                    <div class="answer">
-                        <p><strong>A:</strong> My lateral movement hunting approach in MDE covers multiple techniques:</p>
-                        <ol>
-                            <li><strong>Network-based detection:</strong> Query DeviceNetworkEvents for SMB (port 445), WinRM (5985/5986), and RDP (3389) connections, looking for unusual source-destination pairs or high connection volumes</li>
-                            <li><strong>Process-based detection:</strong> Look for PsExec service creation, WMI remote execution (wmiprvse.exe spawning processes), and PowerShell remoting commands in DeviceProcessEvents</li>
-                            <li><strong>Authentication correlation:</strong> Cross-reference DeviceLogonEvents for RemoteInteractive and Network logon types, especially from non-jump-server sources</li>
-                            <li><strong>Service creation:</strong> Monitor for new services created on remote systems via sc.exe with network logon context</li>
-                            <li><strong>Pattern analysis:</strong> Look for sequential authentication to multiple systems from a single source within short timeframes, indicating potential credential abuse</li>
-                        </ol>
+            </main>
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        <a href="../index.html">Home</a>
+                        <a href="../sentinel/index.html">Sentinel</a>
+                        <a href="../splunk/index.html">Splunk</a>
                     </div>
+                    <p>Nik's SIEM Compendium</p>
                 </div>
-
-                <div class="qa-section">
-                    <h3>Q: What's your approach to detecting credential theft in MDE?</h3>
-                    <div class="answer">
-                        <p><strong>A:</strong> Credential theft detection in MDE involves multiple layers:</p>
-                        <ul>
-                            <li><strong>LSASS access monitoring:</strong> While MDE doesn't expose all LSASS access events directly, I look for known tool signatures (mimikatz strings, procdump with -ma lsass), processes in suspicious locations accessing LSASS, and ASR rule triggers for credential stealing</li>
-                            <li><strong>Registry hive extraction:</strong> Query for reg.exe save/export commands targeting SAM, SYSTEM, or SECURITY hives</li>
-                            <li><strong>NTDS.dit targeting:</strong> Look for vssadmin shadow copy creation combined with file access to Windows\NTDS paths, or ntdsutil IFM commands</li>
-                            <li><strong>Credential tool indicators:</strong> Search for command-line patterns associated with Mimikatz, LaZagne, and other credential tools in ProcessCommandLine</li>
-                            <li><strong>DCSync:</strong> While primarily a network detection, look for drsuapi-related strings and PowerShell AD replication commands</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="qa-section">
-                    <h3>Q: How do MDE Advanced Hunting tables differ from Sentinel tables?</h3>
-                    <div class="answer">
-                        <p><strong>A:</strong> Key differences between MDE and Sentinel tables:</p>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Aspect</th>
-                                    <th>MDE Advanced Hunting</th>
-                                    <th>Sentinel</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Naming</td>
-                                    <td>Device* prefix (DeviceProcessEvents)</td>
-                                    <td>No prefix or different (SecurityEvent)</td>
-                                </tr>
-                                <tr>
-                                    <td>Retention</td>
-                                    <td>30 days standard</td>
-                                    <td>Configurable (30-730 days)</td>
-                                </tr>
-                                <tr>
-                                    <td>Scope</td>
-                                    <td>MDE-onboarded endpoints only</td>
-                                    <td>All connected data sources</td>
-                                </tr>
-                                <tr>
-                                    <td>Schema</td>
-                                    <td>MDE-specific fields</td>
-                                    <td>Normalized where possible</td>
-                                </tr>
-                                <tr>
-                                    <td>Cross-product</td>
-                                    <td>Via M365D unified hunting</td>
-                                    <td>Native cross-workspace joins</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <p>In M365 Defender unified hunting, the same DeviceProcessEvents table is available, enabling correlation with IdentityLogonEvents, EmailEvents, and CloudAppEvents for comprehensive threat hunting.</p>
-                    </div>
-                </div>
-            </section>
-        </article>
-    </main>
-
-    <script src="../assets/js/main.js"></script>
+            </footer>
+        </div>
+    </div>
+    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
 </body>
 </html>

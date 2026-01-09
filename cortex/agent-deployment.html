@@ -23,16 +23,14 @@
             <li><a href="../operations/index.html">⚙️ Operations</a></li>
         </ul>
     </nav>
-
     <main class="main-content">
         <div class="content-header">
             <h1>🟠 Cortex XDR Agent Deployment</h1>
             <p>Complete guide to deploying and managing Cortex XDR agents across enterprise environments</p>
         </div>
-
         <section class="content-section">
             <h2>Deployment Architecture</h2>
-            <div class="architecture-diagram">
+            <div class="diagram-box"><div class="diagram-content">
                 <pre>
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        CORTEX XDR DEPLOYMENT ARCHITECTURE                        │
@@ -66,10 +64,8 @@
                 </pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>System Requirements</h2>
-            
             <h3>Windows Requirements</h3>
             <table class="comparison-table">
                 <thead>
@@ -107,7 +103,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <h3>macOS Requirements</h3>
             <table class="comparison-table">
                 <thead>
@@ -140,7 +135,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <h3>Linux Requirements</h3>
             <table class="comparison-table">
                 <thead>
@@ -179,14 +173,12 @@
                 </tbody>
             </table>
         </section>
-
         <section class="content-section">
             <h2>Network Requirements</h2>
             <div class="info-box">
                 <h4>Required Connectivity</h4>
                 <p>Cortex XDR agents require outbound HTTPS (443) connectivity to the following domains:</p>
             </div>
-
             <table class="comparison-table">
                 <thead>
                     <tr>
@@ -224,25 +216,19 @@
                 </tbody>
             </table>
         </section>
-
         <section class="content-section">
             <h2>Installation Methods</h2>
-
             <h3>Windows - Interactive Installation</h3>
             <div class="code-block">
                 <pre><code># Download installer from Cortex XDR console
 # Run with administrative privileges
-
 # Silent installation with default settings
 msiexec /i TrapsAgent.msi /qn
-
 # Silent installation with logging
 msiexec /i TrapsAgent.msi /qn /l*v C:\Logs\traps_install.log
-
 # Installation with custom parameters
 msiexec /i TrapsAgent.msi /qn INSTALLDIR="C:\Program Files\Palo Alto Networks" TRAY_ICON=1</code></pre>
             </div>
-
             <h3>Windows - SCCM/Intune Deployment</h3>
             <div class="code-block">
                 <pre><code># SCCM Application Detection Method (PowerShell)
@@ -255,62 +241,47 @@ if (Test-Path $AgentPath) {
     }
 }
 exit 1
-
 # SCCM Installation Command
 msiexec /i TrapsAgent.msi /qn REBOOT=ReallySuppress
-
 # Intune Win32 App Install Command
 msiexec /i TrapsAgent.msi /qn /l*v %TEMP%\traps_install.log
-
 # Intune Detection Rule (Registry)
 # Path: HKLM\SOFTWARE\Palo Alto Networks\Traps
 # Value: Version
 # Comparison: Greater than or equal to 8.0.0</code></pre>
             </div>
-
             <h3>macOS Installation</h3>
             <div class="code-block">
                 <pre><code># Download PKG from Cortex XDR console
-
 # Interactive installation
 sudo installer -pkg TrapsAgent.pkg -target /
-
 # Silent installation via MDM (Jamf Pro)
 # Upload PKG to Jamf and deploy via policy
-
 # Post-installation: Grant required permissions
 # System Preferences → Security & Privacy → Privacy:
 # - Full Disk Access: Palo Alto Networks Traps
 # - Network Filtering: Palo Alto Networks Traps
-
 # Verify installation
 /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool runtime status</code></pre>
             </div>
-
             <h3>Linux Installation</h3>
             <div class="code-block">
                 <pre><code># RHEL/CentOS - RPM Installation
 sudo rpm -ivh traps_agent.rpm
-
 # Ubuntu/Debian - DEB Installation
 sudo dpkg -i traps_agent.deb
 sudo apt-get install -f  # Fix dependencies if needed
-
 # Verify installation
 sudo /opt/traps/bin/cytool runtime status
-
 # Check agent connectivity
 sudo /opt/traps/bin/cytool connect status
-
 # View agent logs
 sudo journalctl -u traps -f
 tail -f /var/log/traps/traps.log</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Agent Profiles</h2>
-            
             <table class="comparison-table">
                 <thead>
                     <tr>
@@ -353,7 +324,6 @@ tail -f /var/log/traps/traps.log</code></pre>
                     </tr>
                 </tbody>
             </table>
-
             <h3>Profile Configuration Settings</h3>
             <div class="code-block">
                 <pre><code># Full Protection Profile Settings
@@ -382,7 +352,6 @@ tail -f /var/log/traps/traps.log</code></pre>
         "registry_events": true
     }
 }
-
 # Server Profile Settings
 {
     "profile_name": "Server Profile",
@@ -404,32 +373,24 @@ tail -f /var/log/traps/traps.log</code></pre>
 }</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Mass Deployment Scripts</h2>
-
             <h3>PowerShell - Domain-Joined Deployment</h3>
             <div class="code-block">
                 <pre><code># Deploy to multiple computers from AD
 $Computers = Get-ADComputer -Filter * -SearchBase "OU=Workstations,DC=corp,DC=local" | 
              Select-Object -ExpandProperty Name
-
 $InstallerPath = "\\fileserver\software\Traps\TrapsAgent.msi"
 $LogPath = "\\fileserver\logs\traps"
-
 foreach ($Computer in $Computers) {
     $Session = New-PSSession -ComputerName $Computer -ErrorAction SilentlyContinue
     if ($Session) {
         Invoke-Command -Session $Session -ScriptBlock {
             param($Installer, $LogDir, $CompName)
-            
             $LogFile = Join-Path $LogDir "$CompName-install.log"
             $Arguments = "/i `"$Installer`" /qn /l*v `"$LogFile`""
-            
             Start-Process msiexec.exe -ArgumentList $Arguments -Wait -NoNewWindow
-            
         } -ArgumentList $InstallerPath, $LogPath, $Computer
-        
         Remove-PSSession $Session
         Write-Host "Deployed to $Computer" -ForegroundColor Green
     } else {
@@ -437,7 +398,6 @@ foreach ($Computer in $Computers) {
     }
 }</code></pre>
             </div>
-
             <h3>Ansible Playbook - Linux Deployment</h3>
             <div class="code-block">
                 <pre><code>---
@@ -448,101 +408,77 @@ foreach ($Computer in $Computers) {
   vars:
     agent_package: "traps_agent_8.0.rpm"
     agent_source: "https://internal-repo.corp.local/cortex/"
-    
   tasks:
     - name: Download Cortex XDR agent package
       get_url:
         url: "{{ agent_source }}{{ agent_package }}"
         dest: "/tmp/{{ agent_package }}"
         mode: '0644'
-      
     - name: Install Cortex XDR agent (RHEL/CentOS)
       yum:
         name: "/tmp/{{ agent_package }}"
         state: present
         disable_gpg_check: yes
       when: ansible_os_family == "RedHat"
-      
     - name: Install Cortex XDR agent (Debian/Ubuntu)
       apt:
         deb: "/tmp/{{ agent_package | replace('.rpm', '.deb') }}"
         state: present
       when: ansible_os_family == "Debian"
-      
     - name: Start Cortex XDR service
       service:
         name: traps
         state: started
         enabled: yes
-        
     - name: Verify agent connectivity
       command: /opt/traps/bin/cytool connect status
       register: connect_status
-      
     - name: Display connection status
       debug:
         var: connect_status.stdout_lines</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Agent Management Commands</h2>
-            
             <h3>Windows - cytool Commands</h3>
             <div class="code-block">
                 <pre><code># Check agent status
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" runtime status
-
 # Check connectivity
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connect status
-
 # Force content update
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" content update
-
 # View agent version
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
-
 # Check protection status
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" protect status
-
 # Isolate endpoint (requires admin token)
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate enable
-
 # Remove isolation
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate disable
-
 # Generate support file
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" support generate</code></pre>
             </div>
-
             <h3>Linux - cytool Commands</h3>
             <div class="code-block">
                 <pre><code># Check agent status
 sudo /opt/traps/bin/cytool runtime status
-
 # Check all modules
 sudo /opt/traps/bin/cytool runtime modules
-
 # View protection policy
 sudo /opt/traps/bin/cytool protect policy
-
 # Check file exclusions
 sudo /opt/traps/bin/cytool protect exclusions
-
 # Force sync with management
 sudo /opt/traps/bin/cytool sync
-
 # Check hash verdict
 sudo /opt/traps/bin/cytool hash query <sha256>
-
 # Collect diagnostic bundle
 sudo /opt/traps/bin/cytool support generate --output /tmp/traps_diag.tar.gz</code></pre>
             </div>
         </section>
-
         <section class="content-section">
             <h2>Troubleshooting</h2>
-
             <h3>Common Issues and Solutions</h3>
             <table class="comparison-table">
                 <thead>
@@ -580,52 +516,40 @@ sudo /opt/traps/bin/cytool support generate --output /tmp/traps_diag.tar.gz</cod
                     </tr>
                 </tbody>
             </table>
-
             <h3>Diagnostic Commands</h3>
             <div class="code-block">
                 <pre><code># Windows - Check service status
 Get-Service -Name "cyserver" | Select-Object Status, StartType
-
 # Windows - View recent logs
 Get-EventLog -LogName Application -Source "Traps*" -Newest 50
-
 # Windows - Check network connectivity
 Test-NetConnection -ComputerName "*.xdr.us.paloaltonetworks.com" -Port 443
-
 # Linux - Check service status
 systemctl status traps
-
 # Linux - View logs
 journalctl -u traps --since "1 hour ago"
-
 # macOS - Check extensions
 systemextensionsctl list | grep paloalto
-
 # macOS - View logs
 log show --predicate 'subsystem == "com.paloaltonetworks.traps"' --last 1h</code></pre>
             </div>
         </section>
-
         <section class="interview-section">
             <h2>💼 Interview Questions</h2>
-            
             <div class="interview-qa">
                 <h4>Q: How would you deploy Cortex XDR agents to 5,000 endpoints in a large enterprise?</h4>
                 <p><strong>A:</strong> I would approach this in phases. First, I would work with the infrastructure team to deploy using existing tools like SCCM or Intune for Windows, Jamf for macOS, and Ansible or Puppet for Linux. I would start with a pilot group of 100-200 machines across different departments to identify any compatibility issues. I would use Detection-Only mode initially to avoid disrupting operations, then gradually enable blocking after validating false positive rates. For network requirements, I would work with the firewall team to allow connectivity to Palo Alto's cloud domains. I would also deploy a Broker VM in each major site for environments with restricted internet access to handle content updates and log forwarding.</p>
             </div>
-
             <div class="interview-qa">
                 <h4>Q: What's the difference between Cortex XDR agent profiles and when would you use each?</h4>
                 <p><strong>A:</strong> Cortex XDR offers several profiles optimized for different environments. Full Protection provides maximum security with all prevention modules enabled, ideal for standard workstations. Server Profile reduces I/O impact by optimizing scan operations and is designed for production servers where performance is critical. VDI Profile handles non-persistent desktops efficiently by minimizing local storage and optimizing for golden image scenarios. Detection-Only mode captures all telemetry without blocking, which I use during initial deployments or when troubleshooting false positives. The key is matching the profile to the endpoint's role and adjusting exclusions based on legitimate applications running on each system type.</p>
             </div>
         </section>
-
         <div class="navigation-links">
             <a href="index.html">← Back to Cortex XDR</a>
             <a href="xql-reference.html">XQL Reference →</a>
         </div>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>

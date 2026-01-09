@@ -22,7 +22,6 @@
             </div>
         </div>
     </nav>
-
     <main class="content-wrapper">
         <aside class="sidebar">
             <div class="sidebar-section">
@@ -40,17 +39,14 @@
                 </ul>
             </div>
         </aside>
-
         <article class="main-content">
             <header class="content-header">
                 <h1>Detection Engineering</h1>
                 <p class="subtitle">Building and maintaining effective detection capabilities across the security stack</p>
             </header>
-
             <section class="content-section">
                 <h2>Detection Engineering Lifecycle</h2>
                 <p>Detection engineering is the practice of designing, building, testing, and maintaining detections that identify malicious activity. Effective detection engineering bridges threat intelligence with operational security monitoring.</p>
-
                 <div class="workflow-diagram">
                     <div class="workflow-step">
                         <span class="step-number">1</span>
@@ -89,7 +85,6 @@
                     </div>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Detection Types</h2>
                 <table class="data-table">
@@ -135,14 +130,11 @@
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Detection Development Framework</h2>
-
                 <h3>Detection Specification Template</h3>
                 <div class="code-block">
                     <pre><code># Detection Specification
-
 ## Metadata
 - **Name**: Encoded PowerShell Execution
 - **ID**: DET-2024-0042
@@ -150,18 +142,15 @@
 - **Created**: 2024-01-15
 - **Last Updated**: 2024-03-20
 - **Status**: Production
-
 ## Threat Context
 - **MITRE ATT&CK**: T1059.001 (PowerShell)
 - **Kill Chain Phase**: Execution
 - **Threat Actor Groups**: APT29, FIN7, Various
 - **Description**: Detects execution of base64-encoded PowerShell commands, 
   commonly used by attackers to obfuscate malicious scripts.
-
 ## Detection Logic
 - **Data Sources**: Process Creation Events (Windows Security 4688, Sysmon 1)
 - **Query Platform**: Splunk/Sentinel/XDR
-
 ### Splunk Query
 ```spl
 index=windows sourcetype=WinEventLog:Security EventCode=4688
@@ -170,7 +159,6 @@ index=windows sourcetype=WinEventLog:Security EventCode=4688
 | eval decoded=base64decode(mvindex(split(CommandLine," "),2))
 | table _time, host, user, CommandLine, decoded
 ```
-
 ### Sentinel KQL
 ```kql
 SecurityEvent
@@ -179,19 +167,16 @@ SecurityEvent
 | where CommandLine matches regex @"(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})"
 | project TimeGenerated, Computer, Account, CommandLine
 ```
-
 ## Tuning Guidance
 - **Known False Positives**: SCCM scripts, GPO deployments, legitimate admin tools
 - **Exclusions**: 
   - Parent process: ConfigMgr\bin\ccm\*
   - User: svc_sccm, svc_intune
   - Encoded prefix: SQBmACAAKAAo (known SCCM pattern)
-
 ## Response Playbook
 - Link: PB-2024-015 (Suspicious PowerShell Execution)
 - Severity: Medium (default), High (if download cradle detected)
 - Auto-Actions: Enrich with user context, check process tree
-
 ## Testing
 - **Atomic Red Team**: T1059.001-1, T1059.001-2
 - **Manual Test**: `powershell -enc [base64-encoded whoami]`
@@ -199,10 +184,8 @@ SecurityEvent
 - **Last Validated**: 2024-03-15</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>MITRE ATT&CK-Driven Detection</h2>
-
                 <h3>Coverage Assessment</h3>
                 <p>Map existing detections to ATT&CK techniques to identify gaps:</p>
                 <div class="code-block">
@@ -216,7 +199,6 @@ SecurityEvent
 | T1547.001 | Run Keys | Registry Mod   | EDR/SIEM | Medium     |
 | T1021.002 | SMB      | Lateral SMB    | NDR/SIEM | Medium     |
 | T1021.001 | RDP      | Unusual RDP    | SIEM     | Low        |
-
 // Gap Analysis Priority
 | Tactic          | Coverage | Priority | Notes                    |
 |-----------------|----------|----------|--------------------------|
@@ -232,7 +214,6 @@ SecurityEvent
 | Exfiltration    | 42%      | High     | Cloud storage gaps       |
 | C2              | 48%      | High     | DNS tunneling needed     |</code></pre>
                 </div>
-
                 <h3>Detection Priority Matrix</h3>
                 <table class="data-table">
                     <thead>
@@ -271,10 +252,8 @@ SecurityEvent
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Testing Detections</h2>
-
                 <h3>Testing Methodologies</h3>
                 <table class="data-table">
                     <thead>
@@ -312,32 +291,27 @@ SecurityEvent
                         </tr>
                     </tbody>
                 </table>
-
                 <h3>Detection Testing Checklist</h3>
                 <div class="code-block">
                     <pre><code>## Pre-Deployment Testing
-
 ### Functional Testing
 [ ] Detection triggers on known-malicious samples
 [ ] Detection triggers on Atomic Red Team test
 [ ] Detection does NOT trigger on normal activity baseline
 [ ] All required data sources are available
 [ ] Query performance is acceptable (<30 seconds)
-
 ### Quality Assurance
 [ ] MITRE ATT&CK mapping is accurate
 [ ] Severity rating is appropriate
 [ ] Playbook is linked and current
 [ ] Documentation is complete
 [ ] Peer review completed
-
 ### Operational Readiness
 [ ] Alert routing configured correctly
 [ ] Enrichment sources configured
 [ ] Auto-response actions tested (if applicable)
 [ ] SOC team briefed on new detection
 [ ] Runbook updated with response steps
-
 ## Post-Deployment Monitoring
 [ ] Monitor FP rate for first 7 days
 [ ] Track alert volume vs. prediction
@@ -346,11 +320,9 @@ SecurityEvent
 [ ] Validate continued detection of test cases</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Detection-as-Code</h2>
                 <p>Treating detections as code enables version control, peer review, automated testing, and consistent deployment.</p>
-
                 <h3>Sigma Rule Example</h3>
                 <div class="code-block">
                     <pre><code>title: Encoded PowerShell Command Execution
@@ -388,12 +360,10 @@ falsepositives:
     - Configuration management tools
 level: medium</code></pre>
                 </div>
-
                 <h3>CI/CD Pipeline for Detections</h3>
                 <div class="code-block">
                     <pre><code># .github/workflows/detection-deploy.yml
 name: Detection Deployment Pipeline
-
 on:
   push:
     paths:
@@ -401,22 +371,18 @@ on:
   pull_request:
     paths:
       - 'detections/**/*.yml'
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Validate Sigma Rules
         run: |
           pip install sigma-cli
           sigma check detections/
-      
       - name: Run Unit Tests
         run: |
           python -m pytest tests/detection_tests.py
-
   test:
     needs: validate
     runs-on: ubuntu-latest
@@ -425,11 +391,9 @@ jobs:
         run: |
           sigma convert -t splunk detections/ -o output/splunk/
           sigma convert -t microsoft365defender detections/ -o output/mde/
-      
       - name: Test Against Sample Data
         run: |
           python scripts/test_detections.py --samples tests/samples/
-
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -439,16 +403,13 @@ jobs:
         run: |
           python scripts/deploy_detections.py --platform splunk
           python scripts/deploy_detections.py --platform sentinel
-      
       - name: Notify SOC
         run: |
           python scripts/notify_soc.py --channel detection-updates</code></pre>
                 </div>
             </section>
-
             <section class="content-section">
                 <h2>Interview Q&A</h2>
-
                 <div class="qa-section">
                     <h3>Q: How do you approach building a new detection from scratch?</h3>
                     <div class="answer">
@@ -465,7 +426,6 @@ jobs:
                         </ol>
                     </div>
                 </div>
-
                 <div class="qa-section">
                     <h3>Q: How do you measure detection effectiveness?</h3>
                     <div class="answer">
@@ -485,7 +445,6 @@ jobs:
             </section>
         </article>
     </main>
-
     <script src="../assets/js/main.js"></script>
 </body>
 </html>
