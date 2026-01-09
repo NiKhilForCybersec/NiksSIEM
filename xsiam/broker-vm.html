@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broker VM Deep Dive | XSIAM | Nik's SIEM Compendium</title>
+    <title>Broker VM - Complete Setup & Configuration | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
-        .sizing-table { background: #161b22; border-radius: 8px; overflow: hidden; margin: 20px 0; }
-        .sizing-table th { background: #21262d; padding: 12px 16px; text-align: left; font-weight: 600; }
-        .sizing-table td { padding: 12px 16px; border-bottom: 1px solid #30363d; }
-        .decision-tree { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin: 20px 0; }
-        .decision-node { background: #161b22; border: 2px solid #58a6ff; border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center; }
-        .decision-node.question { border-color: #d29922; }
-        .decision-node.yes { border-color: #3fb950; }
-        .decision-node.no { border-color: #f85149; }
-        .architecture-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .log-source-card { background: #161b22; border-radius: 8px; padding: 16px; margin: 12px 0; border-left: 4px solid #58a6ff; }
-        .config-block { background: #0d1117; border-radius: 8px; padding: 16px; margin: 16px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; }
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
+        .config-step { display: flex; gap: 16px; padding: 16px; background: #21262d; border-radius: 8px; margin: 12px 0; }
+        .step-num { width: 32px; height: 32px; background: #58a6ff; color: #0d1117; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .code-comment { color: #8b949e; }
+        .code-command { color: #79c0ff; }
+        .code-param { color: #ffa657; }
+        .code-value { color: #a5d6ff; }
+        .field-ref { background: #21262d; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -51,311 +50,395 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-server"></i> Broker VM - On-Premises Data Collection</h1>
-                <p class="lead">The Broker VM is XSIAM's on-premises component for collecting logs from sources that cannot send data directly to the cloud. This guide covers when to use it, how to size it, deployment architectures, and troubleshooting.</p>
+                <h1><i class="fas fa-server"></i> Broker VM - Complete Setup & Configuration Guide</h1>
+                <p class="lead">Step-by-step guide to deploying, configuring, and managing Broker VMs for on-premises log collection. Includes actual console paths, configuration commands, and production-ready syslog configurations.</p>
 
-                <!-- What is Broker VM -->
-                <h2><i class="fas fa-question-circle"></i> What is the Broker VM?</h2>
+                <!-- Broker VM Deployment -->
+                <h2><i class="fas fa-download"></i> Step 1: Deploy Broker VM</h2>
                 
-                <div class="info-box" style="border-color: #58a6ff;">
-                    <h4><i class="fas fa-lightbulb"></i> Broker VM Explained</h4>
-                    <p>The <strong>Broker VM</strong> is a virtual appliance you deploy in your data center that acts as a <strong>bridge between on-premises log sources and XSIAM cloud</strong>.</p>
-                    <p>It collects logs via syslog, Windows Event forwarding, file monitoring, and other protocols, then securely transmits them to XSIAM.</p>
-                </div>
-
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Broker VM Data Flow</div>
-<pre style="color: #8b949e; font-size: 0.85rem; line-height: 1.8;">
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                              ON-PREMISES DATA CENTER                                      │
-│                                                                                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
-│  │  Firewalls  │  │  Routers/   │  │  Windows    │  │  Linux      │  │  Legacy     │   │
-│  │  (PA, Cisco)│  │  Switches   │  │  Servers    │  │  Servers    │  │  Apps       │   │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘   │
-│         │ Syslog         │ Syslog         │ WEF            │ Syslog         │ Syslog   │
-│         │ UDP/TCP        │ UDP/TCP        │ (WinRM)        │ TCP            │ TCP      │
-│         └────────────────┴────────────────┴────────────────┴────────────────┘          │
-│                                           │                                             │
-│                                           ▼                                             │
-│                            ┌──────────────────────────────┐                            │
-│                            │        BROKER VM             │                            │
-│                            │                              │                            │
-│                            │  • Receives logs             │                            │
-│                            │  • Parses & normalizes       │                            │
-│                            │  • Buffers during outages    │                            │
-│                            │  • Encrypts & compresses     │                            │
-│                            │  • Sends to XSIAM cloud      │                            │
-│                            └──────────────┬───────────────┘                            │
-│                                           │                                             │
-└───────────────────────────────────────────┼─────────────────────────────────────────────┘
-                                            │ HTTPS (443)
-                                            │ Encrypted
-                                            ▼
-                              ┌──────────────────────────────┐
-                              │        XSIAM CLOUD           │
-                              │                              │
-                              │   Data Lake → Analytics →    │
-                              │   Detection → Response       │
-                              └──────────────────────────────┘
-</pre>
-                </div>
-
-                <!-- Decision Tree: Do You Need Broker VM? -->
-                <h2><i class="fas fa-code-branch"></i> Decision Tree: Do You Need a Broker VM?</h2>
-                
-                <div class="decision-tree">
-                    <div class="decision-node question">
-                        <strong>What type of log source are you collecting?</strong>
+                <div class="config-section">
+                    <h3>Download Broker VM Image</h3>
+                    <div class="console-path">XSIAM Console → Settings → Data Sources → Broker VM → + Add Broker VM</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Navigate to Broker VM Setup</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Settings (gear icon) → Data Sources → Broker VM → Click "+ Add Broker VM"</p>
+                        </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+                    <div class="config-step">
+                        <div class="step-num">2</div>
                         <div>
-                            <div class="decision-node" style="border-color: #3fb950;">
-                                <strong style="color: #3fb950;">Cloud/SaaS Sources</strong>
-                                <div style="color: #8b949e; font-size: 0.85rem;">AWS, Azure, M365, Okta, Salesforce</div>
-                            </div>
-                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
-                            <div class="decision-node yes" style="background: #1a4d2e;">
-                                <strong style="color: #3fb950;">NO Broker VM needed</strong>
-                                <div style="color: #8b949e; font-size: 0.85rem;">Use Cloud Collectors (API-based)</div>
+                            <strong>Download OVA Image</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Select "Download OVA" for VMware or "Download VHD" for Hyper-V</p>
+                            <p style="color: #d29922; margin: 4px 0; font-size: 0.9rem;">Image size: ~8-10 GB. Keep the registration token - you'll need it.</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Copy Registration Token</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Copy the token shown - this links the VM to your XSIAM tenant</p>
+                            <div class="code-block">
+<span class="code-comment"># Token format example:</span>
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FwaS5wYWxv...
                             </div>
                         </div>
+                    </div>
+
+                    <h3>VMware vSphere Deployment</h3>
+                    <div class="config-step">
+                        <div class="step-num">4</div>
                         <div>
-                            <div class="decision-node" style="border-color: #58a6ff;">
-                                <strong style="color: #58a6ff;">Endpoints</strong>
-                                <div style="color: #8b949e; font-size: 0.85rem;">Windows, Mac, Linux workstations/servers</div>
-                            </div>
-                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
-                            <div class="decision-node" style="background: #1c3a5e;">
-                                <strong style="color: #58a6ff;">NO Broker VM needed</strong>
-                                <div style="color: #8b949e; font-size: 0.85rem;">Use Cortex XDR Agent (direct to cloud)</div>
-                            </div>
+                            <strong>Import OVA</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">vSphere Client → Right-click cluster/host → Deploy OVF Template → Select downloaded OVA</p>
                         </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">5</div>
                         <div>
-                            <div class="decision-node" style="border-color: #d29922;">
-                                <strong style="color: #d29922;">On-Prem Infrastructure</strong>
-                                <div style="color: #8b949e; font-size: 0.85rem;">Firewalls, routers, servers (syslog)</div>
-                            </div>
-                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
-                            <div class="decision-node question">
-                                <strong>Can source send directly to internet?</strong>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-                                <div>
-                                    <div style="text-align: center; color: #3fb950; font-size: 0.8rem;">YES</div>
-                                    <div class="decision-node" style="font-size: 0.8rem; padding: 8px;">
-                                        <strong>HTTP Collector</strong>
-                                        <div style="color: #8b949e;">Direct to XSIAM</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="text-align: center; color: #f85149; font-size: 0.8rem;">NO</div>
-                                    <div class="decision-node" style="font-size: 0.8rem; padding: 8px; background: #4d3a0d; border-color: #d29922;">
-                                        <strong style="color: #d29922;">BROKER VM required</strong>
-                                    </div>
-                                </div>
-                            </div>
+                            <strong>Configure VM Resources</strong>
+                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px;">
+                                <tr><td style="padding-right: 20px;"><strong>Small (5K EPS):</strong></td><td>4 vCPU, 16 GB RAM, 500 GB disk</td></tr>
+                                <tr><td><strong>Medium (15K EPS):</strong></td><td>8 vCPU, 32 GB RAM, 1 TB disk</td></tr>
+                                <tr><td><strong>Large (40K EPS):</strong></td><td>16 vCPU, 64 GB RAM, 2 TB disk</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">6</div>
+                        <div>
+                            <strong>Configure Networking</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Assign to network that can:</p>
+                            <ul style="color: #8b949e; font-size: 0.9rem;">
+                                <li>Receive syslog from log sources (typically internal/DMZ)</li>
+                                <li>Reach *.paloaltonetworks.com:443 (XSIAM cloud)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-check-circle"></i> When You Need Broker VM</h4>
-                    <ul>
-                        <li><strong>Syslog sources</strong> - Firewalls, routers, switches, load balancers (most only support syslog)</li>
-                        <li><strong>Windows Event Collection</strong> - Servers without XDR agent, domain controllers (security events)</li>
-                        <li><strong>Air-gapped/regulated networks</strong> - Environments that can't send directly to cloud</li>
-                        <li><strong>High-volume aggregation</strong> - Local buffering during network outages</li>
-                        <li><strong>Legacy applications</strong> - Apps that only write to files or syslog</li>
-                    </ul>
-                </div>
-
-                <!-- Sizing Guide -->
-                <h2><i class="fas fa-calculator"></i> Broker VM Sizing Guide</h2>
+                <!-- Initial Configuration -->
+                <h2><i class="fas fa-terminal"></i> Step 2: Initial Broker VM Configuration</h2>
                 
-                <div class="styled-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Deployment Size</th>
-                                <th>EPS (Events/Sec)</th>
-                                <th>vCPU</th>
-                                <th>RAM</th>
-                                <th>Disk</th>
-                                <th>Typical Use Case</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Small</strong></td>
-                                <td>Up to 5,000</td>
-                                <td>4</td>
-                                <td>16 GB</td>
-                                <td>500 GB SSD</td>
-                                <td>Single site, 50-100 devices</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Medium</strong></td>
-                                <td>5,000 - 15,000</td>
-                                <td>8</td>
-                                <td>32 GB</td>
-                                <td>1 TB SSD</td>
-                                <td>Regional DC, 100-500 devices</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Large</strong></td>
-                                <td>15,000 - 40,000</td>
-                                <td>16</td>
-                                <td>64 GB</td>
-                                <td>2 TB SSD</td>
-                                <td>Large DC, 500-2000 devices</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Enterprise</strong></td>
-                                <td>40,000+</td>
-                                <td>32+</td>
-                                <td>128 GB</td>
-                                <td>4 TB+ SSD</td>
-                                <td>Multiple Broker VMs recommended</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="info-box" style="border-color: #d29922;">
-                    <h4><i class="fas fa-exclamation-triangle"></i> Sizing Considerations</h4>
-                    <ul>
-                        <li><strong>Disk is for buffering:</strong> If network to XSIAM goes down, logs buffer locally. Size for 24-72 hours of retention.</li>
-                        <li><strong>Calculate your EPS:</strong> Firewall logs can be 1000+ EPS each. Windows DCs can be 500+ EPS. Add it up!</li>
-                        <li><strong>HA requires 2 VMs:</strong> For production, deploy 2 Broker VMs with load balancing</li>
-                        <li><strong>Network bandwidth:</strong> 10,000 EPS ≈ 10-20 Mbps to XSIAM cloud (compressed)</li>
-                    </ul>
-                </div>
-
-                <!-- Enterprise Scenario -->
-                <h2><i class="fas fa-building"></i> Enterprise Deployment Scenario</h2>
-                
-                <div class="architecture-box">
-                    <h4 style="color: #58a6ff; margin-top: 0;"><i class="fas fa-industry"></i> Scenario: Manufacturing Company - 3 Data Centers</h4>
-                    <p style="color: #8b949e;">15,000 employees | Primary DC + 2 regional DCs | OT/IT convergence</p>
-                    
-<pre style="color: #8b949e; font-size: 0.8rem; margin-top: 16px;">
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              PRIMARY DATA CENTER (US-East)                               │
-│                                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
-│  │  Broker VM Cluster (HA)                                                          │   │
-│  │  ┌─────────────────┐    ┌─────────────────┐                                     │   │
-│  │  │  Broker VM #1   │    │  Broker VM #2   │     Load Balanced                   │   │
-│  │  │  16 vCPU/64GB   │    │  16 vCPU/64GB   │     (F5 or HAProxy)                 │   │
-│  │  │  Active         │    │  Standby        │                                      │   │
-│  │  └────────┬────────┘    └────────┬────────┘                                     │   │
-│  └───────────┼──────────────────────┼──────────────────────────────────────────────┘   │
-│              │                      │                                                   │
-│  ┌───────────┼──────────────────────┼──────────────────────────────────────────────┐   │
-│  │  LOG SOURCES (25,000 EPS total)  │                                               │   │
-│  │                                  │                                               │   │
-│  │  • 4x Palo Alto NGFW (8,000 EPS) │  • 50x Windows Servers (5,000 EPS)           │   │
-│  │  • 2x Cisco ASA (2,000 EPS)      │  • Domain Controllers (3,000 EPS)            │   │
-│  │  • Core switches (2,000 EPS)     │  • F5 Load Balancers (1,000 EPS)             │   │
-│  │  • DNS servers (2,000 EPS)       │  • DHCP servers (500 EPS)                    │   │
-│  │  • OT/SCADA syslog (1,500 EPS)   │                                               │   │
-│  └──────────────────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────┐    ┌────────────────────────────────────┐
-│   REGIONAL DC #1 (US-West)         │    │   REGIONAL DC #2 (EU)              │
-│                                    │    │                                    │
-│   Broker VM (8 vCPU/32GB)          │    │   Broker VM (8 vCPU/32GB)          │
-│   ~8,000 EPS                       │    │   ~6,000 EPS                       │
-│                                    │    │                                    │
-│   • 2x Firewalls                   │    │   • 2x Firewalls                   │
-│   • 20x Windows servers            │    │   • 15x Windows servers            │
-│   • Network infrastructure         │    │   • Network infrastructure         │
-└────────────────────────────────────┘    └────────────────────────────────────┘
-                    │                                      │
-                    └──────────────────┬───────────────────┘
-                                       │
-                                       ▼
-                        ┌──────────────────────────────┐
-                        │        XSIAM CLOUD           │
-                        │   (All data normalized to    │
-                        │    XDM, correlated, stored)  │
-                        └──────────────────────────────┘
-</pre>
-                </div>
-
-                <!-- Configuration Examples -->
-                <h2><i class="fas fa-cog"></i> Configuration Examples</h2>
-                
-                <h3>Syslog Collection (Firewall Logs)</h3>
-                <div class="log-source-card">
-                    <h4 style="margin-top: 0;"><i class="fas fa-fire"></i> Palo Alto NGFW → Broker VM</h4>
-                    <p style="color: #8b949e;">Configure firewall to send syslog to Broker VM</p>
-                    
-                    <strong>On Palo Alto Firewall:</strong>
-                    <div class="config-block">
-<span style="color: #8b949e;"># Device → Server Profiles → Syslog</span>
-Name: XSIAM-Broker
-Server: 10.0.1.50  <span style="color: #8b949e;"># Broker VM IP</span>
-Transport: TCP
-Port: 514
-Format: BSD
-Facility: LOG_USER
-
-<span style="color: #8b949e;"># Log Forwarding Profile</span>
-Traffic Logs: Forward to XSIAM-Broker
-Threat Logs: Forward to XSIAM-Broker
-URL Logs: Forward to XSIAM-Broker
+                <div class="config-section">
+                    <h3>Console Access & Registration</h3>
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Access VM Console</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Open VM console in vSphere. Default credentials:</p>
+                            <div class="code-block">
+Username: <span class="code-value">admin</span>
+Password: <span class="code-value">admin</span>
+<span class="code-comment"># You'll be forced to change password on first login</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <strong>On Broker VM (XSIAM Console):</strong>
-                    <div class="config-block">
-<span style="color: #8b949e;"># Settings → Data Sources → Add Syslog Source</span>
-Name: paloalto-firewall
-Protocol: TCP
-Port: 514
-Vendor: Palo Alto Networks
-Product: Firewall
-Parser: PAN-OS Traffic, Threat, URL
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Configure Network (Static IP Recommended)</strong>
+                            <div class="code-block">
+<span class="code-comment"># From Broker VM CLI menu, select: Network Configuration</span>
+
+<span class="code-command">broker-vm></span> configure network
+Interface: eth0
+IP Address: <span class="code-value">10.0.1.50</span>
+Subnet Mask: <span class="code-value">255.255.255.0</span>
+Gateway: <span class="code-value">10.0.1.1</span>
+DNS Server 1: <span class="code-value">10.0.1.10</span>
+DNS Server 2: <span class="code-value">10.0.1.11</span>
+
+<span class="code-comment"># Apply and verify</span>
+<span class="code-command">broker-vm></span> show network
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Register with XSIAM</strong>
+                            <div class="code-block">
+<span class="code-command">broker-vm></span> register
+<span class="code-comment"># Paste the registration token from XSIAM console</span>
+Token: <span class="code-value">eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...</span>
+
+<span class="code-comment"># Wait for "Registration successful" message</span>
+<span class="code-comment"># Broker VM will appear in XSIAM console within 2-5 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">4</div>
+                        <div>
+                            <strong>Verify Registration</strong>
+                            <div class="code-block">
+<span class="code-command">broker-vm></span> show status
+
+<span class="code-comment"># Expected output:</span>
+Registration Status: <span class="code-value">Registered</span>
+Cloud Connectivity: <span class="code-value">Connected</span>
+Last Check-in: <span class="code-value">2024-02-15 14:32:01 UTC</span>
+Certificate Status: <span class="code-value">Valid</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <h3>Windows Event Collection</h3>
-                <div class="log-source-card" style="border-color: #3fb950;">
-                    <h4 style="margin-top: 0;"><i class="fab fa-windows"></i> Windows Server → Broker VM (WEF)</h4>
-                    <p style="color: #8b949e;">Collect Windows Security Events via Windows Event Forwarding</p>
+                <!-- Configure Syslog Collection -->
+                <h2><i class="fas fa-stream"></i> Step 3: Configure Syslog Data Sources</h2>
+                
+                <div class="config-section">
+                    <h3>Add Syslog Listener in XSIAM Console</h3>
+                    <div class="console-path">Settings → Data Sources → Add Data Source → Syslog Collector</div>
                     
-                    <strong>On Windows Server (Source):</strong>
-                    <div class="config-block">
-<span style="color: #8b949e;"># Enable WinRM</span>
-winrm quickconfig
-
-<span style="color: #8b949e;"># Add Broker VM to Event Log Readers group</span>
-net localgroup "Event Log Readers" DOMAIN\BrokerVM$ /add
-
-<span style="color: #8b949e;"># Configure subscription (on Broker VM)</span>
-wecutil cs subscription.xml
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Create Syslog Data Source</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Data Sources → + Add Data Source → Select "Syslog Collector"</p>
+                        </div>
                     </div>
-                    
-                    <strong>Recommended Events to Collect:</strong>
-                    <div class="config-block">
-<span style="color: #3fb950;">Security Events (Critical for SOC):</span>
-4624 - Successful logon
-4625 - Failed logon
-4648 - Explicit credential logon
-4672 - Special privileges assigned
-4688 - Process creation (enable command line logging!)
-4689 - Process termination
-4697 - Service installed
-4698 - Scheduled task created
-4720 - User account created
-4732 - Member added to security group
-4738 - User account changed
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Configure Listener Settings</strong>
+                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px; width: 100%;">
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Name:</strong></td>
+                                    <td style="padding: 8px;">paloalto-firewall-syslog</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Broker VM:</strong></td>
+                                    <td style="padding: 8px;">Select your registered Broker VM</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Protocol:</strong></td>
+                                    <td style="padding: 8px;">TCP (recommended) or UDP</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Port:</strong></td>
+                                    <td style="padding: 8px;">514 (or custom port)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Vendor:</strong></td>
+                                    <td style="padding: 8px;">Palo Alto Networks</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Product:</strong></td>
+                                    <td style="padding: 8px;">Firewall</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Save and Deploy</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Click Save. Configuration pushes to Broker VM within 1-2 minutes.</p>
+                        </div>
+                    </div>
+                </div>
 
-<span style="color: #d29922;">PowerShell Events:</span>
-4103 - Module logging
-4104 - Script block logging (CRITICAL for threat hunting)
+                <h3>Configure Source Device (Palo Alto Firewall Example)</h3>
+                <div class="config-section">
+                    <div class="console-path">Firewall GUI → Device → Server Profiles → Syslog</div>
+                    
+                    <h4>Step A: Create Syslog Server Profile</h4>
+                    <div class="code-block">
+<span class="code-comment"># Firewall GUI: Device → Server Profiles → Syslog → Add</span>
+
+Name: <span class="code-value">XSIAM-Broker</span>
+Servers:
+  Name: <span class="code-value">broker-vm-1</span>
+  Server: <span class="code-value">10.0.1.50</span>  <span class="code-comment"># Your Broker VM IP</span>
+  Transport: <span class="code-value">TCP</span>
+  Port: <span class="code-value">514</span>
+  Format: <span class="code-value">BSD</span>
+  Facility: <span class="code-value">LOG_USER</span>
+                    </div>
+
+                    <h4>Step B: Create Log Forwarding Profile</h4>
+                    <div class="code-block">
+<span class="code-comment"># Objects → Log Forwarding → Add</span>
+
+Name: <span class="code-value">Forward-to-XSIAM</span>
+
+Match List:
+  <span class="code-comment"># Entry 1: Traffic logs</span>
+  Name: <span class="code-value">traffic-logs</span>
+  Log Type: <span class="code-value">traffic</span>
+  Filter: <span class="code-value">All Logs</span>  <span class="code-comment"># Or filter to reduce volume</span>
+  Syslog: <span class="code-value">XSIAM-Broker</span>
+  
+  <span class="code-comment"># Entry 2: Threat logs</span>
+  Name: <span class="code-value">threat-logs</span>
+  Log Type: <span class="code-value">threat</span>
+  Filter: <span class="code-value">All Logs</span>
+  Syslog: <span class="code-value">XSIAM-Broker</span>
+  
+  <span class="code-comment"># Entry 3: URL logs</span>
+  Name: <span class="code-value">url-logs</span>
+  Log Type: <span class="code-value">url</span>
+  Filter: <span class="code-value">All Logs</span>
+  Syslog: <span class="code-value">XSIAM-Broker</span>
+  
+  <span class="code-comment"># Entry 4: Authentication logs</span>
+  Name: <span class="code-value">auth-logs</span>
+  Log Type: <span class="code-value">auth</span>
+  Filter: <span class="code-value">All Logs</span>
+  Syslog: <span class="code-value">XSIAM-Broker</span>
+                    </div>
+
+                    <h4>Step C: Apply Log Forwarding to Security Rules</h4>
+                    <div class="code-block">
+<span class="code-comment"># Policies → Security → Edit each rule</span>
+
+Actions tab:
+  Log Setting: <span class="code-value">Log at Session End</span>  <span class="code-comment"># Required to generate logs</span>
+  Log Forwarding: <span class="code-value">Forward-to-XSIAM</span>  <span class="code-comment"># Apply the profile</span>
+  
+<span class="code-comment"># Commit changes</span>
+                    </div>
+
+                    <h4>Step D: Configure System Logs (Optional but Recommended)</h4>
+                    <div class="code-block">
+<span class="code-comment"># Device → Log Settings → System</span>
+
+System Logs:
+  Syslog: <span class="code-value">XSIAM-Broker</span>  <span class="code-comment"># Sends config changes, admin actions</span>
+
+Configuration Logs:
+  Syslog: <span class="code-value">XSIAM-Broker</span>  <span class="code-comment"># Sends commit/config events</span>
+                    </div>
+                </div>
+
+                <h3>Configure Cisco ASA (Example)</h3>
+                <div class="config-section">
+                    <div class="code-block">
+<span class="code-comment">! Configure logging to Broker VM</span>
+<span class="code-command">logging enable</span>
+<span class="code-command">logging timestamp</span>
+<span class="code-command">logging host</span> inside <span class="code-value">10.0.1.50</span> tcp/514
+<span class="code-command">logging trap</span> informational
+<span class="code-command">logging facility</span> 20
+
+<span class="code-comment">! Enable specific log messages (security relevant)</span>
+<span class="code-command">logging class</span> auth trap informational
+<span class="code-command">logging class</span> access trap informational
+<span class="code-command">logging class</span> ha trap warnings
+<span class="code-command">logging class</span> ids trap informational
+
+<span class="code-comment">! Verify configuration</span>
+<span class="code-command">show logging</span>
+                    </div>
+                </div>
+
+                <h3>Configure Windows Event Forwarding (WEF)</h3>
+                <div class="config-section">
+                    <h4>On Broker VM: Enable WEF Listener</h4>
+                    <div class="console-path">XSIAM Console → Data Sources → Add → Windows Event Collector</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Add Windows Event Collector Data Source</strong>
+                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px;">
+                                <tr><td style="padding-right: 20px;"><strong>Name:</strong></td><td>windows-security-events</td></tr>
+                                <tr><td><strong>Broker VM:</strong></td><td>Select your Broker VM</td></tr>
+                                <tr><td><strong>Vendor:</strong></td><td>Microsoft</td></tr>
+                                <tr><td><strong>Product:</strong></td><td>Windows</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h4>On Windows Servers: Configure Event Forwarding</h4>
+                    <div class="code-block">
+<span class="code-comment"># Step 1: Enable WinRM on source servers</span>
+<span class="code-command">winrm quickconfig</span>
+
+<span class="code-comment"># Step 2: Add Broker VM computer account to Event Log Readers group</span>
+<span class="code-command">net localgroup</span> "Event Log Readers" <span class="code-value">DOMAIN\BrokerVM$</span> /add
+
+<span class="code-comment"># Step 3: Create subscription (on Broker VM or via GPO)</span>
+<span class="code-comment"># Subscription XML example:</span>
+                    </div>
+
+                    <div class="code-block">
+<span class="code-comment">&lt;!-- subscription.xml --&gt;</span>
+&lt;Subscription xmlns="http://schemas.microsoft.com/2006/03/windows/events/subscription"&gt;
+  &lt;SubscriptionId&gt;<span class="code-value">SecurityEvents</span>&lt;/SubscriptionId&gt;
+  &lt;SubscriptionType&gt;SourceInitiated&lt;/SubscriptionType&gt;
+  &lt;Description&gt;Security Events for XSIAM&lt;/Description&gt;
+  &lt;Enabled&gt;true&lt;/Enabled&gt;
+  &lt;Uri&gt;http://schemas.microsoft.com/wbem/wsman/1/windows/EventLog&lt;/Uri&gt;
+  &lt;Query&gt;
+    &lt;![CDATA[
+      &lt;QueryList&gt;
+        &lt;Query Id="0" Path="Security"&gt;
+          &lt;Select Path="Security"&gt;*[System[(EventID=4624 or EventID=4625 or 
+            EventID=4648 or EventID=4672 or EventID=4688 or EventID=4689 or 
+            EventID=4697 or EventID=4698 or EventID=4720 or EventID=4732)]]&lt;/Select&gt;
+        &lt;/Query&gt;
+        &lt;Query Id="1" Path="Microsoft-Windows-PowerShell/Operational"&gt;
+          &lt;Select Path="Microsoft-Windows-PowerShell/Operational"&gt;*[System[(EventID=4103 or EventID=4104)]]&lt;/Select&gt;
+        &lt;/Query&gt;
+      &lt;/QueryList&gt;
+    ]]&gt;
+  &lt;/Query&gt;
+&lt;/Subscription&gt;
+                    </div>
+                </div>
+
+                <!-- Verify Data Flow -->
+                <h2><i class="fas fa-check-circle"></i> Step 4: Verify Data is Flowing</h2>
+                
+                <div class="config-section">
+                    <h3>Check Broker VM Status</h3>
+                    <div class="code-block">
+<span class="code-comment"># SSH or console to Broker VM</span>
+<span class="code-command">broker-vm></span> show status
+
+Registration Status: <span class="code-value">Registered</span>
+Cloud Connectivity: <span class="code-value">Connected</span>
+Last Upload: <span class="code-value">2024-02-15 14:35:22 UTC</span>
+
+<span class="code-comment"># Check listener status</span>
+<span class="code-command">broker-vm></span> show listeners
+
+Listener          Protocol  Port   Status    Events/sec
+--------------------------------------------------------
+syslog-tcp-514    TCP       514    Active    1,247
+syslog-udp-514    UDP       514    Active    832
+wef-collector     WinRM     5985   Active    156
+                    </div>
+
+                    <h3>Verify in XSIAM Console</h3>
+                    <div class="console-path">Settings → Data Sources → [Your Data Source] → Status</div>
+                    
+                    <p style="color: #8b949e;">Check that "Last Event Received" shows recent timestamp and "Events/Hour" shows expected volume.</p>
+
+                    <h3>Query Data in XQL</h3>
+                    <div class="code-block">
+<span class="code-comment">// Check Palo Alto firewall data</span>
+<span class="code-command">dataset</span> = panw_ngfw_traffic_raw
+| <span class="code-command">filter</span> _time > ago(1h)
+| <span class="code-command">comp</span> count = <span class="code-command">count</span>()
+| <span class="code-command">fields</span> count
+
+<span class="code-comment">// Check by source IP (firewall management IP)</span>
+<span class="code-command">dataset</span> = panw_ngfw_traffic_raw
+| <span class="code-command">filter</span> _collector_source = <span class="code-value">"10.0.1.100"</span>  <span class="code-comment">// Firewall IP</span>
+| <span class="code-command">limit</span> 10
+
+<span class="code-comment">// Check Windows events</span>
+<span class="code-command">dataset</span> = microsoft_windows_raw
+| <span class="code-command">filter</span> _time > ago(1h)
+| <span class="code-command">comp</span> count = <span class="code-command">count</span>() by event_id
+| <span class="code-command">sort</span> desc count
+| <span class="code-command">limit</span> 20
                     </div>
                 </div>
 
@@ -366,112 +449,121 @@ wecutil cs subscription.xml
                     <table>
                         <thead>
                             <tr>
-                                <th>Symptom</th>
-                                <th>Likely Cause</th>
+                                <th>Issue</th>
+                                <th>Diagnostic Command</th>
                                 <th>Resolution</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>No data in XSIAM</strong></td>
-                                <td>Broker VM can't reach XSIAM cloud</td>
-                                <td>Check outbound HTTPS (443) to *.paloaltonetworks.com. Verify proxy settings if applicable.</td>
+                                <td><strong>Broker VM not appearing in console</strong></td>
+                                <td><code>broker-vm> show status</code></td>
+                                <td>Re-run registration. Check HTTPS 443 outbound to *.paloaltonetworks.com</td>
                             </tr>
                             <tr>
-                                <td><strong>Intermittent data gaps</strong></td>
-                                <td>Network instability or undersized VM</td>
-                                <td>Check Broker VM disk usage (buffering). Review network latency. Consider sizing up.</td>
+                                <td><strong>No events from syslog source</strong></td>
+                                <td><code>tcpdump -i eth0 port 514</code></td>
+                                <td>Verify source is sending. Check firewall rules on Broker VM network.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Events received but not in XSIAM</strong></td>
+                                <td><code>broker-vm> show upload-queue</code></td>
+                                <td>Check cloud connectivity. Queue backup indicates upload issues.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Data not parsing correctly</strong></td>
+                                <td>Check raw logs in XQL</td>
+                                <td>Verify correct Vendor/Product selected in data source config.</td>
                             </tr>
                             <tr>
                                 <td><strong>High disk usage</strong></td>
-                                <td>Upload backlog (cloud connectivity issue)</td>
-                                <td>Verify cloud connectivity. Check for bandwidth throttling. Review EPS vs capacity.</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Logs not parsing</strong></td>
-                                <td>Wrong parser selected or custom format</td>
-                                <td>Verify vendor/product in data source config. Check raw logs for format issues. May need custom parser.</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Duplicate events</strong></td>
-                                <td>Source sending to multiple Broker VMs</td>
-                                <td>Use load balancer VIP for HA, not multiple IPs. Configure source to send to single destination.</td>
+                                <td><code>broker-vm> show disk</code></td>
+                                <td>Upload backlog. Check bandwidth or cloud connectivity.</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <h3>Network Connectivity Test</h3>
+                <div class="code-block">
+<span class="code-comment"># Test connectivity to XSIAM cloud</span>
+<span class="code-command">broker-vm></span> connectivity test
+
+Testing connection to api.paloaltonetworks.com:443... <span class="code-value">OK</span>
+Testing connection to cortex-gateway.paloaltonetworks.com:443... <span class="code-value">OK</span>
+Testing certificate validation... <span class="code-value">OK</span>
+
+<span class="code-comment"># If using proxy</span>
+<span class="code-command">broker-vm></span> configure proxy
+Proxy Server: <span class="code-value">proxy.corp.com</span>
+Proxy Port: <span class="code-value">8080</span>
                 </div>
 
                 <!-- Interview Q&A -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is a Broker VM and when would you use it?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through setting up syslog collection from a firewall to XSIAM via Broker VM.</button>
                         <div class="qa-answer">
-                            <p><strong>The Broker VM is XSIAM's on-premises log collector.</strong> It's a virtual appliance that receives logs from sources that can't send directly to the cloud.</p>
-                            <p><strong>When to use it:</strong></p>
-                            <ul>
-                                <li><strong>Syslog sources:</strong> Firewalls, routers, switches - most network devices only support syslog</li>
-                                <li><strong>Windows Event Collection:</strong> Domain controllers, servers without XDR agents</li>
-                                <li><strong>Regulated environments:</strong> When data must traverse internal network first</li>
-                                <li><strong>Legacy apps:</strong> Applications that write to files or local syslog</li>
-                            </ul>
-                            <p><strong>When NOT to use it:</strong></p>
-                            <ul>
-                                <li>Cloud sources (AWS, Azure) - use Cloud Collectors instead</li>
-                                <li>Endpoints - use Cortex XDR agent instead</li>
-                                <li>SaaS apps (Okta, M365) - use API-based collectors</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you size a Broker VM for 20,000 EPS?</button>
-                        <div class="qa-answer">
-                            <p><strong>For 20,000 EPS, I'd recommend:</strong></p>
-                            <ul>
-                                <li><strong>vCPU:</strong> 16 cores (parsing is CPU-intensive)</li>
-                                <li><strong>RAM:</strong> 64 GB</li>
-                                <li><strong>Disk:</strong> 2 TB SSD (for buffering during outages)</li>
-                            </ul>
-                            <p><strong>Additional considerations:</strong></p>
-                            <ul>
-                                <li><strong>High Availability:</strong> Deploy 2 Broker VMs behind a load balancer</li>
-                                <li><strong>Disk sizing:</strong> Calculate for 24-72 hours of buffer. At 20K EPS with avg 500 bytes/event = ~35 GB/hour</li>
-                                <li><strong>Network:</strong> Ensure dedicated NIC for log ingestion, separate from management</li>
-                                <li><strong>Location:</strong> Place in DMZ or close to log sources to minimize latency</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you troubleshoot a Broker VM that shows high disk usage?</button>
-                        <div class="qa-answer">
-                            <p><strong>High disk usage indicates an upload backlog. Systematic troubleshooting:</strong></p>
+                            <p><strong>Complete end-to-end process:</strong></p>
                             <ol>
-                                <li><strong>Check cloud connectivity:</strong>
+                                <li><strong>Deploy Broker VM:</strong>
                                     <ul>
-                                        <li>Can Broker VM reach XSIAM? Test HTTPS to *.paloaltonetworks.com</li>
-                                        <li>Check for proxy issues, firewall blocks, certificate problems</li>
+                                        <li>Download OVA from XSIAM console (Settings → Data Sources → Broker VM)</li>
+                                        <li>Deploy to VMware with appropriate sizing (8 vCPU/32GB for ~15K EPS)</li>
+                                        <li>Configure static IP on network accessible by firewalls</li>
+                                        <li>Register with XSIAM using provided token</li>
                                     </ul>
                                 </li>
-                                <li><strong>Check EPS vs capacity:</strong>
+                                <li><strong>Create Syslog Data Source in XSIAM:</strong>
                                     <ul>
-                                        <li>Is incoming EPS exceeding Broker VM capacity?</li>
-                                        <li>Run diagnostics to see current EPS rate</li>
+                                        <li>Settings → Data Sources → Add → Syslog Collector</li>
+                                        <li>Select Broker VM, Protocol (TCP), Port (514)</li>
+                                        <li>Set Vendor (Palo Alto Networks) and Product (Firewall)</li>
                                     </ul>
                                 </li>
-                                <li><strong>Check for stuck processes:</strong>
+                                <li><strong>Configure Firewall:</strong>
                                     <ul>
-                                        <li>Review Broker VM logs for errors</li>
-                                        <li>Restart collection services if needed</li>
+                                        <li>Create Syslog Server Profile pointing to Broker VM IP</li>
+                                        <li>Create Log Forwarding Profile for Traffic, Threat, URL logs</li>
+                                        <li>Apply Log Forwarding Profile to security rules</li>
+                                        <li>Commit configuration</li>
                                     </ul>
                                 </li>
-                                <li><strong>Check bandwidth:</strong>
+                                <li><strong>Verify:</strong>
                                     <ul>
-                                        <li>Is upload bandwidth being throttled?</li>
-                                        <li>20K EPS needs ~20 Mbps sustained upload</li>
+                                        <li>Check Broker VM: <code>show listeners</code> shows events/sec</li>
+                                        <li>Query XQL: <code>dataset = panw_ngfw_traffic_raw | limit 10</code></li>
                                     </ul>
                                 </li>
                             </ol>
-                            <p><strong>Temporary mitigation:</strong> If disk fills up, oldest buffered logs may be dropped. Prioritize restoring cloud connectivity.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Broker VM shows high disk usage. How do you troubleshoot?</button>
+                        <div class="qa-answer">
+                            <p><strong>High disk = upload backlog. Systematic troubleshooting:</strong></p>
+                            <ol>
+                                <li><strong>Check queue status:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">broker-vm> show upload-queue</div>
+                                    <p style="color: #8b949e;">If queue is large, data isn't uploading to cloud.</p>
+                                </li>
+                                <li><strong>Test cloud connectivity:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">broker-vm> connectivity test</div>
+                                    <p style="color: #8b949e;">Verify HTTPS 443 to *.paloaltonetworks.com works.</p>
+                                </li>
+                                <li><strong>Check bandwidth:</strong>
+                                    <p style="color: #8b949e;">10K EPS ≈ 10-20 Mbps sustained upload needed. Check for throttling.</p>
+                                </li>
+                                <li><strong>Check for proxy issues:</strong>
+                                    <p style="color: #8b949e;">If using proxy, verify it's configured correctly and not blocking.</p>
+                                </li>
+                                <li><strong>Verify EPS vs capacity:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">broker-vm> show listeners</div>
+                                    <p style="color: #8b949e;">If incoming EPS exceeds VM capacity, need to scale up or add another Broker VM.</p>
+                                </li>
+                            </ol>
+                            <p><strong>Emergency mitigation:</strong> If disk fills, oldest logs drop. Priority is restoring cloud connectivity.</p>
                         </div>
                     </div>
                 </div>

@@ -3,9 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex XDR Agents | XSIAM | Nik's SIEM</title>
+    <title>Cortex XDR Agent - Complete Configuration Guide | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
+        .config-step { display: flex; gap: 16px; padding: 16px; background: #21262d; border-radius: 8px; margin: 12px 0; }
+        .step-num { width: 32px; height: 32px; background: #58a6ff; color: #0d1117; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; }
+        .code-comment { color: #8b949e; }
+        .code-command { color: #79c0ff; }
+        .code-param { color: #a5d6ff; }
+        .code-value { color: #a5d6ff; }
+        .policy-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .policy-table th, .policy-table td { padding: 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        .policy-table th { background: #21262d; }
+        .toggle-on { color: #3fb950; }
+        .toggle-off { color: #f85149; }
+        .field-ref { background: #21262d; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -15,25 +32,11 @@
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
                     <div class="brand-text">
                         <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                        <span class="brand-subtitle">Security Operations</span>
                     </div>
                 </a>
             </div>
-            <div class="platform-selector">
-                <div class="platform-tabs">
-                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
-                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
-                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
-                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
-                </div>
-            </div>
             <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">XSIAM Platform</div>
-                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
-                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> vs Competitors</a>
-                </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
@@ -41,295 +44,533 @@
                     <a href="agents.html" class="nav-link active"><i class="fas fa-desktop"></i> Cortex Agents</a>
                     <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
                 </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">XQL Query Language</div>
-                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Detection & Response</div>
-                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-bell"></i> Correlation Rules</a>
-                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
-                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
-                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
-                </div>
             </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">XSIAM</a>
-                    <span class="separator">/</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
                     <span class="current">Cortex Agents</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-user-secret"></i> Cortex XDR Agents</h1>
-                <p class="lead">The Cortex XDR agent provides unified endpoint protection, detection, and response capabilities, collecting rich telemetry while preventing malware, exploits, and fileless attacks.</p>
-                <div class="concept-box">
-                    <h3><i class="fas fa-question-circle"></i> Agent vs. Agentless</h3>
-                    <p>XSIAM supports both agent-based and agentless data collection:</p>
-                    <ul>
-                        <li><strong>Cortex Agent:</strong> Full protection + telemetry, response actions, behavioral analysis</li>
-                        <li><strong>Agentless:</strong> Log collection only via Broker VM, cloud APIs, or direct forwarding</li>
-                    </ul>
-                    <p>For complete endpoint visibility and protection, the Cortex agent is essential.</p>
+                <h1><i class="fas fa-desktop"></i> Cortex XDR Agent - Complete Configuration Guide</h1>
+                <p class="lead">The Cortex XDR agent is the endpoint sensor that collects telemetry and enables response actions. This guide covers installation, policy configuration, data collection tuning, and troubleshooting with actual console paths and commands.</p>
+
+                <!-- Agent Overview -->
+                <h2><i class="fas fa-info-circle"></i> What Data Does the Agent Collect?</h2>
+                
+                <div class="info-box" style="border-color: #58a6ff;">
+                    <h4><i class="fas fa-database"></i> Agent Telemetry Categories</h4>
+                    <p>The Cortex XDR agent collects the following data types (all configurable via policy):</p>
                 </div>
-                <h2><i class="fas fa-shield-alt"></i> Agent Capabilities</h2>
+
                 <div class="styled-table">
                     <table>
                         <thead>
                             <tr>
-                                <th>Capability</th>
-                                <th>Description</th>
-                                <th>Configurable</th>
+                                <th>Data Type</th>
+                                <th>What It Captures</th>
+                                <th>XDM Dataset</th>
+                                <th>Typical Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Process Execution</strong></td>
+                                <td>Every process start: path, command line, parent process, user, hash</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=PROCESS</td>
+                                <td>~500-2000 events/endpoint/day</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Operations</strong></td>
+                                <td>Create, modify, delete, rename of files (configurable paths)</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=FILE</td>
+                                <td>~1000-5000 events/endpoint/day</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Connections</strong></td>
+                                <td>Outbound/inbound connections: IP, port, process, bytes</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=NETWORK</td>
+                                <td>~200-1000 events/endpoint/day</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Registry (Windows)</strong></td>
+                                <td>Key creation, modification, deletion (security-relevant keys)</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=REGISTRY</td>
+                                <td>~100-500 events/endpoint/day</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Module/DLL Loads</strong></td>
+                                <td>Libraries loaded by processes</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=LOAD_IMAGE</td>
+                                <td>~500-2000 events/endpoint/day</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Authentication</strong></td>
+                                <td>Local logons, logoffs, failed attempts</td>
+                                <td><span class="field-ref">xdr_data</span> event_type=AUTH</td>
+                                <td>~10-100 events/endpoint/day</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Installation Methods -->
+                <h2><i class="fas fa-download"></i> Agent Installation Methods</h2>
+
+                <h3>Method 1: Manual Installation (Single Endpoint)</h3>
+                <div class="config-section">
+                    <h4>Step 1: Download Agent Package</h4>
+                    <div class="console-path">XSIAM Console → Settings → Endpoints → Agent Installation</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Navigate to Agent Downloads</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Go to Settings (gear icon) → Endpoints → Agent Installation</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Select Platform & Version</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Choose: Windows (64-bit), macOS, or Linux. Select latest stable version.</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Download Package</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Download includes: installer + distribution ID (auto-configured)</p>
+                        </div>
+                    </div>
+
+                    <h4>Windows Installation Command</h4>
+                    <div class="code-block">
+<span class="code-comment"># Run as Administrator</span>
+<span class="code-command">msiexec</span> /i CortexXDR_x64.msi /qn <span class="code-param">DISTRIBUTION_ID</span>=<span class="code-value">"your-distribution-id"</span>
+
+<span class="code-comment"># With custom installation path</span>
+<span class="code-command">msiexec</span> /i CortexXDR_x64.msi /qn <span class="code-param">DISTRIBUTION_ID</span>=<span class="code-value">"your-distribution-id"</span> <span class="code-param">INSTALLDIR</span>=<span class="code-value">"C:\Program Files\Cortex XDR"</span>
+
+<span class="code-comment"># Silent install with logging</span>
+<span class="code-command">msiexec</span> /i CortexXDR_x64.msi /qn /l*v <span class="code-value">C:\temp\cortex_install.log</span> <span class="code-param">DISTRIBUTION_ID</span>=<span class="code-value">"your-distribution-id"</span>
+                    </div>
+
+                    <h4>macOS Installation Command</h4>
+                    <div class="code-block">
+<span class="code-comment"># Install the PKG file</span>
+<span class="code-command">sudo</span> installer -pkg CortexXDR.pkg -target /
+
+<span class="code-comment"># The distribution ID is embedded in the package</span>
+<span class="code-comment"># Verify installation</span>
+<span class="code-command">/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool</span> info
+                    </div>
+
+                    <h4>Linux Installation Commands</h4>
+                    <div class="code-block">
+<span class="code-comment"># RHEL/CentOS (RPM)</span>
+<span class="code-command">sudo</span> rpm -ivh cortex-xdr-agent.rpm
+
+<span class="code-comment"># Ubuntu/Debian (DEB)</span>
+<span class="code-command">sudo</span> dpkg -i cortex-xdr-agent.deb
+
+<span class="code-comment"># Verify agent status</span>
+<span class="code-command">sudo</span> /opt/traps/bin/cytool runtime status
+                    </div>
+                </div>
+
+                <h3>Method 2: Mass Deployment via SCCM/Intune</h3>
+                <div class="config-section">
+                    <h4>Microsoft Intune Deployment</h4>
+                    <div class="console-path">Intune Admin Center → Apps → Windows → Add → Line-of-business app</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Prepare the MSI Package</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Download MSI from XSIAM console. Note: Intune requires the MSI, not EXE.</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Create App in Intune</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Apps → Windows → Add → Select "Line-of-business app" → Upload MSI</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Configure Command Line Arguments</strong>
+                            <div class="code-block" style="margin-top: 8px;">
+<span class="code-comment"># Command line arguments field:</span>
+<span class="code-param">DISTRIBUTION_ID</span>=<span class="code-value">"your-distribution-id"</span> <span class="code-param">REBOOT</span>=<span class="code-value">ReallySuppress</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">4</div>
+                        <div>
+                            <strong>Assign to Device Groups</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Assignments → Add group → Select "All devices" or specific device groups</p>
+                        </div>
+                    </div>
+
+                    <h4>SCCM Deployment</h4>
+                    <div class="code-block">
+<span class="code-comment"># Create Application in SCCM</span>
+<span class="code-comment"># Software Library → Applications → Create Application</span>
+
+<span class="code-comment"># Installation Program:</span>
+<span class="code-command">msiexec</span> /i CortexXDR_x64.msi /qn DISTRIBUTION_ID=<span class="code-value">"your-id"</span> REBOOT=ReallySuppress
+
+<span class="code-comment"># Detection Method: File exists</span>
+Path: C:\Program Files\Palo Alto Networks\Traps
+File: cyserver.exe
+
+<span class="code-comment"># Uninstall Program:</span>
+<span class="code-command">msiexec</span> /x {Product-GUID} /qn
+                    </div>
+
+                    <h4>GPO Deployment</h4>
+                    <div class="code-block">
+<span class="code-comment"># 1. Copy MSI to network share accessible by all computers</span>
+\\server\share\CortexXDR_x64.msi
+
+<span class="code-comment"># 2. Create GPO: Computer Configuration → Policies → Software Settings</span>
+<span class="code-comment"># 3. Right-click "Software Installation" → New → Package</span>
+<span class="code-comment"># 4. Browse to MSI on network share</span>
+<span class="code-comment"># 5. Select "Assigned" deployment method</span>
+
+<span class="code-comment"># For command-line parameters, use MST transform file or startup script instead</span>
+                    </div>
+                </div>
+
+                <!-- Agent Profiles & Policies -->
+                <h2><i class="fas fa-cog"></i> Agent Profiles & Policy Configuration</h2>
+                
+                <div class="info-box" style="border-color: #d29922;">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Understanding Agent Policies</h4>
+                    <p>Agent behavior is controlled by <strong>Endpoint Profiles</strong>. Each profile defines what data to collect, what to block, and response capabilities. Profiles are assigned to <strong>Endpoint Groups</strong> based on rules (OS, hostname pattern, AD group, etc.).</p>
+                </div>
+
+                <div class="console-path">XSIAM Console → Settings → Endpoints → Policy Management → Profiles</div>
+
+                <h3>Creating an Endpoint Profile</h3>
+                <div class="config-section">
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Navigate to Profiles</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Settings → Endpoints → Policy Management → Profiles → + New Profile</p>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Select Profile Type</strong>
+                            <ul style="color: #8b949e; margin: 4px 0; font-size: 0.9rem;">
+                                <li><strong>Windows Workstation</strong> - For desktops/laptops</li>
+                                <li><strong>Windows Server</strong> - Optimized for server workloads</li>
+                                <li><strong>macOS</strong> - Mac endpoints</li>
+                                <li><strong>Linux</strong> - Linux servers/workstations</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Configure Profile Settings</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">See detailed settings below</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Profile Settings Deep Dive</h3>
+
+                <h4>Malware Protection Settings</h4>
+                <div class="config-section">
+                    <table class="policy-table">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Options</th>
+                                <th>Recommendation</th>
+                                <th>Impact</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><strong>Malware Protection</strong></td>
-                                <td>AI-driven detection of known and unknown malware</td>
-                                <td>Block/Detect/Disabled modes</td>
+                                <td>Enabled / Disabled</td>
+                                <td><span class="toggle-on">Enabled</span></td>
+                                <td>Real-time scanning of files</td>
                             </tr>
                             <tr>
-                                <td><strong>Exploit Protection</strong></td>
-                                <td>Memory corruption, code injection, technique-based prevention</td>
-                                <td>Per-technique settings</td>
+                                <td><strong>Malware Protection Action</strong></td>
+                                <td>Block and Quarantine / Report Only</td>
+                                <td>Block and Quarantine</td>
+                                <td>Blocks execution of known malware</td>
                             </tr>
                             <tr>
                                 <td><strong>Behavioral Threat Protection</strong></td>
-                                <td>ML-based analysis of process behavior chains</td>
-                                <td>Sensitivity levels</td>
+                                <td>Enabled / Disabled</td>
+                                <td><span class="toggle-on">Enabled</span></td>
+                                <td>Detects suspicious behavior patterns</td>
                             </tr>
                             <tr>
-                                <td><strong>Ransomware Protection</strong></td>
-                                <td>Encryption behavior detection and prevention</td>
-                                <td>Block/Detect</td>
+                                <td><strong>Anti-Ransomware</strong></td>
+                                <td>Enabled / Disabled</td>
+                                <td><span class="toggle-on">Enabled</span></td>
+                                <td>Protects against encryption attacks</td>
                             </tr>
                             <tr>
-                                <td><strong>Device Control</strong></td>
-                                <td>USB and removable media management</td>
-                                <td>Allow/Block/Read-only</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Host Firewall</strong></td>
-                                <td>Network traffic control per endpoint</td>
-                                <td>Rule-based policies</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Disk Encryption</strong></td>
-                                <td>BitLocker/FileVault management and reporting</td>
-                                <td>Enforce/Report</td>
+                                <td><strong>Exploit Protection</strong></td>
+                                <td>Enabled / Disabled</td>
+                                <td><span class="toggle-on">Enabled</span></td>
+                                <td>Blocks memory exploitation techniques</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <h2><i class="fas fa-laptop"></i> Supported Platforms</h2>
-                <div class="card-grid">
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fab fa-windows"></i></div>
-                        <h3>Windows</h3>
-                        <p>Windows 10/11, Server 2016-2022. Full feature support including host firewall.</p>
+
+                <h4>Data Collection Settings (THE KEY PART)</h4>
+                <div class="config-section">
+                    <div class="console-path">Profile → Data Collection → Extended Data Collection</div>
+                    
+                    <div class="info-box" style="border-color: #3fb950;">
+                        <h4><i class="fas fa-database"></i> This Is Where You Control What Data Gets Sent to XSIAM</h4>
+                        <p>The "Extended Data Collection" section determines the telemetry richness. More collection = better detection but more data volume.</p>
                     </div>
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fab fa-apple"></i></div>
-                        <h3>macOS</h3>
-                        <p>macOS 11+ (Big Sur and later). Kernel extensions or System Extensions.</p>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fab fa-linux"></i></div>
-                        <h3>Linux</h3>
-                        <p>RHEL, Ubuntu, CentOS, Debian, SUSE. Server and container support.</p>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fab fa-android"></i></div>
-                        <h3>Android</h3>
-                        <p>Android 8.0+. Mobile threat defense with app analysis.</p>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fab fa-apple"></i></div>
-                        <h3>iOS</h3>
-                        <p>iOS 14+. Jailbreak detection, network protection, app inventory.</p>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <div class="card-icon"><i class="fas fa-cloud"></i></div>
-                        <h3>Kubernetes</h3>
-                        <p>Container runtime security, pod-level visibility.</p>
-                    </div>
-                </div>
-                <h2><i class="fas fa-download"></i> Agent Deployment</h2>
-                <h3>Deployment Methods</h3>
-                <div class="styled-table">
-                    <table>
+
+                    <table class="policy-table">
                         <thead>
                             <tr>
-                                <th>Method</th>
-                                <th>Best For</th>
-                                <th>Requirements</th>
+                                <th>Collection Setting</th>
+                                <th>What It Collects</th>
+                                <th>Recommendation</th>
+                                <th>Volume Impact</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>Manual Install</strong></td>
-                                <td>Testing, small deployments</td>
-                                <td>Local admin rights</td>
+                                <td><strong>Process Execution</strong></td>
+                                <td>All process starts with full command line, parent process, user</td>
+                                <td><span class="toggle-on">Always Enable</span></td>
+                                <td>High - but essential</td>
                             </tr>
                             <tr>
-                                <td><strong>Group Policy (GPO)</strong></td>
-                                <td>Windows domain environments</td>
-                                <td>Active Directory, network share</td>
+                                <td><strong>Command Line Logging</strong></td>
+                                <td>Full command line arguments for every process</td>
+                                <td><span class="toggle-on">Always Enable</span></td>
+                                <td>Medium</td>
                             </tr>
                             <tr>
-                                <td><strong>SCCM/Intune</strong></td>
-                                <td>Enterprise Windows deployment</td>
-                                <td>Management infrastructure</td>
+                                <td><strong>File Operations</strong></td>
+                                <td>File create/modify/delete/rename events</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                                <td>High</td>
                             </tr>
                             <tr>
-                                <td><strong>Jamf Pro</strong></td>
-                                <td>macOS enterprise</td>
-                                <td>Jamf instance</td>
+                                <td><strong>Network Connections</strong></td>
+                                <td>All TCP/UDP connections with process context</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                                <td>Medium-High</td>
                             </tr>
                             <tr>
-                                <td><strong>Ansible/Chef/Puppet</strong></td>
-                                <td>Linux servers, DevOps</td>
-                                <td>Configuration management</td>
+                                <td><strong>Registry Operations</strong></td>
+                                <td>Registry key changes (Windows only)</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                                <td>Medium</td>
                             </tr>
                             <tr>
-                                <td><strong>Container Sidecar</strong></td>
-                                <td>Kubernetes clusters</td>
-                                <td>Helm charts, DaemonSet</td>
+                                <td><strong>Module/Image Loads</strong></td>
+                                <td>DLL/SO loads by processes</td>
+                                <td>Enable for high-security endpoints</td>
+                                <td>Very High</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Script Execution</strong></td>
+                                <td>PowerShell, VBScript, JScript content</td>
+                                <td><span class="toggle-on">Always Enable</span></td>
+                                <td>Medium</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DNS Queries</strong></td>
+                                <td>All DNS lookups from endpoint</td>
+                                <td>Enable if no NGFW DNS logging</td>
+                                <td>High</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 16px; padding: 16px; background: #21262d; border-radius: 8px;">
+                        <strong style="color: #d29922;">Critical for Detection:</strong>
+                        <p style="color: #8b949e; margin: 8px 0 0 0;">Without <strong>Command Line Logging</strong> and <strong>Script Execution</strong> enabled, you will miss most attack techniques. These are essential for detecting encoded PowerShell, living-off-the-land attacks, and lateral movement.</p>
+                    </div>
+                </div>
+
+                <h4>Response Actions Configuration</h4>
+                <div class="config-section">
+                    <div class="console-path">Profile → Response Actions</div>
+                    
+                    <table class="policy-table">
+                        <thead>
+                            <tr>
+                                <th>Capability</th>
+                                <th>What It Enables</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Live Terminal</strong></td>
+                                <td>Remote command execution on endpoint</td>
+                                <td><span class="toggle-on">Enable</span> (requires approval workflow)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Retrieval</strong></td>
+                                <td>Download files from endpoint for analysis</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Isolation</strong></td>
+                                <td>Isolate endpoint from network (except XSIAM)</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Process Termination</strong></td>
+                                <td>Kill running processes remotely</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Quarantine</strong></td>
+                                <td>Quarantine malicious files</td>
+                                <td><span class="toggle-on">Enable</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Script Execution</strong></td>
+                                <td>Run remediation scripts remotely</td>
+                                <td>Enable with approval</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <h3>Windows Installation</h3>
-                <div class="code-block">
-                    <div class="code-header">Silent Installation (Command Line)</div>
-                    <pre># Download installer from XSIAM console
-# Settings → Endpoints → Agent Installation
-# Silent install with distribution ID
-msiexec /i cortex-xdr-agent.msi /qn DISTRIBUTION_ID=&lt;YOUR_DIST_ID&gt;
-# With proxy configuration
-msiexec /i cortex-xdr-agent.msi /qn DISTRIBUTION_ID=&lt;ID&gt; ^
-    PROXY_URL=http://proxy.corp.com:8080
-# Verify installation
-sc query cyserver
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info</pre>
+
+                <!-- Assigning Profiles to Endpoints -->
+                <h2><i class="fas fa-users-cog"></i> Assigning Profiles to Endpoints</h2>
+                
+                <div class="config-section">
+                    <div class="console-path">Settings → Endpoints → Policy Management → Endpoint Groups</div>
+                    
+                    <h4>Step 1: Create Endpoint Group</h4>
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>New Endpoint Group</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Endpoint Groups → + New Group → Name: "Windows Workstations"</p>
+                        </div>
+                    </div>
+                    
+                    <h4>Step 2: Define Group Rules</h4>
+                    <p style="color: #8b949e;">Groups are dynamic - endpoints automatically join based on matching rules:</p>
+                    
+                    <div class="code-block">
+<span class="code-comment"># Example Group Rules:</span>
+
+<span class="code-comment"># All Windows 10/11 workstations</span>
+<span class="code-param">os_type</span> = <span class="code-value">"Windows"</span> AND <span class="code-param">os_version</span> contains <span class="code-value">"10"</span>
+
+<span class="code-comment"># Servers by hostname pattern</span>
+<span class="code-param">hostname</span> matches <span class="code-value">"SRV-*"</span> OR <span class="code-param">hostname</span> matches <span class="code-value">"*-SERVER"</span>
+
+<span class="code-comment"># By Active Directory OU</span>
+<span class="code-param">ad_ou</span> contains <span class="code-value">"OU=Finance"</span>
+
+<span class="code-comment"># By IP range</span>
+<span class="code-param">ip_address</span> in_subnet <span class="code-value">"10.50.0.0/16"</span>
+
+<span class="code-comment"># High-security endpoints (executives)</span>
+<span class="code-param">ad_groups</span> contains <span class="code-value">"Executive-Laptops"</span>
+                    </div>
+
+                    <h4>Step 3: Assign Profile to Group</h4>
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Link Profile</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Edit Group → Profile Assignment → Select your profile → Save</p>
+                            <p style="color: #d29922; margin: 4px 0; font-size: 0.9rem;">Note: Changes propagate to endpoints within 5-15 minutes</p>
+                        </div>
+                    </div>
                 </div>
-                <h3>macOS Installation</h3>
-                <div class="code-block">
-                    <div class="code-header">macOS Deployment</div>
-                    <pre># Download PKG from XSIAM console
-# Install via command line
-sudo installer -pkg Cortex_XDR_Agent.pkg -target /
-# Grant Full Disk Access (required)
-# System Preferences → Security & Privacy → Privacy → Full Disk Access
-# Add: /Library/Application Support/PaloAltoNetworks/Traps/bin/pmd
-# Grant Network Extension approval
-# System Preferences → Security & Privacy → General → Allow Palo Alto
-# Verify installation
-/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info</pre>
+
+                <!-- Verifying Data Collection -->
+                <h2><i class="fas fa-search"></i> Verifying Data Collection is Working</h2>
+                
+                <div class="config-section">
+                    <h4>Method 1: Check in XSIAM Console</h4>
+                    <div class="console-path">Investigation → XQL Search</div>
+                    
+                    <div class="code-block">
+<span class="code-comment">// Verify process events from specific endpoint</span>
+<span class="code-command">dataset</span> = xdr_data
+| <span class="code-command">filter</span> agent_hostname = <span class="code-value">"WORKSTATION-001"</span>
+| <span class="code-command">filter</span> event_type = PROCESS
+| <span class="code-command">fields</span> _time, action_process_image_name, action_process_command_line, actor_process_image_name
+| <span class="code-command">sort</span> desc _time
+| <span class="code-command">limit</span> 100
+                    </div>
+
+                    <div class="code-block">
+<span class="code-comment">// Check all event types from endpoint in last hour</span>
+<span class="code-command">dataset</span> = xdr_data
+| <span class="code-command">filter</span> agent_hostname = <span class="code-value">"WORKSTATION-001"</span>
+| <span class="code-command">filter</span> _time > ago(1h)
+| <span class="code-command">comp</span> count = <span class="code-command">count</span>() by event_type
+| <span class="code-command">sort</span> desc count
+                    </div>
+
+                    <h4>Expected Output (Healthy Endpoint)</h4>
+                    <div class="code-block">
+<span class="code-comment">// You should see something like:</span>
+event_type          count
+----------------------------
+PROCESS             847
+FILE                1,234
+NETWORK             312
+REGISTRY            156
+LOAD_IMAGE          2,891
+AUTH                23
+                    </div>
+
+                    <h4>Method 2: Check on Endpoint Locally</h4>
+                    <div class="code-block">
+<span class="code-comment"># Windows - Check agent status</span>
+<span class="code-command">"C:\Program Files\Palo Alto Networks\Traps\cytool.exe"</span> info
+
+<span class="code-comment"># Expected output includes:</span>
+<span class="code-comment"># Agent Status: Protected</span>
+<span class="code-comment"># Server Connectivity: Connected</span>
+<span class="code-comment"># Last Check-in: [recent timestamp]</span>
+
+<span class="code-comment"># Check what's being collected</span>
+<span class="code-command">"C:\Program Files\Palo Alto Networks\Traps\cytool.exe"</span> runtime status
+
+<span class="code-comment"># macOS</span>
+<span class="code-command">/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool</span> info
+
+<span class="code-comment"># Linux</span>
+<span class="code-command">sudo</span> /opt/traps/bin/cytool runtime status
+                    </div>
                 </div>
-                <h3>Linux Installation</h3>
-                <div class="code-block">
-                    <div class="code-header">Linux Agent Deployment</div>
-                    <pre># RHEL/CentOS
-sudo rpm -ivh cortex-xdr-agent-*.rpm
-# Ubuntu/Debian
-sudo dpkg -i cortex-xdr-agent-*.deb
-# With distribution ID
-sudo /opt/traps/bin/cytool configure distid &lt;YOUR_DIST_ID&gt;
-# Verify service status
-sudo systemctl status traps_pmd
-# Check agent connectivity
-sudo /opt/traps/bin/cytool info
-sudo /opt/traps/bin/cytool connectivity check</pre>
-                </div>
-                <h2><i class="fas fa-cogs"></i> Agent Configuration</h2>
-                <h3>Security Profiles</h3>
-                <div class="info-box">
-                    <h4>Profile Types</h4>
-                    <ul>
-                        <li><strong>Malware Profile:</strong> AI analysis mode, scan settings, exclusions</li>
-                        <li><strong>Exploit Profile:</strong> Technique-specific protection settings</li>
-                        <li><strong>Restrictions Profile:</strong> Application restrictions, script control</li>
-                        <li><strong>Device Control Profile:</strong> USB and removable media policies</li>
-                        <li><strong>Host Firewall Profile:</strong> Network access rules</li>
-                    </ul>
-                </div>
-                <h3>Common Exclusions</h3>
-                <div class="code-block">
-                    <div class="code-header">Typical Exclusion Patterns</div>
-                    <pre># Process Exclusions (for performance/compatibility)
-# Add via: Endpoints → Profiles → Malware → Exclusions
-# Backup Software
-C:\Program Files\Veeam\*
-C:\Program Files\Commvault\*
-# Database Engines
-C:\Program Files\Microsoft SQL Server\*\MSSQL\Binn\sqlservr.exe
-/u01/app/oracle/product/*/bin/oracle
-# Development Tools
-C:\Program Files\Microsoft Visual Studio\*
-/opt/jetbrains/*
-# Virtualization
-C:\Program Files\VMware\*
-# Security Tools (if compatibility issues)
-# Be cautious - verify necessity before excluding</pre>
-                </div>
-                <h2><i class="fas fa-heartbeat"></i> Agent Health Monitoring</h2>
-                <div class="code-block">
-                    <div class="code-header">XQL: Agent Health Dashboard Queries</div>
-                    <pre>// Agent connectivity status
-dataset = endpoints
-| comp count() as count by agent_status
-| alter pct = round(multiply(divide(count, sum(count)), 100), 1)
-// Agents not checking in (offline > 24h)
-dataset = endpoints
-| filter agent_status = "DISCONNECTED"
-| filter last_seen < ago(24h)
-| fields hostname, ip_address, os_type, last_seen, agent_version
-| sort asc last_seen
-// Agent version distribution
-dataset = endpoints
-| comp count() as count by agent_version
-| sort desc count
-// Endpoints missing agent
-dataset = asset_inventory
-| join type = left (
-    dataset = endpoints
-    | fields hostname, agent_status
-) as agents on hostname = agents.hostname
-| filter agents.hostname = null
-| fields hostname, ip_address, os_type, asset_source</pre>
-                </div>
-                <h3>Troubleshooting Commands</h3>
-                <div class="code-block">
-                    <div class="code-header">Agent Diagnostic Commands</div>
-                    <pre># Windows - cytool commands
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connectivity check
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" log collect
-# Check service status
-sc query cyserver
-Get-Service -Name "Cortex XDR*"
-# View agent logs
-Get-Content "C:\ProgramData\Cyvera\Logs\*.log" -Tail 100
-# Linux
-sudo /opt/traps/bin/cytool info
-sudo /opt/traps/bin/cytool connectivity check
-sudo journalctl -u traps_pmd -f
-# macOS
-/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info
-/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool connectivity check</pre>
-                </div>
-                <h3>Common Issues & Solutions</h3>
+
+                <!-- Common Issues -->
+                <h2><i class="fas fa-bug"></i> Troubleshooting Common Issues</h2>
+                
                 <div class="styled-table">
                     <table>
                         <thead>
@@ -341,90 +582,163 @@ sudo journalctl -u traps_pmd -f
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Agent offline</td>
-                                <td>No check-in, disconnected status</td>
-                                <td>Verify network/proxy, check service running, verify FQDN resolution</td>
+                                <td><strong>No data in XSIAM</strong></td>
+                                <td>XQL returns no events for endpoint</td>
+                                <td>Check agent connectivity: <code>cytool info</code>. Verify endpoint can reach *.paloaltonetworks.com:443</td>
                             </tr>
                             <tr>
-                                <td>High CPU usage</td>
-                                <td>Endpoint performance issues</td>
-                                <td>Add process exclusions for known heavy apps, check scan schedule</td>
+                                <td><strong>Missing command lines</strong></td>
+                                <td>Process events show but command_line is empty</td>
+                                <td>Enable "Command Line Logging" in profile. Check Windows audit policy (Process Creation auditing)</td>
                             </tr>
                             <tr>
-                                <td>Application blocked</td>
-                                <td>Legitimate app prevented</td>
-                                <td>Add hash/path exception, review exploit profile</td>
+                                <td><strong>Missing network events</strong></td>
+                                <td>No NETWORK event_type in data</td>
+                                <td>Enable "Network Connections" in profile Data Collection settings</td>
                             </tr>
                             <tr>
-                                <td>macOS permissions</td>
-                                <td>Reduced protection features</td>
-                                <td>Grant Full Disk Access, approve kernel/system extension</td>
+                                <td><strong>Agent not updating policy</strong></td>
+                                <td>Old profile settings still active</td>
+                                <td>Force policy refresh: <code>cytool checkin</code> or wait 15 minutes</td>
                             </tr>
                             <tr>
-                                <td>Version mismatch</td>
-                                <td>Features not working</td>
-                                <td>Update agent to latest, check content updates</td>
+                                <td><strong>High CPU usage</strong></td>
+                                <td>Agent consuming >5% CPU constantly</td>
+                                <td>Check for scanning exclusion needs. Reduce "Module Loads" collection on busy servers.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <h2><i class="fas fa-terminal"></i> Live Terminal (Response)</h2>
-                <div class="info-box">
-                    <h4>Live Terminal Capabilities</h4>
-                    <p>Remote shell access to endpoints for investigation and response:</p>
-                    <ul>
-                        <li>Execute commands on endpoint</li>
-                        <li>Collect files for analysis</li>
-                        <li>Push scripts for remediation</li>
-                        <li>Kill processes, quarantine files</li>
-                        <li>Network isolation</li>
-                    </ul>
-                </div>
+
+                <h3>Diagnostic Commands</h3>
                 <div class="code-block">
-                    <div class="code-header">Common Live Terminal Commands</div>
-                    <pre># Process investigation
-processlist
-processlist -filter "name contains powershell"
-# File operations
-filelist "C:\Users\*\Downloads"
-fileinfo "C:\Windows\Temp\suspicious.exe"
-getfile "C:\Windows\Temp\suspicious.exe"
-# Registry investigation (Windows)
-reglist "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-# Network connections
-netstat
-netstat -filter "state=ESTABLISHED"
-# Kill malicious process
-processkill -pid 1234
-# Quarantine file
-filequarantine "C:\malware.exe"
-# Network isolation
-isolate  # Cuts all network except XSIAM communication
-unisolate  # Restores network</pre>
+<span class="code-comment"># Full diagnostic dump (Windows)</span>
+<span class="code-command">"C:\Program Files\Palo Alto Networks\Traps\cytool.exe"</span> diagnostic create
+
+<span class="code-comment"># Check connectivity to XSIAM</span>
+<span class="code-command">"C:\Program Files\Palo Alto Networks\Traps\cytool.exe"</span> connectivity test
+
+<span class="code-comment"># Force immediate check-in</span>
+<span class="code-command">"C:\Program Files\Palo Alto Networks\Traps\cytool.exe"</span> checkin
+
+<span class="code-comment"># View local agent logs</span>
+<span class="code-comment"># Windows: C:\ProgramData\Cyvera\Logs\</span>
+<span class="code-comment"># macOS: /Library/Application Support/PaloAltoNetworks/Traps/logs/</span>
+<span class="code-comment"># Linux: /var/log/traps/</span>
                 </div>
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you handle agent deployment at scale?"</h4>
-                    <p>"For enterprise agent deployment, I use existing management infrastructure. For Windows, I create an SCCM or Intune deployment package with the MSI and distribution ID pre-configured for silent installation. I use GPO startup scripts as a fallback for machines not in SCCM. For macOS, I deploy via Jamf Pro with a PreStage enrollment that includes the Cortex agent and pre-approves the required privacy permissions via PPPC profiles. For Linux servers, I use Ansible playbooks that handle package installation and distribution ID configuration. I start with a pilot group of 5-10% of endpoints, monitor for compatibility issues for a week, then roll out in phases. I track deployment progress via XSIAM dashboards showing agent coverage percentage and any installation failures."</p>
+
+                <!-- Interview Q&A -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you configure the Cortex XDR agent to collect specific data types?</button>
+                        <div class="qa-answer">
+                            <p><strong>Data collection is controlled via Endpoint Profiles:</strong></p>
+                            <ol>
+                                <li>Navigate to <strong>Settings → Endpoints → Policy Management → Profiles</strong></li>
+                                <li>Create or edit a profile for your OS type</li>
+                                <li>Go to the <strong>Data Collection</strong> section</li>
+                                <li>Enable specific collection types:
+                                    <ul>
+                                        <li><strong>Process Execution</strong> - Essential for all detection</li>
+                                        <li><strong>Command Line Logging</strong> - Critical for seeing what processes actually do</li>
+                                        <li><strong>Network Connections</strong> - For C2 detection</li>
+                                        <li><strong>File Operations</strong> - For ransomware and data exfil detection</li>
+                                        <li><strong>Registry Operations</strong> - For persistence detection (Windows)</li>
+                                        <li><strong>Script Execution</strong> - For PowerShell attack detection</li>
+                                    </ul>
+                                </li>
+                                <li>Assign profile to an Endpoint Group</li>
+                                <li>Endpoints pick up new policy within 5-15 minutes</li>
+                            </ol>
+                            <p><strong>Verification:</strong> Run XQL query filtering by agent_hostname and check event_type distribution</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you deploy Cortex XDR agent to 10,000 Windows endpoints?</button>
+                        <div class="qa-answer">
+                            <p><strong>For enterprise deployment, I'd use existing deployment infrastructure:</strong></p>
+                            <p><strong>Option 1: Microsoft Intune (if available)</strong></p>
+                            <ol>
+                                <li>Download MSI from XSIAM console</li>
+                                <li>Create Line-of-business app in Intune</li>
+                                <li>Set command line: <code>DISTRIBUTION_ID="your-id" REBOOT=ReallySuppress</code></li>
+                                <li>Assign to "All Windows devices" group</li>
+                                <li>Monitor deployment status in Intune</li>
+                            </ol>
+                            <p><strong>Option 2: SCCM</strong></p>
+                            <ol>
+                                <li>Create Application with MSI deployment type</li>
+                                <li>Set detection method (cyserver.exe exists)</li>
+                                <li>Deploy to device collection</li>
+                                <li>Use phased deployment for risk management</li>
+                            </ol>
+                            <p><strong>Option 3: GPO (if no MDM/SCCM)</strong></p>
+                            <ol>
+                                <li>Host MSI on network share</li>
+                                <li>Create Software Installation GPO</li>
+                                <li>Link to OU containing target computers</li>
+                            </ol>
+                            <p><strong>Best Practice:</strong> Deploy to pilot group (100-500) first, monitor for issues, then expand to full deployment in waves.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: An endpoint shows as connected but you're not seeing expected telemetry. How do you troubleshoot?</button>
+                        <div class="qa-answer">
+                            <p><strong>Systematic troubleshooting approach:</strong></p>
+                            <ol>
+                                <li><strong>Verify profile assignment:</strong>
+                                    <ul>
+                                        <li>Check which profile is assigned to the endpoint</li>
+                                        <li>Verify the profile has correct Data Collection settings enabled</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Check local agent status:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">cytool info<br>cytool runtime status</div>
+                                    <p style="color: #8b949e; margin: 4px 0;">Look for "Protected" status and recent policy timestamp</p>
+                                </li>
+                                <li><strong>Force policy refresh:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">cytool checkin</div>
+                                </li>
+                                <li><strong>Verify with XQL:</strong>
+                                    <div class="code-block" style="margin: 8px 0;">dataset = xdr_data | filter agent_hostname = "HOSTNAME" | comp count() by event_type</div>
+                                </li>
+                                <li><strong>Check for specific missing data:</strong>
+                                    <ul>
+                                        <li>Missing command lines → Enable "Command Line Logging" in profile</li>
+                                        <li>Missing network → Enable "Network Connections" collection</li>
+                                        <li>Missing registry → Enable "Registry Operations" (Windows only)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Review agent logs:</strong>
+                                    <p style="color: #8b949e; margin: 4px 0;">Check C:\ProgramData\Cyvera\Logs\ for errors</p>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
                 </div>
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you troubleshoot an agent that's not connecting?"</h4>
-                    <p>"I follow a systematic process. First, I verify the agent service is running - on Windows, check 'cyserver' service status. Then I run 'cytool connectivity check' to test communication with the XSIAM cloud. If that fails, I check network connectivity: can the endpoint reach the XSIAM URLs on port 443? Are there proxy requirements not configured? I review the agent logs for specific error messages. Common issues include firewall blocking outbound HTTPS, incorrect proxy settings, or certificate inspection interfering with the connection. For certificate issues, I add the XSIAM URLs to the SSL inspection bypass list. If the agent was working before, I check what changed - Windows updates, new security software, or network changes. As a last resort, I uninstall and reinstall the agent with fresh configuration."</p>
-                </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="index.html">XSIAM</a>
-                        <a href="xdr-overview.html">XDR Detection</a>
-                        <a href="architecture.html">Architecture</a>
-                    </div>
-                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
                 </div>
             </footer>
         </div>
     </div>
-    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
-    <script src="../assets/js/main.js"></script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
