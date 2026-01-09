@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Hunting | Nik's SIEM</title>
+    <title>Advanced Hunting | MDE | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -41,48 +41,120 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-terminal"></i> Advanced Hunting</h1>
-                <p class="lead">Use KQL in Microsoft Defender to hunt for threats across devices, emails, identities, and cloud apps. Same query language as Sentinel.</p>
+                <p class="lead">Use KQL in Microsoft Defender to hunt for threats across endpoints, emails, identities, and cloud apps. The same query language as Sentinel but with MDE-specific tables.</p>
 
-                <h2><i class="fas fa-code"></i> Key Tables</h2>
+                <h2><i class="fas fa-database"></i> Key Tables</h2>
                 <div class="styled-table">
                     <table>
-                        <thead><tr><th>Table</th><th>Contains</th></tr></thead>
+                        <thead><tr><th>Table</th><th>Contains</th><th>Retention</th></tr></thead>
                         <tbody>
-                            <tr><td><strong>DeviceProcessEvents</strong></td><td>Process creation and execution</td></tr>
-                            <tr><td><strong>DeviceNetworkEvents</strong></td><td>Network connections</td></tr>
-                            <tr><td><strong>DeviceFileEvents</strong></td><td>File creation, modification, deletion</td></tr>
-                            <tr><td><strong>DeviceRegistryEvents</strong></td><td>Registry changes</td></tr>
-                            <tr><td><strong>DeviceLogonEvents</strong></td><td>Authentication events</td></tr>
-                            <tr><td><strong>AlertInfo/AlertEvidence</strong></td><td>Alert details and evidence</td></tr>
+                            <tr><td><strong>DeviceProcessEvents</strong></td><td>Process creation, command lines</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceNetworkEvents</strong></td><td>Network connections</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceFileEvents</strong></td><td>File creation, modification, deletion</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceRegistryEvents</strong></td><td>Registry changes</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceLogonEvents</strong></td><td>Logon events</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceImageLoadEvents</strong></td><td>DLL loads</td><td>30 days</td></tr>
+                            <tr><td><strong>DeviceEvents</strong></td><td>Miscellaneous events</td><td>30 days</td></tr>
+                            <tr><td><strong>AlertInfo</strong></td><td>Alert metadata</td><td>30 days</td></tr>
+                            <tr><td><strong>AlertEvidence</strong></td><td>Alert evidence/entities</td><td>30 days</td></tr>
                         </tbody>
                     </table>
                 </div>
 
                 <h2><i class="fas fa-code"></i> Hunting Queries</h2>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Common Hunting Scenarios</div>
+                    <div class="code-header"><i class="fas fa-code"></i> Process Hunting</div>
 <pre>
 // PowerShell with encoded commands
 DeviceProcessEvents
 | where Timestamp > ago(7d)
-| where FileName =~ "powershell.exe"
-| where ProcessCommandLine contains "-enc" or ProcessCommandLine contains "-encoded"
-| project Timestamp, DeviceName, AccountName, ProcessCommandLine
+| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+| where ProcessCommandLine has_any ("-enc", "-encoded", "-e ", "-ec ")
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, 
+    InitiatingProcessFileName, InitiatingProcessCommandLine
 
-// Suspicious process parent-child
+// Suspicious process spawning from Office
 DeviceProcessEvents
 | where Timestamp > ago(24h)
-| where InitiatingProcessFileName in~ ("outlook.exe", "excel.exe", "word.exe")
-| where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe")
-| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, ProcessCommandLine
+| where InitiatingProcessFileName in~ ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe")
+| where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| project Timestamp, DeviceName, AccountName, InitiatingProcessFileName, 
+    FileName, ProcessCommandLine
 
-// Lateral movement detection
-DeviceNetworkEvents
-| where Timestamp > ago(1h)
-| where RemotePort in (445, 135, 5985, 5986)
-| summarize ConnectionCount = count() by DeviceName, RemoteIP
-| where ConnectionCount > 5
+// LOLBins usage
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName in~ ("certutil.exe", "bitsadmin.exe", "mshta.exe", 
+    "regsvr32.exe", "rundll32.exe", "msiexec.exe")
+| where ProcessCommandLine has_any ("http", "ftp", "download", "transfer")
+| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
 </pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Network & Persistence Hunting</div>
+<pre>
+// Connections to rare external IPs
+DeviceNetworkEvents
+| where Timestamp > ago(24h)
+| where RemoteIPType == "Public"
+| summarize ConnectionCount = count(), Devices = dcount(DeviceName) by RemoteIP
+| where Devices == 1 and ConnectionCount < 5
+| join kind=inner (
+    DeviceNetworkEvents | where Timestamp > ago(24h)
+) on RemoteIP
+| project Timestamp, DeviceName, RemoteIP, RemotePort, InitiatingProcessFileName
+
+// Scheduled task creation
+DeviceRegistryEvents
+| where Timestamp > ago(7d)
+| where RegistryKey has "Schedule\\TaskCache\\Tasks"
+| where ActionType == "RegistryValueSet"
+| project Timestamp, DeviceName, RegistryKey, RegistryValueName, PreviousRegistryValueData
+
+// Run key persistence
+DeviceRegistryEvents
+| where Timestamp > ago(7d)
+| where RegistryKey has_any ("Run", "RunOnce")
+| where ActionType == "RegistryValueSet"
+| project Timestamp, DeviceName, AccountName, RegistryKey, RegistryValueName, RegistryValueData
+</pre>
+                </div>
+
+                <h2><i class="fas fa-bell"></i> Custom Detection Rules</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Turn Hunting Queries into Alerts</h4>
+                    <p>Save hunting queries as <strong>Custom Detection Rules</strong> to automatically generate alerts when the query finds results. Configure frequency, alert title, severity, and response actions.</p>
+                </div>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How would you hunt for lateral movement in MDE?</button>
+                        <div class="qa-answer">
+<pre>// Hunt for lateral movement indicators
+// 1. Remote service creation
+DeviceProcessEvents
+| where Timestamp > ago(24h)
+| where FileName == "services.exe"
+| where ProcessCommandLine has "create" or ProcessCommandLine has "config"
+| project Timestamp, DeviceName, ProcessCommandLine
+
+// 2. PsExec-like activity
+DeviceNetworkEvents
+| where Timestamp > ago(24h)
+| where RemotePort == 445 or RemotePort == 135
+| summarize TargetCount = dcount(RemoteIP) by DeviceName
+| where TargetCount > 5
+
+// 3. WMI remote execution
+DeviceProcessEvents
+| where Timestamp > ago(24h)
+| where InitiatingProcessFileName == "wmiprvse.exe"
+| where FileName in~ ("cmd.exe", "powershell.exe")
+</pre>
+                        </div>
+                    </div>
                 </div>
             </main>
             <footer class="main-footer">
@@ -90,7 +162,7 @@ DeviceNetworkEvents
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">MDE</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

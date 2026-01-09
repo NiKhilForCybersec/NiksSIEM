@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DCR & DCE Guide | Nik's SIEM</title>
+    <title>DCR & DCE Guide | Sentinel | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -20,153 +20,373 @@
                 </a>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-section"><div class="nav-section-title">Sentinel</div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
-                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
-                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Connectors</a>
-                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a></div>
-                <div class="nav-section"><div class="nav-section-title">KQL</div>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link active"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
                     <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Rules</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
                     <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
-                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a></div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
             </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">Sentinel</a>
-                    <span class="separator">/</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
                     <span class="current">DCR & DCE Guide</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-cogs"></i> DCR & DCE Guide</h1>
-                <p class="lead">Data Collection Rules (DCR) and Data Collection Endpoints (DCE) are the modern way to collect and transform data in Azure Monitor and Sentinel. Master these for efficient data ingestion.</p>
+                <h1><i class="fas fa-cogs"></i> Data Collection Rules & Endpoints</h1>
+                <p class="lead">DCR (Data Collection Rules) and DCE (Data Collection Endpoints) are the foundation of Azure Monitor's data pipeline. Master these components to control data ingestion, transformation, and routing.</p>
 
-                <h2><i class="fas fa-lightbulb"></i> Key Concepts</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-file-alt"></i></div>
-                        <h4>Data Collection Rule (DCR)</h4>
-                        <p>Defines WHAT data to collect, HOW to transform it, and WHERE to send it. JSON configuration.</p>
+                <!-- CONCEPT OVERVIEW -->
+                <h2><i class="fas fa-lightbulb"></i> Understanding DCR and DCE</h2>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-globe"></i></div>
+                            <div class="comparison-item-title">DCE (Data Collection Endpoint)</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Network endpoint for data ingestion</li>
+                            <li><i class="fas fa-check"></i> Regional Azure resource</li>
+                            <li><i class="fas fa-check"></i> Provides HTTPS ingestion URL</li>
+                            <li><i class="fas fa-check"></i> Required for custom logs</li>
+                            <li><i class="fas fa-info-circle"></i> "Where data enters Azure"</li>
+                        </ul>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-network-wired"></i></div>
-                        <h4>Data Collection Endpoint (DCE)</h4>
-                        <p>Network endpoint where agents send data. Required for custom logs and some scenarios.</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-desktop"></i></div>
-                        <h4>Azure Monitor Agent (AMA)</h4>
-                        <p>Modern agent that uses DCRs. Replaces legacy agents (MMA, OMS).</p>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-route"></i></div>
+                            <div class="comparison-item-title">DCR (Data Collection Rule)</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Defines WHAT to collect</li>
+                            <li><i class="fas fa-check"></i> Specifies WHERE to send</li>
+                            <li><i class="fas fa-check"></i> Contains transformation logic</li>
+                            <li><i class="fas fa-check"></i> Can filter/modify data</li>
+                            <li><i class="fas fa-info-circle"></i> "Rules for processing data"</li>
+                        </ul>
                     </div>
                 </div>
 
-                <h2><i class="fas fa-code"></i> DCR Structure</h2>
+                <!-- DATA FLOW -->
+                <h2><i class="fas fa-project-diagram"></i> Data Flow Architecture</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-stream"></i> DCR/DCE Data Pipeline</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">Data Source</div><div class="flow-box-subtitle">VM, App, API</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box primary"><div class="flow-box-title">AMA / API Client</div><div class="flow-box-subtitle">Sends data</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box success"><div class="flow-box-title">DCE</div><div class="flow-box-subtitle">Ingestion endpoint</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box warning"><div class="flow-box-title">DCR</div><div class="flow-box-subtitle">Transform & Route</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box purple"><div class="flow-box-title">Workspace</div><div class="flow-box-subtitle">Table</div></div>
+                    </div>
+                </div>
+
+                <!-- DCR COMPONENTS -->
+                <h2><i class="fas fa-puzzle-piece"></i> DCR Components</h2>
+                
+                <div class="pipeline">
+                    <div class="pipeline-stage" data-step="1">
+                        <div class="pipeline-stage-title">Data Sources</div>
+                        <div class="pipeline-stage-desc">What data to collect</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>Syslog:</strong> Facility, severity filters</li>
+                                <li><strong>Windows Events:</strong> XPath queries</li>
+                                <li><strong>Performance:</strong> Counters, sample rate</li>
+                                <li><strong>Custom Logs:</strong> File paths, formats</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="2">
+                        <div class="pipeline-stage-title">Streams</div>
+                        <div class="pipeline-stage-desc">Data format definition</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>Built-in streams:</strong> Microsoft-Syslog, Microsoft-SecurityEvent</li>
+                                <li><strong>Custom streams:</strong> Custom-MyTable_CL</li>
+                                <li>Defines column schema</li>
+                                <li>Input format for transformation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="3">
+                        <div class="pipeline-stage-title">Transformations</div>
+                        <div class="pipeline-stage-desc">KQL to modify data</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>Filter:</strong> Drop unwanted events</li>
+                                <li><strong>Parse:</strong> Extract fields from text</li>
+                                <li><strong>Enrich:</strong> Add calculated fields</li>
+                                <li><strong>Project:</strong> Select/rename columns</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="4">
+                        <div class="pipeline-stage-title">Destinations</div>
+                        <div class="pipeline-stage-desc">Where to send data</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>Log Analytics:</strong> Standard tables (Syslog, SecurityEvent)</li>
+                                <li><strong>Custom tables:</strong> YourTable_CL</li>
+                                <li><strong>Multiple destinations:</strong> Send to multiple workspaces</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DCR TRANSFORMATION EXAMPLES -->
+                <h2><i class="fas fa-code"></i> DCR Transformation Examples</h2>
+
+                <h3>Example 1: Filter Non-Security Syslog</h3>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> DCR JSON Example</div>
-<pre>
+                    <div class="code-header"><i class="fas fa-filter"></i> KQL Transform - Drop Debug Events</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Drop debug/info events to save costs</span>
+<span style="color: #79c0ff;">source</span>
+| <span style="color: #f97583;">where</span> SeverityLevel <= 4  <span style="color: #8b949e;">// Keep only Warning (4) and above</span>
+| <span style="color: #f97583;">project</span>-away Computer  <span style="color: #8b949e;">// Remove unnecessary field</span>
+</pre>
+                </div>
+
+                <h3>Example 2: Parse Custom Log Format</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> KQL Transform - Parse JSON Fields</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Parse JSON from raw message</span>
+<span style="color: #79c0ff;">source</span>
+| <span style="color: #f97583;">extend</span> parsed = <span style="color: #79c0ff;">parse_json</span>(RawData)
+| <span style="color: #f97583;">extend</span> 
+    UserName = tostring(parsed.user),
+    Action = tostring(parsed.action),
+    SourceIP = tostring(parsed.source_ip),
+    Timestamp = todatetime(parsed.timestamp)
+| <span style="color: #f97583;">project</span> TimeGenerated, UserName, Action, SourceIP
+</pre>
+                </div>
+
+                <h3>Example 3: Enrich with Geo-IP</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-globe"></i> KQL Transform - Add Geolocation</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Add geo-location data</span>
+<span style="color: #79c0ff;">source</span>
+| <span style="color: #f97583;">extend</span> GeoInfo = <span style="color: #79c0ff;">geo_info_from_ip_address</span>(SourceIP)
+| <span style="color: #f97583;">extend</span> 
+    Country = tostring(GeoInfo.country),
+    City = tostring(GeoInfo.city),
+    Latitude = toreal(GeoInfo.latitude),
+    Longitude = toreal(GeoInfo.longitude)
+| <span style="color: #f97583;">project</span>-away GeoInfo
+</pre>
+                </div>
+
+                <!-- DCR JSON EXAMPLE -->
+                <h2><i class="fas fa-file-code"></i> DCR JSON Structure</h2>
+                
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> ARM Template - DCR Definition</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
 {
-  "location": "eastus",
-  "properties": {
-    "dataSources": {
-      "windowsEventLogs": [{
-        "name": "SecurityEvents",
-        "streams": ["Microsoft-SecurityEvent"],
-        "xPathQueries": [
-          "Security!*[System[(EventID=4624 or EventID=4625)]]"
-        ]
-      }],
-      "syslog": [{
-        "name": "SyslogDataSource",
-        "streams": ["Microsoft-Syslog"],
-        "facilityNames": ["auth", "authpriv"],
-        "logLevels": ["Warning", "Error", "Critical"]
-      }]
+  <span style="color: #a5d6ff;">"properties"</span>: {
+    <span style="color: #a5d6ff;">"dataSources"</span>: {
+      <span style="color: #a5d6ff;">"syslog"</span>: [
+        {
+          <span style="color: #a5d6ff;">"streams"</span>: [<span style="color: #a5d6ff;">"Microsoft-Syslog"</span>],
+          <span style="color: #a5d6ff;">"facilityNames"</span>: [<span style="color: #a5d6ff;">"auth"</span>, <span style="color: #a5d6ff;">"authpriv"</span>, <span style="color: #a5d6ff;">"local0"</span>],
+          <span style="color: #a5d6ff;">"logLevels"</span>: [<span style="color: #a5d6ff;">"Warning"</span>, <span style="color: #a5d6ff;">"Error"</span>, <span style="color: #a5d6ff;">"Critical"</span>],
+          <span style="color: #a5d6ff;">"name"</span>: <span style="color: #a5d6ff;">"syslogDataSource"</span>
+        }
+      ]
     },
-    "destinations": {
-      "logAnalytics": [{
-        "workspaceResourceId": "/subscriptions/.../workspaces/sentinel-ws",
-        "name": "sentinel-destination"
-      }]
+    <span style="color: #a5d6ff;">"destinations"</span>: {
+      <span style="color: #a5d6ff;">"logAnalytics"</span>: [
+        {
+          <span style="color: #a5d6ff;">"workspaceResourceId"</span>: <span style="color: #a5d6ff;">"/subscriptions/.../workspaces/myworkspace"</span>,
+          <span style="color: #a5d6ff;">"name"</span>: <span style="color: #a5d6ff;">"myWorkspace"</span>
+        }
+      ]
     },
-    "dataFlows": [{
-      "streams": ["Microsoft-SecurityEvent", "Microsoft-Syslog"],
-      "destinations": ["sentinel-destination"]
-    }]
+    <span style="color: #a5d6ff;">"dataFlows"</span>: [
+      {
+        <span style="color: #a5d6ff;">"streams"</span>: [<span style="color: #a5d6ff;">"Microsoft-Syslog"</span>],
+        <span style="color: #a5d6ff;">"destinations"</span>: [<span style="color: #a5d6ff;">"myWorkspace"</span>],
+        <span style="color: #a5d6ff;">"transformKql"</span>: <span style="color: #a5d6ff;">"source | where SeverityLevel <= 4"</span>,
+        <span style="color: #a5d6ff;">"outputStream"</span>: <span style="color: #a5d6ff;">"Microsoft-Syslog"</span>
+      }
+    ]
   }
 }
 </pre>
                 </div>
 
-                <h2><i class="fas fa-filter"></i> Data Transformation</h2>
-                <div class="info-box success">
-                    <h4><i class="fas fa-magic"></i> Transform at Ingestion</h4>
-                    <p>DCRs can transform data BEFORE it's stored - filter rows, drop columns, parse fields. This reduces storage costs and improves query performance.</p>
+                <!-- USE CASES -->
+                <h2><i class="fas fa-tasks"></i> Common Use Cases</h2>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-dollar-sign"></i></div>
+                            <div class="comparison-item-title">Cost Reduction</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-filter"></i> Filter debug/info logs</li>
+                            <li><i class="fas fa-filter"></i> Drop non-security events</li>
+                            <li><i class="fas fa-filter"></i> Remove unnecessary fields</li>
+                            <li><i class="fas fa-filter"></i> Sample high-volume data</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-code-branch"></i></div>
+                            <div class="comparison-item-title">Multi-Destination</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-share-alt"></i> Send to multiple workspaces</li>
+                            <li><i class="fas fa-share-alt"></i> Security → Sentinel workspace</li>
+                            <li><i class="fas fa-share-alt"></i> Ops → IT monitoring workspace</li>
+                            <li><i class="fas fa-share-alt"></i> Regional data residency</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-magic"></i></div>
+                            <div class="comparison-item-title">Data Enrichment</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-plus"></i> Add geo-location</li>
+                            <li><i class="fas fa-plus"></i> Parse nested JSON</li>
+                            <li><i class="fas fa-plus"></i> Calculate derived fields</li>
+                            <li><i class="fas fa-plus"></i> Normalize field names</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Transformation Query</div>
-<pre>
-// In DCR transformKql property:
-source
-| where EventID in (4624, 4625, 4688)  // Keep only specific events
-| extend ParsedAccount = extract(@"^([^\\]+)\\(.+)$", 2, TargetUserName)
-| project-away RawEventData  // Drop large unnecessary field
-</pre>
+                <!-- ENTERPRISE EXAMPLE -->
+                <div class="enterprise-example">
+                    <div class="enterprise-example-header">
+                        <i class="fas fa-building"></i>
+                        <div class="enterprise-example-title">Enterprise Example: Multi-Region DCR Strategy</div>
+                    </div>
+                    <div class="enterprise-example-scenario">
+                        <strong>Scenario:</strong> Global company with EU data residency requirements, need to filter high-volume firewall logs.
+                    </div>
+                    
+                    <div class="flow-diagram" style="margin-top: 16px;">
+                        <div class="flow-row centered">
+                            <div class="flow-box"><div class="flow-box-title">EU Firewalls</div><div class="flow-box-subtitle">Palo Alto</div></div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-box success"><div class="flow-box-title">DCE (EU)</div><div class="flow-box-subtitle">West Europe</div></div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-box warning"><div class="flow-box-title">DCR (Filter)</div><div class="flow-box-subtitle">Drop allow traffic</div></div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-box purple"><div class="flow-box-title">EU Workspace</div><div class="flow-box-subtitle">GDPR compliant</div></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #0d1117; border-radius: 8px;">
+                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
+                            <strong style="color: #3fb950;">DCR Transform:</strong> <code>source | where Action != "allow" or ThreatID != ""</code><br>
+                            <strong style="color: #58a6ff;">Result:</strong> 90% volume reduction by keeping only deny/threat events<br>
+                            <strong style="color: #d29922;">Compliance:</strong> EU data stays in EU region DCE/workspace
+                        </p>
+                    </div>
                 </div>
 
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: What's the difference between DCR and legacy data collection methods?</button>
+                        <button class="qa-question">Q: What's the relationship between AMA, DCR, and DCE?</button>
                         <div class="qa-answer">
-                            <p><strong>Legacy (MMA/OMS Agent):</strong></p>
+                            <p><strong>The data flow:</strong></p>
+                            <ol>
+                                <li><strong>AMA (Azure Monitor Agent):</strong> Collects data from source (VM)</li>
+                                <li><strong>DCR (Data Collection Rule):</strong> Tells AMA what to collect, how to transform, where to send</li>
+                                <li><strong>DCE (Data Collection Endpoint):</strong> Network endpoint where data is sent</li>
+                            </ol>
+                            <p><strong>Relationships:</strong></p>
                             <ul>
-                                <li>Configuration in workspace or agent</li>
-                                <li>Limited transformation capability</li>
-                                <li>All-or-nothing collection</li>
+                                <li>AMA is associated with one or more DCRs</li>
+                                <li>DCR can have a DCE for custom logs (optional for standard logs)</li>
+                                <li>Multiple DCRs can share one DCE</li>
                             </ul>
-                            <p><strong>Modern (AMA + DCR):</strong></p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How do DCR transformations help reduce costs?</button>
+                        <div class="qa-answer">
+                            <p><strong>Cost reduction strategies:</strong></p>
                             <ul>
-                                <li>Centralized configuration via Azure</li>
-                                <li>Ingestion-time transformation with KQL</li>
-                                <li>Granular filtering (specific Event IDs, facilities)</li>
-                                <li>Multi-destination routing</li>
-                                <li>Better performance and security</li>
+                                <li><strong>Filter at source:</strong> Drop events before they're ingested (saves ingestion cost)</li>
+                                <li><strong>Remove fields:</strong> project-away unnecessary columns</li>
+                                <li><strong>Aggregate:</strong> Summarize high-volume data</li>
+                            </ul>
+                            <p><strong>Example impact:</strong></p>
+                            <ul>
+                                <li>Firewall: Drop "allow" traffic → 80-90% reduction</li>
+                                <li>Syslog: Filter info/debug → 60-70% reduction</li>
+                                <li>Field removal: 10-20% additional savings</li>
                             </ul>
                         </div>
                     </div>
                 </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>
             </footer>
         </div>
     </div>
     <script>
-        document.querySelectorAll('.qa-question').forEach(b => {
-            b.addEventListener('click', () => {
-                const a = b.nextElementSibling;
-                const open = a.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(x => x.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(x => x.classList.remove('active'));
-                if (!open) { a.style.display = 'block'; b.classList.add('active'); }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
             });
         });
     </script>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Troubleshooting | Nik's SIEM</title>
+    <title>MDE Troubleshooting | MDE | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -36,29 +36,118 @@
                 <div class="breadcrumb">
                     <a href="../index.html">Home</a><span class="separator">/</span>
                     <a href="index.html">MDE</a><span class="separator">/</span>
-                    <span class="current">Troubleshooting</span>
+                    <span class="current">MDE Troubleshooting</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-bug"></i> Troubleshooting</h1>
-                <p class="lead">Diagnose connectivity issues, sensor problems, and common MDE deployment challenges.</p>
+                <h1><i class="fas fa-bug"></i> MDE Troubleshooting</h1>
+                <p class="lead">Diagnose and resolve common MDE issues including onboarding failures, connectivity problems, and sensor issues.</p>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>Diagnose connectivity issues, sensor problems, and common MDE deployment challenges.</p>
+                <h2><i class="fas fa-stethoscope"></i> Diagnostic Tools</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Tool</th><th>Purpose</th><th>Location</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>MDE Client Analyzer</strong></td><td>Comprehensive health check</td><td>Download from MS</td></tr>
+                            <tr><td><strong>mdatp health</strong></td><td>Quick status check (Linux/macOS)</td><td>CLI</td></tr>
+                            <tr><td><strong>Get-MpComputerStatus</strong></td><td>Windows status check</td><td>PowerShell</td></tr>
+                            <tr><td><strong>Event Viewer</strong></td><td>Detailed logs</td><td>Windows Events</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
+
+                <h2><i class="fas fa-terminal"></i> Windows Diagnostics</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> PowerShell Diagnostics</div>
+<pre>
+# Check MDE service status
+Get-Service -Name "Sense" | Select-Object Status, StartType
+
+# Check Defender status
+Get-MpComputerStatus | Select-Object *
+
+# Check onboarding state
+Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status"
+
+# Connectivity test
+Test-NetConnection -ComputerName "winatp-gw-cus.microsoft.com" -Port 443
+
+# Check Event Logs
+Get-WinEvent -LogName "Microsoft-Windows-SENSE/Operational" -MaxEvents 20
+
+# Re-register MDE
+# Stop service
+Stop-Service -Name "Sense"
+# Remove onboarding
+reg delete "HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection" /f
+# Re-onboard with script
+</pre>
+                </div>
+
+                <h2><i class="fas fa-exclamation-triangle"></i> Common Issues</h2>
                 <div class="concept-grid">
-                    <div class="concept-card"><div class="concept-card-icon cyan"><i class="fas fa-book"></i></div><h4>Fundamentals</h4><p>Core concepts</p></div>
-                    <div class="concept-card"><div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div><h4>Configuration</h4><p>Setup steps</p></div>
-                    <div class="concept-card"><div class="concept-card-icon green"><i class="fas fa-check"></i></div><h4>Best Practices</h4><p>Recommendations</p></div>
-                    <div class="concept-card"><div class="concept-card-icon orange"><i class="fas fa-bug"></i></div><h4>Troubleshooting</h4><p>Common issues</p></div>
+                    <div class="concept-card">
+                        <div class="concept-card-icon red"><i class="fas fa-plug"></i></div>
+                        <h4>Connectivity Failures</h4>
+                        <p>Proxy blocking, firewall rules, SSL inspection breaking cert pinning</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="concept-card-icon orange"><i class="fas fa-power-off"></i></div>
+                        <h4>Sensor Not Starting</h4>
+                        <p>Service disabled, corrupted installation, conflicting AV</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="concept-card-icon yellow"><i class="fas fa-clock"></i></div>
+                        <h4>Delayed Telemetry</h4>
+                        <p>Network latency, high event volume, agent throttling</p>
+                    </div>
+                    <div class="concept-card">
+                        <div class="concept-card-icon cyan"><i class="fas fa-user-times"></i></div>
+                        <h4>Onboarding Failures</h4>
+                        <p>Wrong package, missing prerequisites, license issues</p>
+                    </div>
                 </div>
+
+                <h2><i class="fas fa-wrench"></i> Resolution Steps</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Common Fixes</div>
+<pre>
+# Fix: Sensor not starting
+sc config sense start= auto
+net start sense
+
+# Fix: Connectivity through proxy
+# Set proxy in registry
+reg add "HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection" /v ProxyServer /t REG_SZ /d "http://proxy:8080"
+
+# Fix: Re-onboard device
+# 1. Run offboarding script
+# 2. Wait 30 minutes
+# 3. Run onboarding script
+
+# Fix: Corrupted installation
+# Uninstall via PowerShell
+$product = Get-WmiObject Win32_Product | Where-Object { $_.Name -like "*Defender*" }
+$product.Uninstall()
+# Reinstall
+</pre>
+                </div>
+
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Key considerations for Troubleshooting?</button>
-                        <div class="qa-answer"><p>This covers deployment, configuration, and operational best practices for enterprise environments.</p></div>
+                        <button class="qa-question">Q: Device shows as inactive in MDE portal - how do you troubleshoot?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Check if device is online:</strong> Can you ping/RDP to it?</li>
+                                <li><strong>Verify SENSE service:</strong> <code>Get-Service Sense</code> - is it running?</li>
+                                <li><strong>Check connectivity:</strong> Can device reach MDE URLs on port 443?</li>
+                                <li><strong>Review event logs:</strong> Microsoft-Windows-SENSE/Operational</li>
+                                <li><strong>Check proxy:</strong> Is proxy configured? SSL inspection breaking connection?</li>
+                                <li><strong>Run Client Analyzer:</strong> Comprehensive diagnostic tool</li>
+                                <li><strong>Check licensing:</strong> Is tenant license valid?</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -67,7 +156,7 @@
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">MDE</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

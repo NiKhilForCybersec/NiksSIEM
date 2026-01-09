@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Connectors | Nik's SIEM</title>
+    <title>Data Connectors | Sentinel | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -20,185 +20,581 @@
                 </a>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-section"><div class="nav-section-title">Sentinel</div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
-                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
-                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Connectors</a>
-                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a></div>
-                <div class="nav-section"><div class="nav-section-title">KQL</div>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link active"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
                     <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Rules</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
                     <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
-                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a></div>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
             </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">Sentinel</a>
-                    <span class="separator">/</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
                     <span class="current">Data Connectors</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-plug"></i> Data Connectors</h1>
-                <p class="lead">Data connectors are how you get data into Microsoft Sentinel. With 200+ native connectors plus custom options, understanding which to use and how to configure them is essential for effective security monitoring.</p>
+                <h1><i class="fas fa-plug"></i> Sentinel Data Connectors</h1>
+                <p class="lead">Data connectors are the ingestion mechanisms that bring security data into Microsoft Sentinel. Choose the right connector type based on your data source, volume requirements, and transformation needs.</p>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-lightbulb"></i> Key Concept</h4>
-                    <p>Data connectors handle <strong>authentication</strong>, <strong>data collection</strong>, and <strong>transformation</strong> to get security data into your Log Analytics workspace. Choose the right connector for your source - it affects cost, latency, and data fidelity.</p>
-                </div>
-
-                <h2><i class="fas fa-layer-group"></i> Connector Categories</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fab fa-microsoft"></i></div>
-                        <h4>Microsoft Services</h4>
-                        <p>M365, Azure AD, Defender XDR, Azure Activity - native integration, often free ingestion</p>
+                <!-- CONNECTOR SELECTION DECISION TREE -->
+                <h2><i class="fas fa-route"></i> Choosing the Right Connector Type</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node">
+                        <div class="decision-node-question">Is this a Microsoft first-party service?</div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-cloud"></i></div>
-                        <h4>Cloud Providers</h4>
-                        <p>AWS CloudTrail, GCP, Azure services - API-based collection with polling</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-shield-alt"></i></div>
-                        <h4>Security Products</h4>
-                        <p>Palo Alto, CrowdStrike, Fortinet - vendor-specific parsers and schemas</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-server"></i></div>
-                        <h4>On-Premises</h4>
-                        <p>Windows Events, Syslog, CEF - requires AMA agent or log forwarder</p>
+                    <div class="decision-paths">
+                        <div class="decision-path">
+                            <div class="decision-path-label yes">Yes - Microsoft Service</div>
+                            <div class="decision-path-content">
+                                <p style="color: #3fb950; font-weight: 600;">→ Use Native Connector</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Azure AD, M365 Defender, Azure Activity - one-click setup, no infrastructure.</p>
+                            </div>
+                        </div>
+                        <div class="decision-path">
+                            <div class="decision-path-label no">No - Third Party</div>
+                            <div class="decision-path-content">
+                                <p style="color: #f85149; font-weight: 600;">→ Continue to next decision</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <h2><i class="fas fa-gift"></i> Free vs Paid Data Sources</h2>
+                <div class="decision-tree">
+                    <div class="decision-node">
+                        <div class="decision-node-question">Does the vendor have a Sentinel connector in Content Hub?</div>
+                    </div>
+                    <div class="decision-paths">
+                        <div class="decision-path">
+                            <div class="decision-path-label yes">Yes - Partner Connector</div>
+                            <div class="decision-path-content">
+                                <p style="color: #3fb950; font-weight: 600;">→ Use Content Hub Solution</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Pre-built connectors for CrowdStrike, Palo Alto, Okta, etc. Install from Content Hub.</p>
+                            </div>
+                        </div>
+                        <div class="decision-path">
+                            <div class="decision-path-label no">No Partner Connector</div>
+                            <div class="decision-path-content">
+                                <p style="color: #d29922; font-weight: 600;">→ Check data format options</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="decision-tree">
+                    <div class="decision-node">
+                        <div class="decision-node-question">What format does the data source support?</div>
+                    </div>
+                    <div class="decision-paths">
+                        <div class="decision-path">
+                            <div class="decision-path-label yes">Syslog/CEF/LEEF</div>
+                            <div class="decision-path-content">
+                                <p style="color: #3fb950; font-weight: 600;">→ AMA with Syslog DCR</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Deploy Azure Monitor Agent on Linux VM, configure DCR for Syslog/CEF collection.</p>
+                            </div>
+                        </div>
+                        <div class="decision-path">
+                            <div class="decision-path-label no">REST API / Custom</div>
+                            <div class="decision-path-content">
+                                <p style="color: #d29922; font-weight: 600;">→ Use Logs Ingestion API</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Build custom connector with Azure Function or Logic App calling DCE endpoint.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONNECTOR TYPES OVERVIEW -->
+                <h2><i class="fas fa-layer-group"></i> Connector Types Overview</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> All Sentinel Ingestion Paths</div>
+                    
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Data Sources</span>
+                    </div>
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">Microsoft 365</div><div class="flow-box-subtitle">Azure AD, Defender</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Azure Resources</div><div class="flow-box-subtitle">VMs, Storage, SQL</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Security Products</div><div class="flow-box-subtitle">Palo Alto, CrowdStrike</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Network Devices</div><div class="flow-box-subtitle">Firewalls, Switches</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Custom Apps</div><div class="flow-box-subtitle">Internal systems</div></div>
+                    </div>
+                    
+                    <div class="flow-arrow down">↓ ↓ ↓ ↓ ↓</div>
+                    
+                    <div style="text-align: center; margin: 16px 0;">
+                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Connector Selection</span>
+                    </div>
+                    <div class="flow-row centered">
+                        <div class="flow-box primary"><div class="flow-box-title">Type 1</div><div class="flow-box-subtitle">Native (Service-to-Service)</div></div>
+                        <div class="flow-box success"><div class="flow-box-title">Type 2</div><div class="flow-box-subtitle">AMA + Syslog/CEF</div></div>
+                        <div class="flow-box warning"><div class="flow-box-title">Type 3</div><div class="flow-box-subtitle">Logs Ingestion API</div></div>
+                        <div class="flow-box purple"><div class="flow-box-title">Type 4</div><div class="flow-box-subtitle">Codeless Connector</div></div>
+                    </div>
+                    
+                    <div class="flow-arrow down">↓</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box primary" style="min-width: 250px;">
+                            <div class="flow-box-title">Log Analytics Workspace</div>
+                            <div class="flow-box-subtitle">Tables: SecurityEvent, Syslog, Custom_CL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TYPE 1: NATIVE CONNECTORS -->
+                <h2><i class="fab fa-microsoft"></i> Type 1: Native Microsoft Connectors</h2>
+                
+                <div class="method-card">
+                    <div class="method-card-header">
+                        <div class="method-card-icon blue"><i class="fab fa-microsoft"></i></div>
+                        <div>
+                            <div class="method-card-title">Service-to-Service Integration</div>
+                            <div class="method-card-desc">Direct integration with Microsoft services - one-click enable, no infrastructure</div>
+                        </div>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-detail">
+                            <div class="method-detail-label">Setup Complexity</div>
+                            <div class="method-detail-value">Minimal - click "Connect" in portal</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Infrastructure</div>
+                            <div class="method-detail-value">None required - cloud-to-cloud</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Cost</div>
+                            <div class="method-detail-value">Some are free (Azure Activity), others incur ingestion</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Tables</div>
+                            <div class="method-detail-value">Pre-defined: SigninLogs, SecurityAlert, etc.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-id-card"></i></div>
+                            <div class="comparison-item-title">Azure AD / Entra ID</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-table"></i> SigninLogs - all authentications</li>
+                            <li><i class="fas fa-table"></i> AuditLogs - directory changes</li>
+                            <li><i class="fas fa-table"></i> AADNonInteractiveUserSignInLogs</li>
+                            <li><i class="fas fa-table"></i> AADServicePrincipalSignInLogs</li>
+                            <li><i class="fas fa-dollar-sign"></i> Requires P1/P2 for some logs</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-shield-alt"></i></div>
+                            <div class="comparison-item-title">Microsoft 365 Defender</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-table"></i> SecurityAlert - unified alerts</li>
+                            <li><i class="fas fa-table"></i> SecurityIncident - correlated incidents</li>
+                            <li><i class="fas fa-table"></i> DeviceEvents (raw telemetry)</li>
+                            <li><i class="fas fa-table"></i> EmailEvents, IdentityInfo</li>
+                            <li><i class="fas fa-dollar-sign"></i> Alerts free, raw data incurs cost</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-cloud"></i></div>
+                            <div class="comparison-item-title">Azure Activity</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-table"></i> AzureActivity - control plane</li>
+                            <li><i class="fas fa-check"></i> Free ingestion</li>
+                            <li><i class="fas fa-check"></i> Subscription operations</li>
+                            <li><i class="fas fa-check"></i> Resource creation/deletion</li>
+                            <li><i class="fas fa-check"></i> Policy/RBAC changes</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-envelope"></i></div>
+                            <div class="comparison-item-title">Office 365</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-table"></i> OfficeActivity - audit logs</li>
+                            <li><i class="fas fa-check"></i> Exchange, SharePoint, OneDrive</li>
+                            <li><i class="fas fa-check"></i> Teams activities</li>
+                            <li><i class="fas fa-check"></i> Admin operations</li>
+                            <li><i class="fas fa-dollar-sign"></i> Standard ingestion cost</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="enterprise-example">
+                    <div class="enterprise-example-header">
+                        <i class="fas fa-building"></i>
+                        <div class="enterprise-example-title">Enterprise Example: Microsoft-First Stack</div>
+                    </div>
+                    <div class="enterprise-example-scenario">
+                        <strong>Scenario:</strong> Organization with M365 E5, Azure infrastructure, and Microsoft Defender for Endpoint.
+                    </div>
+                    <div class="enterprise-example-flow">
+                        <div class="flow-box primary"><div class="flow-box-title">Azure AD</div><div class="flow-box-subtitle">SigninLogs</div></div>
+                        <span class="flow-arrow">+</span>
+                        <div class="flow-box success"><div class="flow-box-title">M365 Defender</div><div class="flow-box-subtitle">SecurityAlert</div></div>
+                        <span class="flow-arrow">+</span>
+                        <div class="flow-box warning"><div class="flow-box-title">Azure Activity</div><div class="flow-box-subtitle">Free</div></div>
+                        <span class="flow-arrow">+</span>
+                        <div class="flow-box purple"><div class="flow-box-title">Office 365</div><div class="flow-box-subtitle">OfficeActivity</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box"><div class="flow-box-title">Sentinel</div><div class="flow-box-subtitle">Full visibility</div></div>
+                    </div>
+                    <div style="margin-top: 16px; padding: 12px; background: #0d1117; border-radius: 8px;">
+                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
+                            <strong style="color: #3fb950;">Why Native Connectors?</strong> Zero infrastructure, fastest setup, best integration with Sentinel analytics. 
+                            Alerts from M365 Defender automatically create Sentinel incidents. Bi-directional sync available.
+                            <br><br>
+                            <strong style="color: #58a6ff;">Cost optimization:</strong> Azure Activity is free. M365 Defender alerts are free (raw telemetry costs extra). 
+                            Enable only the log types you need for detection.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TYPE 2: AMA SYSLOG/CEF -->
+                <h2><i class="fas fa-server"></i> Type 2: AMA with Syslog/CEF</h2>
+                
+                <div class="method-card">
+                    <div class="method-card-header">
+                        <div class="method-card-icon green"><i class="fas fa-server"></i></div>
+                        <div>
+                            <div class="method-card-title">Azure Monitor Agent Collection</div>
+                            <div class="method-card-desc">Deploy AMA on Linux VM to receive Syslog/CEF from network devices</div>
+                        </div>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-detail">
+                            <div class="method-detail-label">Best For</div>
+                            <div class="method-detail-value">Firewalls, IDS/IPS, proxies, network devices</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Infrastructure</div>
+                            <div class="method-detail-value">Linux VM (Azure or Arc-enabled on-prem)</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Protocols</div>
+                            <div class="method-detail-value">Syslog (UDP/TCP 514), CEF, RFC 5424</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Tables</div>
+                            <div class="method-detail-value">Syslog, CommonSecurityLog (CEF)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> AMA Syslog/CEF Architecture</div>
+                    
+                    <div class="flow-row">
+                        <div class="flow-box"><div class="flow-box-title">Palo Alto FW</div><div class="flow-box-subtitle">CEF format</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Cisco ASA</div><div class="flow-box-subtitle">Syslog</div></div>
+                        <div class="flow-box"><div class="flow-box-title">F5 WAF</div><div class="flow-box-subtitle">CEF</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Linux Servers</div><div class="flow-box-subtitle">Syslog</div></div>
+                    </div>
+                    
+                    <div class="flow-arrow down">↓ Syslog UDP 514 / TCP 514</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box success" style="min-width: 300px;">
+                            <div class="flow-box-title">Log Forwarder VM</div>
+                            <div class="flow-box-subtitle">Linux + Azure Monitor Agent + rsyslog</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flow-arrow down">↓ Data Collection Rule (DCR)</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box warning" style="min-width: 250px;">
+                            <div class="flow-box-title">Data Collection Endpoint</div>
+                            <div class="flow-box-subtitle">Azure (HTTPS)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flow-arrow down">↓</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box primary" style="min-width: 250px;">
+                            <div class="flow-box-title">Log Analytics Workspace</div>
+                            <div class="flow-box-subtitle">Syslog / CommonSecurityLog tables</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="enterprise-example">
+                    <div class="enterprise-example-header">
+                        <i class="fas fa-building"></i>
+                        <div class="enterprise-example-title">Enterprise Example: Multi-Vendor Network Stack</div>
+                    </div>
+                    <div class="enterprise-example-scenario">
+                        <strong>Scenario:</strong> Enterprise with Palo Alto firewalls (perimeter), Cisco ASA (VPN), F5 WAF (web apps), and Zscaler proxy.
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #3fb950; margin-top: 0;">Log Forwarder Sizing</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                <strong>VM Size:</strong> Standard_D4s_v3 (4 vCPU, 16GB)<br>
+                                <strong>Disk:</strong> 256GB SSD for buffer<br>
+                                <strong>Expected EPS:</strong> ~5,000<br>
+                                <strong>Region:</strong> Same as Log Analytics workspace
+                            </p>
+                        </div>
+                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #58a6ff; margin-top: 0;">DCR Configuration</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                <strong>Facility:</strong> local0-local7 (vendor specific)<br>
+                                <strong>Min Severity:</strong> Info (6) for security events<br>
+                                <strong>Transform:</strong> Filter non-security events<br>
+                                <strong>Destination:</strong> CommonSecurityLog table
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #161b22; border-radius: 8px;">
+                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
+                            <strong style="color: #3fb950;">Why AMA over Legacy Agent?</strong> AMA supports DCRs for filtering at source (cost savings), 
+                            multiple workspaces from one agent, better performance, and is the future direction from Microsoft (legacy agent deprecated).
+                            <br><br>
+                            <strong style="color: #d29922;">Architecture tip:</strong> For high availability, deploy 2 log forwarders with load balancing. 
+                            Configure network devices to send to both using round-robin or primary/backup.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TYPE 3: LOGS INGESTION API -->
+                <h2><i class="fas fa-code"></i> Type 3: Logs Ingestion API</h2>
+                
+                <div class="method-card">
+                    <div class="method-card-header">
+                        <div class="method-card-icon orange"><i class="fas fa-code"></i></div>
+                        <div>
+                            <div class="method-card-title">Custom Data Ingestion via API</div>
+                            <div class="method-card-desc">Send any data to custom tables using REST API calls to Data Collection Endpoint</div>
+                        </div>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-detail">
+                            <div class="method-detail-label">Best For</div>
+                            <div class="method-detail-value">Custom apps, SaaS APIs, proprietary systems</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Implementation</div>
+                            <div class="method-detail-value">Azure Function, Logic App, or custom script</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Authentication</div>
+                            <div class="method-detail-value">Azure AD app registration with DCR permissions</div>
+                        </div>
+                        <div class="method-detail">
+                            <div class="method-detail-label">Tables</div>
+                            <div class="method-detail-value">Custom tables (YourTable_CL)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Logs Ingestion API Flow</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">Custom App</div><div class="flow-box-subtitle">REST API source</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box warning"><div class="flow-box-title">Azure Function</div><div class="flow-box-subtitle">Timer trigger</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box purple"><div class="flow-box-title">Get Token</div><div class="flow-box-subtitle">Azure AD OAuth</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box success"><div class="flow-box-title">DCE Endpoint</div><div class="flow-box-subtitle">POST /dataCollectionRules</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box primary"><div class="flow-box-title">Custom Table</div><div class="flow-box-subtitle">MyApp_CL</div></div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Python Example: Logs Ingestion API</div>
+<pre style="color: #8b949e; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #f97583;">import</span> <span style="color: #f0f6fc;">requests</span>
+<span style="color: #f97583;">import</span> <span style="color: #f0f6fc;">json</span>
+<span style="color: #f97583;">from</span> <span style="color: #f0f6fc;">azure.identity</span> <span style="color: #f97583;">import</span> <span style="color: #f0f6fc;">DefaultAzureCredential</span>
+
+<span style="color: #8b949e;"># Configuration</span>
+<span style="color: #f0f6fc;">dce_endpoint</span> = <span style="color: #a5d6ff;">"https://dce-xxxxx.eastus-1.ingest.monitor.azure.com"</span>
+<span style="color: #f0f6fc;">dcr_id</span> = <span style="color: #a5d6ff;">"dcr-xxxxxxxxxxxxxxxxxx"</span>
+<span style="color: #f0f6fc;">stream_name</span> = <span style="color: #a5d6ff;">"Custom-MyApp_CL"</span>
+
+<span style="color: #8b949e;"># Get Azure AD token</span>
+<span style="color: #f0f6fc;">credential</span> = <span style="color: #f0f6fc;">DefaultAzureCredential</span>()
+<span style="color: #f0f6fc;">token</span> = <span style="color: #f0f6fc;">credential</span>.<span style="color: #f0f6fc;">get_token</span>(<span style="color: #a5d6ff;">"https://monitor.azure.com/.default"</span>)
+
+<span style="color: #8b949e;"># Prepare log data</span>
+<span style="color: #f0f6fc;">logs</span> = [
+    {
+        <span style="color: #a5d6ff;">"TimeGenerated"</span>: <span style="color: #a5d6ff;">"2024-01-15T10:30:00Z"</span>,
+        <span style="color: #a5d6ff;">"EventType"</span>: <span style="color: #a5d6ff;">"LOGIN_SUCCESS"</span>,
+        <span style="color: #a5d6ff;">"User"</span>: <span style="color: #a5d6ff;">"jsmith@company.com"</span>,
+        <span style="color: #a5d6ff;">"SourceIP"</span>: <span style="color: #a5d6ff;">"192.168.1.100"</span>
+    }
+]
+
+<span style="color: #8b949e;"># Send to DCE</span>
+<span style="color: #f0f6fc;">url</span> = <span style="color: #f97583;">f</span><span style="color: #a5d6ff;">"{dce_endpoint}/dataCollectionRules/{dcr_id}/streams/{stream_name}?api-version=2023-01-01"</span>
+<span style="color: #f0f6fc;">headers</span> = {<span style="color: #a5d6ff;">"Authorization"</span>: <span style="color: #f97583;">f</span><span style="color: #a5d6ff;">"Bearer {token.token}"</span>, <span style="color: #a5d6ff;">"Content-Type"</span>: <span style="color: #a5d6ff;">"application/json"</span>}
+<span style="color: #f0f6fc;">response</span> = <span style="color: #f0f6fc;">requests</span>.<span style="color: #f0f6fc;">post</span>(<span style="color: #f0f6fc;">url</span>, <span style="color: #f0f6fc;">headers</span>=<span style="color: #f0f6fc;">headers</span>, <span style="color: #f0f6fc;">json</span>=<span style="color: #f0f6fc;">logs</span>)
+</pre>
+                </div>
+
+                <!-- CONNECTOR COMPARISON TABLE -->
+                <h2><i class="fas fa-balance-scale"></i> Connector Comparison</h2>
+                
                 <div class="styled-table">
                     <table>
                         <thead>
-                            <tr><th>Data Source</th><th>Cost</th><th>Notes</th></tr>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>Native Connector</th>
+                                <th>AMA + Syslog/CEF</th>
+                                <th>Logs Ingestion API</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <tr><td><strong>Azure Activity Logs</strong></td><td>FREE</td><td>All Azure control plane operations</td></tr>
-                            <tr><td><strong>Microsoft 365 Audit</strong></td><td>FREE*</td><td>*Requires E5 or appropriate license</td></tr>
-                            <tr><td><strong>Azure AD Logs</strong></td><td>FREE*</td><td>*Requires P1/P2 license</td></tr>
-                            <tr><td><strong>Defender XDR Alerts</strong></td><td>FREE</td><td>Alerts only - raw events charged</td></tr>
-                            <tr><td><strong>Windows Security Events</strong></td><td>PAID</td><td>Via AMA - filter to reduce cost</td></tr>
-                            <tr><td><strong>Syslog/CEF</strong></td><td>PAID</td><td>Linux logs, firewall logs</td></tr>
-                            <tr><td><strong>Custom Logs</strong></td><td>PAID</td><td>REST API or file-based ingestion</td></tr>
+                            <tr>
+                                <td><strong>Setup Complexity</strong></td>
+                                <td style="color: #3fb950;">Low (click to connect)</td>
+                                <td style="color: #d29922;">Medium (VM + DCR)</td>
+                                <td style="color: #f85149;">High (custom code)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Infrastructure</strong></td>
+                                <td>None</td>
+                                <td>Linux VM required</td>
+                                <td>Function App / Logic App</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Transformation</strong></td>
+                                <td>Pre-defined</td>
+                                <td>DCR transforms</td>
+                                <td>Full control</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cost Control</strong></td>
+                                <td>Limited</td>
+                                <td>Filter at DCR</td>
+                                <td>Full control</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Best For</strong></td>
+                                <td>Microsoft services</td>
+                                <td>Network devices</td>
+                                <td>Custom/SaaS APIs</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2><i class="fas fa-server"></i> Common Connector Setup</h2>
-                
-                <h3>Windows Security Events via AMA</h3>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> DCR for Windows Security Events</div>
-<pre>
-// Data Collection Rule - JSON snippet
-{
-  "dataSources": {
-    "windowsEventLogs": [
-      {
-        "streams": ["Microsoft-SecurityEvent"],
-        "xPathQueries": [
-          "Security!*[System[(EventID=4624 or EventID=4625 or EventID=4688)]]"
-        ],
-        "name": "SecurityEventDataSource"
-      }
-    ]
-  }
-}
-
-// Common Security Event IDs to collect:
-// 4624 - Successful logon
-// 4625 - Failed logon  
-// 4688 - Process creation
-// 4672 - Special privileges assigned
-// 4720 - User account created
-// 4726 - User account deleted
-</pre>
-                </div>
-
-                <h3>Syslog/CEF Collection</h3>
-                <div class="steps-container">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h4>Deploy Log Forwarder VM</h4>
-                            <p>Create Linux VM with AMA agent. This receives syslog from network devices and forwards to Sentinel.</p>
-                        </div>
-                    </div>
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>Configure DCR</h4>
-                            <p>Create Data Collection Rule for Syslog facilities (auth, authpriv, local0-7) and severity levels.</p>
-                        </div>
-                    </div>
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h4>Point Sources to Forwarder</h4>
-                            <p>Configure firewalls, routers, and servers to send syslog to forwarder VM IP on port 514.</p>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: How do you collect logs from on-premises Windows servers into Sentinel?</button>
+                        <button class="qa-question">Q: How do you decide between AMA and the legacy Log Analytics agent?</button>
                         <div class="qa-answer">
-                            <p><strong>Answer:</strong> Use the <strong>Azure Monitor Agent (AMA)</strong> with Data Collection Rules:</p>
-                            <ol>
-                                <li>Install AMA on Windows servers (via Azure Arc for non-Azure VMs)</li>
-                                <li>Create Data Collection Rule specifying which Event IDs to collect</li>
-                                <li>Associate DCR with the servers</li>
-                                <li>Data flows to SecurityEvent table in Log Analytics</li>
-                            </ol>
-                            <p><strong>Best practice:</strong> Filter Event IDs in DCR to reduce costs - don't collect everything.</p>
+                            <p><strong>Always choose AMA for new deployments:</strong></p>
+                            <ul>
+                                <li>Legacy agent (MMA/OMS) is deprecated, end of support Aug 2024</li>
+                                <li>AMA supports Data Collection Rules for filtering/transformation</li>
+                                <li>AMA can send to multiple workspaces from one agent</li>
+                                <li>Better performance and resource usage</li>
+                                <li>Required for new features like transformation at ingestion</li>
+                            </ul>
+                            <p><strong>Migration path:</strong> Run both agents in parallel during transition, verify data parity, then remove legacy agent.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: What's the difference between CEF and Syslog connectors?</button>
+                        <button class="qa-question">Q: How do you reduce Sentinel ingestion costs?</button>
                         <div class="qa-answer">
-                            <p><strong>Syslog:</strong> Raw log format, varies by vendor, goes to Syslog table</p>
-                            <p><strong>CEF (Common Event Format):</strong> Standardized format with predefined fields (src, dst, act, etc.), goes to CommonSecurityLog table</p>
-                            <p><strong>Which to use:</strong> If your device supports CEF, use it - structured data is easier to query and correlate.</p>
+                            <p><strong>Cost optimization strategies:</strong></p>
+                            <ul>
+                                <li><strong>DCR filtering:</strong> Drop non-security events before ingestion</li>
+                                <li><strong>Basic Logs tier:</strong> Use for high-volume, low-query data (8x cheaper)</li>
+                                <li><strong>Commitment tiers:</strong> 100GB/day+ gets significant discounts</li>
+                                <li><strong>Archive tier:</strong> Move old data to cheap storage</li>
+                                <li><strong>Free data sources:</strong> Azure Activity, Security alerts are free</li>
+                                <li><strong>Sampling:</strong> For verbose logs, sample instead of full collection</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: Explain the difference between DCR and DCE.</button>
+                        <div class="qa-answer">
+                            <p><strong>DCE (Data Collection Endpoint):</strong></p>
+                            <ul>
+                                <li>The network endpoint where data is sent</li>
+                                <li>Regional resource (choose region close to sources)</li>
+                                <li>Provides HTTPS ingestion URL</li>
+                            </ul>
+                            <p><strong>DCR (Data Collection Rule):</strong></p>
+                            <ul>
+                                <li>Defines WHAT to collect and WHERE to send it</li>
+                                <li>Contains transformation logic (KQL)</li>
+                                <li>Specifies destination table(s)</li>
+                                <li>Can filter, enrich, or modify data</li>
+                            </ul>
+                            <p><strong>Relationship:</strong> Data flows to DCE → DCR processes it → data lands in workspace table</p>
                         </div>
                     </div>
                 </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>
             </footer>
         </div>
     </div>
     <script>
-        document.querySelectorAll('.qa-question').forEach(b => {
-            b.addEventListener('click', () => {
-                const a = b.nextElementSibling;
-                const open = a.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(x => x.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(x => x.classList.remove('active'));
-                if (!open) { a.style.display = 'block'; b.classList.add('active'); }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
             });
         });
     </script>

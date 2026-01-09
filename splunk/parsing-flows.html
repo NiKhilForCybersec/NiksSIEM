@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parsing & Transforms | Nik's SIEM</title>
+    <title>Parsing & Indexing | Splunk | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -19,86 +19,415 @@
                     </div>
                 </a>
             </div>
-            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">Splunk</div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a></div>
-                <div class="nav-section"><div class="nav-section-title">SPL</div>
+                    <a href="parsing-flows.html" class="nav-link active"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlations</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notable Events</a>
-                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> RBA</a></div></nav>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-tools"></i> Troubleshooting</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
                     <a href="../index.html">Home</a><span class="separator">/</span>
                     <a href="index.html">Splunk</a><span class="separator">/</span>
-                    <span class="current">Parsing & Transforms</span>
+                    <span class="current">Parsing & Indexing</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-stream"></i> Parsing & Transforms</h1>
-                <p class="lead">props.conf, transforms.conf, and field extractions for data normalization.</p>
+                <h1><i class="fas fa-stream"></i> Splunk Parsing & Indexing</h1>
+                <p class="lead">Understanding Splunk's data pipeline is essential for proper data onboarding. Learn how props.conf and transforms.conf work together to parse, transform, and route data.</p>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>props.conf, transforms.conf, and field extractions for data normalization.</p>
-                </div>
-
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-book"></i></div>
-                        <h4>Fundamentals</h4>
-                        <p>Core concepts and foundational knowledge</p>
+                <!-- PARSING DECISION TREE -->
+                <h2><i class="fas fa-route"></i> Index-Time vs Search-Time Extraction</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node">
+                        <div class="decision-node-question">When should you extract fields?</div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div>
-                        <h4>Configuration</h4>
-                        <p>Step-by-step setup procedures</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-check"></i></div>
-                        <h4>Best Practices</h4>
-                        <p>Enterprise recommendations</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-lightbulb"></i></div>
-                        <h4>Tips & Tricks</h4>
-                        <p>Expert insights and shortcuts</p>
-                    </div>
-                </div>
-
-                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question">Q: Explain the key aspects of Parsing & Transforms.</button>
-                        <div class="qa-answer">
-                            <p>This topic covers essential concepts for security operations. Key areas include architecture understanding, configuration approaches, and operational best practices.</p>
+                    <div class="decision-paths">
+                        <div class="decision-path">
+                            <div class="decision-path-label yes">Index-Time (props.conf + transforms.conf)</div>
+                            <div class="decision-path-content">
+                                <p style="color: #3fb950; font-weight: 600;">→ Use sparingly</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Only for: timestamp extraction, line breaking, sourcetype routing, event filtering. Increases index size.</p>
+                            </div>
+                        </div>
+                        <div class="decision-path">
+                            <div class="decision-path-label no">Search-Time (props.conf only)</div>
+                            <div class="decision-path-content">
+                                <p style="color: #d29922; font-weight: 600;">→ Default approach</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Field extraction when searching. Flexible, no re-indexing needed. Slight search performance cost.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- DATA PIPELINE -->
+                <h2><i class="fas fa-project-diagram"></i> Splunk Data Pipeline</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-stream"></i> Index-Time Processing Pipeline</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">Raw Data</div><div class="flow-box-subtitle">Input</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box primary"><div class="flow-box-title">1. Input Phase</div><div class="flow-box-subtitle">inputs.conf</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box success"><div class="flow-box-title">2. Parsing Phase</div><div class="flow-box-subtitle">props.conf</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box warning"><div class="flow-box-title">3. Transform Phase</div><div class="flow-box-subtitle">transforms.conf</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box purple"><div class="flow-box-title">4. Indexing Phase</div><div class="flow-box-subtitle">indexes.conf</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box danger"><div class="flow-box-title">Indexed Data</div><div class="flow-box-subtitle">Searchable</div></div>
+                    </div>
+                </div>
+
+                <div class="pipeline">
+                    <div class="pipeline-stage" data-step="1">
+                        <div class="pipeline-stage-title">Input Phase</div>
+                        <div class="pipeline-stage-desc">Data enters Splunk - source, sourcetype, host assigned</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>source:</strong> Where data came from (file path, network port)</li>
+                                <li><strong>sourcetype:</strong> Data format (auto-detected or configured)</li>
+                                <li><strong>host:</strong> Origin system</li>
+                                <li><strong>index:</strong> Destination index</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="2">
+                        <div class="pipeline-stage-title">Parsing Phase</div>
+                        <div class="pipeline-stage-desc">Break data into events, extract timestamps</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>LINE_BREAKER:</strong> Regex to split into events</li>
+                                <li><strong>TIME_FORMAT:</strong> Timestamp parsing</li>
+                                <li><strong>TIME_PREFIX:</strong> Where to find timestamp</li>
+                                <li><strong>SHOULD_LINEMERGE:</strong> Combine multi-line events</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="3">
+                        <div class="pipeline-stage-title">Transform Phase</div>
+                        <div class="pipeline-stage-desc">Modify, route, or filter events</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li><strong>TRANSFORMS:</strong> Reference transforms.conf stanzas</li>
+                                <li><strong>Field extraction:</strong> Regex-based extraction</li>
+                                <li><strong>Routing:</strong> Send to different indexes</li>
+                                <li><strong>Filtering:</strong> Drop unwanted events</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="pipeline-stage" data-step="4">
+                        <div class="pipeline-stage-title">Indexing Phase</div>
+                        <div class="pipeline-stage-desc">Write to disk, build index structures</div>
+                        <div class="pipeline-stage-details">
+                            <ul>
+                                <li>Compress and store raw data</li>
+                                <li>Build .tsidx files for searching</li>
+                                <li>Apply retention policies</li>
+                                <li>Replicate to cluster peers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROPS.CONF EXAMPLES -->
+                <h2><i class="fas fa-file-code"></i> props.conf Configuration</h2>
+
+                <h3>Example 1: Custom Application Logs</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> props.conf</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;"># Custom application log parsing</span>
+<span style="color: #79c0ff;">[myapp:security]</span>
+<span style="color: #8b949e;"># Timestamp extraction</span>
+TIME_PREFIX = ^\[
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+MAX_TIMESTAMP_LOOKAHEAD = 25
+
+<span style="color: #8b949e;"># Line breaking - each log starts with [timestamp]</span>
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)\[
+
+<span style="color: #8b949e;"># Character encoding</span>
+CHARSET = UTF-8
+
+<span style="color: #8b949e;"># Search-time field extractions</span>
+EXTRACT-user = user=(?P&lt;user&gt;[^\s]+)
+EXTRACT-action = action=(?P&lt;action&gt;[^\s]+)
+EXTRACT-status = status=(?P&lt;status&gt;[^\s]+)
+EXTRACT-src_ip = client_ip=(?P&lt;src_ip&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})
+</pre>
+                </div>
+
+                <h3>Example 2: Multi-line Stack Traces</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> props.conf for Java Stack Traces</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;"># Java application with multi-line stack traces</span>
+<span style="color: #79c0ff;">[java:application]</span>
+<span style="color: #8b949e;"># Merge lines that don't start with timestamp</span>
+SHOULD_LINEMERGE = true
+BREAK_ONLY_BEFORE = ^\d{4}-\d{2}-\d{2}
+
+<span style="color: #8b949e;"># Or use explicit line breaking</span>
+<span style="color: #8b949e;"># LINE_BREAKER = ([\r\n]+)(?=\d{4}-\d{2}-\d{2})</span>
+
+TIME_FORMAT = %Y-%m-%d %H:%M:%S,%3N
+MAX_TIMESTAMP_LOOKAHEAD = 30
+
+<span style="color: #8b949e;"># Truncate very long stack traces</span>
+TRUNCATE = 50000
+</pre>
+                </div>
+
+                <!-- TRANSFORMS.CONF EXAMPLES -->
+                <h2><i class="fas fa-exchange-alt"></i> transforms.conf Configuration</h2>
+
+                <h3>Example 1: Route by Severity</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> transforms.conf - Index Routing</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;"># Route events to different indexes based on content</span>
+<span style="color: #79c0ff;">[route_by_severity]</span>
+REGEX = severity=(CRITICAL|HIGH)
+DEST_KEY = _MetaData:Index
+FORMAT = security_high
+
+<span style="color: #79c0ff;">[route_low_severity]</span>
+REGEX = severity=(LOW|INFO)
+DEST_KEY = _MetaData:Index
+FORMAT = security_low
+</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> props.conf - Apply Transforms</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #79c0ff;">[security_logs]</span>
+<span style="color: #8b949e;"># Apply routing transforms</span>
+TRANSFORMS-route = route_by_severity, route_low_severity
+</pre>
+                </div>
+
+                <h3>Example 2: Filter (Drop) Events</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> transforms.conf - Null Queue (Drop)</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;"># Drop noisy events to save license</span>
+<span style="color: #79c0ff;">[drop_debug_events]</span>
+REGEX = ^DEBUG:|level=DEBUG
+DEST_KEY = queue
+FORMAT = nullQueue
+
+<span style="color: #79c0ff;">[drop_healthcheck]</span>
+REGEX = GET /health HTTP
+DEST_KEY = queue
+FORMAT = nullQueue
+</pre>
+                </div>
+
+                <!-- CIM COMPLIANCE -->
+                <h2><i class="fas fa-check-circle"></i> CIM (Common Information Model)</h2>
+                
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> What is CIM?</h4>
+                    <p><strong>CIM</strong> is Splunk's schema normalization standard. Similar to XSIAM's XDM, it maps vendor-specific fields to standard field names. This enables:</p>
+                    <ul>
+                        <li>Enterprise Security correlation searches to work across all data</li>
+                        <li>Pre-built dashboards and reports</li>
+                        <li>Cross-vendor queries with standard field names</li>
+                    </ul>
+                </div>
+
+                <h3>CIM Field Mapping Example</h3>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> props.conf - CIM Compliance</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #79c0ff;">[myvendor:firewall]</span>
+<span style="color: #8b949e;"># Map vendor fields to CIM Authentication data model</span>
+FIELDALIAS-user = username AS user
+FIELDALIAS-src = source_address AS src
+FIELDALIAS-dest = destination_address AS dest
+FIELDALIAS-action = fw_action AS action
+FIELDALIAS-app = application_name AS app
+
+<span style="color: #8b949e;"># Calculate fields for CIM</span>
+EVAL-vendor_product = "MyVendor Firewall"
+EVAL-dvc = host
+</pre>
+                </div>
+
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>CIM Data Model</th>
+                                <th>Common Fields</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Authentication</strong></td>
+                                <td>user, src, dest, action, app</td>
+                                <td>Login events, access tracking</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Traffic</strong></td>
+                                <td>src_ip, dest_ip, src_port, dest_port, bytes</td>
+                                <td>Firewall, flow data</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Endpoint</strong></td>
+                                <td>process_name, parent_process, user, dest</td>
+                                <td>EDR, process execution</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Malware</strong></td>
+                                <td>file_name, file_hash, signature, action</td>
+                                <td>AV, malware detection</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ENTERPRISE EXAMPLE -->
+                <div class="enterprise-example">
+                    <div class="enterprise-example-header">
+                        <i class="fas fa-building"></i>
+                        <div class="enterprise-example-title">Enterprise Example: Palo Alto NGFW Parsing</div>
+                    </div>
+                    <div class="enterprise-example-scenario">
+                        <strong>Scenario:</strong> Onboard Palo Alto firewall logs via syslog. Parse different log types (traffic, threat, system) and ensure CIM compliance for ES.
+                    </div>
+                    
+                    <div class="code-block" style="margin-top: 16px;">
+                        <div class="code-header"><i class="fas fa-file-code"></i> props.conf for Palo Alto</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;"># Palo Alto Traffic Logs</span>
+<span style="color: #79c0ff;">[pan:traffic]</span>
+TIME_FORMAT = %Y/%m/%d %H:%M:%S
+TIME_PREFIX = ^[^,]*,
+SHOULD_LINEMERGE = false
+
+<span style="color: #8b949e;"># CIM Network Traffic mappings</span>
+FIELDALIAS-src = src AS src_ip
+FIELDALIAS-dst = dst AS dest_ip
+FIELDALIAS-src_port = sport AS src_port
+FIELDALIAS-dest_port = dport AS dest_port
+FIELDALIAS-bytes_in = bytes_received AS bytes_in
+FIELDALIAS-bytes_out = bytes_sent AS bytes_out
+
+EVAL-vendor_product = "Palo Alto Networks Firewall"
+EVAL-direction = if(match(flags, "client-to-server"), "outbound", "inbound")
+</pre>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #0d1117; border-radius: 8px;">
+                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
+                            <strong style="color: #3fb950;">Best Practice:</strong> Use the official Palo Alto TA (Technology Add-on) from Splunkbase. It includes all props.conf, transforms.conf, and CIM mappings pre-configured and tested.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What's the difference between index-time and search-time field extraction?</button>
+                        <div class="qa-answer">
+                            <p><strong>Index-Time Extraction:</strong></p>
+                            <ul>
+                                <li>Happens during ingestion</li>
+                                <li>Fields stored in index (increases size)</li>
+                                <li>Cannot change without re-indexing</li>
+                                <li>Faster searches on extracted fields</li>
+                                <li>Use for: timestamp, line breaking, routing</li>
+                            </ul>
+                            <p><strong>Search-Time Extraction:</strong></p>
+                            <ul>
+                                <li>Happens when you search</li>
+                                <li>Raw data stored, fields extracted on-demand</li>
+                                <li>Can change anytime (flexible)</li>
+                                <li>Slight search performance cost</li>
+                                <li>Use for: most field extractions</li>
+                            </ul>
+                            <p><strong>Rule of thumb:</strong> Default to search-time. Only use index-time when necessary.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How do you troubleshoot parsing issues?</button>
+                        <div class="qa-answer">
+                            <p><strong>Troubleshooting steps:</strong></p>
+                            <ol>
+                                <li><strong>Check sourcetype:</strong> Is the correct sourcetype assigned?</li>
+                                <li><strong>Use btool:</strong> <code>./splunk btool props list [sourcetype] --debug</code></li>
+                                <li><strong>Check for conflicts:</strong> Multiple TAs defining same sourcetype?</li>
+                                <li><strong>Test regex:</strong> Use regex101.com with sample events</li>
+                                <li><strong>Review _internal:</strong> Search for parsing errors in _internal index</li>
+                                <li><strong>Check timestamp:</strong> Search <code>index=_internal sourcetype=splunkd parsing</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>
             </footer>
         </div>
     </div>
-    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

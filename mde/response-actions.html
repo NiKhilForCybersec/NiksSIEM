@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Response Actions | Nik's SIEM</title>
+    <title>Response Actions | MDE | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -41,24 +41,102 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-bolt"></i> Response Actions</h1>
-                <p class="lead">Isolate devices, collect investigation packages, run live response, and block files.</p>
+                <p class="lead">Take immediate action on threats using MDE's response capabilities. Isolate devices, collect forensic packages, and run live response sessions.</p>
 
+                <h2><i class="fas fa-bolt"></i> Available Actions</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Action</th><th>Description</th><th>Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Isolate Device</strong></td><td>Cut network except MDE communication</td><td>High - User loses network</td></tr>
+                            <tr><td><strong>Restrict App Execution</strong></td><td>Only MS-signed apps can run</td><td>High - May break apps</td></tr>
+                            <tr><td><strong>Run AV Scan</strong></td><td>Trigger full or quick scan</td><td>Low - Background task</td></tr>
+                            <tr><td><strong>Collect Investigation Package</strong></td><td>Gather forensic data</td><td>Low - Background collection</td></tr>
+                            <tr><td><strong>Initiate Live Response</strong></td><td>Interactive remote shell</td><td>Medium - Direct access</td></tr>
+                            <tr><td><strong>Stop & Quarantine File</strong></td><td>Kill process, quarantine file</td><td>Medium - Stops process</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Device Isolation</h2>
+                <div class="info-box warning">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Isolation Considerations</h4>
+                    <ul>
+                        <li>Device loses ALL network except MDE service</li>
+                        <li>User cannot access network resources, internet</li>
+                        <li>VPN connections terminated</li>
+                        <li>MDE continues to send telemetry and receive commands</li>
+                        <li>Can release isolation when investigation complete</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-terminal"></i> Live Response</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Live Response Commands</div>
+<pre>
+# File system operations
+dir C:\Users\Public
+cd C:\Windows\Temp
+getfile C:\Windows\Temp\suspicious.exe
+
+# Process operations
+processes
+remediate process <pid>
+
+# Registry
+registry QUERY HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+
+# Network
+connections
+
+# Run scripts (from library)
+run script.ps1
+
+# Collect file for analysis
+getfile "C:\path\to\file.exe"
+
+# Put file (from library)
+putfile malware_removal.ps1
+
+# Memory acquisition
+memdump
+</pre>
+                </div>
+
+                <h2><i class="fas fa-box"></i> Investigation Package Contents</h2>
                 <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>Isolate devices, collect investigation packages, run live response, and block files.</p>
+                    <h4><i class="fas fa-archive"></i> Package Includes</h4>
+                    <ul>
+                        <li><strong>Autoruns:</strong> Persistence mechanisms</li>
+                        <li><strong>Installed programs:</strong> Software inventory</li>
+                        <li><strong>Network connections:</strong> Active connections at collection time</li>
+                        <li><strong>Scheduled tasks:</strong> All scheduled tasks</li>
+                        <li><strong>Services:</strong> Installed services</li>
+                        <li><strong>Security event logs:</strong> Recent security events</li>
+                        <li><strong>Prefetch files:</strong> Evidence of program execution</li>
+                    </ul>
                 </div>
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
-                <div class="concept-grid">
-                    <div class="concept-card"><div class="concept-card-icon cyan"><i class="fas fa-book"></i></div><h4>Fundamentals</h4><p>Core concepts</p></div>
-                    <div class="concept-card"><div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div><h4>Configuration</h4><p>Setup steps</p></div>
-                    <div class="concept-card"><div class="concept-card-icon green"><i class="fas fa-check"></i></div><h4>Best Practices</h4><p>Recommendations</p></div>
-                    <div class="concept-card"><div class="concept-card-icon orange"><i class="fas fa-bug"></i></div><h4>Troubleshooting</h4><p>Common issues</p></div>
-                </div>
+
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Key considerations for Response Actions?</button>
-                        <div class="qa-answer"><p>This covers deployment, configuration, and operational best practices for enterprise environments.</p></div>
+                        <button class="qa-question">Q: When would you use device isolation vs other response actions?</button>
+                        <div class="qa-answer">
+                            <p><strong>Use isolation when:</strong></p>
+                            <ul>
+                                <li>Active attacker on device (lateral movement risk)</li>
+                                <li>Ransomware detected (prevent spread)</li>
+                                <li>C2 communication confirmed</li>
+                                <li>Need to preserve evidence while investigating</li>
+                            </ul>
+                            <p><strong>Consider alternatives when:</strong></p>
+                            <ul>
+                                <li>Single suspicious file - use Stop & Quarantine</li>
+                                <li>Need investigation first - collect package</li>
+                                <li>Lower severity - run AV scan</li>
+                                <li>Business critical system - restrict apps instead</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -67,7 +145,7 @@
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">MDE</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

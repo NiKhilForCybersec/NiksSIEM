@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Windows Onboarding | Nik's SIEM</title>
+    <title>Windows Onboarding | MDE | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -41,49 +41,119 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-windows"></i> Windows Onboarding</h1>
-                <p class="lead">Onboard Windows devices to Microsoft Defender for Endpoint using various methods including Group Policy, Intune, SCCM, and local scripts.</p>
+                <p class="lead">Onboard Windows devices to Microsoft Defender for Endpoint using various deployment methods. Choose the right approach based on your infrastructure.</p>
 
-                <h2><i class="fas fa-list"></i> Onboarding Methods</h2>
+                <h2><i class="fas fa-list"></i> Deployment Methods</h2>
                 <div class="styled-table">
                     <table>
-                        <thead><tr><th>Method</th><th>Best For</th><th>Scale</th></tr></thead>
+                        <thead><tr><th>Method</th><th>Best For</th><th>Scale</th><th>Prerequisites</th></tr></thead>
                         <tbody>
-                            <tr><td><strong>Intune</strong></td><td>Cloud-managed devices</td><td>Enterprise</td></tr>
-                            <tr><td><strong>Group Policy</strong></td><td>Domain-joined, on-prem AD</td><td>Enterprise</td></tr>
-                            <tr><td><strong>SCCM/ConfigMgr</strong></td><td>Existing SCCM infrastructure</td><td>Enterprise</td></tr>
-                            <tr><td><strong>Local Script</strong></td><td>Testing, small deployments</td><td>Limited</td></tr>
-                            <tr><td><strong>VDI</strong></td><td>Virtual desktops</td><td>Varies</td></tr>
+                            <tr><td><strong>Microsoft Intune</strong></td><td>Cloud-managed, Azure AD joined</td><td>Enterprise</td><td>Intune license, Entra ID</td></tr>
+                            <tr><td><strong>Group Policy</strong></td><td>Domain-joined, on-prem AD</td><td>Enterprise</td><td>AD DS, GPO access</td></tr>
+                            <tr><td><strong>SCCM/ConfigMgr</strong></td><td>Existing ConfigMgr infrastructure</td><td>Enterprise</td><td>ConfigMgr deployment</td></tr>
+                            <tr><td><strong>Local Script</strong></td><td>Testing, small deployments</td><td>Limited</td><td>Local admin</td></tr>
+                            <tr><td><strong>VDI Script</strong></td><td>Non-persistent VDI</td><td>Varies</td><td>Master image access</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2><i class="fas fa-code"></i> Local Script Onboarding</h2>
+                <h2><i class="fas fa-terminal"></i> Local Script Onboarding</h2>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-terminal"></i> PowerShell Onboarding</div>
+                    <div class="code-header"><i class="fas fa-code"></i> PowerShell Onboarding Steps</div>
 <pre>
-# Download onboarding package from security.microsoft.com
-# Run as Administrator
+# 1. Download onboarding package from security.microsoft.com
+#    Settings > Endpoints > Onboarding > Download package
+
+# 2. Run as Administrator
+cd C:\Path\To\Package
 .\WindowsDefenderATPLocalOnboardingScript.cmd
 
-# Verify onboarding
+# 3. Verify onboarding status
 Get-MpComputerStatus | Select-Object AMRunningMode, OnboardingState
 
-# Check connectivity
-Test-NetConnection -ComputerName winatp-gw-cus.microsoft.com -Port 443
+# 4. Check service is running
+Get-Service -Name "Sense" | Select-Object Status, StartType
+
+# 5. Verify connectivity
+$urls = @(
+    "winatp-gw-cus.microsoft.com",
+    "winatp-gw-eus.microsoft.com", 
+    "winatp-gw-weu.microsoft.com"
+)
+foreach ($url in $urls) {
+    Test-NetConnection -ComputerName $url -Port 443
+}
+
+# 6. Run detection test (download EICAR or run test command)
+powershell.exe -NoExit -ExecutionPolicy Bypass -WindowStyle Hidden $ErrorActionPreference= 'silentlycontinue';(New-Object System.Net.WebClient).DownloadFile('http://127.0.0.1/1.exe', 'C:\test-WDATP-test\invoice.exe');Start-Process 'C:\test-WDATP-test\invoice.exe'
 </pre>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> Group Policy Deployment</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Download Package</h4>
+                            <p>Get Group Policy package from security.microsoft.com portal</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Extract ADMX</h4>
+                            <p>Copy ADMX/ADML files to PolicyDefinitions folder on DC</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Create GPO</h4>
+                            <p>Create new GPO, navigate to Windows Defender ATP settings</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Configure Settings</h4>
+                            <p>Enable onboarding, paste workspace ID and key from portal</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Link & Apply</h4>
+                            <p>Link GPO to target OU, run gpupdate on endpoints</p>
+                        </div>
+                    </div>
                 </div>
 
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: How do you verify successful MDE onboarding?</button>
+                        <button class="qa-question">Q: How do you verify MDE is properly onboarded?</button>
                         <div class="qa-answer">
                             <ol>
-                                <li>Check device appears in security.microsoft.com portal</li>
-                                <li>Run detection test: download EICAR file</li>
-                                <li>PowerShell: Get-MpComputerStatus shows OnboardingState</li>
-                                <li>Event log: Microsoft-Windows-SENSE operational log</li>
+                                <li><strong>Portal check:</strong> Device appears in security.microsoft.com device inventory</li>
+                                <li><strong>Service check:</strong> SENSE service running (<code>Get-Service Sense</code>)</li>
+                                <li><strong>Status check:</strong> <code>Get-MpComputerStatus</code> shows OnboardingState = 1</li>
+                                <li><strong>Detection test:</strong> Run EICAR test file, verify alert generated</li>
+                                <li><strong>Event log:</strong> Check Microsoft-Windows-SENSE/Operational for events</li>
                             </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What ports and URLs does MDE need to communicate?</button>
+                        <div class="qa-answer">
+                            <p><strong>Port:</strong> HTTPS (443) outbound only</p>
+                            <p><strong>Key URLs:</strong></p>
+                            <ul>
+                                <li><code>*.wd.microsoft.com</code> - Windows Defender</li>
+                                <li><code>*.smartscreen.microsoft.com</code> - SmartScreen</li>
+                                <li><code>winatp-gw-*.microsoft.com</code> - MDE gateways</li>
+                                <li><code>*.blob.core.windows.net</code> - Sample upload</li>
+                            </ul>
+                            <p><strong>Tip:</strong> Use Windows Defender ATP Client Analyzer for connectivity testing</p>
                         </div>
                     </div>
                 </div>
@@ -93,7 +163,7 @@ Test-NetConnection -ComputerName winatp-gw-cus.microsoft.com -Port 443
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">MDE</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

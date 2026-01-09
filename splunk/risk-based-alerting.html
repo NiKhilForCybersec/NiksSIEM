@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Risk-Based Alerting | Nik's SIEM</title>
+    <title>Risk-Based Alerting | Splunk | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -19,22 +19,40 @@
                     </div>
                 </a>
             </div>
-            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">Splunk</div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a></div>
-                <div class="nav-section"><div class="nav-section-title">SPL</div>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlations</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notable Events</a>
-                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> RBA</a></div></nav>
+                    <a href="risk-based-alerting.html" class="nav-link active"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-tools"></i> Troubleshooting</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
@@ -45,77 +63,314 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-chart-line"></i> Risk-Based Alerting</h1>
-                <p class="lead">Risk-Based Alerting (RBA) aggregates risk from multiple low-fidelity detections to surface high-priority threats while reducing alert fatigue.</p>
+                <h1><i class="fas fa-chart-line"></i> Risk-Based Alerting (RBA)</h1>
+                <p class="lead">Risk-Based Alerting shifts from alert-per-event to cumulative risk scoring. Instead of alerting on every detection, risk points accumulate until a threshold triggers investigation.</p>
 
-                <h2><i class="fas fa-lightbulb"></i> RBA Philosophy</h2>
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> The Problem with Traditional Alerting</h4>
-                    <p>Traditional approach: Every detection = alert. Result: <strong>Alert fatigue</strong>. Analysts ignore low-severity alerts, miss real attacks.</p>
-                    <p>RBA approach: Detections add <strong>risk scores</strong> to entities (users, hosts). Alert when risk threshold exceeded. Low-fidelity signals combine to surface real threats.</p>
-                </div>
-
-                <h2><i class="fas fa-calculator"></i> How RBA Works</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-user"></i></div>
-                        <h4>Risk Objects</h4>
-                        <p>Entities that accumulate risk: users, hosts, IP addresses</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-plus"></i></div>
-                        <h4>Risk Modifiers</h4>
-                        <p>Correlation searches add risk scores to objects</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-bell"></i></div>
-                        <h4>Risk Notables</h4>
-                        <p>Alert fires when object exceeds risk threshold</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-chart-line"></i></div>
-                        <h4>Risk Timeline</h4>
-                        <p>Visual history of all risk contributions</p>
+                <!-- RBA CONCEPT -->
+                <h2><i class="fas fa-lightbulb"></i> Understanding RBA</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-balance-scale"></i> Traditional vs Risk-Based Alerting</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px;">
+                        <div style="background: #1c1c1c; border: 1px solid #f85149; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #f85149; margin-top: 0;"><i class="fas fa-times-circle"></i> Traditional: Alert Per Event</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                • Failed login → Alert<br>
+                                • Suspicious process → Alert<br>
+                                • External transfer → Alert<br>
+                                <strong style="color: #f85149;">Result: 500 alerts/day, analyst fatigue</strong>
+                            </p>
+                        </div>
+                        <div style="background: #1c1c1c; border: 1px solid #3fb950; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #3fb950; margin-top: 0;"><i class="fas fa-check-circle"></i> RBA: Cumulative Risk</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                • Failed login → +10 risk<br>
+                                • Suspicious process → +30 risk<br>
+                                • External transfer → +25 risk<br>
+                                <strong style="color: #3fb950;">Result: Alert when risk > 100, fewer but meaningful alerts</strong>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <h2><i class="fas fa-code"></i> Risk Modifier Example</h2>
+                <!-- RBA COMPONENTS -->
+                <h2><i class="fas fa-cubes"></i> RBA Components</h2>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-plus-circle"></i></div>
+                            <div class="comparison-item-title">Risk Modifiers</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Add risk to entities</li>
+                            <li><i class="fas fa-check"></i> Correlation searches that contribute risk</li>
+                            <li><i class="fas fa-check"></i> No immediate alert</li>
+                            <li><i class="fas fa-check"></i> Includes risk_score field</li>
+                            <li><i class="fas fa-info-circle"></i> Building blocks of RBA</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-database"></i></div>
+                            <div class="comparison-item-title">Risk Index</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Stores all risk events</li>
+                            <li><i class="fas fa-check"></i> index=risk</li>
+                            <li><i class="fas fa-check"></i> Contains risk_object, risk_score</li>
+                            <li><i class="fas fa-check"></i> Historical risk tracking</li>
+                            <li><i class="fas fa-info-circle"></i> Central risk repository</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-bell"></i></div>
+                            <div class="comparison-item-title">Risk Notables</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Alert when threshold exceeded</li>
+                            <li><i class="fas fa-check"></i> "ATT&CK Tactic Threshold Exceeded"</li>
+                            <li><i class="fas fa-check"></i> Aggregates contributing events</li>
+                            <li><i class="fas fa-check"></i> Context-rich investigation</li>
+                            <li><i class="fas fa-info-circle"></i> What analysts investigate</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-users"></i></div>
+                            <div class="comparison-item-title">Risk Objects</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-user"></i> Users (risk_object_type=user)</li>
+                            <li><i class="fas fa-server"></i> Systems (risk_object_type=system)</li>
+                            <li><i class="fas fa-check"></i> Risk accumulates per object</li>
+                            <li><i class="fas fa-check"></i> Separate thresholds possible</li>
+                            <li><i class="fas fa-info-circle"></i> Who/what has risk</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- RBA FLOW -->
+                <h2><i class="fas fa-stream"></i> RBA Data Flow</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> Risk Event Pipeline</div>
+                    
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">Security Event</div><div class="flow-box-subtitle">Failed login</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box primary"><div class="flow-box-title">Risk Modifier</div><div class="flow-box-subtitle">+20 risk</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box success"><div class="flow-box-title">Risk Index</div><div class="flow-box-subtitle">Stored event</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box warning"><div class="flow-box-title">Risk Rule</div><div class="flow-box-subtitle">Threshold check</div></div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box danger"><div class="flow-box-title">Notable</div><div class="flow-box-subtitle">If > 100</div></div>
+                    </div>
+                </div>
+
+                <!-- RISK MODIFIER EXAMPLE -->
+                <h2><i class="fas fa-code"></i> Creating Risk Modifiers</h2>
+
+                <h3>Example: Failed Login Risk Modifier</h3>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Add Risk Score</div>
-<pre>
-// Detection adds 20 risk points to user
-| eval risk_object=user
-| eval risk_object_type="user"  
-| eval risk_score=20
-| eval risk_message="User ".user." attempted access to sensitive file"
-| collect index=risk
+                    <div class="code-header"><i class="fas fa-code"></i> SPL - Risk Modifier Search</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">| `datamodel("Authentication", "Authentication")`</span>
+| <span style="color: #f97583;">search</span> action=failure
+| <span style="color: #f97583;">stats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">as</span> failure_count <span style="color: #f97583;">by</span> user, src
+| <span style="color: #f97583;">where</span> failure_count >= 5
+| <span style="color: #f97583;">eval</span> risk_score = <span style="color: #79c0ff;">case</span>(
+    failure_count >= 20, 40,
+    failure_count >= 10, 25,
+    failure_count >= 5, 15,
+    <span style="color: #79c0ff;">true</span>(), 10
+)
+| <span style="color: #f97583;">eval</span> risk_object = user
+| <span style="color: #f97583;">eval</span> risk_object_type = <span style="color: #a5d6ff;">"user"</span>
+| <span style="color: #f97583;">eval</span> risk_message = <span style="color: #a5d6ff;">"Multiple failed logins ("</span> . failure_count . <span style="color: #a5d6ff;">") from "</span> . src
+| <span style="color: #f97583;">eval</span> threat_object = src
+| <span style="color: #f97583;">eval</span> threat_object_type = <span style="color: #a5d6ff;">"ip"</span>
+<span style="color: #8b949e;">| `risk_score`  // Macro to write to risk index</span>
 </pre>
                 </div>
 
+                <h3>Risk Score Guidelines</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr><th>Risk Level</th><th>Score Range</th><th>Examples</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong style="color: #8b949e;">Low</strong></td>
+                                <td>5-15</td>
+                                <td>Minor policy violation, info-level events</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color: #d29922;">Medium</strong></td>
+                                <td>20-40</td>
+                                <td>Failed logins, suspicious but explainable</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color: #f85149;">High</strong></td>
+                                <td>50-75</td>
+                                <td>Malware detection, privilege escalation attempt</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color: #a371f7;">Critical</strong></td>
+                                <td>80-100</td>
+                                <td>Confirmed malicious activity, active attack</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- THRESHOLD RULES -->
+                <h2><i class="fas fa-tachometer-alt"></i> Risk Threshold Rules</h2>
+                
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> SPL - Risk Threshold Notable</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Alert when user's risk exceeds threshold in 24 hours</span>
+<span style="color: #79c0ff;">index</span>=risk
+| <span style="color: #f97583;">stats</span> 
+    <span style="color: #79c0ff;">sum</span>(risk_score) <span style="color: #f97583;">as</span> total_risk,
+    <span style="color: #79c0ff;">dc</span>(source) <span style="color: #f97583;">as</span> contributing_rules,
+    <span style="color: #79c0ff;">values</span>(source) <span style="color: #f97583;">as</span> risk_sources,
+    <span style="color: #79c0ff;">values</span>(risk_message) <span style="color: #f97583;">as</span> risk_messages,
+    <span style="color: #79c0ff;">earliest</span>(_time) <span style="color: #f97583;">as</span> first_risk,
+    <span style="color: #79c0ff;">latest</span>(_time) <span style="color: #f97583;">as</span> last_risk
+  <span style="color: #f97583;">by</span> risk_object, risk_object_type
+| <span style="color: #f97583;">where</span> total_risk > 100 AND risk_object_type=<span style="color: #a5d6ff;">"user"</span>
+| <span style="color: #f97583;">eval</span> rule_name = <span style="color: #a5d6ff;">"User Risk Threshold Exceeded"</span>
+| <span style="color: #f97583;">eval</span> rule_title = risk_object . <span style="color: #a5d6ff;">" has risk score of "</span> . total_risk
+| <span style="color: #f97583;">eval</span> security_domain = <span style="color: #a5d6ff;">"identity"</span>
+| <span style="color: #f97583;">eval</span> severity = <span style="color: #79c0ff;">case</span>(
+    total_risk >= 200, <span style="color: #a5d6ff;">"critical"</span>,
+    total_risk >= 150, <span style="color: #a5d6ff;">"high"</span>,
+    total_risk >= 100, <span style="color: #a5d6ff;">"medium"</span>
+)
+</pre>
+                </div>
+
+                <!-- MITRE MAPPING -->
+                <h2><i class="fas fa-map"></i> MITRE ATT&CK Integration</h2>
+                
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Tactic-Based Thresholds</h4>
+                    <p>ES includes built-in rules that alert when a user/system has risk events across multiple MITRE ATT&CK tactics. This catches attack chains that span Initial Access → Execution → Persistence → etc.</p>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Risk Modifier with MITRE Mapping</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+| <span style="color: #f97583;">eval</span> risk_score = 30
+| <span style="color: #f97583;">eval</span> risk_object = user
+| <span style="color: #f97583;">eval</span> risk_object_type = <span style="color: #a5d6ff;">"user"</span>
+<span style="color: #8b949e;">// Add MITRE context</span>
+| <span style="color: #f97583;">eval</span> mitre_attack_technique = <span style="color: #a5d6ff;">"T1110.001"</span>  <span style="color: #8b949e;">// Brute Force: Password Guessing</span>
+| <span style="color: #f97583;">eval</span> mitre_attack_tactic = <span style="color: #a5d6ff;">"TA0006"</span>       <span style="color: #8b949e;">// Credential Access</span>
+| <span style="color: #f97583;">eval</span> kill_chain_phase = <span style="color: #a5d6ff;">"Actions on Objectives"</span>
+</pre>
+                </div>
+
+                <!-- ENTERPRISE EXAMPLE -->
+                <div class="enterprise-example">
+                    <div class="enterprise-example-header">
+                        <i class="fas fa-building"></i>
+                        <div class="enterprise-example-title">Enterprise Example: RBA Implementation</div>
+                    </div>
+                    <div class="enterprise-example-scenario">
+                        <strong>Scenario:</strong> Enterprise SOC reducing 500 daily alerts to actionable investigations using RBA.
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #f85149; margin-top: 0;">Before RBA</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                <strong>Alerts/day:</strong> 500+<br>
+                                <strong>False positive rate:</strong> 85%<br>
+                                <strong>Analyst capacity:</strong> 50 investigations<br>
+                                <strong>Missed threats:</strong> Many
+                            </p>
+                        </div>
+                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #d29922; margin-top: 0;">RBA Config</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                <strong>Risk modifiers:</strong> 75 rules<br>
+                                <strong>User threshold:</strong> 100 points<br>
+                                <strong>System threshold:</strong> 75 points<br>
+                                <strong>Time window:</strong> 24 hours
+                            </p>
+                        </div>
+                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
+                            <h4 style="color: #3fb950; margin-top: 0;">After RBA</h4>
+                            <p style="color: #8b949e; font-size: 0.85rem;">
+                                <strong>Risk notables/day:</strong> 25-40<br>
+                                <strong>True positive rate:</strong> 70%<br>
+                                <strong>Context per alert:</strong> Full history<br>
+                                <strong>Analyst satisfaction:</strong> High
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
                         <button class="qa-question">Q: How does RBA reduce alert fatigue?</button>
                         <div class="qa-answer">
-                            <p><strong>Traditional:</strong> 100 low-severity detections = 100 alerts (ignored)</p>
-                            <p><strong>RBA:</strong> 100 detections add risk scores. When user exceeds threshold (e.g., risk > 100), ONE alert fires with full context of all contributing detections.</p>
-                            <p><strong>Result:</strong> Fewer, higher-quality alerts. Each alert shows complete picture of suspicious activity.</p>
+                            <p><strong>RBA reduces alert fatigue by:</strong></p>
+                            <ul>
+                                <li><strong>Aggregation:</strong> Multiple low-severity events combine into one investigation</li>
+                                <li><strong>Threshold filtering:</strong> Only alert when cumulative risk is significant</li>
+                                <li><strong>Context-rich:</strong> When you do alert, you have full history of contributing events</li>
+                                <li><strong>Focus on entities:</strong> Investigate risky users/systems, not individual events</li>
+                            </ul>
+                            <p><strong>Example:</strong> Instead of 50 separate "failed login" alerts, you get 1 notable: "User jsmith has 150 risk points from 5 different suspicious activities."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How do you tune RBA thresholds?</button>
+                        <div class="qa-answer">
+                            <p><strong>Threshold tuning approach:</strong></p>
+                            <ol>
+                                <li><strong>Baseline:</strong> Start with default thresholds (user=100, system=75)</li>
+                                <li><strong>Analyze distribution:</strong> Look at risk score distribution across population</li>
+                                <li><strong>Review notables:</strong> Are you getting too many? Too few?</li>
+                                <li><strong>Adjust risk scores:</strong> Tune individual rule scores first</li>
+                                <li><strong>Then adjust threshold:</strong> Raise threshold if too noisy</li>
+                                <li><strong>Consider decay:</strong> Implement risk decay for older events</li>
+                            </ol>
                         </div>
                     </div>
                 </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>
             </footer>
         </div>
     </div>
-    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPL Intermediate | Nik's SIEM</title>
+    <title>SPL Intermediate | Splunk | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -20,151 +20,179 @@
                 </a>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-section"><div class="nav-section-title">Splunk</div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a></div>
-                <div class="nav-section"><div class="nav-section-title">SPL</div>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlations</a>
-                    <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notables</a>
-                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> RBA</a></div></nav>
+                    <a href="spl-intermediate.html" class="nav-link active"><i class="fas fa-layer-group"></i> Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-tools"></i> Troubleshooting</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span class="current">SPL Intermediate</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Splunk</a><span class="separator">/</span>
+                    <span class="current">SPL Intermediate</span>
                 </div>
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-layer-group"></i> SPL Intermediate</h1>
+                <p class="lead">Build on SPL fundamentals with subsearches, transactions, lookups, macros, and eval functions for complex security analysis.</p>
 
-                <p class="lead">Build on SPL fundamentals with subsearches, transactions, lookups, and advanced eval functions for complex security analysis.</p>
-
-                <h2><i class="fas fa-code-branch"></i> Subsearches</h2>
+                <h2><i class="fas fa-code"></i> Subsearches</h2>
                 <div class="code-block">
                     <div class="code-header"><i class="fas fa-code"></i> Subsearch Examples</div>
 <pre>
-// Find events from top 10 talkers
-index=network sourcetype=firewall
-    [search index=network sourcetype=firewall earliest=-1h
-    | stats sum(bytes) as total_bytes by src_ip
-    | sort -total_bytes
-    | head 10
-    | fields src_ip]
+# Find events from top talkers
+index=network 
+[search index=network | top 10 src_ip | fields src_ip]
 
-// Events from users in HR department (lookup-based)
-index=auth 
-    [| inputlookup employees.csv 
-    | search department="HR" 
-    | fields user]
+# Find users who logged in from known bad IPs
+index=authentication action=success
+[| inputlookup bad_ips.csv | fields ip | rename ip as src]
+
+# Events from users with failed logins
+index=* 
+[search index=authentication action=failure 
+| stats count by user 
+| where count > 5 
+| fields user]
 </pre>
                 </div>
 
                 <h2><i class="fas fa-link"></i> Transactions</h2>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Transaction Command</div>
+                    <div class="code-header"><i class="fas fa-code"></i> Transaction Examples</div>
 <pre>
-// Group events into sessions by user
-index=web sourcetype=access_log
-| transaction user maxpause=30m
-| table user, duration, eventcount
+# Group events by session
+index=web 
+| transaction session_id maxpause=5m
 
-// Group login to logout
-index=auth
-| transaction user startswith="action=login" endswith="action=logout"
-| table user, duration, eventcount
+# Login to logout session
+index=authentication 
+| transaction user startswith="action=login" endswith="action=logout" maxspan=8h
+| eval session_duration = duration
+| table user, session_duration, eventcount
 
-// Multi-event attack chain
-index=security
-| transaction src_ip maxspan=1h maxpause=5m
-| search eventcount > 5
-| table src_ip, duration, eventcount
+# Multi-stage attack (recon -> exploit -> exfil)
+index=security 
+| transaction src_ip maxspan=1h 
+| search eventcount > 3
 </pre>
                 </div>
 
                 <h2><i class="fas fa-table"></i> Lookups</h2>
                 <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Lookup Commands</div>
+                    <div class="code-header"><i class="fas fa-code"></i> Lookup Examples</div>
 <pre>
-// Enrich with lookup
-index=auth
-| lookup employees.csv user OUTPUT department, manager, location
-| table _time, user, department, action
+# Enrich with asset information
+index=security 
+| lookup asset_lookup ip as src_ip OUTPUT asset_name, asset_criticality, owner
+| table _time, src_ip, asset_name, asset_criticality, event_type
 
-// GeoIP lookup
-index=firewall
-| iplocation src_ip
-| stats count by src_ip, Country, City
-
-// Threat intel lookup
-index=proxy
-| lookup threat_intel.csv domain AS dest_host OUTPUT threat_type, confidence
+# Check against threat intel
+index=network 
+| lookup threat_intel_ip ip as dest_ip OUTPUT threat_type, confidence
 | where isnotnull(threat_type)
+
+# Automatic lookup (configured in transforms.conf)
+# Just query - enrichment happens automatically
+index=authentication
+| table user, department, manager  # department/manager from identity lookup
 </pre>
                 </div>
 
                 <h2><i class="fas fa-calculator"></i> Advanced Eval Functions</h2>
-                <div class="styled-table"><table>
-                    <thead><tr><th>Function</th><th>Purpose</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>if()</strong></td><td>Conditional</td><td>eval status=if(code>400,"error","ok")</td></tr>
-                        <tr><td><strong>case()</strong></td><td>Multiple conditions</td><td>eval level=case(score>90,"high",score>50,"med",1=1,"low")</td></tr>
-                        <tr><td><strong>coalesce()</strong></td><td>First non-null</td><td>eval ip=coalesce(src_ip,client_ip)</td></tr>
-                        <tr><td><strong>mvcount()</strong></td><td>Count multi-values</td><td>eval port_count=mvcount(dest_port)</td></tr>
-                        <tr><td><strong>mvfilter()</strong></td><td>Filter multi-values</td><td>eval high_ports=mvfilter(port>1024)</td></tr>
-                        <tr><td><strong>relative_time()</strong></td><td>Time calculations</td><td>eval yesterday=relative_time(now(),"-1d@d")</td></tr>
-                    </tbody>
-                </table></div>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> Eval Examples</div>
+<pre>
+# Multiple conditions with case
+| eval severity = case(
+    count > 100, "critical",
+    count > 50, "high",
+    count > 10, "medium",
+    true(), "low"
+)
+
+# Coalesce - first non-null value
+| eval user = coalesce(src_user, dest_user, "unknown")
+
+# String manipulation
+| eval domain = mvindex(split(email, "@"), 1)
+| eval filename = mvindex(split(file_path, "\\"), -1)
+
+# Time functions
+| eval hour = strftime(_time, "%H")
+| eval day_of_week = strftime(_time, "%A")
+| eval is_business_hours = if(hour >= 9 AND hour <= 17, "yes", "no")
+
+# Regex extraction
+| rex field=message "user=(?<extracted_user>[^\s]+)"
+| rex field=url "https?://(?<domain>[^/]+)"
+</pre>
+                </div>
 
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: When would you use transaction vs stats?</button>
+                        <button class="qa-question">Q: What's the difference between subsearch and join?</button>
                         <div class="qa-answer">
-                            <p><strong>transaction:</strong> When you need to see related events as a single item, preserve raw events, calculate duration. Memory-intensive.</p>
-                            <p><strong>stats:</strong> When you only need aggregations (count, sum, values). Much faster and efficient.</p>
-                            <p><strong>Rule:</strong> Use stats when possible, transaction only when you need event grouping with duration/eventcount.</p>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question">Q: Explain lookup types in Splunk.</button>
-                        <div class="qa-answer">
+                            <p><strong>Subsearch:</strong></p>
                             <ul>
-                                <li><strong>CSV lookups:</strong> Static file-based, good for reference data</li>
-                                <li><strong>KV Store:</strong> NoSQL database, faster for large datasets</li>
-                                <li><strong>External lookups:</strong> Python scripts for dynamic data</li>
-                                <li><strong>Automatic lookups:</strong> Applied automatically at search time</li>
+                                <li>Runs first, returns values used in main search</li>
+                                <li>Limited to ~10,000 results, 60 seconds</li>
+                                <li>Good for: filtering main search by dynamic list</li>
                             </ul>
+                            <p><strong>Join:</strong></p>
+                            <ul>
+                                <li>Combines fields from two datasets</li>
+                                <li>More flexible but memory-intensive</li>
+                                <li>Good for: enrichment, correlation between datasets</li>
+                            </ul>
+                            <p><strong>Best practice:</strong> Use subsearch for filtering, join for enrichment, stats for aggregation-based correlation</p>
                         </div>
                     </div>
                 </div>
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
+                    <div class="footer-links">
+                        <a href="../index.html">Home</a>
+                        <a href="../sentinel/index.html">Sentinel</a>
+                        <a href="index.html">Splunk</a>
+                    </div>
+                    <p>Nik's SIEM Compendium</p>
                 </div>
             </footer>
         </div>
     </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(b => {
-            b.addEventListener('click', () => {
-                const a = b.nextElementSibling;
-                const open = a.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(x => x.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(x => x.classList.remove('active'));
-                if (!open) { a.style.display = 'block'; b.classList.add('active'); }
-            });
-        });
-    </script>
+    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
 </body>
 </html>

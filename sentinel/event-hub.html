@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Hub Integration | Nik's SIEM</title>
+    <title>Event Hub Integration | Sentinel | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -19,21 +19,38 @@
                     </div>
                 </a>
             </div>
-            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">Sentinel</div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
-                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
-                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Connectors</a>
-                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a></div>
-                <div class="nav-section"><div class="nav-section-title">KQL</div>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
                     <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Rules</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-bell"></i> Analytics Rules</a>
                     <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
-                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a></div></nav>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users-cog"></i> SOC Operations</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
@@ -45,98 +62,70 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-broadcast-tower"></i> Event Hub Integration</h1>
-                <p class="lead">Azure Event Hubs enable high-volume, real-time data streaming into Sentinel. Use for sources that can't use native connectors or need custom processing.</p>
+                <p class="lead">Azure Event Hub provides high-throughput streaming for data ingestion. Use it for custom applications, IoT data, or when you need to transform data before Sentinel.</p>
 
-                <h2><i class="fas fa-stream"></i> When to Use Event Hub</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-tachometer-alt"></i></div>
-                        <h4>High Volume</h4>
-                        <p>Sources sending millions of events/second that need buffering</p>
+                <h2><i class="fas fa-route"></i> When to Use Event Hub</h2>
+                <div class="decision-tree">
+                    <div class="decision-node">
+                        <div class="decision-node-question">Do you need custom transformation before data reaches Sentinel?</div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-code"></i></div>
-                        <h4>Custom Processing</h4>
-                        <p>Need to transform, filter, or enrich before ingestion</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-share-alt"></i></div>
-                        <h4>Multi-Destination</h4>
-                        <p>Same data going to Sentinel + other systems (SIEM, data lake)</p>
-                    </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-plug"></i></div>
-                        <h4>No Native Connector</h4>
-                        <p>Custom apps or unsupported sources that can write to Event Hub</p>
+                    <div class="decision-paths">
+                        <div class="decision-path">
+                            <div class="decision-path-label yes">Yes - Need Transformation</div>
+                            <div class="decision-path-content">
+                                <p style="color: #3fb950; font-weight: 600;">→ Use Event Hub + Stream Analytics/Function</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Event Hub receives data, Stream Analytics transforms, outputs to Log Analytics.</p>
+                            </div>
+                        </div>
+                        <div class="decision-path">
+                            <div class="decision-path-label no">No Transformation Needed</div>
+                            <div class="decision-path-content">
+                                <p style="color: #58a6ff; font-weight: 600;">→ Use Direct Connector or DCR</p>
+                                <p style="color: #8b949e; font-size: 0.85rem;">Simpler architecture, lower cost.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <h2><i class="fas fa-sitemap"></i> Architecture</h2>
-                <div class="diagram-box">
-                    <div class="diagram-header"><i class="fas fa-project-diagram"></i><span>Event Hub to Sentinel Flow</span></div>
-                    <div class="diagram-content">
-<pre>
-+============================================================================+
-|                    EVENT HUB INTEGRATION ARCHITECTURE                       |
-+============================================================================+
-|                                                                             |
-|  DATA SOURCES              EVENT HUB               SENTINEL                 |
-|  ============              =========               ========                 |
-|                                                                             |
-|  +----------+             +------------+          +------------------+      |
-|  | App Logs |------------>|            |          |                  |      |
-|  +----------+             |            |          |  Log Analytics   |      |
-|                           |  Event Hub |--------->|  Workspace       |      |
-|  +----------+             |  Namespace |   DCR    |                  |      |
-|  | IoT Data |------------>|            |          |  - Custom_CL     |      |
-|  +----------+             |  - hub1    |          |  - Syslog        |      |
-|                           |  - hub2    |          |                  |      |
-|  +----------+             +------------+          +------------------+      |
-|  | Custom   |                   |                                           |
-|  | Sources  |---------+         |  (Optional)                               |
-|  +----------+         |         v                                           |
-|                       |   +------------+                                    |
-|                       +-->| Azure      |  Transform/filter                  |
-|                           | Functions  |  before ingestion                  |
-|                           +------------+                                    |
-|                                                                             |
-+============================================================================+
-</pre>
+                <h2><i class="fas fa-project-diagram"></i> Event Hub Architecture</h2>
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> Event Hub Data Flow</div>
+                    <div class="flow-row centered">
+                        <div class="flow-box"><div class="flow-box-title">IoT Devices</div></div>
+                        <div class="flow-box"><div class="flow-box-title">Custom Apps</div></div>
+                        <div class="flow-box"><div class="flow-box-title">3rd Party</div></div>
+                    </div>
+                    <div class="flow-arrow down">↓ HTTPS/AMQP</div>
+                    <div class="flow-row centered">
+                        <div class="flow-box warning" style="min-width: 250px;"><div class="flow-box-title">Event Hub</div><div class="flow-box-subtitle">Buffer & Stream</div></div>
+                    </div>
+                    <div class="flow-arrow down">↓</div>
+                    <div class="flow-row centered">
+                        <div class="flow-box purple"><div class="flow-box-title">Stream Analytics</div><div class="flow-box-subtitle">Transform (optional)</div></div>
+                    </div>
+                    <div class="flow-arrow down">↓</div>
+                    <div class="flow-row centered">
+                        <div class="flow-box primary"><div class="flow-box-title">Log Analytics</div><div class="flow-box-subtitle">Sentinel</div></div>
                     </div>
                 </div>
 
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: When would you use Event Hub vs direct data connector?</button>
+                        <button class="qa-question">Q: Why use Event Hub instead of direct ingestion?</button>
                         <div class="qa-answer">
-                            <p><strong>Use native connector when:</strong></p>
                             <ul>
-                                <li>Connector exists for your source</li>
-                                <li>Volume is manageable</li>
-                                <li>No custom transformation needed</li>
-                            </ul>
-                            <p><strong>Use Event Hub when:</strong></p>
-                            <ul>
-                                <li>Very high volume requiring buffering</li>
-                                <li>Need to process/transform data before ingestion</li>
-                                <li>Same data goes to multiple destinations</li>
-                                <li>Custom application that can write to Event Hub</li>
+                                <li><strong>High throughput:</strong> Millions of events/sec</li>
+                                <li><strong>Buffering:</strong> Handles spikes, prevents data loss</li>
+                                <li><strong>Transformation:</strong> Process data before Sentinel</li>
+                                <li><strong>Fan-out:</strong> Send same data to multiple consumers</li>
+                                <li><strong>Replay:</strong> Reprocess historical data</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
+            <footer class="main-footer"><div class="footer-content"><p>Nik's SIEM Compendium</p></div></footer>
         </div>
     </div>
     <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>

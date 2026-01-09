@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linux Onboarding | Nik's SIEM</title>
+    <title>Linux Onboarding | MDE | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -41,24 +41,111 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-linux"></i> Linux Onboarding</h1>
-                <p class="lead">Deploy MDE on Linux servers using apt/yum packages or Ansible automation.</p>
+                <p class="lead">Deploy Microsoft Defender for Endpoint on Linux servers. Supports major distributions including RHEL, CentOS, Ubuntu, Debian, SLES, and Oracle Linux.</p>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>Deploy MDE on Linux servers using apt/yum packages or Ansible automation.</p>
+                <h2><i class="fas fa-check-circle"></i> Supported Distributions</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Distribution</th><th>Versions</th><th>Package</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>RHEL / CentOS</strong></td><td>7.2+, 8.x, 9.x</td><td>RPM (yum/dnf)</td></tr>
+                            <tr><td><strong>Ubuntu</strong></td><td>18.04+, 20.04, 22.04</td><td>DEB (apt)</td></tr>
+                            <tr><td><strong>Debian</strong></td><td>9+, 10, 11</td><td>DEB (apt)</td></tr>
+                            <tr><td><strong>SLES</strong></td><td>12+, 15</td><td>RPM (zypper)</td></tr>
+                            <tr><td><strong>Oracle Linux</strong></td><td>7.2+, 8.x</td><td>RPM (yum)</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
-                <div class="concept-grid">
-                    <div class="concept-card"><div class="concept-card-icon cyan"><i class="fas fa-book"></i></div><h4>Fundamentals</h4><p>Core concepts</p></div>
-                    <div class="concept-card"><div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div><h4>Configuration</h4><p>Setup steps</p></div>
-                    <div class="concept-card"><div class="concept-card-icon green"><i class="fas fa-check"></i></div><h4>Best Practices</h4><p>Recommendations</p></div>
-                    <div class="concept-card"><div class="concept-card-icon orange"><i class="fas fa-bug"></i></div><h4>Troubleshooting</h4><p>Common issues</p></div>
+
+                <h2><i class="fas fa-terminal"></i> Installation (Ubuntu/Debian)</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> APT Installation</div>
+<pre>
+# 1. Install prerequisites
+sudo apt-get install curl apt-transport-https gnupg
+
+# 2. Add Microsoft repository key
+curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+
+# 3. Add repository
+sudo apt-add-repository "https://packages.microsoft.com/ubuntu/$(lsb_release -rs)/prod"
+
+# 4. Update and install
+sudo apt-get update
+sudo apt-get install mdatp
+
+# 5. Download onboarding script from portal and run
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# 6. Verify
+mdatp health
+mdatp health --field org_id
+</pre>
                 </div>
+
+                <h2><i class="fas fa-terminal"></i> Installation (RHEL/CentOS)</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> YUM Installation</div>
+<pre>
+# 1. Add Microsoft repository
+sudo yum-config-manager --add-repo=https://packages.microsoft.com/config/rhel/8/prod.repo
+
+# 2. Install
+sudo yum install mdatp
+
+# 3. Onboard
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# 4. Verify
+mdatp health
+mdatp connectivity test
+</pre>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> Common Commands</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> mdatp CLI</div>
+<pre>
+# Check health status
+mdatp health
+
+# Check specific field
+mdatp health --field real_time_protection_enabled
+
+# Run scan
+mdatp scan quick
+mdatp scan full
+mdatp scan custom --path /home/user
+
+# Threat management
+mdatp threat list
+mdatp threat quarantine
+
+# Update definitions
+mdatp definitions update
+
+# View configuration
+mdatp config
+
+# Connectivity test
+mdatp connectivity test
+</pre>
+                </div>
+
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Key considerations for Linux Onboarding?</button>
-                        <div class="qa-answer"><p>This covers deployment, configuration, and operational best practices for enterprise environments.</p></div>
+                        <button class="qa-question">Q: What are the prerequisites for MDE on Linux?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Kernel:</strong> 3.10.0-327 or later</li>
+                                <li><strong>Disk space:</strong> 1GB minimum</li>
+                                <li><strong>Python:</strong> Python 3.x for onboarding script</li>
+                                <li><strong>Network:</strong> Outbound HTTPS to Microsoft endpoints</li>
+                                <li><strong>Package manager:</strong> apt, yum, dnf, or zypper</li>
+                                <li><strong>fanotify:</strong> Kernel support for file monitoring</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -67,7 +154,7 @@
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">MDE</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intelligence | Nik's SIEM</title>
+    <title>Threat Intelligence | Splunk | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -19,22 +19,40 @@
                     </div>
                 </a>
             </div>
-            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">Splunk</div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a></div>
-                <div class="nav-section"><div class="nav-section-title">SPL</div>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlations</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notable Events</a>
-                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> RBA</a></div></nav>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-tools"></i> Troubleshooting</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
@@ -46,43 +64,101 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-crosshairs"></i> Threat Intelligence</h1>
-                <p class="lead">Threat intel framework integration. IOC matching and enrichment in ES.</p>
+                <p class="lead">Integrate threat intelligence feeds into Splunk Enterprise Security. Match IOCs against logs, configure threat intel lookups, and enrich events.</p>
 
+                <h2><i class="fas fa-database"></i> Threat Intel Framework</h2>
                 <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>Threat intel framework integration. IOC matching and enrichment in ES.</p>
+                    <h4><i class="fas fa-lightbulb"></i> How ES Uses Threat Intel</h4>
+                    <p>Enterprise Security includes a <strong>Threat Intelligence framework</strong> that downloads, normalizes, and matches IOCs against your data. When a match is found, ES can create notable events or add threat context to existing events.</p>
                 </div>
 
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
-                <div class="concept-grid">
-                    <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-book"></i></div>
-                        <h4>Fundamentals</h4>
-                        <p>Core concepts and foundational knowledge</p>
+                <h2><i class="fas fa-plug"></i> Supported Sources</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Source Type</th><th>Examples</th><th>Update Method</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>TAXII Feeds</strong></td><td>Anomali, MISP, Recorded Future</td><td>Automatic polling</td></tr>
+                            <tr><td><strong>CSV/Lookup</strong></td><td>Internal TI, custom lists</td><td>Manual/Scheduled</td></tr>
+                            <tr><td><strong>Open Source</strong></td><td>AlienVault OTX, Abuse.ch</td><td>Modular input</td></tr>
+                            <tr><td><strong>API Integration</strong></td><td>VirusTotal, IBM X-Force</td><td>Custom scripted input</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-code"></i> Threat Intel Searches</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-code"></i> IOC Matching Queries</div>
+<pre>
+# Match IPs against threat intel
+index=network 
+| lookup threat_intel_ip ip as dest_ip OUTPUT threat_type, confidence, description
+| where isnotnull(threat_type)
+| table _time, src_ip, dest_ip, threat_type, confidence, description
+
+# Match domains in DNS logs
+index=dns 
+| lookup threat_intel_domain domain as query OUTPUT threat_type, threat_category
+| where isnotnull(threat_type)
+| stats count by query, threat_type, threat_category
+
+# Match file hashes
+index=endpoint sourcetype=sysmon EventCode=1
+| lookup threat_intel_hash hash as SHA256 OUTPUT malware_family, threat_level
+| where isnotnull(malware_family)
+| table _time, Computer, SHA256, malware_family, threat_level
+
+# Enrich all traffic with threat context
+index=proxy 
+| lookup local_threat_intel ip as dest_ip OUTPUT threat_score, threat_tags
+| eval enriched = if(isnotnull(threat_score), "yes", "no")
+</pre>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> Configure Threat Intel Sources</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Add Source</h4>
+                            <p>Configure > Data Enrichment > Threat Intelligence Downloads</p>
+                        </div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div>
-                        <h4>Configuration</h4>
-                        <p>Step-by-step setup procedures</p>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Configure Type</h4>
+                            <p>Select source type (TAXII, URL, Local), set credentials</p>
+                        </div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-check"></i></div>
-                        <h4>Best Practices</h4>
-                        <p>Enterprise recommendations</p>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Map Fields</h4>
+                            <p>Map source fields to ES threat intel fields</p>
+                        </div>
                     </div>
-                    <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-lightbulb"></i></div>
-                        <h4>Tips & Tricks</h4>
-                        <p>Expert insights and shortcuts</p>
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Enable Matching</h4>
+                            <p>Configure which data models match against this source</p>
+                        </div>
                     </div>
                 </div>
 
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Explain the key aspects of Threat Intelligence.</button>
+                        <button class="qa-question">Q: How does Splunk ES match threat intelligence against logs?</button>
                         <div class="qa-answer">
-                            <p>This topic covers essential concepts for security operations. Key areas include architecture understanding, configuration approaches, and operational best practices.</p>
+                            <p><strong>Matching methods:</strong></p>
+                            <ul>
+                                <li><strong>Lookup tables:</strong> TI data stored in KV store, searched via lookup command</li>
+                                <li><strong>Correlation searches:</strong> Scheduled queries that join threat intel with events</li>
+                                <li><strong>Automatic lookups:</strong> Configured in props.conf to enrich at search time</li>
+                                <li><strong>Real-time matching:</strong> Streaming searches for immediate alerting</li>
+                            </ul>
+                            <p><strong>IOC types matched:</strong> IP addresses, domains, URLs, file hashes, email addresses</p>
                         </div>
                     </div>
                 </div>
@@ -92,7 +168,7 @@
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">Splunk</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>

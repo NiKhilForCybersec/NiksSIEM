@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forwarders | Nik's SIEM</title>
+    <title>Forwarders | Splunk | Nik's SIEM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -19,22 +19,40 @@
                     </div>
                 </a>
             </div>
-            <nav class="sidebar-nav"><div class="nav-section"><div class="nav-section-title">Splunk</div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a></div>
-                <div class="nav-section"><div class="nav-section-title">Data</div>
-                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a></div>
-                <div class="nav-section"><div class="nav-section-title">SPL</div>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link active"><i class="fas fa-share"></i> Forwarders</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
                     <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a></div>
-                <div class="nav-section"><div class="nav-section-title">Detection</div>
-                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlations</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-bell"></i> Notable Events</a>
-                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> RBA</a></div></nav>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-tools"></i> Troubleshooting</a>
+                </div>
+            </nav>
         </aside>
         <div class="main-wrapper">
             <header class="top-bar">
@@ -46,43 +64,114 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-share"></i> Forwarders</h1>
-                <p class="lead">Universal and Heavy Forwarders for data collection. Deployment strategies and configuration.</p>
+                <p class="lead">Forwarders are the data collection agents of Splunk. Universal Forwarders are lightweight collectors, while Heavy Forwarders provide parsing and routing capabilities.</p>
 
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
-                    <p>Universal and Heavy Forwarders for data collection. Deployment strategies and configuration.</p>
+                <h2><i class="fas fa-exchange-alt"></i> Forwarder Types</h2>
+                <div class="styled-table">
+                    <table>
+                        <thead><tr><th>Type</th><th>Footprint</th><th>Capabilities</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Universal Forwarder</strong></td><td>~50MB</td><td>Collect, forward only</td><td>Endpoints, servers</td></tr>
+                            <tr><td><strong>Heavy Forwarder</strong></td><td>~1GB+</td><td>Parse, filter, route, index</td><td>Syslog aggregation, routing</td></tr>
+                            <tr><td><strong>Intermediate Forwarder</strong></td><td>Varies</td><td>Load balancing tier</td><td>Scale collection layer</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h2><i class="fas fa-list"></i> Key Topics</h2>
+                <h2><i class="fas fa-cogs"></i> Universal Forwarder Configuration</h2>
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> inputs.conf - Data Collection</div>
+<pre>
+# Monitor Windows Security logs
+[WinEventLog://Security]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Security
+
+# Monitor a file
+[monitor:///var/log/application.log]
+disabled = 0
+index = application
+sourcetype = app_logs
+
+# Monitor directory
+[monitor:///var/log/apache2/]
+disabled = 0
+index = web
+sourcetype = apache:access
+whitelist = access\.log$
+</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><i class="fas fa-file-code"></i> outputs.conf - Forwarding</div>
+<pre>
+# Forward to indexers with load balancing
+[tcpout]
+defaultGroup = indexers
+
+[tcpout:indexers]
+server = idx1.company.com:9997, idx2.company.com:9997, idx3.company.com:9997
+compressed = true
+useACK = true
+
+# SSL encryption
+[tcpout:indexers]
+sslCertPath = $SPLUNK_HOME/etc/auth/client.pem
+sslRootCAPath = $SPLUNK_HOME/etc/auth/ca.pem
+sslVerifyServerCert = true
+</pre>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Heavy Forwarder Use Cases</h2>
                 <div class="concept-grid">
                     <div class="concept-card">
-                        <div class="concept-card-icon cyan"><i class="fas fa-book"></i></div>
-                        <h4>Fundamentals</h4>
-                        <p>Core concepts and foundational knowledge</p>
+                        <div class="concept-card-icon cyan"><i class="fas fa-network-wired"></i></div>
+                        <h4>Syslog Aggregation</h4>
+                        <p>Receive syslog from network devices, parse, route to appropriate indexes</p>
                     </div>
                     <div class="concept-card">
-                        <div class="concept-card-icon purple"><i class="fas fa-cogs"></i></div>
-                        <h4>Configuration</h4>
-                        <p>Step-by-step setup procedures</p>
+                        <div class="concept-card-icon purple"><i class="fas fa-filter"></i></div>
+                        <h4>Data Filtering</h4>
+                        <p>Drop unwanted events before they reach indexers (save license)</p>
                     </div>
                     <div class="concept-card">
-                        <div class="concept-card-icon green"><i class="fas fa-check"></i></div>
-                        <h4>Best Practices</h4>
-                        <p>Enterprise recommendations</p>
+                        <div class="concept-card-icon green"><i class="fas fa-route"></i></div>
+                        <h4>Index Routing</h4>
+                        <p>Route different sourcetypes to different indexes based on content</p>
                     </div>
                     <div class="concept-card">
-                        <div class="concept-card-icon orange"><i class="fas fa-lightbulb"></i></div>
-                        <h4>Tips & Tricks</h4>
-                        <p>Expert insights and shortcuts</p>
+                        <div class="concept-card-icon orange"><i class="fas fa-mask"></i></div>
+                        <h4>Data Masking</h4>
+                        <p>Redact sensitive data (SSN, credit cards) before indexing</p>
                     </div>
                 </div>
 
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Explain the key aspects of Forwarders.</button>
+                        <button class="qa-question">Q: How does load balancing work with Universal Forwarders?</button>
                         <div class="qa-answer">
-                            <p>This topic covers essential concepts for security operations. Key areas include architecture understanding, configuration approaches, and operational best practices.</p>
+                            <p>UF load balancing in outputs.conf:</p>
+                            <ul>
+                                <li>List multiple indexers: <code>server = idx1:9997, idx2:9997, idx3:9997</code></li>
+                                <li>UF switches between indexers every <code>autoLBFrequency</code> seconds (default 30)</li>
+                                <li>If indexer unavailable, automatically fails over to next</li>
+                                <li><code>useACK = true</code> ensures data isn't lost during failover</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What is the Deployment Server and how does it work?</button>
+                        <div class="qa-answer">
+                            <p><strong>Deployment Server</strong> manages forwarder configurations:</p>
+                            <ul>
+                                <li>Central location for apps/configs</li>
+                                <li>Forwarders connect as "deployment clients"</li>
+                                <li>Server classes group forwarders (by OS, function, location)</li>
+                                <li>Push apps to specific server classes</li>
+                                <li>Forwarders poll for updates (default every 60 seconds)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -92,7 +181,7 @@
                     <div class="footer-links">
                         <a href="../index.html">Home</a>
                         <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
+                        <a href="index.html">Splunk</a>
                     </div>
                     <p>Nik's SIEM Compendium</p>
                 </div>
