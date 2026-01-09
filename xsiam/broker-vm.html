@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broker VM | XSIAM | Nik's SIEM Compendium</title>
+    <title>Broker VM Deep Dive | XSIAM | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .sizing-table { background: #161b22; border-radius: 8px; overflow: hidden; margin: 20px 0; }
+        .sizing-table th { background: #21262d; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .sizing-table td { padding: 12px 16px; border-bottom: 1px solid #30363d; }
+        .decision-tree { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .decision-node { background: #161b22; border: 2px solid #58a6ff; border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center; }
+        .decision-node.question { border-color: #d29922; }
+        .decision-node.yes { border-color: #3fb950; }
+        .decision-node.no { border-color: #f85149; }
+        .architecture-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .log-source-card { background: #161b22; border-radius: 8px; padding: 16px; margin: 12px 0; border-left: 4px solid #58a6ff; }
+        .config-block { background: #0d1117; border-radius: 8px; padding: 16px; margin: 16px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -21,34 +34,11 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">XSIAM Platform</div>
-                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
-                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> vs Competitors</a>
-                </div>
-                <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
                     <a href="broker-vm.html" class="nav-link active"><i class="fas fa-server"></i> Broker VM</a>
                     <a href="agents.html" class="nav-link"><i class="fas fa-desktop"></i> Cortex Agents</a>
                     <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">XQL Query Language</div>
-                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Detection & Response</div>
-                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-bell"></i> Correlation Rules</a>
-                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
-                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
-                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
                 </div>
             </nav>
         </aside>
@@ -61,387 +51,452 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-server"></i> Broker VM Deep Dive</h1>
-                <p class="lead">The Broker VM is XSIAM's on-premises data collection appliance. It receives logs from sources that can't push directly to the cloud and forwards them securely to XSIAM.</p>
+                <h1><i class="fas fa-server"></i> Broker VM - On-Premises Data Collection</h1>
+                <p class="lead">The Broker VM is XSIAM's on-premises component for collecting logs from sources that cannot send data directly to the cloud. This guide covers when to use it, how to size it, deployment architectures, and troubleshooting.</p>
 
-                <!-- WHEN TO USE BROKER VM -->
-                <h2><i class="fas fa-route"></i> When Do You Need a Broker VM?</h2>
+                <!-- What is Broker VM -->
+                <h2><i class="fas fa-question-circle"></i> What is the Broker VM?</h2>
                 
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">Can your data source push logs directly to the internet/cloud?</div>
-                    </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">Yes - Internet Access</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Consider Cloud API or Direct Syslog</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">If XSIAM has a native collector, use that instead.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">No - Isolated Network</div>
-                            <div class="decision-path-content">
-                                <p style="color: #f85149; font-weight: 600;">→ Broker VM Required</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Broker bridges air-gapped or restricted networks.</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="info-box" style="border-color: #58a6ff;">
+                    <h4><i class="fas fa-lightbulb"></i> Broker VM Explained</h4>
+                    <p>The <strong>Broker VM</strong> is a virtual appliance you deploy in your data center that acts as a <strong>bridge between on-premises log sources and XSIAM cloud</strong>.</p>
+                    <p>It collects logs via syslog, Windows Event forwarding, file monitoring, and other protocols, then securely transmits them to XSIAM.</p>
                 </div>
 
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">What protocol does your data source support?</div>
-                    </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">Syslog (UDP/TCP/TLS)</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Broker VM Syslog Collector</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Configure device to send syslog to Broker VM IP.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">File-based Logs</div>
-                            <div class="decision-path-content">
-                                <p style="color: #d29922; font-weight: 600;">→ Broker VM File Collector</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Mount/share log directory, configure file tail.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BROKER VM ARCHITECTURE -->
-                <h2><i class="fas fa-sitemap"></i> Broker VM Architecture</h2>
-                
                 <div class="flow-diagram">
                     <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Broker VM Data Flow</div>
-                    
-                    <div style="text-align: center; margin-bottom: 16px;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">On-Premises Data Sources</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box"><div class="flow-box-title">Palo Alto FW</div><div class="flow-box-subtitle">Syslog CEF</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Cisco Switches</div><div class="flow-box-subtitle">Syslog</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Linux Servers</div><div class="flow-box-subtitle">rsyslog</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Legacy Apps</div><div class="flow-box-subtitle">File logs</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓ Syslog UDP 514 / TCP 601 / TLS 6514 / File Share</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box success" style="min-width: 400px;">
-                            <div class="flow-box-title">Broker VM</div>
-                            <div class="flow-box-subtitle">Syslog Collector | File Collector | HTTP Collector</div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin: 16px 0; padding: 16px; background: #161b22; border-radius: 8px;">
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; text-align: center;">
-                            <div><span style="color: #58a6ff; font-size: 0.8rem;">1. RECEIVE</span><br><span style="color: #8b949e; font-size: 0.75rem;">Accept incoming logs</span></div>
-                            <div><span style="color: #3fb950; font-size: 0.8rem;">2. BUFFER</span><br><span style="color: #8b949e; font-size: 0.75rem;">Local disk queue</span></div>
-                            <div><span style="color: #d29922; font-size: 0.8rem;">3. COMPRESS</span><br><span style="color: #8b949e; font-size: 0.75rem;">Reduce bandwidth</span></div>
-                            <div><span style="color: #a371f7; font-size: 0.8rem;">4. ENCRYPT</span><br><span style="color: #8b949e; font-size: 0.75rem;">TLS to cloud</span></div>
-                        </div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓ HTTPS (Compressed, Encrypted)</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box primary" style="min-width: 300px;">
-                            <div class="flow-box-title">XSIAM Cloud</div>
-                            <div class="flow-box-subtitle">Ingestion → Parsing → XDM → Data Lake</div>
-                        </div>
-                    </div>
+<pre style="color: #8b949e; font-size: 0.85rem; line-height: 1.8;">
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                              ON-PREMISES DATA CENTER                                      │
+│                                                                                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
+│  │  Firewalls  │  │  Routers/   │  │  Windows    │  │  Linux      │  │  Legacy     │   │
+│  │  (PA, Cisco)│  │  Switches   │  │  Servers    │  │  Servers    │  │  Apps       │   │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘   │
+│         │ Syslog         │ Syslog         │ WEF            │ Syslog         │ Syslog   │
+│         │ UDP/TCP        │ UDP/TCP        │ (WinRM)        │ TCP            │ TCP      │
+│         └────────────────┴────────────────┴────────────────┴────────────────┘          │
+│                                           │                                             │
+│                                           ▼                                             │
+│                            ┌──────────────────────────────┐                            │
+│                            │        BROKER VM             │                            │
+│                            │                              │                            │
+│                            │  • Receives logs             │                            │
+│                            │  • Parses & normalizes       │                            │
+│                            │  • Buffers during outages    │                            │
+│                            │  • Encrypts & compresses     │                            │
+│                            │  • Sends to XSIAM cloud      │                            │
+│                            └──────────────┬───────────────┘                            │
+│                                           │                                             │
+└───────────────────────────────────────────┼─────────────────────────────────────────────┘
+                                            │ HTTPS (443)
+                                            │ Encrypted
+                                            ▼
+                              ┌──────────────────────────────┐
+                              │        XSIAM CLOUD           │
+                              │                              │
+                              │   Data Lake → Analytics →    │
+                              │   Detection → Response       │
+                              └──────────────────────────────┘
+</pre>
                 </div>
 
-                <!-- COLLECTOR TYPES -->
-                <h2><i class="fas fa-layer-group"></i> Broker VM Collector Types</h2>
+                <!-- Decision Tree: Do You Need Broker VM? -->
+                <h2><i class="fas fa-code-branch"></i> Decision Tree: Do You Need a Broker VM?</h2>
                 
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-broadcast-tower"></i></div>
-                            <div class="comparison-item-title">Syslog Collector</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> UDP 514, TCP 601, TLS 6514</li>
-                            <li><i class="fas fa-check"></i> CEF, LEEF, BSD, RFC 5424</li>
-                            <li><i class="fas fa-check"></i> Most common for network devices</li>
-                            <li><i class="fas fa-check"></i> Real-time streaming</li>
-                            <li><i class="fas fa-cog"></i> Configure: Settings → Data Sources</li>
-                        </ul>
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>What type of log source are you collecting?</strong>
                     </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-file-alt"></i></div>
-                            <div class="comparison-item-title">File Collector</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+                        <div>
+                            <div class="decision-node" style="border-color: #3fb950;">
+                                <strong style="color: #3fb950;">Cloud/SaaS Sources</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">AWS, Azure, M365, Okta, Salesforce</div>
+                            </div>
+                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
+                            <div class="decision-node yes" style="background: #1a4d2e;">
+                                <strong style="color: #3fb950;">NO Broker VM needed</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Use Cloud Collectors (API-based)</div>
+                            </div>
                         </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Tail local or mounted files</li>
-                            <li><i class="fas fa-check"></i> SMB/NFS share support</li>
-                            <li><i class="fas fa-check"></i> Best for legacy applications</li>
-                            <li><i class="fas fa-check"></i> Handles log rotation</li>
-                            <li><i class="fas fa-cog"></i> Configure file path + pattern</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-code"></i></div>
-                            <div class="comparison-item-title">HTTP Collector</div>
+                        <div>
+                            <div class="decision-node" style="border-color: #58a6ff;">
+                                <strong style="color: #58a6ff;">Endpoints</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Windows, Mac, Linux workstations/servers</div>
+                            </div>
+                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
+                            <div class="decision-node" style="background: #1c3a5e;">
+                                <strong style="color: #58a6ff;">NO Broker VM needed</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Use Cortex XDR Agent (direct to cloud)</div>
+                            </div>
                         </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> REST API endpoint on Broker</li>
-                            <li><i class="fas fa-check"></i> JSON payload support</li>
-                            <li><i class="fas fa-check"></i> Custom applications</li>
-                            <li><i class="fas fa-check"></i> Webhook receiver</li>
-                            <li><i class="fas fa-cog"></i> POST to Broker HTTP port</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fab fa-windows"></i></div>
-                            <div class="comparison-item-title">WEF Collector</div>
+                        <div>
+                            <div class="decision-node" style="border-color: #d29922;">
+                                <strong style="color: #d29922;">On-Prem Infrastructure</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Firewalls, routers, servers (syslog)</div>
+                            </div>
+                            <div style="text-align: center; color: #8b949e; margin: 8px 0;">↓</div>
+                            <div class="decision-node question">
+                                <strong>Can source send directly to internet?</strong>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                                <div>
+                                    <div style="text-align: center; color: #3fb950; font-size: 0.8rem;">YES</div>
+                                    <div class="decision-node" style="font-size: 0.8rem; padding: 8px;">
+                                        <strong>HTTP Collector</strong>
+                                        <div style="color: #8b949e;">Direct to XSIAM</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="text-align: center; color: #f85149; font-size: 0.8rem;">NO</div>
+                                    <div class="decision-node" style="font-size: 0.8rem; padding: 8px; background: #4d3a0d; border-color: #d29922;">
+                                        <strong style="color: #d29922;">BROKER VM required</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Windows Event Forwarding</li>
-                            <li><i class="fas fa-check"></i> Collects from WEC server</li>
-                            <li><i class="fas fa-check"></i> Security, System, Application</li>
-                            <li><i class="fas fa-check"></i> Alternative to agent</li>
-                            <li><i class="fas fa-cog"></i> Requires WEC infrastructure</li>
-                        </ul>
                     </div>
                 </div>
 
-                <!-- SIZING GUIDE -->
-                <h2><i class="fas fa-ruler"></i> Broker VM Sizing Guide</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-check-circle"></i> When You Need Broker VM</h4>
+                    <ul>
+                        <li><strong>Syslog sources</strong> - Firewalls, routers, switches, load balancers (most only support syslog)</li>
+                        <li><strong>Windows Event Collection</strong> - Servers without XDR agent, domain controllers (security events)</li>
+                        <li><strong>Air-gapped/regulated networks</strong> - Environments that can't send directly to cloud</li>
+                        <li><strong>High-volume aggregation</strong> - Local buffering during network outages</li>
+                        <li><strong>Legacy applications</strong> - Apps that only write to files or syslog</li>
+                    </ul>
+                </div>
+
+                <!-- Sizing Guide -->
+                <h2><i class="fas fa-calculator"></i> Broker VM Sizing Guide</h2>
                 
                 <div class="styled-table">
                     <table>
                         <thead>
                             <tr>
-                                <th>EPS Range</th>
+                                <th>Deployment Size</th>
+                                <th>EPS (Events/Sec)</th>
                                 <th>vCPU</th>
                                 <th>RAM</th>
                                 <th>Disk</th>
-                                <th>Network</th>
+                                <th>Typical Use Case</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>&lt; 5,000 EPS</strong></td>
-                                <td>4 cores</td>
-                                <td>8 GB</td>
-                                <td>100 GB SSD</td>
-                                <td>1 Gbps</td>
-                            </tr>
-                            <tr>
-                                <td><strong>5,000 - 15,000 EPS</strong></td>
-                                <td>8 cores</td>
+                                <td><strong>Small</strong></td>
+                                <td>Up to 5,000</td>
+                                <td>4</td>
                                 <td>16 GB</td>
-                                <td>250 GB SSD</td>
-                                <td>1 Gbps</td>
-                            </tr>
-                            <tr>
-                                <td><strong>15,000 - 30,000 EPS</strong></td>
-                                <td>16 cores</td>
-                                <td>32 GB</td>
                                 <td>500 GB SSD</td>
-                                <td>10 Gbps</td>
+                                <td>Single site, 50-100 devices</td>
                             </tr>
                             <tr>
-                                <td><strong>&gt; 30,000 EPS</strong></td>
-                                <td colspan="4" style="color: #d29922;">Deploy multiple Broker VMs with load balancing</td>
+                                <td><strong>Medium</strong></td>
+                                <td>5,000 - 15,000</td>
+                                <td>8</td>
+                                <td>32 GB</td>
+                                <td>1 TB SSD</td>
+                                <td>Regional DC, 100-500 devices</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Large</strong></td>
+                                <td>15,000 - 40,000</td>
+                                <td>16</td>
+                                <td>64 GB</td>
+                                <td>2 TB SSD</td>
+                                <td>Large DC, 500-2000 devices</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Enterprise</strong></td>
+                                <td>40,000+</td>
+                                <td>32+</td>
+                                <td>128 GB</td>
+                                <td>4 TB+ SSD</td>
+                                <td>Multiple Broker VMs recommended</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <div class="info-box warning">
-                    <h4><i class="fas fa-exclamation-triangle"></i> Disk Buffer Importance</h4>
-                    <p>Disk space is critical for buffering during network outages. If connectivity to XSIAM is lost, the Broker VM queues logs locally. Size disk for at least 24 hours of buffer at peak EPS.</p>
-                    <p><strong>Formula:</strong> Disk GB = (Peak EPS × 1KB avg event × 3600 sec × 24 hours) / 1,000,000,000</p>
+                <div class="info-box" style="border-color: #d29922;">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Sizing Considerations</h4>
+                    <ul>
+                        <li><strong>Disk is for buffering:</strong> If network to XSIAM goes down, logs buffer locally. Size for 24-72 hours of retention.</li>
+                        <li><strong>Calculate your EPS:</strong> Firewall logs can be 1000+ EPS each. Windows DCs can be 500+ EPS. Add it up!</li>
+                        <li><strong>HA requires 2 VMs:</strong> For production, deploy 2 Broker VMs with load balancing</li>
+                        <li><strong>Network bandwidth:</strong> 10,000 EPS ≈ 10-20 Mbps to XSIAM cloud (compressed)</li>
+                    </ul>
                 </div>
 
-                <!-- ENTERPRISE DEPLOYMENT -->
-                <h2><i class="fas fa-building"></i> Enterprise Deployment Patterns</h2>
-
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-building"></i>
-                        <div class="enterprise-example-title">Pattern 1: Single Site Deployment</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> Single data center with firewalls, switches, and Linux servers. ~8,000 EPS total.
-                    </div>
+                <!-- Enterprise Scenario -->
+                <h2><i class="fas fa-building"></i> Enterprise Deployment Scenario</h2>
+                
+                <div class="architecture-box">
+                    <h4 style="color: #58a6ff; margin-top: 0;"><i class="fas fa-industry"></i> Scenario: Manufacturing Company - 3 Data Centers</h4>
+                    <p style="color: #8b949e;">15,000 employees | Primary DC + 2 regional DCs | OT/IT convergence</p>
                     
-                    <div class="flow-diagram" style="margin-top: 16px; background: #0d1117;">
-                        <div class="flow-row centered">
-                            <div class="flow-box"><div class="flow-box-title">PA-5260</div><div class="flow-box-subtitle">3,000 EPS</div></div>
-                            <div class="flow-box"><div class="flow-box-title">Cisco Nexus</div><div class="flow-box-subtitle">2,000 EPS</div></div>
-                            <div class="flow-box"><div class="flow-box-title">50 Linux VMs</div><div class="flow-box-subtitle">3,000 EPS</div></div>
-                        </div>
-                        <div class="flow-arrow down">↓</div>
-                        <div class="flow-row centered">
-                            <div class="flow-box success"><div class="flow-box-title">Broker VM</div><div class="flow-box-subtitle">8 vCPU, 16GB RAM</div></div>
-                        </div>
-                        <div class="flow-arrow down">↓</div>
-                        <div class="flow-row centered">
-                            <div class="flow-box primary"><div class="flow-box-title">XSIAM Cloud</div></div>
-                        </div>
-                    </div>
+<pre style="color: #8b949e; font-size: 0.8rem; margin-top: 16px;">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              PRIMARY DATA CENTER (US-East)                               │
+│                                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │  Broker VM Cluster (HA)                                                          │   │
+│  │  ┌─────────────────┐    ┌─────────────────┐                                     │   │
+│  │  │  Broker VM #1   │    │  Broker VM #2   │     Load Balanced                   │   │
+│  │  │  16 vCPU/64GB   │    │  16 vCPU/64GB   │     (F5 or HAProxy)                 │   │
+│  │  │  Active         │    │  Standby        │                                      │   │
+│  │  └────────┬────────┘    └────────┬────────┘                                     │   │
+│  └───────────┼──────────────────────┼──────────────────────────────────────────────┘   │
+│              │                      │                                                   │
+│  ┌───────────┼──────────────────────┼──────────────────────────────────────────────┐   │
+│  │  LOG SOURCES (25,000 EPS total)  │                                               │   │
+│  │                                  │                                               │   │
+│  │  • 4x Palo Alto NGFW (8,000 EPS) │  • 50x Windows Servers (5,000 EPS)           │   │
+│  │  • 2x Cisco ASA (2,000 EPS)      │  • Domain Controllers (3,000 EPS)            │   │
+│  │  • Core switches (2,000 EPS)     │  • F5 Load Balancers (1,000 EPS)             │   │
+│  │  • DNS servers (2,000 EPS)       │  • DHCP servers (500 EPS)                    │   │
+│  │  • OT/SCADA syslog (1,500 EPS)   │                                               │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────┐    ┌────────────────────────────────────┐
+│   REGIONAL DC #1 (US-West)         │    │   REGIONAL DC #2 (EU)              │
+│                                    │    │                                    │
+│   Broker VM (8 vCPU/32GB)          │    │   Broker VM (8 vCPU/32GB)          │
+│   ~8,000 EPS                       │    │   ~6,000 EPS                       │
+│                                    │    │                                    │
+│   • 2x Firewalls                   │    │   • 2x Firewalls                   │
+│   • 20x Windows servers            │    │   • 15x Windows servers            │
+│   • Network infrastructure         │    │   • Network infrastructure         │
+└────────────────────────────────────┘    └────────────────────────────────────┘
+                    │                                      │
+                    └──────────────────┬───────────────────┘
+                                       │
+                                       ▼
+                        ┌──────────────────────────────┐
+                        │        XSIAM CLOUD           │
+                        │   (All data normalized to    │
+                        │    XDM, correlated, stored)  │
+                        └──────────────────────────────┘
+</pre>
                 </div>
 
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-globe"></i>
-                        <div class="enterprise-example-title">Pattern 2: Multi-Site with HA</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> 3 global sites (US, EU, APAC). Each site needs local collection with HA.
-                    </div>
+                <!-- Configuration Examples -->
+                <h2><i class="fas fa-cog"></i> Configuration Examples</h2>
+                
+                <h3>Syslog Collection (Firewall Logs)</h3>
+                <div class="log-source-card">
+                    <h4 style="margin-top: 0;"><i class="fas fa-fire"></i> Palo Alto NGFW → Broker VM</h4>
+                    <p style="color: #8b949e;">Configure firewall to send syslog to Broker VM</p>
                     
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px; border: 1px solid #30363d;">
-                            <h4 style="color: #58a6ff; margin-top: 0; text-align: center;">US-East (Primary DC)</h4>
-                            <div style="text-align: center; margin: 12px 0;">
-                                <div style="display: inline-block; background: #1a4d2e; padding: 8px 16px; border-radius: 4px; margin: 4px;">
-                                    <span style="color: #3fb950; font-size: 0.85rem;">Broker VM 1</span>
-                                </div>
-                                <div style="display: inline-block; background: #1a4d2e; padding: 8px 16px; border-radius: 4px; margin: 4px;">
-                                    <span style="color: #3fb950; font-size: 0.85rem;">Broker VM 2</span>
-                                </div>
-                            </div>
-                            <p style="color: #8b949e; font-size: 0.8rem; text-align: center;">Load balanced pair<br>20,000 EPS total</p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px; border: 1px solid #30363d;">
-                            <h4 style="color: #d29922; margin-top: 0; text-align: center;">EU-West</h4>
-                            <div style="text-align: center; margin: 12px 0;">
-                                <div style="display: inline-block; background: #4d3a0d; padding: 8px 16px; border-radius: 4px; margin: 4px;">
-                                    <span style="color: #d29922; font-size: 0.85rem;">Broker VM 1</span>
-                                </div>
-                                <div style="display: inline-block; background: #4d3a0d; padding: 8px 16px; border-radius: 4px; margin: 4px;">
-                                    <span style="color: #d29922; font-size: 0.85rem;">Broker VM 2</span>
-                                </div>
-                            </div>
-                            <p style="color: #8b949e; font-size: 0.8rem; text-align: center;">Load balanced pair<br>12,000 EPS total</p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px; border: 1px solid #30363d;">
-                            <h4 style="color: #a371f7; margin-top: 0; text-align: center;">APAC</h4>
-                            <div style="text-align: center; margin: 12px 0;">
-                                <div style="display: inline-block; background: #3d2a5e; padding: 8px 16px; border-radius: 4px; margin: 4px;">
-                                    <span style="color: #a371f7; font-size: 0.85rem;">Broker VM</span>
-                                </div>
-                            </div>
-                            <p style="color: #8b949e; font-size: 0.8rem; text-align: center;">Single instance<br>5,000 EPS total</p>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 16px; padding: 12px; background: #161b22; border-radius: 8px;">
-                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
-                            <strong style="color: #3fb950;">HA Configuration:</strong> Configure network devices to send to both Broker VMs using round-robin or primary/backup. 
-                            If one Broker fails, traffic automatically routes to the remaining instance.
-                        </p>
-                    </div>
-                </div>
+                    <strong>On Palo Alto Firewall:</strong>
+                    <div class="config-block">
+<span style="color: #8b949e;"># Device → Server Profiles → Syslog</span>
+Name: XSIAM-Broker
+Server: 10.0.1.50  <span style="color: #8b949e;"># Broker VM IP</span>
+Transport: TCP
+Port: 514
+Format: BSD
+Facility: LOG_USER
 
-                <!-- CONFIGURATION STEPS -->
-                <h2><i class="fas fa-cogs"></i> Configuration Steps</h2>
-
-                <div class="pipeline">
-                    <div class="pipeline-stage" data-step="1">
-                        <div class="pipeline-stage-title">Deploy Broker VM</div>
-                        <div class="pipeline-stage-desc">Download and deploy the Broker VM OVA/VHD</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li>Download from XSIAM Settings → Configurations → Broker VM</li>
-                                <li>Deploy on VMware ESXi, Hyper-V, or KVM</li>
-                                <li>Configure network (static IP recommended)</li>
-                                <li>Ensure outbound HTTPS to XSIAM cloud</li>
-                            </ul>
-                        </div>
+<span style="color: #8b949e;"># Log Forwarding Profile</span>
+Traffic Logs: Forward to XSIAM-Broker
+Threat Logs: Forward to XSIAM-Broker
+URL Logs: Forward to XSIAM-Broker
                     </div>
                     
-                    <div class="pipeline-stage" data-step="2">
-                        <div class="pipeline-stage-title">Register with XSIAM</div>
-                        <div class="pipeline-stage-desc">Connect Broker VM to your XSIAM tenant</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li>Generate registration token in XSIAM</li>
-                                <li>SSH to Broker VM, run registration command</li>
-                                <li>Verify status shows "Connected" in XSIAM UI</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="3">
-                        <div class="pipeline-stage-title">Configure Collectors</div>
-                        <div class="pipeline-stage-desc">Set up data collection for each source type</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li>Enable Syslog collector, specify ports</li>
-                                <li>Add file collection paths if needed</li>
-                                <li>Configure vendor/product identification</li>
-                                <li>Test with sample logs</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="4">
-                        <div class="pipeline-stage-title">Point Data Sources</div>
-                        <div class="pipeline-stage-desc">Configure devices to send logs to Broker VM</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li>Firewall: Configure syslog server = Broker IP</li>
-                                <li>Switches: logging host [Broker IP]</li>
-                                <li>Linux: Update rsyslog.conf with Broker target</li>
-                                <li>Verify logs flowing in XSIAM</li>
-                            </ul>
-                        </div>
+                    <strong>On Broker VM (XSIAM Console):</strong>
+                    <div class="config-block">
+<span style="color: #8b949e;"># Settings → Data Sources → Add Syslog Source</span>
+Name: paloalto-firewall
+Protocol: TCP
+Port: 514
+Vendor: Palo Alto Networks
+Product: Firewall
+Parser: PAN-OS Traffic, Threat, URL
                     </div>
                 </div>
 
-                <!-- Interview Questions -->
+                <h3>Windows Event Collection</h3>
+                <div class="log-source-card" style="border-color: #3fb950;">
+                    <h4 style="margin-top: 0;"><i class="fab fa-windows"></i> Windows Server → Broker VM (WEF)</h4>
+                    <p style="color: #8b949e;">Collect Windows Security Events via Windows Event Forwarding</p>
+                    
+                    <strong>On Windows Server (Source):</strong>
+                    <div class="config-block">
+<span style="color: #8b949e;"># Enable WinRM</span>
+winrm quickconfig
+
+<span style="color: #8b949e;"># Add Broker VM to Event Log Readers group</span>
+net localgroup "Event Log Readers" DOMAIN\BrokerVM$ /add
+
+<span style="color: #8b949e;"># Configure subscription (on Broker VM)</span>
+wecutil cs subscription.xml
+                    </div>
+                    
+                    <strong>Recommended Events to Collect:</strong>
+                    <div class="config-block">
+<span style="color: #3fb950;">Security Events (Critical for SOC):</span>
+4624 - Successful logon
+4625 - Failed logon
+4648 - Explicit credential logon
+4672 - Special privileges assigned
+4688 - Process creation (enable command line logging!)
+4689 - Process termination
+4697 - Service installed
+4698 - Scheduled task created
+4720 - User account created
+4732 - Member added to security group
+4738 - User account changed
+
+<span style="color: #d29922;">PowerShell Events:</span>
+4103 - Module logging
+4104 - Script block logging (CRITICAL for threat hunting)
+                    </div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-bug"></i> Troubleshooting Common Issues</h2>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Symptom</th>
+                                <th>Likely Cause</th>
+                                <th>Resolution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>No data in XSIAM</strong></td>
+                                <td>Broker VM can't reach XSIAM cloud</td>
+                                <td>Check outbound HTTPS (443) to *.paloaltonetworks.com. Verify proxy settings if applicable.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Intermittent data gaps</strong></td>
+                                <td>Network instability or undersized VM</td>
+                                <td>Check Broker VM disk usage (buffering). Review network latency. Consider sizing up.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>High disk usage</strong></td>
+                                <td>Upload backlog (cloud connectivity issue)</td>
+                                <td>Verify cloud connectivity. Check for bandwidth throttling. Review EPS vs capacity.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Logs not parsing</strong></td>
+                                <td>Wrong parser selected or custom format</td>
+                                <td>Verify vendor/product in data source config. Check raw logs for format issues. May need custom parser.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Duplicate events</strong></td>
+                                <td>Source sending to multiple Broker VMs</td>
+                                <td>Use load balancer VIP for HA, not multiple IPs. Configure source to send to single destination.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Interview Q&A -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: When would you deploy a Broker VM vs using cloud API collectors?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is a Broker VM and when would you use it?</button>
                         <div class="qa-answer">
-                            <p><strong>Use Broker VM when:</strong></p>
+                            <p><strong>The Broker VM is XSIAM's on-premises log collector.</strong> It's a virtual appliance that receives logs from sources that can't send directly to the cloud.</p>
+                            <p><strong>When to use it:</strong></p>
                             <ul>
-                                <li>Data source can't reach internet (air-gapped, restricted)</li>
-                                <li>Source only supports syslog output</li>
-                                <li>Need to collect from local file logs</li>
-                                <li>Regulatory requirement to keep data on-prem before cloud</li>
+                                <li><strong>Syslog sources:</strong> Firewalls, routers, switches - most network devices only support syslog</li>
+                                <li><strong>Windows Event Collection:</strong> Domain controllers, servers without XDR agents</li>
+                                <li><strong>Regulated environments:</strong> When data must traverse internal network first</li>
+                                <li><strong>Legacy apps:</strong> Applications that write to files or local syslog</li>
                             </ul>
-                            <p><strong>Use Cloud API when:</strong></p>
+                            <p><strong>When NOT to use it:</strong></p>
                             <ul>
-                                <li>SaaS application with API access (O365, AWS)</li>
-                                <li>Want to minimize on-prem infrastructure</li>
-                                <li>XSIAM has native connector for the source</li>
+                                <li>Cloud sources (AWS, Azure) - use Cloud Collectors instead</li>
+                                <li>Endpoints - use Cortex XDR agent instead</li>
+                                <li>SaaS apps (Okta, M365) - use API-based collectors</li>
                             </ul>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: What happens if the Broker VM loses connectivity to XSIAM cloud?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you size a Broker VM for 20,000 EPS?</button>
                         <div class="qa-answer">
+                            <p><strong>For 20,000 EPS, I'd recommend:</strong></p>
                             <ul>
-                                <li><strong>Buffering:</strong> Logs queue to local disk</li>
-                                <li><strong>No data loss:</strong> As long as disk has space</li>
-                                <li><strong>Auto-recovery:</strong> Forwards queued data when connection restores</li>
-                                <li><strong>Monitoring:</strong> XSIAM shows Broker status as disconnected</li>
-                                <li><strong>Best practice:</strong> Size disk for 24-48 hours of buffer</li>
+                                <li><strong>vCPU:</strong> 16 cores (parsing is CPU-intensive)</li>
+                                <li><strong>RAM:</strong> 64 GB</li>
+                                <li><strong>Disk:</strong> 2 TB SSD (for buffering during outages)</li>
                             </ul>
+                            <p><strong>Additional considerations:</strong></p>
+                            <ul>
+                                <li><strong>High Availability:</strong> Deploy 2 Broker VMs behind a load balancer</li>
+                                <li><strong>Disk sizing:</strong> Calculate for 24-72 hours of buffer. At 20K EPS with avg 500 bytes/event = ~35 GB/hour</li>
+                                <li><strong>Network:</strong> Ensure dedicated NIC for log ingestion, separate from management</li>
+                                <li><strong>Location:</strong> Place in DMZ or close to log sources to minimize latency</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you troubleshoot a Broker VM that shows high disk usage?</button>
+                        <div class="qa-answer">
+                            <p><strong>High disk usage indicates an upload backlog. Systematic troubleshooting:</strong></p>
+                            <ol>
+                                <li><strong>Check cloud connectivity:</strong>
+                                    <ul>
+                                        <li>Can Broker VM reach XSIAM? Test HTTPS to *.paloaltonetworks.com</li>
+                                        <li>Check for proxy issues, firewall blocks, certificate problems</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Check EPS vs capacity:</strong>
+                                    <ul>
+                                        <li>Is incoming EPS exceeding Broker VM capacity?</li>
+                                        <li>Run diagnostics to see current EPS rate</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Check for stuck processes:</strong>
+                                    <ul>
+                                        <li>Review Broker VM logs for errors</li>
+                                        <li>Restart collection services if needed</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Check bandwidth:</strong>
+                                    <ul>
+                                        <li>Is upload bandwidth being throttled?</li>
+                                        <li>20K EPS needs ~20 Mbps sustained upload</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            <p><strong>Temporary mitigation:</strong> If disk fills up, oldest buffered logs may be dropped. Prioritize restoring cloud connectivity.</p>
                         </div>
                     </div>
                 </div>
 
             </main>
             <footer class="main-footer">
-                <div class="footer-content"><p>Nik's SIEM Compendium</p></div>
+                <div class="footer-content">
+                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
+                </div>
             </footer>
         </div>
     </div>
-    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

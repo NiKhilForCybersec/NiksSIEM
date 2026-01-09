@@ -3,50 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recon & Attack Surface Management | XSIAM | Nik's SIEM</title>
+    <title>Attack Surface Management (ASM) with Xpanse | XSIAM | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
-        .risk-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .risk-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
         .risk-critical { background: #dc2626; color: white; }
         .risk-high { background: #ea580c; color: white; }
         .risk-medium { background: #ca8a04; color: black; }
         .risk-low { background: #16a34a; color: white; }
-        .asset-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin: 0.75rem 0; }
-        .asset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .asset-type { font-size: 0.8rem; color: var(--text-secondary); }
-        .asset-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; font-size: 0.85rem; }
-        .asset-detail-label { color: var(--text-muted); font-size: 0.75rem; }
-        .flow-diagram { display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 1rem; padding: 2rem; background: var(--card-bg); border-radius: var(--radius-md); margin: 1.5rem 0; }
-        .flow-step { text-align: center; flex: 1; min-width: 120px; }
-        .flow-icon { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.5rem; color: white; }
-        .flow-arrow { color: var(--text-muted); font-size: 1.5rem; }
-        .capability-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-        .capability-item { background: var(--card-bg); border-left: 3px solid var(--accent-primary); padding: 1rem 1.25rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+        .asset-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .asset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .discovery-timeline { position: relative; padding-left: 30px; }
+        .discovery-timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #30363d; }
+        .timeline-item { position: relative; margin-bottom: 24px; }
+        .timeline-item::before { content: ''; position: absolute; left: -24px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #58a6ff; border: 2px solid #0d1117; }
+        .decision-tree { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .decision-node { background: #161b22; border: 2px solid #58a6ff; border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center; }
+        .decision-node.question { border-color: #d29922; }
+        .decision-node.action { border-color: #3fb950; background: #1a4d2e; }
+        .decision-node.warning { border-color: #f85149; background: #4d1a1a; }
+        .attack-surface-visual { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+        .surface-category { background: #161b22; border-radius: 8px; padding: 16px; text-align: center; border-top: 3px solid #58a6ff; }
+        .enterprise-scenario { background: linear-gradient(135deg, #1a1f35 0%, #0d1117 100%); border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .finding-card { background: #21262d; border-radius: 8px; padding: 16px; margin: 12px 0; border-left: 4px solid #f85149; }
+        .remediation-step { background: #161b22; border-radius: 6px; padding: 12px 16px; margin: 8px 0; display: flex; align-items: center; gap: 12px; }
+        .step-number { background: #58a6ff; color: #0d1117; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
                     <div class="brand-text">
                         <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                        <span class="brand-subtitle">Security Operations</span>
                     </div>
                 </a>
             </div>
-            <div class="platform-selector">
-                <div class="platform-tabs">
-                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
-                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
-                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
-                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
-                </div>
-            </div>
-<nav class="sidebar-nav">
+            <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">XSIAM Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
@@ -54,430 +51,566 @@
                     <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> vs Competitors</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Data Collection</div>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
-                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM</a>
-                    <a href="agents.html" class="nav-link"><i class="fas fa-desktop"></i> Cortex Agents</a>
-                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">XQL Query Language</div>
-                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
-                </div>
-                <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
                     <a href="correlation-rules.html" class="nav-link"><i class="fas fa-bell"></i> Correlation Rules</a>
                     <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
-                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
-                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                    <a href="recon-asm.html" class="nav-link active"><i class="fas fa-globe"></i> Attack Surface Mgmt</a>
                 </div>
             </nav>
         </aside>
-        <!-- Main Content -->
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">XSIAM</a>
-                    <span class="separator">/</span>
-                    <span class="current">Recon & ASM</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Attack Surface Management</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-globe"></i> Recon & Attack Surface Management</h1>
-                <p class="lead">Cortex Xpanse integration provides continuous discovery and monitoring of your internet-facing assets, identifying risks before attackers do. ASM is the proactive arm of XSIAM security.</p>
-                <div class="concept-box">
-                    <h3><i class="fas fa-lightbulb"></i> What is Attack Surface Management?</h3>
-                    <p><strong>Attack Surface Management (ASM)</strong> is the continuous process of discovering, classifying, and monitoring all external-facing assets that could be exploited by attackers. In XSIAM, this capability comes from <strong>Cortex Xpanse</strong> integration.</p>
-                    <div class="memory-trick">
-                        <h4><i class="fas fa-brain"></i> Memory Trick: "ASM = Always Scanning Myself"</h4>
-                        <p>Think of ASM as constantly looking at your organization from an attacker's perspective - always scanning what's exposed to the internet.</p>
+                <h1><i class="fas fa-globe"></i> Attack Surface Management (ASM) with Cortex Xpanse</h1>
+                <p class="lead">Cortex Xpanse provides continuous discovery and monitoring of your internet-facing assets, finding exposures before attackers do. This guide covers ASM concepts, Xpanse capabilities, enterprise deployment, and integration with XSIAM for automated remediation.</p>
+
+                <!-- What is ASM -->
+                <h2><i class="fas fa-question-circle"></i> What is Attack Surface Management?</h2>
+                
+                <div class="info-box" style="border-color: #d29922;">
+                    <h4><i class="fas fa-exclamation-triangle"></i> The Problem ASM Solves</h4>
+                    <p><strong>You can't protect what you don't know exists.</strong></p>
+                    <p>Most organizations have significant blind spots in their external attack surface:</p>
+                    <ul>
+                        <li>Shadow IT: Cloud resources spun up outside IT/Security knowledge</li>
+                        <li>Forgotten assets: Test servers, old projects, deprecated services</li>
+                        <li>M&A blind spots: Inherited infrastructure from acquisitions</li>
+                        <li>Third-party exposure: Vendor systems with your data</li>
+                        <li>Certificate sprawl: Unknown or expiring SSL certificates</li>
+                    </ul>
+                    <p style="color: #d29922;"><strong>Attackers use the same reconnaissance techniques.</strong> ASM lets you find these exposures first.</p>
+                </div>
+
+                <div class="info-box" style="border-color: #3fb950;">
+                    <h4><i class="fas fa-shield-alt"></i> ASM Definition</h4>
+                    <p><strong>Attack Surface Management (ASM)</strong> is the continuous process of:</p>
+                    <ol>
+                        <li><strong>Discovery:</strong> Finding all internet-facing assets attributable to your organization</li>
+                        <li><strong>Classification:</strong> Categorizing assets by type, ownership, and business criticality</li>
+                        <li><strong>Risk Assessment:</strong> Evaluating exposure level and potential impact</li>
+                        <li><strong>Monitoring:</strong> Detecting changes, new exposures, and emerging risks</li>
+                        <li><strong>Remediation:</strong> Taking action to reduce risk (ideally automated)</li>
+                    </ol>
+                </div>
+
+                <!-- What Xpanse Discovers -->
+                <h2><i class="fas fa-search"></i> What Does Xpanse Discover?</h2>
+                
+                <div class="attack-surface-visual">
+                    <div class="surface-category" style="border-color: #58a6ff;">
+                        <i class="fas fa-server" style="font-size: 2rem; color: #58a6ff;"></i>
+                        <h4>Infrastructure</h4>
+                        <ul style="text-align: left; color: #8b949e; font-size: 0.85rem;">
+                            <li>Public IP addresses</li>
+                            <li>Exposed services/ports</li>
+                            <li>Load balancers</li>
+                            <li>VPN gateways</li>
+                            <li>Remote access</li>
+                        </ul>
+                    </div>
+                    <div class="surface-category" style="border-color: #3fb950;">
+                        <i class="fas fa-globe" style="font-size: 2rem; color: #3fb950;"></i>
+                        <h4>Web Properties</h4>
+                        <ul style="text-align: left; color: #8b949e; font-size: 0.85rem;">
+                            <li>Domains/subdomains</li>
+                            <li>Web applications</li>
+                            <li>APIs (REST, GraphQL)</li>
+                            <li>Marketing sites</li>
+                            <li>Developer portals</li>
+                        </ul>
+                    </div>
+                    <div class="surface-category" style="border-color: #d29922;">
+                        <i class="fas fa-cloud" style="font-size: 2rem; color: #d29922;"></i>
+                        <h4>Cloud Resources</h4>
+                        <ul style="text-align: left; color: #8b949e; font-size: 0.85rem;">
+                            <li>AWS/Azure/GCP assets</li>
+                            <li>S3 buckets</li>
+                            <li>Cloud databases</li>
+                            <li>Container registries</li>
+                            <li>Kubernetes clusters</li>
+                        </ul>
+                    </div>
+                    <div class="surface-category" style="border-color: #f85149;">
+                        <i class="fas fa-certificate" style="font-size: 2rem; color: #f85149;"></i>
+                        <h4>Certificates</h4>
+                        <ul style="text-align: left; color: #8b949e; font-size: 0.85rem;">
+                            <li>SSL/TLS certificates</li>
+                            <li>Expiring certs</li>
+                            <li>Weak cipher suites</li>
+                            <li>Certificate chains</li>
+                            <li>Wildcard certs</li>
+                        </ul>
                     </div>
                 </div>
-                <!-- ASM Workflow -->
-                <h2><i class="fas fa-arrows-spin"></i> ASM Workflow</h2>
+
+                <!-- How Xpanse Works -->
+                <h2><i class="fas fa-cogs"></i> How Xpanse Works - Technical Deep Dive</h2>
+                
                 <div class="flow-diagram">
-                    <div class="flow-step">
-                        <div class="flow-icon"><i class="fas fa-search"></i></div>
-                        <strong>Discover</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Find all assets</p>
-                    </div>
-                    <div class="flow-arrow">→</div>
-                    <div class="flow-step">
-                        <div class="flow-icon"><i class="fas fa-tags"></i></div>
-                        <strong>Classify</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Identify ownership</p>
-                    </div>
-                    <div class="flow-arrow">→</div>
-                    <div class="flow-step">
-                        <div class="flow-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                        <strong>Assess</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Evaluate risk</p>
-                    </div>
-                    <div class="flow-arrow">→</div>
-                    <div class="flow-step">
-                        <div class="flow-icon"><i class="fas fa-bell"></i></div>
-                        <strong>Alert</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Notify teams</p>
-                    </div>
-                    <div class="flow-arrow">→</div>
-                    <div class="flow-step">
-                        <div class="flow-icon"><i class="fas fa-wrench"></i></div>
-                        <strong>Remediate</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Fix issues</p>
+                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Xpanse Discovery Engine</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.8; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              XPANSE DISCOVERY PROCESS                                    │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  1. SEED DATA   │────►│  2. INTERNET    │────►│  3. ATTRIBUTION │────►│  4. RISK        │
+│                 │     │     SCANNING    │     │                 │     │     SCORING     │
+├─────────────────┤     ├─────────────────┤     ├─────────────────┤     ├─────────────────┤
+│ You provide:    │     │ Xpanse scans:   │     │ Correlates:     │     │ Evaluates:      │
+│ • Domain names  │     │ • Full IPv4     │     │ • WHOIS data    │     │ • CVE exposure  │
+│ • IP ranges     │     │ • All ports     │     │ • DNS records   │     │ • Misconfig     │
+│ • Company names │     │ • SSL certs     │     │ • SSL certs     │     │ • Data exposure │
+│ • Brand names   │     │ • Banners       │     │ • IP ownership  │     │ • Access risk   │
+│ • ASN numbers   │     │ • Headers       │     │ • Historical    │     │ • Compliance    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                                                │
+                                                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              XPANSE ASSET INVENTORY                                      │
+│                                                                                          │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐        │
+│  │ Web Apps: 847  │  │ APIs: 156      │  │ Cloud: 234     │  │ Certs: 1,203   │        │
+│  │ ▲ 12 new       │  │ ▲ 3 new        │  │ ▲ 8 new        │  │ ⚠ 47 expiring  │        │
+│  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘        │
+│                                                                                          │
+│  Risk Distribution: ■■■■ Critical: 23  ■■■■■■■ High: 67  ■■■■■■■■■ Medium: 145         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              XSIAM INTEGRATION                                           │
+│                                                                                          │
+│  Xpanse Finding ──► XSIAM Alert ──► XSOAR Playbook ──► Auto-Remediation                │
+│                                                                                          │
+│  Example: Exposed RDP ──► Critical Alert ──► Block Port Playbook ──► Firewall Rule     │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-database"></i> Data Sources Xpanse Uses for Attribution</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 12px;">
+                        <div>
+                            <strong style="color: #58a6ff;">DNS & Domain Data</strong>
+                            <ul style="color: #8b949e; font-size: 0.85rem;">
+                                <li>WHOIS registrations</li>
+                                <li>DNS zone files</li>
+                                <li>Subdomain enumeration</li>
+                                <li>DNS history</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong style="color: #3fb950;">Certificate Intelligence</strong>
+                            <ul style="color: #8b949e; font-size: 0.85rem;">
+                                <li>CT (Certificate Transparency) logs</li>
+                                <li>SSL certificate details</li>
+                                <li>Certificate chains</li>
+                                <li>SAN entries</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong style="color: #d29922;">Network Data</strong>
+                            <ul style="color: #8b949e; font-size: 0.85rem;">
+                                <li>BGP routing tables</li>
+                                <li>ASN ownership</li>
+                                <li>IP geolocation</li>
+                                <li>Historical IP data</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <!-- Asset Discovery -->
-                <h2><i class="fas fa-search"></i> Asset Discovery</h2>
-                <p>Cortex Xpanse continuously scans the internet to discover assets belonging to your organization using multiple techniques:</p>
-                <div class="capability-grid">
-                    <div class="capability-item">
-                        <h4><i class="fas fa-network-wired"></i> IP Range Scanning</h4>
-                        <p>Scans all IPs in your registered ranges and associated ASNs</p>
-                    </div>
-                    <div class="capability-item">
-                        <h4><i class="fas fa-certificate"></i> Certificate Analysis</h4>
-                        <p>Finds assets through SSL/TLS certificate organization fields</p>
-                    </div>
-                    <div class="capability-item">
-                        <h4><i class="fas fa-globe"></i> DNS Enumeration</h4>
-                        <p>Discovers subdomains and DNS records for your domains</p>
-                    </div>
-                    <div class="capability-item">
-                        <h4><i class="fas fa-cloud"></i> Cloud Provider APIs</h4>
-                        <p>Integrates with AWS, Azure, GCP for cloud asset discovery</p>
-                    </div>
-                    <div class="capability-item">
-                        <h4><i class="fas fa-link"></i> Linked Asset Analysis</h4>
-                        <p>Traces connections between known and unknown assets</p>
-                    </div>
-                    <div class="capability-item">
-                        <h4><i class="fas fa-history"></i> Historical Data</h4>
-                        <p>Uses historical internet data to find forgotten assets</p>
-                    </div>
-                </div>
-                <!-- Asset Types -->
-                <h2><i class="fas fa-layer-group"></i> Discovered Asset Types</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asset Type</th>
-                                <th>Examples</th>
-                                <th>Common Risks</th>
-                                <th>Discovery Method</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Web Services</strong></td>
-                                <td>Websites, APIs, Admin panels</td>
-                                <td>Exposed admin pages, outdated frameworks</td>
-                                <td>Port scan + fingerprinting</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Remote Access</strong></td>
-                                <td>RDP, SSH, VPN gateways</td>
-                                <td>Brute force targets, unpatched services</td>
-                                <td>Port scan (22, 3389, 443)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Email Services</strong></td>
-                                <td>SMTP, Exchange, mail gateways</td>
-                                <td>Missing DMARC, open relays</td>
-                                <td>MX record + port scan</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Cloud Assets</strong></td>
-                                <td>S3 buckets, Azure Blobs, VMs</td>
-                                <td>Misconfigured permissions, exposed data</td>
-                                <td>Cloud API + certificate analysis</td>
-                            </tr>
-                            <tr>
-                                <td><strong>IoT/OT Devices</strong></td>
-                                <td>Cameras, building systems, SCADA</td>
-                                <td>Default credentials, unpatched firmware</td>
-                                <td>Banner grabbing, fingerprinting</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Development</strong></td>
-                                <td>Git repos, staging servers, CI/CD</td>
-                                <td>Exposed credentials, test data leaks</td>
-                                <td>Subdomain enum, certificate scan</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Risk Scoring -->
-                <h2><i class="fas fa-tachometer-alt"></i> Risk Scoring</h2>
-                <p>Xpanse assigns risk scores based on multiple factors:</p>
-                <div class="card-grid">
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="risk-badge risk-critical">CRITICAL</span> Score 9-10</h3>
-                        <p>Actively exploited vulnerabilities, exposed databases, default credentials on critical systems.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Exposed RDP with no MFA</li>
-                            <li>Unpatched Log4j instances</li>
-                            <li>Open MongoDB without auth</li>
-                            <li>Exposed cloud storage with PII</li>
-                        </ul>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="risk-badge risk-high">HIGH</span> Score 7-8</h3>
-                        <p>Known CVEs, misconfigured services, sensitive services exposed to internet.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Outdated Apache/Nginx versions</li>
-                            <li>SSH with password auth enabled</li>
-                            <li>Admin panels without 2FA</li>
-                            <li>Development servers in prod</li>
-                        </ul>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="risk-badge risk-medium">MEDIUM</span> Score 4-6</h3>
-                        <p>Security misconfigurations, missing hardening, non-critical exposures.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Missing security headers</li>
-                            <li>Weak TLS configurations</li>
-                            <li>Directory listing enabled</li>
-                            <li>Verbose error messages</li>
-                        </ul>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="risk-badge risk-low">LOW</span> Score 1-3</h3>
-                        <p>Informational findings, best practice recommendations.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Missing HSTS header</li>
-                            <li>Cookie without Secure flag</li>
-                            <li>Old but patched software</li>
-                            <li>Non-critical info disclosure</li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Sample Assets -->
-                <h2><i class="fas fa-server"></i> Sample Asset View</h2>
-                <div class="asset-card">
-                    <div class="asset-header">
-                        <div>
-                            <strong>vpn.acmecorp.com</strong>
-                            <span class="asset-type">• Remote Access Gateway</span>
-                        </div>
-                        <span class="risk-badge risk-high">HIGH RISK</span>
-                    </div>
-                    <div class="asset-details">
-                        <div>
-                            <div class="asset-detail-label">IP Address</div>
-                            <div>203.0.113.50</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Port</div>
-                            <div>443/tcp</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Service</div>
-                            <div>Cisco AnyConnect</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Version</div>
-                            <div>4.9.0 (outdated)</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Certificate</div>
-                            <div>Valid until 2025-06-15</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Last Seen</div>
-                            <div>2 hours ago</div>
-                        </div>
-                    </div>
-                    <div class="warning-box" style="margin-top: 1rem; margin-bottom: 0;">
-                        <strong>⚠️ Issues Detected:</strong> CVE-2023-20095 (Remote Code Execution), Weak TLS cipher suites enabled
-                    </div>
-                </div>
-                <div class="asset-card">
-                    <div class="asset-header">
-                        <div>
-                            <strong>dev-api.acmecorp.com</strong>
-                            <span class="asset-type">• Development API</span>
-                        </div>
+
+                <!-- Common Findings -->
+                <h2><i class="fas fa-exclamation-triangle"></i> Common Xpanse Findings (With Real Examples)</h2>
+                
+                <div class="finding-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: #f85149;"><i class="fas fa-desktop"></i> Exposed RDP (Port 3389)</h4>
                         <span class="risk-badge risk-critical">CRITICAL</span>
                     </div>
-                    <div class="asset-details">
-                        <div>
-                            <div class="asset-detail-label">IP Address</div>
-                            <div>203.0.113.122</div>
+                    <p style="color: #8b949e; margin-bottom: 12px;"><strong>What Xpanse found:</strong> Windows server with RDP directly exposed to internet, no VPN required</p>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                        <span style="color: #8b949e;">Asset:</span> <span style="color: #f0f6fc;">203.0.113.47:3389</span><br>
+                        <span style="color: #8b949e;">Hostname:</span> <span style="color: #f0f6fc;">dev-server-01.corp.example.com</span><br>
+                        <span style="color: #8b949e;">Banner:</span> <span style="color: #f0f6fc;">Windows Server 2019, RDP enabled</span><br>
+                        <span style="color: #8b949e;">Owner:</span> <span style="color: #f0f6fc;">IT Development Team (attributed via DNS)</span>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong style="color: #d29922;">Why it's critical:</strong>
+                        <span style="color: #8b949e;">RDP is #1 target for ransomware groups. Brute force attacks, credential stuffing, and BlueKeep-style exploits.</span>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong style="color: #3fb950;">Remediation:</strong>
+                        <div class="remediation-step">
+                            <div class="step-number">1</div>
+                            <span style="color: #8b949e;">Block port 3389 at perimeter firewall immediately</span>
                         </div>
-                        <div>
-                            <div class="asset-detail-label">Port</div>
-                            <div>8080/tcp</div>
+                        <div class="remediation-step">
+                            <div class="step-number">2</div>
+                            <span style="color: #8b949e;">Implement VPN or jump host for remote access</span>
                         </div>
-                        <div>
-                            <div class="asset-detail-label">Service</div>
-                            <div>Node.js Express</div>
+                        <div class="remediation-step">
+                            <div class="step-number">3</div>
+                            <span style="color: #8b949e;">Enable Network Level Authentication (NLA)</span>
                         </div>
-                        <div>
-                            <div class="asset-detail-label">Environment</div>
-                            <div>Development</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">Auth</div>
-                            <div>None detected</div>
-                        </div>
-                        <div>
-                            <div class="asset-detail-label">First Seen</div>
-                            <div>3 days ago</div>
+                        <div class="remediation-step">
+                            <div class="step-number">4</div>
+                            <span style="color: #8b949e;">Review for signs of compromise during exposure window</span>
                         </div>
                     </div>
-                    <div class="error-box" style="margin-top: 1rem; margin-bottom: 0;">
-                        <strong>🚨 Critical Issues:</strong> No authentication, Debug mode enabled, Database credentials in response headers, Test data contains PII
+                </div>
+
+                <div class="finding-card" style="border-color: #ea580c;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: #ea580c;"><i class="fas fa-database"></i> Exposed MongoDB (No Authentication)</h4>
+                        <span class="risk-badge risk-high">HIGH</span>
+                    </div>
+                    <p style="color: #8b949e; margin-bottom: 12px;"><strong>What Xpanse found:</strong> MongoDB instance accepting connections without authentication</p>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                        <span style="color: #8b949e;">Asset:</span> <span style="color: #f0f6fc;">198.51.100.22:27017</span><br>
+                        <span style="color: #8b949e;">Service:</span> <span style="color: #f0f6fc;">MongoDB 4.2.8</span><br>
+                        <span style="color: #8b949e;">Databases:</span> <span style="color: #f0f6fc;">customer_data, analytics, logs (visible without auth)</span><br>
+                        <span style="color: #8b949e;">Cloud:</span> <span style="color: #f0f6fc;">AWS us-east-1 (attributed via IP range)</span>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong style="color: #d29922;">Business Impact:</strong>
+                        <span style="color: #8b949e;">Customer PII exposure, potential GDPR violation, data theft, ransomware (MEOWdb attacks)</span>
                     </div>
                 </div>
-                <!-- XQL Queries for ASM -->
-                <h2><i class="fas fa-terminal"></i> XQL Queries for ASM Data</h2>
-                <h3>Query Critical Risk Assets</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
+
+                <div class="finding-card" style="border-color: #ca8a04;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: #ca8a04;"><i class="fas fa-certificate"></i> Expiring SSL Certificate (7 days)</h4>
+                        <span class="risk-badge risk-medium">MEDIUM</span>
                     </div>
-                    <pre>dataset = xpanse_assets
-| filter risk_score >= 9
-| fields asset_name, asset_type, ip_address, risk_score, issues, last_seen
-| sort desc risk_score
-| limit 100</pre>
-                </div>
-                <h3>Find Newly Discovered Assets (Last 24 Hours)</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
+                    <p style="color: #8b949e; margin-bottom: 12px;"><strong>What Xpanse found:</strong> Customer-facing payment portal with certificate expiring soon</p>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                        <span style="color: #8b949e;">Domain:</span> <span style="color: #f0f6fc;">payments.example.com</span><br>
+                        <span style="color: #8b949e;">Issuer:</span> <span style="color: #f0f6fc;">DigiCert SHA2 Extended Validation</span><br>
+                        <span style="color: #8b949e;">Expiry:</span> <span style="color: #f85149;">2024-02-15 (7 days remaining)</span><br>
+                        <span style="color: #8b949e;">Impact:</span> <span style="color: #f0f6fc;">Customer payment failures, trust warnings</span>
                     </div>
-                    <pre>dataset = xpanse_assets
-| filter first_seen >= timestamp_sub(current_time(), "24h")
-| fields asset_name, asset_type, ip_address, first_seen, risk_score
-| sort desc first_seen</pre>
                 </div>
-                <h3>Assets with Known CVEs</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
+
+                <div class="finding-card" style="border-color: #58a6ff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: #58a6ff;"><i class="fas fa-cloud"></i> Shadow Cloud Resource Discovered</h4>
+                        <span class="risk-badge risk-high">HIGH</span>
                     </div>
-                    <pre>dataset = xpanse_assets
-| filter cve_ids != null
-| arrayexpand cve_ids
-| join type = left (
-    dataset = threat_intel_cve
-    | fields cve_id, cvss_score, exploit_available
-) as cve_data on cve_ids = cve_data.cve_id
-| filter cve_data.exploit_available = true
-| fields asset_name, ip_address, cve_ids, cve_data.cvss_score
-| sort desc cve_data.cvss_score</pre>
-                </div>
-                <h3>Shadow IT Detection (Unmanaged Assets)</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
+                    <p style="color: #8b949e; margin-bottom: 12px;"><strong>What Xpanse found:</strong> Unknown AWS account with public S3 bucket containing company data</p>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                        <span style="color: #8b949e;">S3 Bucket:</span> <span style="color: #f0f6fc;">example-corp-marketing-assets</span><br>
+                        <span style="color: #8b949e;">Region:</span> <span style="color: #f0f6fc;">us-west-2</span><br>
+                        <span style="color: #8b949e;">Access:</span> <span style="color: #f85149;">Public read enabled</span><br>
+                        <span style="color: #8b949e;">Contents:</span> <span style="color: #f0f6fc;">Customer lists, internal presentations, financial reports</span><br>
+                        <span style="color: #8b949e;">Attribution:</span> <span style="color: #f0f6fc;">Files reference "Example Corp", employee names in metadata</span>
                     </div>
-                    <pre>dataset = xpanse_assets
-| filter managed_status = "unmanaged" or managed_status = "unknown"
-| filter risk_score >= 5
-| fields asset_name, ip_address, asset_type, discovery_method, business_unit
-| sort desc risk_score</pre>
+                    <div style="margin-top: 12px;">
+                        <strong style="color: #d29922;">How this happens:</strong>
+                        <span style="color: #8b949e;">Marketing team created AWS account with corporate credit card, uploaded assets for external agency, forgot to secure it.</span>
+                    </div>
                 </div>
-                <!-- ASM Alerts -->
-                <h2><i class="fas fa-bell"></i> ASM Alert Types</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Alert Type</th>
-                                <th>Description</th>
-                                <th>Severity</th>
-                                <th>Response SLA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>New Critical Asset</strong></td>
-                                <td>High-risk asset discovered for the first time</td>
-                                <td><span class="risk-badge risk-critical">Critical</span></td>
-                                <td>4 hours</td>
-                            </tr>
-                            <tr>
-                                <td><strong>CVE Detected</strong></td>
-                                <td>Known vulnerability found on internet-facing asset</td>
-                                <td><span class="risk-badge risk-high">High</span></td>
-                                <td>24 hours</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Expired Certificate</strong></td>
-                                <td>SSL/TLS certificate has expired or expiring soon</td>
-                                <td><span class="risk-badge risk-medium">Medium</span></td>
-                                <td>48 hours</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Configuration Drift</strong></td>
-                                <td>Asset configuration changed unexpectedly</td>
-                                <td><span class="risk-badge risk-medium">Medium</span></td>
-                                <td>24 hours</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Shadow IT</strong></td>
-                                <td>Unmanaged asset discovered</td>
-                                <td><span class="risk-badge risk-high">High</span></td>
-                                <td>24 hours</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Misconfig Detected</strong></td>
-                                <td>Security misconfiguration on exposed service</td>
-                                <td><span class="risk-badge risk-medium">Medium</span></td>
-                                <td>48 hours</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <!-- Decision Tree: Responding to Findings -->
+                <h2><i class="fas fa-code-branch"></i> Decision Tree: Responding to ASM Findings</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>New critical/high finding discovered</strong>
+                        <div style="color: #8b949e; font-size: 0.85rem;">Start here when Xpanse alerts</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div style="text-align: center; color: #8b949e;">↓ Immediate risk? (RDP, DB, etc.)</div>
+                            <div class="decision-node action">
+                                <strong style="color: #3fb950;">Yes → Emergency Response</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem; text-align: left; margin-top: 8px;">
+                                    1. Block at firewall NOW<br>
+                                    2. Identify asset owner<br>
+                                    3. Check for compromise indicators<br>
+                                    4. Implement proper access control<br>
+                                    5. Document and review
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="text-align: center; color: #8b949e;">↓ Not immediately exploitable?</div>
+                            <div class="decision-node" style="border-color: #d29922;">
+                                <strong style="color: #d29922;">No → Standard Response</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem; text-align: left; margin-top: 8px;">
+                                    1. Create ticket for asset owner<br>
+                                    2. Set SLA based on risk level<br>
+                                    3. Track remediation progress<br>
+                                    4. Verify fix and close
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; color: #8b949e; margin: 16px 0;">↓</div>
+                    <div class="decision-node question">
+                        <strong>Is asset known or shadow IT?</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div style="text-align: center; color: #8b949e;">↓ Known asset</div>
+                            <div class="decision-node">
+                                <strong>Route to existing owner</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Use CMDB to find owner, create incident</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="text-align: center; color: #8b949e;">↓ Shadow IT / Unknown</div>
+                            <div class="decision-node warning">
+                                <strong style="color: #f85149;">Shadow IT Protocol</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem; text-align: left; margin-top: 8px;">
+                                    1. Use attribution data to find likely owner<br>
+                                    2. Escalate to department leadership<br>
+                                    3. Add to asset inventory<br>
+                                    4. Review for policy violations<br>
+                                    5. Consider blocking until claimed
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <!-- Remediation Workflows -->
-                <h2><i class="fas fa-wrench"></i> Remediation Workflows</h2>
-                <div class="tip-box">
-                    <strong>XSOAR Integration:</strong> ASM alerts can automatically trigger XSOAR playbooks for remediation. Common automations include creating Jira tickets, notifying asset owners via Slack, and initiating vulnerability scans.
+
+                <!-- Enterprise Scenario -->
+                <h2><i class="fas fa-building"></i> Enterprise ASM Implementation</h2>
+                
+                <div class="enterprise-scenario">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #58a6ff, #3fb950); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-university" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.1rem; font-weight: 600;">Case Study: Global Retail Company</div>
+                            <div style="font-size: 0.8rem; color: #8b949e;">5,000 stores | 200,000 employees | 50 countries</div>
+                        </div>
+                    </div>
+
+                    <h4 style="color: #d29922;">Initial Discovery Results (Week 1)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0;">
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #58a6ff;">12,847</div>
+                            <div style="font-size: 0.8rem; color: #8b949e;">Total Assets</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #f85149;">847</div>
+                            <div style="font-size: 0.8rem; color: #8b949e;">Unknown to IT</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #ea580c;">156</div>
+                            <div style="font-size: 0.8rem; color: #8b949e;">Critical Findings</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #d29922;">23</div>
+                            <div style="font-size: 0.8rem; color: #8b949e;">Shadow Cloud Accounts</div>
+                        </div>
+                    </div>
+
+                    <h4 style="color: #f85149;">Critical Findings Breakdown</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>47 exposed RDP endpoints</strong> - Store back-office servers with direct internet access</li>
+                        <li><strong>23 POS systems</strong> - Point-of-sale management interfaces publicly accessible</li>
+                        <li><strong>18 databases</strong> - MongoDB, MySQL, PostgreSQL with weak/no auth</li>
+                        <li><strong>34 admin panels</strong> - phpMyAdmin, cPanel, WordPress admin exposed</li>
+                        <li><strong>12 API endpoints</strong> - Customer APIs without rate limiting or auth</li>
+                        <li><strong>22 SSL issues</strong> - Expired certs, weak ciphers, missing HSTS</li>
+                    </ul>
+
+                    <h4 style="color: #3fb950;">Remediation Approach</h4>
+                    <div class="discovery-timeline">
+                        <div class="timeline-item">
+                            <strong style="color: #f0f6fc;">Day 1-2: Emergency Triage</strong>
+                            <p style="color: #8b949e; font-size: 0.9rem;">Blocked all 47 RDP endpoints at central firewall. Isolated 23 POS systems. Created war room for database exposure review.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong style="color: #f0f6fc;">Week 1: Owner Identification</strong>
+                            <p style="color: #8b949e; font-size: 0.9rem;">Used Xpanse attribution data to identify owners for 89% of unknown assets. Escalated 11% to regional IT directors.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong style="color: #f0f6fc;">Week 2-4: Systematic Remediation</strong>
+                            <p style="color: #8b949e; font-size: 0.9rem;">Implemented VPN for remote access. Migrated databases behind firewalls. Renewed certificates. Decommissioned 127 abandoned assets.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong style="color: #f0f6fc;">Month 2: Process Integration</strong>
+                            <p style="color: #8b949e; font-size: 0.9rem;">Connected Xpanse to XSOAR for automated alerting. Integrated with ServiceNow for ticket creation. Built dashboards for regional teams.</p>
+                        </div>
+                    </div>
+
+                    <h4 style="color: #58a6ff;">Ongoing Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                        <p style="color: #8b949e; margin: 0;"><strong>Daily:</strong> ASM team reviews new findings (avg 12/day), triages by risk, assigns to owners</p>
+                        <p style="color: #8b949e; margin: 8px 0 0 0;"><strong>Weekly:</strong> Risk score trending review, certificate expiry report, shadow IT hunt</p>
+                        <p style="color: #8b949e; margin: 8px 0 0 0;"><strong>Monthly:</strong> Executive report with risk reduction metrics, new asset discovery trends</p>
+                    </div>
                 </div>
-                <h3>Sample Remediation Playbook Flow</h3>
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Diagram</h4>
-                    <p style="color: #8b949e;">See Data Ingestion page for detailed visual diagrams of this architecture.</p>
+
+                <!-- XSIAM Integration -->
+                <h2><i class="fas fa-plug"></i> Xpanse + XSIAM Integration</h2>
+                
+                <div class="info-box" style="border-color: #a371f7;">
+                    <h4><i class="fas fa-magic"></i> The Power of Integration</h4>
+                    <p>When Xpanse is integrated with XSIAM, ASM findings become actionable security incidents with automated response:</p>
                 </div>
-                <!-- Interview Answer -->
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "What is Attack Surface Management?"</h4>
-                    <p>"Attack Surface Management is the practice of continuously discovering and monitoring all internet-facing assets that belong to an organization. In XSIAM, this is powered by Cortex Xpanse which scans the internet using techniques like IP range enumeration, certificate analysis, DNS reconnaissance, and cloud API integration. The key value is finding assets you didn't know existed - shadow IT, forgotten dev servers, or assets from acquisitions. Xpanse assigns risk scores based on CVEs, misconfigurations, and exposure level, then generates alerts that feed into the same incident queue as XDR alerts. This allows security teams to prioritize remediation of external vulnerabilities alongside internal threat detection."</p>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title">Xpanse → XSIAM → XSOAR Automation Flow</div>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; text-align: center;">
+                        <div style="background: #1c3a5e; padding: 16px; border-radius: 8px;">
+                            <i class="fas fa-globe" style="font-size: 1.5rem; color: #58a6ff;"></i>
+                            <div style="font-weight: 600; margin: 8px 0;">Xpanse Discovers</div>
+                            <div style="color: #8b949e; font-size: 0.8rem;">Exposed RDP on unknown server</div>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; color: #8b949e;">→</div>
+                        <div style="background: #4d3a0d; padding: 16px; border-radius: 8px;">
+                            <i class="fas fa-bell" style="font-size: 1.5rem; color: #d29922;"></i>
+                            <div style="font-weight: 600; margin: 8px 0;">XSIAM Alert</div>
+                            <div style="color: #8b949e; font-size: 0.8rem;">Critical ASM finding created</div>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; color: #8b949e;">→</div>
+                        <div style="background: #3d2a5e; padding: 16px; border-radius: 8px;">
+                            <i class="fas fa-robot" style="font-size: 1.5rem; color: #a371f7;"></i>
+                            <div style="font-weight: 600; margin: 8px 0;">XSOAR Playbook</div>
+                            <div style="color: #8b949e; font-size: 0.8rem;">Auto-triggered response</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; background: #1a4d2e; padding: 16px; border-radius: 8px;">
+                        <h4 style="color: #3fb950; margin-top: 0;"><i class="fas fa-check-circle"></i> XSOAR Playbook Actions</h4>
+                        <ol style="color: #8b949e; font-size: 0.9rem;">
+                            <li>Enrich IP with threat intel (VirusTotal, AbuseIPDB)</li>
+                            <li>Query CMDB for asset owner</li>
+                            <li>Check for active attacks in XSIAM logs</li>
+                            <li>If exposed RDP: Create emergency firewall rule to block</li>
+                            <li>Create ServiceNow ticket assigned to owner</li>
+                            <li>Send Slack alert to SOC channel</li>
+                            <li>Schedule 24-hour follow-up check</li>
+                        </ol>
+                    </div>
                 </div>
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How does ASM differ from Vulnerability Scanning?"</h4>
-                    <p>"Traditional vulnerability scanning requires you to know what assets exist and point the scanner at them. ASM flips this - it starts from the internet and discovers what's exposed, including assets you don't know about. Vulnerability scanners go deep on known assets; ASM goes wide across your entire external footprint. In an ideal security program, ASM feeds newly discovered assets into your vulnerability management program for deeper scanning. XSIAM's integration means Xpanse discoveries can automatically trigger Tenable, Qualys, or Rapid7 scans via XSOAR playbooks."</p>
+
+                <!-- Interview Q&A -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is Attack Surface Management and why is it important?</button>
+                        <div class="qa-answer">
+                            <p><strong>Definition:</strong> ASM is the continuous process of discovering, classifying, and monitoring all external-facing assets that could be targeted by attackers.</p>
+                            <p><strong>Why it matters:</strong></p>
+                            <ul>
+                                <li><strong>You can't protect what you don't know exists</strong> - Most breaches involve unknown or forgotten assets</li>
+                                <li><strong>Attack surface is constantly changing</strong> - Cloud resources, M&A, shadow IT</li>
+                                <li><strong>Attackers do recon first</strong> - ASM lets you find exposures before they do</li>
+                                <li><strong>Compliance requirements</strong> - PCI-DSS, SOC 2 require asset inventory</li>
+                            </ul>
+                            <p><strong>Real statistic:</strong> "Gartner found that organizations with ASM discovered 30% more assets than they had in their CMDB, and reduced their external attack surface by 25% within 6 months."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does Cortex Xpanse discover assets?</button>
+                        <div class="qa-answer">
+                            <p><strong>Xpanse uses multiple discovery methods:</strong></p>
+                            <ol>
+                                <li><strong>Internet-wide scanning:</strong> Scans all 4.3 billion IPv4 addresses regularly, collecting banners, certificates, and service information</li>
+                                <li><strong>DNS enumeration:</strong> Discovers subdomains through zone transfers, certificate transparency, and brute-force</li>
+                                <li><strong>Certificate transparency:</strong> Monitors CT logs for new certificates issued to your domains</li>
+                                <li><strong>WHOIS correlation:</strong> Attributes IP ranges and domains to your organization</li>
+                                <li><strong>Cloud provider APIs:</strong> Optional integration with AWS, Azure, GCP for accurate cloud attribution</li>
+                            </ol>
+                            <p><strong>Attribution process:</strong></p>
+                            <p>You provide seed data (domain names, IP ranges, company names). Xpanse correlates scan results with this seed data plus public records to attribute assets to your organization with confidence scores.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What would you do if Xpanse discovered an exposed database with customer data?</button>
+                        <div class="qa-answer">
+                            <p><strong>Immediate response (first 30 minutes):</strong></p>
+                            <ol>
+                                <li><strong>Confirm the finding</strong> - Verify the database is actually exposed and contains sensitive data</li>
+                                <li><strong>Identify the owner</strong> - Use Xpanse attribution data, cloud account info, or IP ownership</li>
+                                <li><strong>Block access immediately</strong> - Firewall rule, security group change, or take offline if necessary</li>
+                                <li><strong>Preserve evidence</strong> - Screenshot of exposure, access logs if available</li>
+                            </ol>
+                            <p><strong>Investigation (next 24-48 hours):</strong></p>
+                            <ol>
+                                <li><strong>Check for data access</strong> - Review any logs to see if data was accessed during exposure</li>
+                                <li><strong>Determine exposure window</strong> - How long was it exposed? When was it created?</li>
+                                <li><strong>Assess data sensitivity</strong> - PII, financial, health data? What regulations apply?</li>
+                                <li><strong>Involve legal/compliance</strong> - May require breach notification</li>
+                            </ol>
+                            <p><strong>Remediation:</strong></p>
+                            <ol>
+                                <li>Implement proper authentication</li>
+                                <li>Move behind firewall/VPN</li>
+                                <li>Enable audit logging</li>
+                                <li>Review similar systems for same issue</li>
+                                <li>Root cause analysis - why was it exposed?</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prioritize ASM findings?</button>
+                        <div class="qa-answer">
+                            <p><strong>Prioritization framework:</strong></p>
+                            <div style="margin: 16px 0;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                    <span class="risk-badge risk-critical">CRITICAL - Fix in 24 hrs</span>
+                                    <span style="color: #8b949e;">Exposed RDP/SSH, unauth databases, admin panels, known exploited CVEs</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                    <span class="risk-badge risk-high">HIGH - Fix in 72 hrs</span>
+                                    <span style="color: #8b949e;">Exposed APIs, weak SSL, sensitive data exposure, shadow cloud</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                    <span class="risk-badge risk-medium">MEDIUM - Fix in 2 weeks</span>
+                                    <span style="color: #8b949e;">Expiring certs, outdated software, non-sensitive info exposure</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span class="risk-badge risk-low">LOW - Fix in 30 days</span>
+                                    <span style="color: #8b949e;">Missing security headers, minor misconfigs, best practice gaps</span>
+                                </div>
+                            </div>
+                            <p><strong>Factors that increase priority:</strong></p>
+                            <ul>
+                                <li>Asset contains sensitive data (PII, financial, health)</li>
+                                <li>Asset is business-critical (customer-facing, revenue-generating)</li>
+                                <li>Vulnerability has known exploits in the wild</li>
+                                <li>Asset is in regulated environment (PCI, HIPAA)</li>
+                                <li>Evidence of active scanning or attacks against it</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="index.html">XSIAM</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
-                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
                 </div>
             </footer>
         </div>
     </div>
-    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
-    <script src="../assets/js/main.js"></script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex XDR - Complete Reference Guide | Nik's SIEM</title>
+    <title>Cortex XDR | Nik's SIEM Compendium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -15,7 +15,7 @@
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
                     <div class="brand-text">
                         <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">Security Compendium</span>
+                        <span class="brand-subtitle">Security Operations</span>
                     </div>
                 </a>
             </div>
@@ -29,283 +29,375 @@
                     <a href="analytics.html" class="nav-link"><i class="fas fa-chart-bar"></i> Analytics</a>
                     <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                     <a href="causality.html" class="nav-link"><i class="fas fa-project-diagram"></i> Causality Analysis</a>
-                    <a href="agent-deployment.html" class="nav-link"><i class="fas fa-download"></i> Deployment</a>
+                    <a href="agent-deployment.html" class="nav-link"><i class="fas fa-download"></i> Agent Deployment</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Other Platforms</div>
+                    <div class="nav-section-title">Related Platforms</div>
+                    <a href="../xsiam/index.html" class="nav-link"><i class="fas fa-shield-alt"></i> XSIAM</a>
                     <a href="../mde/index.html" class="nav-link"><i class="fab fa-microsoft"></i> Microsoft Defender</a>
                     <a href="../crowdstrike/index.html" class="nav-link"><i class="fas fa-crow"></i> CrowdStrike</a>
                 </div>
             </nav>
         </aside>
         <div class="main-wrapper">
-            <main class="main-content">
-                <div class="page-header">
-                    <h1><i class="fas fa-crosshairs"></i> Cortex XDR</h1>
-                    <p class="lead">Palo Alto Networks Extended Detection and Response platform - comprehensive threat hunting, detection engineering, and response capabilities</p>
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <span class="current">Cortex XDR</span>
                 </div>
-                <!-- Architecture Overview -->
-                <section class="content-section">
-                    <h2><i class="fas fa-sitemap"></i> Architecture Overview</h2>
-                    <div class="workflow-diagram">
-<pre>
-╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                              CORTEX XDR ARCHITECTURE                                                                  ║
-╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                                                                       ║
-║    ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
-║    │                                              DATA SOURCES                                                                    │   ║
-║    ├───────────────┬───────────────┬───────────────┬───────────────┬───────────────┬───────────────┬───────────────┐             │   ║
-║    │   Cortex XDR  │   Palo Alto   │    Cloud      │   Identity    │   Network     │    3rd Party  │   Custom      │             │   ║
-║    │    Agent      │   Firewall    │   Workloads   │   Providers   │   Sensors     │    Logs       │   Collectors  │             │   ║
-║    │  (Endpoint)   │   (NGFW)      │  (Prisma)     │  (AD/Azure)   │  (Network)    │  (Syslog)     │  (API)        │             │   ║
-║    └───────┬───────┴───────┬───────┴───────┬───────┴───────┬───────┴───────┬───────┴───────┬───────┴───────┬───────┘             │   ║
-║            │               │               │               │               │               │               │                      │   ║
-║            └───────────────┴───────────────┴───────────────┴───────────────┴───────────────┴───────────────┘                      │   ║
-║                                                            │                                                                      │   ║
-║                                                            ▼                                                                      │   ║
-║    ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
-║    │                                        CORTEX DATA LAKE                                                                     │   ║
-║    │  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐                        │   ║
-║    │  │   Endpoint Data     │  │   Network Data      │  │   Cloud Data        │  │   Identity Data     │                        │   ║
-║    │  │   • Process events  │  │   • Firewall logs   │  │   • AWS/Azure/GCP   │  │   • Auth events     │                        │   ║
-║    │  │   • File events     │  │   • DNS queries     │  │   • Container logs  │  │   • Access logs     │                        │   ║
-║    │  │   • Registry        │  │   • Traffic flows   │  │   • Kubernetes      │  │   • Directory       │                        │   ║
-║    │  │   • Network conn    │  │   • URL filtering   │  │   • Serverless      │  │     changes         │                        │   ║
-║    │  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘                        │   ║
-║    └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   ║
-║                                                            │                                                                      │   ║
-║                    ┌───────────────────────────────────────┼───────────────────────────────────────┐                             │   ║
-║                    ▼                                       ▼                                       ▼                             │   ║
-║    ┌──────────────────────────────┐    ┌──────────────────────────────┐    ┌──────────────────────────────┐                      │   ║
-║    │     DETECTION ENGINE         │    │     ANALYTICS ENGINE         │    │     THREAT INTEL             │                      │   ║
-║    │                              │    │                              │    │                              │                      │   ║
-║    │  • BIOC (Behavioral IOC)     │    │  • Machine Learning          │    │  • Unit 42 Threat Intel      │                      │   ║
-║    │  • Analytics Alerts          │    │  • User Behavior Analytics   │    │  • AutoFocus Integration     │                      │   ║
-║    │  • Correlation Rules         │    │  • Entity Risk Scoring       │    │  • WildFire Verdicts         │                      │   ║
-║    │  • Custom Detection Rules    │    │  • Anomaly Detection         │    │  • External TI Feeds         │                      │   ║
-║    └──────────────────────────────┘    └──────────────────────────────┘    └──────────────────────────────┘                      │   ║
-║                    │                                       │                                       │                             │   ║
-║                    └───────────────────────────────────────┼───────────────────────────────────────┘                             │   ║
-║                                                            ▼                                                                      │   ║
-║    ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
-║    │                                           INCIDENT MANAGEMENT                                                               │   ║
-║    │                                                                                                                             │   ║
-║    │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐           │   ║
-║    │  │     ALERTS      │ ─► │   INCIDENTS     │ ─► │   CAUSALITY     │ ─► │    RESPONSE     │ ─► │   REPORTING     │           │   ║
-║    │  │                 │    │                 │    │    ANALYSIS     │    │    ACTIONS      │    │                 │           │   ║
-║    │  │  Grouped &      │    │  Deduplicated   │    │  Attack chain   │    │  • Isolate      │    │  • Dashboards   │           │   ║
-║    │  │  Prioritized    │    │  & Correlated   │    │  visualization  │    │  • Quarantine   │    │  • Reports      │           │   ║
-║    │  │                 │    │                 │    │                 │    │  • Remediate    │    │  • Exports      │           │   ║
-║    │  └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘           │   ║
-║    └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   ║
-║                                                                                                                                       ║
-╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-</pre>
-                    </div>
-                </section>
-                <!-- Key Capabilities -->
-                <section class="content-section">
-                    <h2><i class="fas fa-star"></i> Key Capabilities</h2>
-                    <div class="card-grid">
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-icon orange"><i class="fas fa-shield-virus"></i></div>
-                                <div>
-                                    <div class="card-title">BIOC Detection</div>
-                                    <div class="card-subtitle">Behavioral Indicators of Compromise</div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-crosshairs"></i> Cortex XDR Overview</h1>
+                <p class="lead">Palo Alto Networks Cortex XDR is an Extended Detection and Response platform that provides endpoint protection, threat detection, investigation, and response capabilities. This guide covers standalone Cortex XDR and explains how it differs from XSIAM.</p>
+
+                <!-- CRITICAL: XDR vs XSIAM CLARITY -->
+                <h2><i class="fas fa-question-circle"></i> Cortex XDR vs XSIAM: Understanding the Difference</h2>
+                
+                <div class="info-box" style="border-color: #f85149;">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Critical Distinction - Read This First</h4>
+                    <p>Many people confuse Cortex XDR and XSIAM. Here's the clear difference:</p>
+                    <ul>
+                        <li><strong>Cortex XDR</strong> = EDR/XDR product (endpoint detection and response)</li>
+                        <li><strong>XSIAM</strong> = Full SOC platform (SIEM + XDR + SOAR + ASM combined)</li>
+                    </ul>
+                    <p><strong>The Cortex XDR Agent is the same in both products.</strong> What changes is where the data goes and what capabilities you get.</p>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-code-branch"></i> Data Flow: Standalone XDR vs XSIAM</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px;">
+                        <!-- Standalone XDR -->
+                        <div style="background: #0d1117; border: 2px solid #58a6ff; border-radius: 12px; padding: 20px;">
+                            <h4 style="color: #58a6ff; margin-top: 0; text-align: center;"><i class="fas fa-laptop"></i> Standalone Cortex XDR</h4>
+                            <div style="text-align: center; margin: 16px 0;">
+                                <div style="background: #1c3a5e; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <i class="fas fa-desktop" style="color: #58a6ff;"></i> Cortex XDR Agent
+                                </div>
+                                <div style="color: #8b949e;">↓</div>
+                                <div style="background: #1c3a5e; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <i class="fas fa-cloud" style="color: #58a6ff;"></i> Cortex XDR Cloud
+                                </div>
+                                <div style="color: #8b949e;">↓</div>
+                                <div style="background: #1c3a5e; padding: 12px; border-radius: 8px;">
+                                    <i class="fas fa-bell" style="color: #58a6ff;"></i> XDR Alerts (Endpoint Only)
                                 </div>
                             </div>
-                            <div class="card-body">
-                                Custom detection rules based on endpoint behaviors - process execution, file operations, network connections, and registry modifications with granular control over severity and response actions.
-                            </div>
-                            <a href="bioc-rules.html" class="card-link">Learn BIOC Rules <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-icon purple"><i class="fas fa-code"></i></div>
-                                <div>
-                                    <div class="card-title">XQL Query Language</div>
-                                    <div class="card-subtitle">Powerful Threat Hunting</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                XDR Query Language for searching across all data sources - endpoints, network, cloud, and identity. Filter, aggregate, join datasets, and visualize results.
-                            </div>
-                            <a href="xql-reference.html" class="card-link">XQL Reference <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-icon cyan"><i class="fas fa-project-diagram"></i></div>
-                                <div>
-                                    <div class="card-title">Causality Analysis</div>
-                                    <div class="card-subtitle">Attack Chain Visualization</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                Automated attack chain reconstruction showing how an incident progressed from initial access through impact, with full process tree and network connection mapping.
-                            </div>
-                            <a href="causality.html" class="card-link">Causality Guide <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-icon green"><i class="fas fa-bolt"></i></div>
-                                <div>
-                                    <div class="card-title">Response Actions</div>
-                                    <div class="card-subtitle">Automated Remediation</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                Built-in response capabilities including endpoint isolation, file quarantine, process termination, script execution, and integration with XSOAR for automated playbooks.
-                            </div>
-                            <a href="response-actions.html" class="card-link">Response Actions <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </section>
-                <!-- XQL Quick Reference -->
-                <section class="content-section">
-                    <h2><i class="fas fa-code"></i> XQL Quick Reference</h2>
-                    <h3>Basic Query Structure</h3>
-                    <pre><code>dataset = xdr_data
-| filter event_type = PROCESS and action_process_image_name = "powershell.exe"
-| filter action_process_image_command_line contains "-enc" or action_process_image_command_line contains "-encoded"
-| fields agent_hostname, actor_process_image_name, action_process_image_name, action_process_image_command_line, _time
-| sort desc _time
-| limit 100</code></pre>
-                    <h3>Essential Threat Hunting Queries</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Use Case</th>
-                                    <th>XQL Query</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>LSASS Access</strong></td>
-                                    <td><code>dataset = xdr_data | filter event_type = PROCESS and action_process_image_name = "lsass.exe" and actor_process_image_name != "svchost.exe"</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Suspicious PowerShell</strong></td>
-                                    <td><code>dataset = xdr_data | filter action_process_image_name = "powershell.exe" and (action_process_image_command_line contains "IEX" or action_process_image_command_line contains "Invoke-Expression")</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Lateral Movement (PsExec)</strong></td>
-                                    <td><code>dataset = xdr_data | filter event_type = PROCESS and action_process_image_name in ("psexec.exe", "psexesvc.exe")</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Scheduled Task Creation</strong></td>
-                                    <td><code>dataset = xdr_data | filter event_type = PROCESS and action_process_image_name = "schtasks.exe" and action_process_image_command_line contains "/create"</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>External Network Connections</strong></td>
-                                    <td><code>dataset = xdr_data | filter event_type = NETWORK and action_external_hostname != null | comp count() by action_external_hostname | sort desc count</code></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <!-- Agent Profiles -->
-                <section class="content-section">
-                    <h2><i class="fas fa-cogs"></i> Agent Configuration Profiles</h2>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Profile</th>
-                                    <th>Prevention</th>
-                                    <th>Collection</th>
-                                    <th>Response</th>
-                                    <th>Best For</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Full Protection</strong></td>
-                                    <td>Block all threats</td>
-                                    <td>All telemetry</td>
-                                    <td>Full response</td>
-                                    <td>Production endpoints</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Detection Only</strong></td>
-                                    <td>Alert only</td>
-                                    <td>All telemetry</td>
-                                    <td>Manual only</td>
-                                    <td>Initial rollout / Testing</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Server Profile</strong></td>
-                                    <td>Conservative</td>
-                                    <td>Enhanced logging</td>
-                                    <td>Full response</td>
-                                    <td>Critical servers</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>VDI Profile</strong></td>
-                                    <td>Optimized</td>
-                                    <td>Reduced telemetry</td>
-                                    <td>Limited</td>
-                                    <td>Virtual desktops</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <!-- Navigation Cards -->
-                <section class="content-section">
-                    <h2><i class="fas fa-book"></i> Documentation Sections</h2>
-                    <div class="card-grid">
-                        <div class="platform-card">
-                            <div class="platform-card-header cortex">
-                                <h3>XQL Reference</h3>
-                                <span>Complete Query Language Guide</span>
-                            </div>
-                            <div class="platform-card-body">
-                                <ul>
-                                    <li>Query syntax and operators</li>
-                                    <li>Functions and aggregations</li>
-                                    <li>Dataset joins</li>
-                                    <li>Performance optimization</li>
+                            <div style="background: #161b22; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                                <p style="color: #8b949e; font-size: 0.85rem; margin: 0;"><strong>What you get:</strong></p>
+                                <ul style="color: #8b949e; font-size: 0.85rem; margin: 8px 0 0 0; padding-left: 20px;">
+                                    <li>Endpoint telemetry only</li>
+                                    <li>EDR alerts and investigation</li>
+                                    <li>Endpoint response actions</li>
+                                    <li>No correlation with other logs</li>
+                                    <li>No SIEM capabilities</li>
                                 </ul>
-                                <a href="xql-reference.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> XQL Reference</a>
                             </div>
                         </div>
-                        <div class="platform-card">
-                            <div class="platform-card-header cortex">
-                                <h3>BIOC Rules</h3>
-                                <span>Behavioral Detection Engineering</span>
+                        
+                        <!-- XSIAM -->
+                        <div style="background: #0d1117; border: 2px solid #3fb950; border-radius: 12px; padding: 20px;">
+                            <h4 style="color: #3fb950; margin-top: 0; text-align: center;"><i class="fas fa-shield-alt"></i> XSIAM (Full Platform)</h4>
+                            <div style="text-align: center; margin: 16px 0;">
+                                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                                    <div style="background: #1a4d2e; padding: 8px; border-radius: 6px; font-size: 0.8rem;">
+                                        <i class="fas fa-desktop" style="color: #3fb950;"></i> Agent
+                                    </div>
+                                    <div style="background: #1a4d2e; padding: 8px; border-radius: 6px; font-size: 0.8rem;">
+                                        <i class="fas fa-fire" style="color: #3fb950;"></i> Firewall
+                                    </div>
+                                    <div style="background: #1a4d2e; padding: 8px; border-radius: 6px; font-size: 0.8rem;">
+                                        <i class="fas fa-cloud" style="color: #3fb950;"></i> Cloud
+                                    </div>
+                                    <div style="background: #1a4d2e; padding: 8px; border-radius: 6px; font-size: 0.8rem;">
+                                        <i class="fas fa-id-card" style="color: #3fb950;"></i> Identity
+                                    </div>
+                                </div>
+                                <div style="color: #8b949e;">↓ All data flows to ↓</div>
+                                <div style="background: #1a4d2e; padding: 12px; border-radius: 8px; margin: 8px 0;">
+                                    <i class="fas fa-database" style="color: #3fb950;"></i> XSIAM Data Lake
+                                </div>
+                                <div style="color: #8b949e;">↓</div>
+                                <div style="background: #1a4d2e; padding: 12px; border-radius: 8px;">
+                                    <i class="fas fa-bell" style="color: #3fb950;"></i> Correlated Alerts
+                                </div>
                             </div>
-                            <div class="platform-card-body">
-                                <ul>
-                                    <li>Rule creation workflow</li>
-                                    <li>Process and file rules</li>
-                                    <li>Network and registry rules</li>
-                                    <li>Testing and tuning</li>
+                            <div style="background: #161b22; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                                <p style="color: #8b949e; font-size: 0.85rem; margin: 0;"><strong>What you get:</strong></p>
+                                <ul style="color: #8b949e; font-size: 0.85rem; margin: 8px 0 0 0; padding-left: 20px;">
+                                    <li>All XDR capabilities PLUS</li>
+                                    <li>Full SIEM (any log source)</li>
+                                    <li>Cross-source correlation</li>
+                                    <li>XSOAR automation built-in</li>
+                                    <li>Attack Surface Management</li>
                                 </ul>
-                                <a href="bioc-rules.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> BIOC Rules</a>
-                            </div>
-                        </div>
-                        <div class="platform-card">
-                            <div class="platform-card-header cortex">
-                                <h3>Response Actions</h3>
-                                <span>Containment & Remediation</span>
-                            </div>
-                            <div class="platform-card-body">
-                                <ul>
-                                    <li>Isolation procedures</li>
-                                    <li>File quarantine</li>
-                                    <li>Script execution</li>
-                                    <li>XSOAR integration</li>
-                                </ul>
-                                <a href="response-actions.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Response Guide</a>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Interview Answer: "Explain the difference between standalone Cortex XDR and XSIAM"</button>
+                        <div class="qa-answer">
+                            <p><strong>Clear, Structured Answer:</strong></p>
+                            
+                            <p>"The Cortex XDR Agent is identical in both products - it's the same software installed on endpoints. The critical difference is the backend platform and what happens to the data:</p>
+                            
+                            <p><strong>Standalone Cortex XDR:</strong></p>
+                            <ul>
+                                <li><strong>Purpose:</strong> EDR/XDR - endpoint detection and response only</li>
+                                <li><strong>Data scope:</strong> Only endpoint telemetry from the XDR agent</li>
+                                <li><strong>Detection:</strong> Alerts based on endpoint behavior only</li>
+                                <li><strong>Use case:</strong> Organizations that already have a SIEM and just need endpoint protection</li>
+                            </ul>
+                            
+                            <p><strong>XSIAM (with the same XDR agent):</strong></p>
+                            <ul>
+                                <li><strong>Purpose:</strong> Complete SOC platform - SIEM + XDR + SOAR + ASM</li>
+                                <li><strong>Data scope:</strong> XDR agent data PLUS firewalls, cloud logs, identity, network, any log source</li>
+                                <li><strong>Detection:</strong> Correlated alerts across ALL data sources</li>
+                                <li><strong>Use case:</strong> Organizations wanting a unified security operations platform</li>
+                            </ul>
+                            
+                            <p><strong>Real-World Example:</strong></p>
+                            <p>User downloads malicious file → XDR agent detects suspicious process:</p>
+                            <ul>
+                                <li><strong>Standalone XDR:</strong> Creates alert saying 'Suspicious process on Workstation-123'</li>
+                                <li><strong>XSIAM:</strong> Creates correlated incident showing: User downloaded file from phishing link (email logs) → Process executed (endpoint) → Attempted C2 connection blocked (firewall) → Same user had 5 failed VPN logins last week (identity) = Complete attack story</li>
+                            </ul>
+                            
+                            <p><strong>Bottom line:</strong> Same agent, completely different platforms. XDR is a component; XSIAM is the whole SOC."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- What is Cortex XDR -->
+                <h2><i class="fas fa-info-circle"></i> What is Cortex XDR?</h2>
+                
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Cortex XDR at a Glance</h4>
+                    <p>Cortex XDR extends traditional EDR by correlating endpoint data with network and cloud sources. Key capabilities:</p>
+                    <ul>
+                        <li><strong>Endpoint Protection:</strong> NGAV, behavioral analysis, exploit prevention</li>
+                        <li><strong>Detection:</strong> ML-based analytics, BIOC rules, IOC matching</li>
+                        <li><strong>Investigation:</strong> Causality chains, timeline analysis, XQL hunting</li>
+                        <li><strong>Response:</strong> Isolate, remediate, live terminal, script execution</li>
+                    </ul>
+                </div>
+
+                <h3>Cortex XDR Agent Capabilities</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-shield-alt"></i></div>
+                            <div class="comparison-item-title">Prevention</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Next-Gen Antivirus (NGAV)</li>
+                            <li><i class="fas fa-check"></i> Behavioral Threat Protection</li>
+                            <li><i class="fas fa-check"></i> Exploit Prevention</li>
+                            <li><i class="fas fa-check"></i> Malware Prevention</li>
+                            <li><i class="fas fa-check"></i> Ransomware Protection</li>
+                            <li><i class="fas fa-check"></i> Device Control (USB)</li>
+                            <li><i class="fas fa-check"></i> Host Firewall</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-search"></i></div>
+                            <div class="comparison-item-title">Detection</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Process execution monitoring</li>
+                            <li><i class="fas fa-check"></i> File activity tracking</li>
+                            <li><i class="fas fa-check"></i> Network connection logging</li>
+                            <li><i class="fas fa-check"></i> Registry changes</li>
+                            <li><i class="fas fa-check"></i> DLL loading</li>
+                            <li><i class="fas fa-check"></i> Script execution (PS, VBS, etc.)</li>
+                            <li><i class="fas fa-check"></i> Memory injection detection</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d1a1a; color: #f85149;"><i class="fas fa-bolt"></i></div>
+                            <div class="comparison-item-title">Response</div>
+                        </div>
+                        <ul class="comparison-item-list">
+                            <li><i class="fas fa-check"></i> Network isolation</li>
+                            <li><i class="fas fa-check"></i> Process termination</li>
+                            <li><i class="fas fa-check"></i> File quarantine</li>
+                            <li><i class="fas fa-check"></i> Live Terminal (shell access)</li>
+                            <li><i class="fas fa-check"></i> Script execution</li>
+                            <li><i class="fas fa-check"></i> File retrieval</li>
+                            <li><i class="fas fa-check"></i> Memory dump collection</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Data Collection -->
+                <h2><i class="fas fa-database"></i> What Data Does the XDR Agent Collect?</h2>
+                
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr><th>Data Type</th><th>What's Collected</th><th>Detection Use Cases</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Process Events</strong></td>
+                                <td>Process name, path, command line, parent process, user, hash</td>
+                                <td>Suspicious execution, LOLBins, process injection</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Events</strong></td>
+                                <td>File create/modify/delete, path, hash, size</td>
+                                <td>Malware drops, ransomware encryption, data staging</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Events</strong></td>
+                                <td>Connections, IPs, ports, protocols, bytes transferred</td>
+                                <td>C2 communication, lateral movement, data exfil</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Registry Events</strong></td>
+                                <td>Key/value changes, paths, before/after values</td>
+                                <td>Persistence mechanisms, config changes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Module/DLL Events</strong></td>
+                                <td>Loaded modules, paths, signatures</td>
+                                <td>DLL injection, side-loading, unsigned modules</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Script Events</strong></td>
+                                <td>PowerShell, VBScript, JScript content and execution</td>
+                                <td>Encoded commands, fileless malware</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Quick Links -->
+                <h2><i class="fas fa-link"></i> Cortex XDR Documentation</h2>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-code"></i></div>
+                            <div class="comparison-item-title">XQL Query Language</div>
+                        </div>
+                        <p style="color: #8b949e; padding: 0 16px;">Learn XQL syntax for threat hunting and investigation queries.</p>
+                        <div style="padding: 0 16px 16px;">
+                            <a href="xql-reference.html" style="color: #58a6ff;">XQL Reference →</a><br>
+                            <a href="xql-hunting.html" style="color: #58a6ff;">Threat Hunting Queries →</a>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-shield-virus"></i></div>
+                            <div class="comparison-item-title">Detection Engineering</div>
+                        </div>
+                        <p style="color: #8b949e; padding: 0 16px;">Create custom detection rules and analytics.</p>
+                        <div style="padding: 0 16px 16px;">
+                            <a href="bioc-rules.html" style="color: #58a6ff;">BIOC Rules →</a><br>
+                            <a href="analytics.html" style="color: #58a6ff;">Analytics Engine →</a>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-item-header">
+                            <div class="comparison-item-icon" style="background: #4d1a1a; color: #f85149;"><i class="fas fa-bolt"></i></div>
+                            <div class="comparison-item-title">Response & Investigation</div>
+                        </div>
+                        <p style="color: #8b949e; padding: 0 16px;">Investigate incidents and respond to threats.</p>
+                        <div style="padding: 0 16px 16px;">
+                            <a href="response-actions.html" style="color: #58a6ff;">Response Actions →</a><br>
+                            <a href="causality.html" style="color: #58a6ff;">Causality Analysis →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interview Q&A -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What is the Cortex XDR agent and what does it do?</button>
+                        <div class="qa-answer">
+                            <p>"The Cortex XDR agent is Palo Alto's endpoint security software that provides both prevention and detection capabilities:</p>
+                            <p><strong>Prevention (blocking threats):</strong></p>
+                            <ul>
+                                <li>Next-Gen Antivirus (NGAV) - blocks known malware</li>
+                                <li>Behavioral analysis - stops suspicious activity patterns</li>
+                                <li>Exploit prevention - blocks memory-based attacks</li>
+                                <li>Ransomware protection - prevents encryption behaviors</li>
+                            </ul>
+                            <p><strong>Detection (visibility):</strong></p>
+                            <ul>
+                                <li>Records all process executions with full command lines</li>
+                                <li>Tracks file operations (create, modify, delete)</li>
+                                <li>Logs network connections from the endpoint</li>
+                                <li>Monitors registry changes and script execution</li>
+                            </ul>
+                            <p>This telemetry is sent to the backend (XDR cloud or XSIAM) for analysis and alerting."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What is a causality chain in Cortex XDR?</button>
+                        <div class="qa-answer">
+                            <p>"A causality chain is XDR's visual representation of how an attack unfolded, showing the parent-child relationships between processes.</p>
+                            <p><strong>Example causality chain:</strong></p>
+                            <ol>
+                                <li><strong>Outlook.exe</strong> (user opened email)</li>
+                                <li>→ <strong>WINWORD.EXE</strong> (opened attachment)</li>
+                                <li>→ → <strong>cmd.exe</strong> (macro executed command)</li>
+                                <li>→ → → <strong>powershell.exe</strong> (downloaded payload)</li>
+                                <li>→ → → → <strong>malware.exe</strong> (executed malware)</li>
+                            </ol>
+                            <p>This tells the complete story: user received phishing email → opened Word doc → macro ran → downloaded and executed malware.</p>
+                            <p>The causality chain is essential for understanding attack scope and determining what needs remediation."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What are BIOC rules?</button>
+                        <div class="qa-answer">
+                            <p>"BIOC stands for Behavioral Indicator of Compromise. These are custom detection rules you create in Cortex XDR to detect specific attack patterns.</p>
+                            <p><strong>How they work:</strong></p>
+                            <ul>
+                                <li>You define conditions based on endpoint telemetry (process, file, network, registry events)</li>
+                                <li>When the conditions match, an alert is generated</li>
+                                <li>Similar to Sigma rules or YARA rules but specific to XDR</li>
+                            </ul>
+                            <p><strong>Example BIOC rule - Detect encoded PowerShell:</strong></p>
+                            <ul>
+                                <li>Process name contains 'powershell'</li>
+                                <li>AND command line contains '-enc' or '-encodedcommand'</li>
+                                <li>→ Alert: 'Encoded PowerShell Execution Detected'</li>
+                            </ul>
+                            <p>BIOCs let you create organization-specific detections beyond the built-in analytics."</p>
+                        </div>
+                    </div>
+                </div>
+
             </main>
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <p>Nik's SIEM Compendium</p>
+                </div>
+            </footer>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) {
+                    answer.style.display = 'block';
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
