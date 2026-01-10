@@ -3,27 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Correlation Rules - Complete Configuration Guide | XSIAM</title>
+    <title>Correlation Rules | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
         .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
-        .config-step { display: flex; gap: 16px; padding: 16px; background: #21262d; border-radius: 8px; margin: 12px 0; }
-        .step-num { width: 32px; height: 32px; background: #58a6ff; color: #0d1117; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
         .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .rule-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .severity-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .severity-critical { background: #4d0f0f; color: #f85149; }
-        .severity-high { background: #4d2d0d; color: #db6d28; }
-        .severity-medium { background: #4d3a0d; color: #d29922; }
-        .mitre-tag { background: #1c3a5e; color: #58a6ff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 4px; }
-        .field-ref { background: #21262d; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+        .rule-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #f97316; }
+        .mitre-tag { background: #1f6feb; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
+        .severity-high { color: #f85149; }
+        .severity-medium { color: #d29922; }
+        .severity-low { color: #3fb950; }
     </style>
 </head>
 <body>
     <div class="app-container">
-                <aside class="sidebar">
+                                                                                <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -79,478 +75,885 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-project-diagram"></i> Correlation Rules - Complete Configuration Guide</h1>
-                <p class="lead">Step-by-step guide to creating, testing, and tuning detection rules in XSIAM. Includes console navigation, XQL syntax, production-ready examples, and tuning procedures.</p>
+                <h1><i class="fas fa-project-diagram"></i> Correlation Rules</h1>
+                <p class="lead">Create custom detection rules in XSIAM using XQL. Correlation rules run on scheduled intervals to detect threats across all ingested data sources.</p>
 
                 <!-- What Are Correlation Rules -->
-                <h2><i class="fas fa-question-circle"></i> What Are Correlation Rules?</h2>
-                
-                <div class="info-box" style="border-color: #58a6ff;">
-                    <h4><i class="fas fa-info-circle"></i> Definition</h4>
-                    <p><strong>Correlation rules</strong> are XQL queries that run continuously against ingested data to detect threats. When the query conditions are met, an alert is generated.</p>
-                    <p style="margin-top: 8px;"><strong>Why "correlation"?</strong> Because they can correlate multiple events together (e.g., "10 failed logins followed by 1 success from same IP" = brute force).</p>
+                <h2><i class="fas fa-info-circle"></i> What Are Correlation Rules?</h2>
+                <div class="config-section">
+                    <p>Correlation rules are scheduled XQL queries that generate alerts when specific conditions are met. Unlike BIOC rules (which run on endpoint agents in real-time), correlation rules:</p>
+                    <ul style="color: #8b949e;">
+                        <li>Run on <strong>all data in Cortex Data Lake</strong> (not just endpoint data)</li>
+                        <li>Execute on a <strong>schedule</strong> (every 5 min to 24 hours)</li>
+                        <li>Can correlate across <strong>multiple data sources</strong> (firewall + endpoint + identity)</li>
+                        <li>Support <strong>aggregation and thresholds</strong> (e.g., 5 failed logins in 10 minutes)</li>
+                    </ul>
+                    
+                    <h4>Correlation Rules vs BIOC Rules</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Aspect</th><th>Correlation Rules</th><th>BIOC Rules</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Execution Location</td><td>Cortex Data Lake (cloud)</td><td>XDR Agent (endpoint)</td></tr>
+                            <tr><td>Data Sources</td><td>All ingested data</td><td>Endpoint telemetry only</td></tr>
+                            <tr><td>Latency</td><td>Minutes (scheduled)</td><td>Real-time</td></tr>
+                            <tr><td>Use Case</td><td>Cross-source correlation, thresholds</td><td>Process chains, behavioral</td></tr>
+                            <tr><td>Language</td><td>XQL</td><td>YAML-based</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="styled-table">
-                    <table>
+                <!-- Creating Correlation Rules -->
+                <h2><i class="fas fa-plus-circle"></i> Creating Correlation Rules</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Detection & Response → Detection Rules → Correlation</span></p>
+                    
+                    <h4>Step-by-Step Process</h4>
+                    <ol style="color: #8b949e;">
+                        <li><strong>Define the detection logic:</strong> Write XQL query that returns events to alert on</li>
+                        <li><strong>Set scheduling:</strong> How often the rule runs and time window to search</li>
+                        <li><strong>Configure alert settings:</strong> Severity, MITRE mapping, alert name</li>
+                        <li><strong>Map entities:</strong> Define which fields represent host, user, IP for incident correlation</li>
+                        <li><strong>Test and tune:</strong> Run query manually, review results, adjust thresholds</li>
+                    </ol>
+                </div>
+
+                <!-- Rule Configuration Fields -->
+                <h2><i class="fas fa-cog"></i> Rule Configuration</h2>
+                <div class="config-section">
+                    <table class="styled-table">
                         <thead>
-                            <tr>
-                                <th>Detection Type</th>
-                                <th>What It Does</th>
-                                <th>When to Use</th>
-                                <th>Where in Console</th>
-                            </tr>
+                            <tr><th>Field</th><th>Description</th><th>Best Practice</th></tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>Correlation Rules</strong></td>
-                                <td>Custom XQL-based detection logic</td>
-                                <td>Known attack patterns, custom use cases</td>
-                                <td>Rules → Correlation Rules</td>
+                                <td><strong>Rule Name</strong></td>
+                                <td>Display name for the rule</td>
+                                <td>Use format: "[Source] - [Technique] - [Action]"<br>Example: "Firewall - Port Scan - Blocked"</td>
                             </tr>
                             <tr>
-                                <td><strong>BIOC Rules</strong></td>
-                                <td>Behavioral IOC detection</td>
-                                <td>Endpoint-specific behavioral patterns</td>
-                                <td>Rules → BIOC Rules</td>
+                                <td><strong>Severity</strong></td>
+                                <td>High, Medium, Low, Informational</td>
+                                <td>High = confirmed malicious, Medium = suspicious, Low = anomalous</td>
                             </tr>
                             <tr>
-                                <td><strong>IOC Matching</strong></td>
-                                <td>Hash/IP/Domain blocklists</td>
-                                <td>Known malicious indicators</td>
-                                <td>Threat Intel → IOC Rules</td>
+                                <td><strong>MITRE ATT&CK</strong></td>
+                                <td>Tactic and technique mapping</td>
+                                <td>Map to most specific technique (T1xxx.xxx)</td>
                             </tr>
                             <tr>
-                                <td><strong>Analytics (ML)</strong></td>
-                                <td>Machine learning anomaly detection</td>
-                                <td>Unknown/novel threats, baseline deviations</td>
-                                <td>Analytics → ML Analytics</td>
+                                <td><strong>Schedule</strong></td>
+                                <td>How often rule executes</td>
+                                <td>Match to detection urgency (critical = 5min, low = 1hr)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time Window</strong></td>
+                                <td>How far back to search</td>
+                                <td>Should overlap schedule (15min window for 10min schedule)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alert Grouping</strong></td>
+                                <td>How to group multiple matches</td>
+                                <td>Group by entity (user, host) to reduce alert volume</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- How to Create a Correlation Rule -->
-                <h2><i class="fas fa-plus-circle"></i> How to Create a Correlation Rule</h2>
-                
+                <!-- XQL Query Structure -->
+                <h2><i class="fas fa-code"></i> XQL Query Structure for Correlation Rules</h2>
                 <div class="config-section">
-                    <h3>Step-by-Step in XSIAM Console</h3>
-                    <div class="console-path">XSIAM Console → Rules → Correlation Rules → + New Rule</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div>
-                            <strong>Navigate to Correlation Rules</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Left navigation → Rules → Correlation Rules</p>
-                            <p style="color: #8b949e; margin: 4px 0;">Click <strong>+ New Rule</strong> button (top right)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div>
-                            <strong>Configure Rule Metadata</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px; width: 100%;">
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px; width: 150px;"><strong>Rule Name:</strong></td>
-                                    <td style="padding: 8px;">Brute Force Authentication Detected</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px;"><strong>Description:</strong></td>
-                                    <td style="padding: 8px;">Detects 10+ failed logins followed by success from same source</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px;"><strong>Severity:</strong></td>
-                                    <td style="padding: 8px;">High (dropdown: Informational, Low, Medium, High, Critical)</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px;"><strong>MITRE ATT&CK:</strong></td>
-                                    <td style="padding: 8px;">T1110 - Brute Force (select from dropdown)</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px;"><strong>Category:</strong></td>
-                                    <td style="padding: 8px;">Credential Access</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div>
-                            <strong>Enter XQL Query</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">This is the detection logic. Paste your XQL query into the query editor.</p>
-                            <div class="code-block">
-<span style="color: #8b949e;">// Brute Force Detection Query</span>
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> event_type = AUTH
-| <span style="color: #ff7b72;">filter</span> _time > ago(10m)
-| <span style="color: #ff7b72;">comp</span> failed = <span style="color: #d2a8ff;">countif</span>(action_outcome = FAILURE),
-       success = <span style="color: #d2a8ff;">countif</span>(action_outcome = SUCCESS)
-       <span style="color: #ff7b72;">by</span> xdm.source.ipv4, xdm.target.user.username
-| <span style="color: #ff7b72;">filter</span> failed >= 10 <span style="color: #ff7b72;">and</span> success >= 1
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div>
-                            <strong>Configure Execution Settings</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px; width: 100%;">
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px; width: 150px;"><strong>Frequency:</strong></td>
-                                    <td style="padding: 8px;">Every 5 minutes (options: 1m, 5m, 15m, 1h, etc.)</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #30363d;">
-                                    <td style="padding: 8px;"><strong>Query Window:</strong></td>
-                                    <td style="padding: 8px;">Last 10 minutes (should match your ago() in query)</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px;"><strong>Alert Grouping:</strong></td>
-                                    <td style="padding: 8px;">Group by source IP (prevents duplicate alerts)</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">5</div>
-                        <div>
-                            <strong>Test the Rule</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Click <strong>"Test Rule"</strong> button to run against historical data</p>
-                            <p style="color: #d29922; margin: 4px 0;">Review results: How many alerts would it have generated? Any false positives?</p>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">6</div>
-                        <div>
-                            <strong>Enable the Rule</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Toggle <strong>Enabled</strong> to ON</p>
-                            <p style="color: #8b949e; margin: 4px 0;">Click <strong>Save</strong></p>
-                            <p style="color: #3fb950; margin: 4px 0;">Rule is now active and will generate alerts when conditions are met!</p>
-                        </div>
-                    </div>
-                </div>
+                    <p>Correlation rule queries must return fields that XSIAM can use for alerting:</p>
+                    <div class="code-block">// Basic correlation rule structure
+dataset = &lt;dataset_name&gt;
+| filter &lt;conditions&gt;
+| &lt;aggregation or processing&gt;
+| alter 
+    xdm.alert.name = "Alert Name",
+    xdm.alert.description = "Description of what was detected",
+    xdm.alert.severity = "high"  // high, medium, low, informational</div>
 
-                <!-- Production-Ready Detection Rules -->
-                <h2><i class="fas fa-shield-alt"></i> Production-Ready Detection Rules</h2>
-
-                <div class="rule-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="margin: 0;">Rule 1: Brute Force Authentication</h3>
-                        <div>
-                            <span class="severity-badge severity-high">HIGH</span>
-                            <span class="mitre-tag">T1110</span>
-                        </div>
-                    </div>
-                    
-                    <p style="color: #8b949e;"><strong>What:</strong> Detects multiple failed login attempts followed by a success - classic brute force pattern.</p>
-                    <p style="color: #8b949e;"><strong>Why:</strong> Attackers use automated tools to guess passwords. Success after many failures = compromised account.</p>
-                    <p style="color: #8b949e;"><strong>When to alert:</strong> 10+ failures then 1+ success within 10 minutes from same IP.</p>
-                    
-                    <div class="console-path">Rules → Correlation Rules → + New Rule</div>
-                    
-                    <h4>XQL Query</h4>
-                    <div class="code-block">
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> event_type = AUTH
-| <span style="color: #ff7b72;">filter</span> _time > ago(10m)
-| <span style="color: #ff7b72;">comp</span> failed = <span style="color: #d2a8ff;">countif</span>(action_outcome = FAILURE),
-       success = <span style="color: #d2a8ff;">countif</span>(action_outcome = SUCCESS),
-       target_users = <span style="color: #d2a8ff;">array_distinct</span>(<span style="color: #d2a8ff;">arrayconcat</span>(xdm.target.user.username))
-       <span style="color: #ff7b72;">by</span> xdm.source.ipv4
-| <span style="color: #ff7b72;">filter</span> failed >= 10 <span style="color: #ff7b72;">and</span> success >= 1
-| <span style="color: #ff7b72;">fields</span> xdm.source.ipv4, failed, success, target_users
-                    </div>
-                    
-                    <h4>Console Settings</h4>
-                    <table style="color: #8b949e; font-size: 0.85rem; width: 100%;">
-                        <tr><td style="padding: 4px; width: 120px;">Frequency:</td><td>5 minutes</td></tr>
-                        <tr><td style="padding: 4px;">Query Window:</td><td>10 minutes</td></tr>
-                        <tr><td style="padding: 4px;">Severity:</td><td>High</td></tr>
-                        <tr><td style="padding: 4px;">MITRE:</td><td>T1110 - Brute Force</td></tr>
-                    </table>
-                    
-                    <h4>Tuning Tips</h4>
-                    <ul style="color: #8b949e; font-size: 0.9rem;">
-                        <li>Exclude service accounts that legitimately fail often (e.g., monitoring)</li>
-                        <li>Adjust threshold based on your environment (some orgs may need 20+)</li>
-                        <li>Add: <code>| filter xdm.source.ipv4 not in ("10.0.0.5", "10.0.0.6")</code> for exclusions</li>
-                    </ul>
-                </div>
-
-                <div class="rule-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="margin: 0;">Rule 2: Encoded PowerShell Execution</h3>
-                        <div>
-                            <span class="severity-badge severity-high">HIGH</span>
-                            <span class="mitre-tag">T1059.001</span>
-                            <span class="mitre-tag">T1027</span>
-                        </div>
-                    </div>
-                    
-                    <p style="color: #8b949e;"><strong>What:</strong> Detects PowerShell running with encoded commands - common attacker technique to evade detection.</p>
-                    <p style="color: #8b949e;"><strong>Why:</strong> Legitimate scripts rarely use base64 encoding. Attackers use it to hide malicious payloads.</p>
-                    <p style="color: #8b949e;"><strong>When to alert:</strong> Any PowerShell execution with -enc, -encodedcommand, or FromBase64String.</p>
-                    
-                    <div class="console-path">Rules → Correlation Rules → + New Rule</div>
-                    
-                    <h4>XQL Query</h4>
-                    <div class="code-block">
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> event_type = PROCESS
-| <span style="color: #ff7b72;">filter</span> action_process_image_name ~= "powershell|pwsh"
-| <span style="color: #ff7b72;">filter</span> action_process_command_line ~= "(?i)(-enc|-encodedcommand|FromBase64String|::Decompress)"
-| <span style="color: #ff7b72;">fields</span> _time, agent_hostname, actor_process_image_name, 
-         action_process_image_name, action_process_command_line,
-         action_process_username
-                    </div>
-                    
-                    <h4>Console Settings</h4>
-                    <table style="color: #8b949e; font-size: 0.85rem; width: 100%;">
-                        <tr><td style="padding: 4px; width: 120px;">Frequency:</td><td>1 minute (near real-time)</td></tr>
-                        <tr><td style="padding: 4px;">Query Window:</td><td>2 minutes</td></tr>
-                        <tr><td style="padding: 4px;">Severity:</td><td>High</td></tr>
-                        <tr><td style="padding: 4px;">MITRE:</td><td>T1059.001 - PowerShell, T1027 - Obfuscated Files</td></tr>
-                    </table>
-                    
-                    <h4>Tuning Tips</h4>
-                    <ul style="color: #8b949e; font-size: 0.9rem;">
-                        <li>Some legitimate tools use encoding (SCCM, Intune) - whitelist by parent process</li>
-                        <li>Add: <code>| filter actor_process_image_name not in ("ccmexec.exe", "svchost.exe")</code></li>
-                        <li>Consider decoding the base64 in response playbook for investigation</li>
-                    </ul>
-                </div>
-
-                <div class="rule-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="margin: 0;">Rule 3: Large Data Exfiltration</h3>
-                        <div>
-                            <span class="severity-badge severity-critical">CRITICAL</span>
-                            <span class="mitre-tag">T1048</span>
-                        </div>
-                    </div>
-                    
-                    <p style="color: #8b949e;"><strong>What:</strong> Detects single endpoint sending unusually large amounts of data externally.</p>
-                    <p style="color: #8b949e;"><strong>Why:</strong> Data theft typically involves transferring large volumes. Normal workstations don't upload gigabytes.</p>
-                    <p style="color: #8b949e;"><strong>When to alert:</strong> >1 GB outbound to external IP in 1 hour from single endpoint.</p>
-                    
-                    <div class="console-path">Rules → Correlation Rules → + New Rule</div>
-                    
-                    <h4>XQL Query</h4>
-                    <div class="code-block">
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> event_type = NETWORK
-| <span style="color: #ff7b72;">filter</span> _time > ago(1h)
-| <span style="color: #ff7b72;">filter</span> action_external_port != null  <span style="color: #8b949e;">// External connections only</span>
-| <span style="color: #ff7b72;">filter</span> xdm.target.ipv4 !~= "^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)"  <span style="color: #8b949e;">// Not RFC1918</span>
-| <span style="color: #ff7b72;">comp</span> total_bytes = <span style="color: #d2a8ff;">sum</span>(action_network_bytes_sent) <span style="color: #ff7b72;">by</span> agent_hostname, xdm.target.ipv4
-| <span style="color: #ff7b72;">alter</span> total_gb = <span style="color: #d2a8ff;">round</span>(total_bytes / 1073741824, 2)  <span style="color: #8b949e;">// Convert to GB</span>
-| <span style="color: #ff7b72;">filter</span> total_gb >= 1
-| <span style="color: #ff7b72;">sort</span> desc total_gb
-                    </div>
-                    
-                    <h4>Tuning Tips</h4>
-                    <ul style="color: #8b949e; font-size: 0.9rem;">
-                        <li>Exclude known backup destinations and cloud sync services</li>
-                        <li>Adjust GB threshold based on business (dev machines may upload more)</li>
-                        <li>Add destination IP reputation check in playbook</li>
-                    </ul>
-                </div>
-
-                <div class="rule-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="margin: 0;">Rule 4: LSASS Memory Access (Credential Dumping)</h3>
-                        <div>
-                            <span class="severity-badge severity-critical">CRITICAL</span>
-                            <span class="mitre-tag">T1003.001</span>
-                        </div>
-                    </div>
-                    
-                    <p style="color: #8b949e;"><strong>What:</strong> Detects processes accessing LSASS memory - used by Mimikatz and similar tools.</p>
-                    <p style="color: #8b949e;"><strong>Why:</strong> LSASS contains cached credentials. Accessing it = attempting to steal passwords.</p>
-                    <p style="color: #8b949e;"><strong>When to alert:</strong> Non-system process accessing lsass.exe memory.</p>
-                    
-                    <h4>XQL Query</h4>
-                    <div class="code-block">
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> event_type = PROCESS
-| <span style="color: #ff7b72;">filter</span> causality_actor_process_image_name ~= "lsass\.exe"
-| <span style="color: #ff7b72;">filter</span> action_process_image_name not in ("svchost.exe", "csrss.exe", "wininit.exe", "MsMpEng.exe")
-| <span style="color: #ff7b72;">fields</span> _time, agent_hostname, action_process_image_name, 
-         action_process_command_line, action_process_username,
-         actor_process_image_name
-                    </div>
-                </div>
-
-                <!-- How to Tune Rules -->
-                <h2><i class="fas fa-sliders-h"></i> How to Tune Rules (Reduce False Positives)</h2>
-                
-                <div class="config-section">
-                    <h3>Step-by-Step Tuning Process</h3>
-                    <div class="console-path">Rules → Correlation Rules → [Select Rule] → Edit</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div>
-                            <strong>Identify False Positives</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Go to Incidents → Filter by rule name → Review closed incidents marked as "False Positive"</p>
-                            <p style="color: #8b949e; margin: 4px 0;">Look for patterns: Same user? Same host? Same process?</p>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div>
-                            <strong>Add Exclusions to Query</strong>
-                            <div class="code-block">
-<span style="color: #8b949e;">// BEFORE (too noisy)</span>
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> action_process_image_name ~= "powershell"
-| <span style="color: #ff7b72;">filter</span> action_process_command_line ~= "-enc"
-
-<span style="color: #8b949e;">// AFTER (with exclusions)</span>
-<span style="color: #ff7b72;">dataset</span> = xdr_data
-| <span style="color: #ff7b72;">filter</span> action_process_image_name ~= "powershell"
-| <span style="color: #ff7b72;">filter</span> action_process_command_line ~= "-enc"
-<span style="color: #3fb950;">| filter actor_process_image_name not in ("ccmexec.exe", "intune.exe")  // Exclude SCCM/Intune</span>
-<span style="color: #3fb950;">| filter agent_hostname not ~= "^BUILD-"  // Exclude build servers</span>
-<span style="color: #3fb950;">| filter action_process_username != "svc_automation"  // Exclude automation account</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div>
-                            <strong>Test Tuned Query</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Click "Test Rule" to see if exclusions would have prevented the false positives</p>
-                            <p style="color: #8b949e; margin: 4px 0;">Verify you're not excluding true positives</p>
-                        </div>
-                    </div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div>
-                            <strong>Save and Monitor</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Save changes → Monitor for 1 week → Check true positive rate</p>
-                            <p style="color: #3fb950; margin: 4px 0;">Target: >30% true positive rate</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>Common Tuning Patterns</h3>
-                <div class="styled-table">
-                    <table>
+                    <h4>Required Output Fields</h4>
+                    <table class="styled-table">
                         <thead>
-                            <tr>
-                                <th>Tuning Method</th>
-                                <th>XQL Syntax</th>
-                                <th>When to Use</th>
-                            </tr>
+                            <tr><th>Field</th><th>Purpose</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>xdm.alert.name</td><td>Alert title displayed in console</td><td>Yes</td></tr>
+                            <tr><td>xdm.alert.description</td><td>Detailed description</td><td>Recommended</td></tr>
+                            <tr><td>xdm.alert.severity</td><td>Alert severity level</td><td>Recommended</td></tr>
+                            <tr><td>xdm.source.host.hostname</td><td>Source host for entity mapping</td><td>For correlation</td></tr>
+                            <tr><td>xdm.source.user.username</td><td>Source user for entity mapping</td><td>For correlation</td></tr>
+                            <tr><td>xdm.source.ipv4</td><td>Source IP for entity mapping</td><td>For correlation</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Real Correlation Rule Examples -->
+                <h2><i class="fas fa-shield-alt"></i> Production-Ready Correlation Rules</h2>
+
+                <!-- Rule 1: Brute Force -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1110.001</span> Brute Force Authentication Attack</h3>
+                    <p><strong>Detection:</strong> Multiple failed logins followed by success from same source</p>
+                    <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
+                    <div class="code-block">dataset = xdr_identity_data
+| filter event_type = "authentication"
+| filter auth_result in ("failure", "success")
+| comp 
+    failures = countif(auth_result = "failure"),
+    successes = countif(auth_result = "success"),
+    first_failure = minif(_time, auth_result = "failure"),
+    success_time = maxif(_time, auth_result = "success")
+    by src_ip, target_user
+    over 15m
+| filter failures >= 5 and successes >= 1
+| filter success_time > first_failure  // Success came after failures
+| alter 
+    xdm.alert.name = concat("Brute Force Success: ", target_user),
+    xdm.alert.description = concat(
+        "User ", target_user, " had ", to_string(failures), 
+        " failed logins followed by successful login from ", src_ip
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.ipv4 = src_ip,
+    xdm.source.user.username = target_user</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 5 minutes | <strong>Window:</strong> 15 minutes
+                    </p>
+                </div>
+
+                <!-- Rule 2: Data Exfiltration -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1048</span> Potential Data Exfiltration</h3>
+                    <p><strong>Detection:</strong> Unusually large outbound data transfer to external IP</p>
+                    <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
+                    <div class="code-block">dataset = panw_ngfw_traffic_raw
+| filter direction = "outbound"
+| filter dst_ip_public = true
+| comp 
+    total_bytes = sum(bytes_sent),
+    connection_count = count(),
+    destinations = count_distinct(dst_ip)
+    by src_ip, src_host
+    over 1h
+| filter total_bytes > 1073741824  // 1 GB
+| alter 
+    xdm.alert.name = concat("Large Outbound Transfer from ", src_host),
+    xdm.alert.description = concat(
+        "Host ", src_host, " transferred ", 
+        to_string(round(total_bytes / 1048576, 2)), " MB to ",
+        to_string(destinations), " external destinations"
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.host.hostname = src_host,
+    xdm.source.ipv4 = src_ip</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 30 minutes | <strong>Window:</strong> 1 hour
+                    </p>
+                </div>
+
+                <!-- Rule 3: Lateral Movement -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1021.002</span> SMB Lateral Movement</h3>
+                    <p><strong>Detection:</strong> Single host connecting to multiple internal hosts via SMB</p>
+                    <p><strong>Severity:</strong> <span class="severity-medium">Medium</span></p>
+                    <div class="code-block">dataset = panw_ngfw_traffic_raw
+| filter app = "ms-ds-smb" or dst_port in (445, 139)
+| filter src_ip_private = true and dst_ip_private = true
+| comp 
+    unique_targets = count_distinct(dst_ip),
+    total_connections = count()
+    by src_ip, src_host
+    over 30m
+| filter unique_targets >= 5  // Connected to 5+ internal hosts
+| alter 
+    xdm.alert.name = concat("SMB Scanning from ", src_host),
+    xdm.alert.description = concat(
+        "Host ", src_host, " connected to ", 
+        to_string(unique_targets), " internal hosts via SMB in 30 minutes"
+    ),
+    xdm.alert.severity = "medium",
+    xdm.source.host.hostname = src_host,
+    xdm.source.ipv4 = src_ip</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 10 minutes | <strong>Window:</strong> 30 minutes
+                    </p>
+                </div>
+
+                <!-- Rule 4: Impossible Travel -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1078</span> Impossible Travel Detection</h3>
+                    <p><strong>Detection:</strong> User authentication from geographically distant locations in short time</p>
+                    <p><strong>Severity:</strong> <span class="severity-medium">Medium</span></p>
+                    <div class="code-block">dataset = xdr_identity_data
+| filter event_type = "authentication" and auth_result = "success"
+| sort _time asc
+| comp 
+    locations = arrayconcat(geo_country),
+    ips = arrayconcat(src_ip),
+    times = arrayconcat(_time),
+    login_count = count()
+    by target_user
+    over 2h
+| filter login_count >= 2
+| filter array_length(arraydistinct(locations)) >= 2  // Multiple countries
+| alter 
+    xdm.alert.name = concat("Impossible Travel: ", target_user),
+    xdm.alert.description = concat(
+        "User ", target_user, " authenticated from multiple countries: ",
+        arraystring(arraydistinct(locations), ", ")
+    ),
+    xdm.alert.severity = "medium",
+    xdm.source.user.username = target_user</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 15 minutes | <strong>Window:</strong> 2 hours
+                    </p>
+                </div>
+
+                <!-- Rule 5: Malware Communication -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1071</span> Known Malicious Domain Communication</h3>
+                    <p><strong>Detection:</strong> DNS query or connection to threat intel flagged domain</p>
+                    <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
+                    <div class="code-block">dataset = panw_ngfw_dns_raw
+| filter query_type in ("A", "AAAA", "CNAME")
+| join type=inner (
+    dataset = threat_intel_indicators
+    | filter indicator_type = "domain"
+    | filter confidence >= 80
+    | fields indicator_value, threat_type, source
+) as ti on query_name = ti.indicator_value
+| alter 
+    xdm.alert.name = concat("Malicious Domain: ", query_name),
+    xdm.alert.description = concat(
+        "Host ", src_host, " queried known malicious domain ",
+        query_name, " (", ti.threat_type, " - Source: ", ti.source, ")"
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.host.hostname = src_host,
+    xdm.source.ipv4 = src_ip</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 5 minutes | <strong>Window:</strong> 10 minutes
+                    </p>
+                </div>
+
+                <!-- Rule 6: Privilege Escalation -->
+                <div class="rule-card">
+                    <h3><span class="mitre-tag">T1078.002</span> New Admin Account Created</h3>
+                    <p><strong>Detection:</strong> User added to privileged group (Domain Admins, Enterprise Admins)</p>
+                    <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
+                    <div class="code-block">dataset = msft_security_events_raw
+| filter event_id in (4728, 4732, 4756)  // Member added to security group
+| filter target_group_name in (
+    "Domain Admins", "Enterprise Admins", "Schema Admins",
+    "Administrators", "Account Operators", "Backup Operators"
+)
+| alter 
+    xdm.alert.name = concat("Privileged Group Modified: ", target_group_name),
+    xdm.alert.description = concat(
+        "User ", added_member, " was added to ", target_group_name,
+        " by ", actor_user, " from ", src_host
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.user.username = actor_user,
+    xdm.source.host.hostname = src_host</div>
+                    <p style="color: #8b949e; font-size: 0.9rem; margin-top: 12px;">
+                        <strong>Schedule:</strong> Every 5 minutes | <strong>Window:</strong> 10 minutes
+                    </p>
+                </div>
+
+                <!-- Aggregation Patterns -->
+                <h2><i class="fas fa-calculator"></i> Aggregation Patterns</h2>
+                <div class="config-section">
+                    <h4>Threshold-Based Detection</h4>
+                    <div class="code-block">// Count events exceeding threshold
+| comp count() as event_count by src_ip over 15m
+| filter event_count >= 100
+
+// Sum values exceeding threshold  
+| comp sum(bytes) as total_bytes by src_host over 1h
+| filter total_bytes > 1073741824  // 1 GB
+
+// Distinct count threshold
+| comp count_distinct(dst_ip) as unique_dests by src_ip over 30m
+| filter unique_dests >= 50</div>
+
+                    <h4>Time-Window Correlation</h4>
+                    <div class="code-block">// Events in sequence (A then B)
+| comp 
+    event_a_time = minif(_time, event_type = "A"),
+    event_b_time = maxif(_time, event_type = "B")
+    by entity
+| filter event_b_time > event_a_time  // B happened after A
+
+// Events within time window
+| comp 
+    first_event = min(_time),
+    last_event = max(_time)
+    by entity over 1h
+| filter timestamp_diff(last_event, first_event, "MINUTE") <= 10</div>
+
+                    <h4>Statistical Anomaly Detection</h4>
+                    <div class="code-block">// Baseline comparison (requires historical data)
+| comp avg(event_count) as baseline by src_host over 7d
+| join type=inner (
+    // Current activity
+    dataset = current_data
+    | comp count() as current_count by src_host over 1h
+) as current on src_host = current.src_host
+| filter current.current_count > baseline * 3  // 3x normal</div>
+                </div>
+
+                <!-- Testing and Tuning -->
+                <h2><i class="fas fa-flask"></i> Testing and Tuning</h2>
+                <div class="config-section">
+                    <h4>Pre-Deployment Testing</h4>
+                    <ol style="color: #8b949e;">
+                        <li><strong>Run query manually:</strong> Execute in Investigation → Query Center</li>
+                        <li><strong>Review result volume:</strong> Check how many alerts it would generate</li>
+                        <li><strong>Validate detections:</strong> Confirm results are true positives</li>
+                        <li><strong>Check performance:</strong> Note query execution time</li>
+                        <li><strong>Test edge cases:</strong> Verify threshold boundaries work correctly</li>
+                    </ol>
+
+                    <h4>Tuning Strategies</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Problem</th><th>Solution</th></tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>Exclude specific hosts</strong></td>
-                                <td><code>| filter agent_hostname not in ("HOST1", "HOST2")</code></td>
-                                <td>Build servers, test environments</td>
+                                <td>Too many false positives</td>
+                                <td>Add exclusions, increase thresholds, narrow scope</td>
                             </tr>
                             <tr>
-                                <td><strong>Exclude by hostname pattern</strong></td>
-                                <td><code>| filter agent_hostname not ~= "^DEV-"</code></td>
-                                <td>Dev/test naming conventions</td>
+                                <td>Missing detections</td>
+                                <td>Lower thresholds, broaden filters, extend time window</td>
                             </tr>
                             <tr>
-                                <td><strong>Exclude users</strong></td>
-                                <td><code>| filter xdm.source.user.username not in ("svc_backup")</code></td>
-                                <td>Service accounts with known behavior</td>
+                                <td>Alert fatigue</td>
+                                <td>Group by entity, increase threshold, add context filters</td>
                             </tr>
                             <tr>
-                                <td><strong>Exclude parent processes</strong></td>
-                                <td><code>| filter actor_process_image_name not in ("sccm.exe")</code></td>
-                                <td>Legitimate management tools</td>
+                                <td>Slow query performance</td>
+                                <td>Add time filters early, reduce fields, limit datasets</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Adding Exclusions</h4>
+                    <div class="code-block">// Exclude known service accounts
+| filter target_user !in ("svc_backup", "svc_monitor", "healthcheck")
+
+// Exclude known scanners
+| filter src_ip !in ("10.0.0.50", "10.0.0.51")  // Vulnerability scanners
+
+// Exclude by pattern
+| filter src_host !~= "^YOURCOMPANY-SCANNER.*"
+
+// Exclude during maintenance windows
+| filter not (
+    dayofweek(_time) = 0 and  // Sunday
+    hour(_time) between 2 and 6  // 2-6 AM
+)</div>
+                </div>
+
+                <!-- Rule Lifecycle Management -->
+                <h2><i class="fas fa-sync-alt"></i> Rule Lifecycle Management</h2>
+                <div class="config-section">
+                    <h4>Rule States</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>State</th><th>Description</th><th>When to Use</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Enabled</td><td>Rule actively running and generating alerts</td><td>Production rules</td></tr>
+                            <tr><td>Disabled</td><td>Rule not running</td><td>Deprecated or problematic rules</td></tr>
+                            <tr><td>Test Mode</td><td>Running but alerts marked as test</td><td>New rules under evaluation</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Version Control Best Practices</h4>
+                    <ul style="color: #8b949e;">
+                        <li>Export rules to YAML/JSON and store in Git repository</li>
+                        <li>Document changes in rule description or comments</li>
+                        <li>Use naming conventions that include version (e.g., "v2")</li>
+                        <li>Test changes in test mode before enabling in production</li>
+                    </ul>
+
+                    <h4>Regular Review Cadence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Weekly:</strong> Review high-volume rules, tune false positives</li>
+                        <li><strong>Monthly:</strong> Review rule effectiveness metrics</li>
+                        <li><strong>Quarterly:</strong> Full rule inventory audit, retire unused rules</li>
+                        <li><strong>On-Demand:</strong> After incidents, after threat intel updates</li>
+                    </ul>
+                </div>
+
+                <!-- Performance Optimization -->
+                <h2><i class="fas fa-tachometer-alt"></i> Performance Optimization</h2>
+                <div class="config-section">
+                    <h4>Query Optimization Tips</h4>
+                    <div class="code-block">// BAD: Filter after aggregation
+dataset = panw_ngfw_traffic_raw
+| comp sum(bytes) as total by src_ip over 1h
+| filter total > 1000000000
+
+// GOOD: Filter early to reduce data
+dataset = panw_ngfw_traffic_raw
+| filter bytes > 10000  // Only large transfers
+| filter direction = "outbound"  // Narrow scope
+| comp sum(bytes) as total by src_ip over 1h
+| filter total > 1000000000
+
+// BAD: Select all fields
+dataset = xdr_data
+| filter ...
+
+// GOOD: Select only needed fields
+dataset = xdr_data
+| filter ...
+| fields _time, src_ip, dst_ip, event_type, bytes</div>
+
+                    <h4>Schedule Optimization</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Detection Type</th><th>Recommended Schedule</th><th>Time Window</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Critical security events</td><td>Every 5 minutes</td><td>10-15 minutes</td></tr>
+                            <tr><td>Threshold-based detection</td><td>Every 10-15 minutes</td><td>30 minutes</td></tr>
+                            <tr><td>Behavioral anomalies</td><td>Every 30 minutes</td><td>1-2 hours</td></tr>
+                            <tr><td>Daily summary rules</td><td>Every 24 hours</td><td>24 hours</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Common Mistakes -->
+                <h2><i class="fas fa-exclamation-triangle"></i> Common Mistakes to Avoid</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Mistake</th><th>Problem</th><th>Solution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Time window shorter than schedule</td>
+                                <td>Gaps in detection coverage</td>
+                                <td>Window should be >= 1.5x schedule interval</td>
                             </tr>
                             <tr>
-                                <td><strong>Raise threshold</strong></td>
-                                <td><code>| filter failed >= 20</code> (was 10)</td>
-                                <td>Too many alerts, need higher bar</td>
+                                <td>No entity mapping</td>
+                                <td>Alerts don't correlate into incidents</td>
+                                <td>Always map xdm.source.* fields</td>
                             </tr>
                             <tr>
-                                <td><strong>Narrow time window</strong></td>
-                                <td><code>| filter _time > ago(5m)</code> (was 10m)</td>
-                                <td>Events should be closer together</td>
+                                <td>Hardcoded thresholds</td>
+                                <td>Doesn't adapt to environment changes</td>
+                                <td>Consider baseline-based thresholds</td>
+                            </tr>
+                            <tr>
+                                <td>Missing exclusions</td>
+                                <td>Known-good activity triggers alerts</td>
+                                <td>Build exclusion list during testing</td>
+                            </tr>
+                            <tr>
+                                <td>Generic alert names</td>
+                                <td>Hard to triage without context</td>
+                                <td>Include key entities in alert name</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Interview Q&A -->
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through creating a correlation rule in XSIAM.</button>
                         <div class="qa-answer">
-                            <p><strong>Step-by-step process:</strong></p>
                             <ol>
-                                <li><strong>Navigate:</strong> Rules → Correlation Rules → + New Rule</li>
-                                <li><strong>Define metadata:</strong> Name, description, severity (Informational to Critical), MITRE ATT&CK technique</li>
-                                <li><strong>Write XQL query:</strong> Start with dataset, add filters for the attack pattern, use comp for aggregation if needed</li>
-                                <li><strong>Set execution:</strong> Frequency (how often to run), query window (how far back to look)</li>
-                                <li><strong>Test:</strong> Click "Test Rule" to run against historical data, review results</li>
-                                <li><strong>Enable:</strong> Toggle on and save</li>
+                                <li><strong>Define the use case:</strong> What attack/behavior am I detecting? Map to MITRE ATT&CK.</li>
+                                <li><strong>Identify data sources:</strong> Which datasets contain the relevant events?</li>
+                                <li><strong>Write XQL query:</strong> Build query with filters, aggregations, and thresholds</li>
+                                <li><strong>Test manually:</strong> Run in Query Center, validate results are true positives</li>
+                                <li><strong>Configure rule:</strong> Set schedule, time window, severity, entity mapping</li>
+                                <li><strong>Deploy in test mode:</strong> Monitor for false positives before production</li>
+                                <li><strong>Tune and document:</strong> Add exclusions, document detection logic</li>
                             </ol>
-                            <p><strong>Example for brute force:</strong> Query looks for 10+ failed logins followed by success from same IP in 10 minutes, runs every 5 minutes, generates High severity alert.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: A correlation rule has a 10% true positive rate. How do you tune it?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between correlation rules and BIOC rules?</button>
                         <div class="qa-answer">
-                            <p><strong>Systematic tuning approach:</strong></p>
-                            <ol>
-                                <li><strong>Analyze false positives:</strong> Review closed FP incidents, look for patterns (same host? same user? same parent process?)</li>
-                                <li><strong>Identify exclusion candidates:</strong> Service accounts, build servers, legitimate tools that trigger the rule</li>
-                                <li><strong>Modify query:</strong> Add exclusion filters:
-                                    <div class="code-block" style="margin: 8px 0;">| filter agent_hostname not in ("BUILD-01", "BUILD-02")
-| filter actor_process_image_name not in ("sccm.exe")
-| filter xdm.source.user.username not ~= "^svc_"</div>
-                                </li>
-                                <li><strong>Adjust thresholds:</strong> If too sensitive, raise the threshold (e.g., 10 failures → 20)</li>
-                                <li><strong>Test before deploying:</strong> Use "Test Rule" to verify changes would have caught true positives but not FPs</li>
-                                <li><strong>Monitor:</strong> Track TP rate over 1-2 weeks after changes</li>
-                            </ol>
-                            <p><strong>Target:</strong> >30% true positive rate is considered healthy for most environments.</p>
+                            <p><strong>Correlation Rules:</strong></p>
+                            <ul>
+                                <li>Run in cloud on Cortex Data Lake</li>
+                                <li>Scheduled execution (minutes to hours)</li>
+                                <li>Can query ANY data source (firewall, cloud, identity, endpoint)</li>
+                                <li>Good for: cross-source correlation, thresholds, aggregations</li>
+                            </ul>
+                            <p><strong>BIOC Rules:</strong></p>
+                            <ul>
+                                <li>Run on endpoint agents in real-time</li>
+                                <li>Only access endpoint telemetry</li>
+                                <li>Good for: process chains, behavioral patterns, immediate response</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prioritize which detection rules to build first?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you reduce false positives in correlation rules?</button>
                         <div class="qa-answer">
-                            <p><strong>Prioritization framework:</strong></p>
-                            <ol>
-                                <li><strong>Threat intelligence:</strong> What techniques are threat actors using against your industry? Check MITRE ATT&CK for sector-specific threats.</li>
-                                <li><strong>Data availability:</strong> Can't detect what you can't see. Prioritize rules where you have good data coverage.</li>
-                                <li><strong>Impact:</strong> Focus on high-impact techniques first:
-                                    <ul>
-                                        <li>Initial Access (phishing, exposed services)</li>
-                                        <li>Credential Access (Mimikatz, brute force)</li>
-                                        <li>Lateral Movement (RDP, PsExec)</li>
-                                        <li>Exfiltration (large transfers, unusual destinations)</li>
-                                    </ul>
-                                </li>
-                                <li><strong>MITRE coverage gaps:</strong> Map existing rules to ATT&CK, identify gaps, prioritize filling them.</li>
-                                <li><strong>Incident history:</strong> What have you seen in past incidents? Build rules to detect similar attacks.</li>
-                            </ol>
+                            <ul>
+                                <li><strong>Add exclusions:</strong> Known service accounts, scanner IPs, maintenance windows</li>
+                                <li><strong>Increase thresholds:</strong> Require more events or higher volumes</li>
+                                <li><strong>Add context filters:</strong> Only alert if additional conditions are met</li>
+                                <li><strong>Use grouping:</strong> Aggregate by entity to reduce alert volume</li>
+                                <li><strong>Baseline comparison:</strong> Compare to historical normal behavior</li>
+                                <li><strong>Correlation:</strong> Require multiple indicators before alerting</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure correlation rules don't miss events?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Time window overlap:</strong> Window should be >= 1.5x schedule interval</li>
+                                <li><strong>Monitor rule health:</strong> Check for execution failures</li>
+                                <li><strong>Test with known-bad data:</strong> Inject test events to verify detection</li>
+                                <li><strong>Review data ingestion:</strong> Ensure source data is flowing</li>
+                                <li><strong>Check query performance:</strong> Slow queries may timeout and miss events</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
             </main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Additional Rule Examples by Category -->
+                <h2><i class="fas fa-folder-open"></i> Rule Examples by Attack Category</h2>
+
+                <!-- Initial Access Rules -->
+                <div class="config-section">
+                    <h3><span class="mitre-tag">TA0001</span> Initial Access Detection</h3>
+                    
+                    <h4>Phishing Link Clicked</h4>
+                    <div class="code-block">dataset = panw_ngfw_url_raw
+| filter url_category in ("phishing", "malware", "newly-registered-domain")
+| filter action = "allowed"  // User actually reached the site
+| alter 
+    xdm.alert.name = concat("Phishing URL Accessed: ", url_domain),
+    xdm.alert.description = concat(
+        "User from ", src_host, " accessed suspicious URL: ", url,
+        " (Category: ", url_category, ")"
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.host.hostname = src_host,
+    xdm.source.user.username = src_user</div>
+
+                    <h4>External RDP Exposure</h4>
+                    <div class="code-block">dataset = panw_ngfw_traffic_raw
+| filter dst_port = 3389
+| filter src_ip_public = true  // External source
+| filter action = "allowed"
+| comp 
+    connection_count = count(),
+    unique_sources = count_distinct(src_ip)
+    by dst_ip, dst_host
+    over 1h
+| filter connection_count >= 10 or unique_sources >= 5
+| alter 
+    xdm.alert.name = concat("External RDP to ", dst_host),
+    xdm.alert.description = concat(
+        "Internal host ", dst_host, " received ", 
+        to_string(connection_count), " RDP connections from ",
+        to_string(unique_sources), " external IPs"
+    ),
+    xdm.alert.severity = "high"</div>
                 </div>
-            </footer>
+
+                <!-- Execution Rules -->
+                <div class="config-section">
+                    <h3><span class="mitre-tag">TA0002</span> Execution Detection</h3>
+                    
+                    <h4>PowerShell Download Cradle</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "process_execution"
+| filter process_name in ("powershell.exe", "pwsh.exe")
+| filter process_command_line ~= "(IEX|Invoke-Expression|Net\.WebClient|DownloadString|DownloadFile|Invoke-WebRequest|iwr|curl)"
+| alter 
+    xdm.alert.name = "PowerShell Download Cradle Detected",
+    xdm.alert.description = concat(
+        "Host ", host_name, " executed PowerShell with download pattern: ",
+        process_command_line
+    ),
+    xdm.alert.severity = "high",
+    xdm.source.host.hostname = host_name,
+    xdm.source.user.username = user_name</div>
+
+                    <h4>Suspicious Script Interpreter</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "process_execution"
+| filter process_name in ("wscript.exe", "cscript.exe", "mshta.exe")
+| filter parent_process_name not in ("explorer.exe", "cmd.exe")  // Unusual parent
+| alter 
+    xdm.alert.name = concat("Suspicious Script Execution via ", process_name),
+    xdm.alert.description = concat(
+        "Script interpreter ", process_name, " spawned by unusual parent ",
+        parent_process_name, " on ", host_name
+    ),
+    xdm.alert.severity = "medium"</div>
+                </div>
+
+                <!-- Persistence Rules -->
+                <div class="config-section">
+                    <h3><span class="mitre-tag">TA0003</span> Persistence Detection</h3>
+                    
+                    <h4>Scheduled Task Created via CLI</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "process_execution"
+| filter process_name = "schtasks.exe"
+| filter process_command_line contains "/create"
+| filter process_command_line ~= "(cmd|powershell|wscript|cscript|mshta)"
+| alter 
+    xdm.alert.name = "Suspicious Scheduled Task Created",
+    xdm.alert.description = concat(
+        "Scheduled task created on ", host_name, " with command: ",
+        process_command_line
+    ),
+    xdm.alert.severity = "medium",
+    xdm.source.host.hostname = host_name</div>
+
+                    <h4>Registry Run Key Modification</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "registry_modification"
+| filter registry_key ~= "\\CurrentVersion\\Run"
+| filter registry_value_data ~= "(\.exe|\.dll|\.bat|\.ps1|\.vbs)"
+| alter 
+    xdm.alert.name = "Registry Persistence Detected",
+    xdm.alert.description = concat(
+        "Run key modified on ", host_name, ": ",
+        registry_key, " = ", registry_value_data
+    ),
+    xdm.alert.severity = "medium"</div>
+                </div>
+
+                <!-- Defense Evasion Rules -->
+                <div class="config-section">
+                    <h3><span class="mitre-tag">TA0005</span> Defense Evasion Detection</h3>
+                    
+                    <h4>Security Tool Disabled</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "process_execution"
+| filter process_command_line ~= "(Set-MpPreference|DisableRealtimeMonitoring|Stop-Service.*Defender|sc stop|net stop)"
+| filter process_command_line ~= "(WinDefend|MsMpEng|Defender|SecurityHealth)"
+| alter 
+    xdm.alert.name = "Security Tool Tampering Detected",
+    xdm.alert.description = concat(
+        "Attempt to disable security tools on ", host_name, ": ",
+        process_command_line
+    ),
+    xdm.alert.severity = "high"</div>
+
+                    <h4>Log Clearing Detected</h4>
+                    <div class="code-block">dataset = msft_security_events_raw
+| filter event_id in (1102, 104)  // Security/System log cleared
+| alter 
+    xdm.alert.name = "Event Log Cleared",
+    xdm.alert.description = concat(
+        "Event log cleared on ", host_name, " by ", actor_user
+    ),
+    xdm.alert.severity = "high"</div>
+                </div>
+
+                <!-- Credential Access Rules -->
+                <div class="config-section">
+                    <h3><span class="mitre-tag">TA0006</span> Credential Access Detection</h3>
+                    
+                    <h4>LSASS Memory Access</h4>
+                    <div class="code-block">dataset = xdr_data
+| filter event_type = "process_access"
+| filter target_process_name = "lsass.exe"
+| filter source_process_name not in (
+    "csrss.exe", "services.exe", "svchost.exe", "wininit.exe"
+)  // Not normal system processes
+| alter 
+    xdm.alert.name = "LSASS Memory Access Detected",
+    xdm.alert.description = concat(
+        "Process ", source_process_name, " accessed LSASS memory on ", host_name
+    ),
+    xdm.alert.severity = "high"</div>
+
+                    <h4>Kerberoasting Activity</h4>
+                    <div class="code-block">dataset = msft_security_events_raw
+| filter event_id = 4769  // Kerberos Service Ticket Request
+| filter ticket_encryption_type = "0x17"  // RC4 (weak, used in Kerberoasting)
+| filter service_name != "krbtgt"
+| comp count() as ticket_requests by source_ip, target_user over 10m
+| filter ticket_requests >= 10  // Multiple service tickets requested
+| alter 
+    xdm.alert.name = "Potential Kerberoasting Activity",
+    xdm.alert.description = concat(
+        "User ", target_user, " requested ", 
+        to_string(ticket_requests), " RC4 service tickets from ", source_ip
+    ),
+    xdm.alert.severity = "medium"</div>
+                </div>
+
+                <!-- Multi-Stage Attack Detection -->
+                <h2><i class="fas fa-project-diagram"></i> Multi-Stage Attack Detection</h2>
+                <div class="config-section">
+                    <p>Correlate multiple indicators to detect complex attack chains:</p>
+                    
+                    <h4>Ransomware Precursor Activity</h4>
+                    <div class="code-block">// Detect combination of: reconnaissance + credential access + lateral movement
+dataset = xdr_data
+| filter event_type in ("process_execution", "network_connection")
+| alter indicator = case(
+    // Reconnaissance
+    process_name in ("net.exe", "nltest.exe", "dsquery.exe") and 
+    process_command_line ~= "(domain|trust|admin|computer)", "recon",
+    // Credential tools
+    process_name in ("mimikatz.exe", "procdump.exe") or
+    process_command_line contains "sekurlsa", "cred_access",
+    // Lateral movement tools
+    process_name in ("psexec.exe", "wmic.exe") and
+    process_command_line contains "\\\\", "lateral",
+    null
+)
+| filter indicator is not null
+| comp 
+    indicators = arraydistinct(arrayconcat(indicator)),
+    hosts_affected = count_distinct(host_name),
+    indicator_count = count()
+    by src_user
+    over 2h
+| filter array_length(indicators) >= 2  // Multiple attack phases
+| alter 
+    xdm.alert.name = "Multi-Stage Attack Detected",
+    xdm.alert.description = concat(
+        "User ", src_user, " exhibited multiple attack indicators: ",
+        arraystring(indicators, ", "), " across ", 
+        to_string(hosts_affected), " hosts"
+    ),
+    xdm.alert.severity = "critical"</div>
+                </div>
+
+                <!-- Rule Import/Export -->
+                <h2><i class="fas fa-file-export"></i> Rule Import/Export</h2>
+                <div class="config-section">
+                    <h4>Exporting Rules</h4>
+                    <p><span class="console-path">Detection Rules → Select Rule → Actions → Export</span></p>
+                    <p style="color: #8b949e;">Rules export as YAML format for version control and sharing.</p>
+
+                    <h4>Rule YAML Structure</h4>
+                    <div class="code-block">name: "Brute Force Authentication Attack"
+description: "Detects multiple failed logins followed by success"
+severity: HIGH
+mitre_attack:
+  - technique_id: T1110.001
+    tactic: Credential Access
+schedule:
+  interval: 5m
+  time_window: 15m
+xql_query: |
+  dataset = xdr_identity_data
+  | filter event_type = "authentication"
+  ...
+entity_mapping:
+  - field: src_ip
+    type: IP
+  - field: target_user
+    type: User
+enabled: true
+tags:
+  - brute_force
+  - authentication</div>
+
+                    <h4>Importing Rules</h4>
+                    <p><span class="console-path">Detection Rules → Import → Upload YAML</span></p>
+                    <ul style="color: #8b949e;">
+                        <li>Validate query syntax before import</li>
+                        <li>Review schedule and thresholds for your environment</li>
+                        <li>Test in test mode before enabling</li>
+                    </ul>
+                </div>
+
+                <!-- Metrics and Monitoring -->
+                <h2><i class="fas fa-chart-bar"></i> Rule Effectiveness Metrics</h2>
+                <div class="config-section">
+                    <h4>Key Metrics to Track</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Metric</th><th>Target</th><th>How to Calculate</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>True Positive Rate</td>
+                                <td>> 80%</td>
+                                <td>Confirmed incidents / Total alerts</td>
+                            </tr>
+                            <tr>
+                                <td>False Positive Rate</td>
+                                <td>< 20%</td>
+                                <td>FP alerts / Total alerts</td>
+                            </tr>
+                            <tr>
+                                <td>Alert Volume</td>
+                                <td>Manageable for team</td>
+                                <td>Alerts per day per rule</td>
+                            </tr>
+                            <tr>
+                                <td>Detection Latency</td>
+                                <td>< Schedule + Window</td>
+                                <td>Alert time - Event time</td>
+                            </tr>
+                            <tr>
+                                <td>Rule Coverage</td>
+                                <td>Key MITRE techniques</td>
+                                <td>Techniques with rules / Priority techniques</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Query to Analyze Rule Effectiveness</h4>
+                    <div class="code-block">dataset = xdr_alerts
+| filter alert_source = "correlation_rule"
+| comp 
+    total_alerts = count(),
+    true_positives = countif(verdict = "true_positive"),
+    false_positives = countif(verdict = "false_positive")
+    by rule_name
+    over 30d
+| alter 
+    tp_rate = round(true_positives * 100 / total_alerts, 1),
+    fp_rate = round(false_positives * 100 / total_alerts, 1)
+| sort fp_rate desc</div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
         </div>
     </div>
     <script>

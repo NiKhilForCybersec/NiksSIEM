@@ -3,13 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPL Intermediate | Splunk | Nik's SIEM</title>
+    <title>SPL Intermediate | Splunk</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .cmd-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .cmd-name { color: #3fb950; font-weight: 700; font-size: 1.1rem; }
+        .cmd-syntax { background: #21262d; padding: 8px 12px; border-radius: 4px; font-family: monospace; margin: 8px 0; display: block; }
+    </style>
 </head>
 <body>
     <div class="app-container">
-                <aside class="sidebar">
+                                                                        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -67,135 +74,863 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-layer-group"></i> SPL Intermediate</h1>
-                <p class="lead">Build on SPL fundamentals with subsearches, transactions, lookups, macros, and eval functions for complex security analysis.</p>
+                <p class="lead">Advance your SPL skills with transactions, subsearches, lookups, macros, and event correlation techniques essential for security analysis.</p>
 
-                <h2><i class="fas fa-code"></i> Subsearches</h2>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Subsearch Examples</div>
-<pre>
-# Find events from top talkers
-index=network 
-[search index=network | top 10 src_ip | fields src_ip]
+                <!-- Transaction Command -->
+                <h2><i class="fas fa-link"></i> Transaction Command</h2>
+                <div class="config-section">
+                    <p>The <code>transaction</code> command groups related events into single transactions based on field values or time.</p>
+                    
+                    <div class="cmd-card">
+                        <span class="cmd-name">transaction</span> - Group related events
+                        <span class="cmd-syntax">transaction [field-list] [startswith=...] [endswith=...] [maxspan=time] [maxpause=time]</span>
+                    </div>
 
-# Find users who logged in from known bad IPs
-index=authentication action=success
-[| inputlookup bad_ips.csv | fields ip | rename ip as src]
+                    <h4>Basic Transaction by Field</h4>
+                    <div class="code-block">// Group all events by session ID
+index=web sourcetype=access_combined
+| transaction session_id
 
-# Events from users with failed logins
-index=* 
-[search index=authentication action=failure 
-| stats count by user 
-| where count > 5 
-| fields user]
-</pre>
-                </div>
+// Transaction fields created:
+// duration - time span of transaction
+// eventcount - number of events in transaction
+// _raw - combined raw events</div>
 
-                <h2><i class="fas fa-link"></i> Transactions</h2>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Transaction Examples</div>
-<pre>
-# Group events by session
+                    <h4>Transaction with Start/End Conditions</h4>
+                    <div class="code-block">// Group login sessions
+index=security sourcetype=WinEventLog:Security
+| transaction user startswith="EventCode=4624" endswith="EventCode=4634"
+| table user, duration, eventcount, _time
+
+// Web sessions with request/response
 index=web 
-| transaction session_id maxpause=5m
+| transaction session_id startswith="action=login" endswith="action=logout" maxspan=8h
+| where eventcount > 1</div>
 
-# Login to logout session
-index=authentication 
-| transaction user startswith="action=login" endswith="action=logout" maxspan=8h
-| eval session_duration = duration
-| table user, session_duration, eventcount
+                    <h4>Transaction Time Controls</h4>
+                    <div class="code-block">// maxspan - maximum total duration
+| transaction user maxspan=30m
 
-# Multi-stage attack (recon -> exploit -> exfil)
-index=security 
-| transaction src_ip maxspan=1h 
-| search eventcount > 3
-</pre>
+// maxpause - maximum gap between events
+| transaction user maxpause=5m
+
+// Combined
+| transaction session_id maxspan=1h maxpause=10m</div>
+
+                    <h4>Security Use Cases</h4>
+                    <div class="code-block">// Track user session activity
+index=security EventCode IN (4624, 4625, 4634, 4647)
+| transaction user maxspan=8h startswith="EventCode=4624" endswith=(EventCode=4634 OR EventCode=4647)
+| eval session_hours = round(duration/3600, 2)
+| table user, session_hours, eventcount, _time
+
+// Detect multi-stage attacks
+index=endpoint
+| transaction host maxspan=30m
+| search (process_name=powershell.exe) AND (action=network_connection)
+| table host, duration, eventcount
+
+// Track file access patterns
+index=security EventCode=4663
+| transaction user, ObjectName maxspan=5m
+| where eventcount > 10
+| table user, ObjectName, eventcount, duration</div>
                 </div>
 
-                <h2><i class="fas fa-table"></i> Lookups</h2>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Lookup Examples</div>
-<pre>
-# Enrich with asset information
-index=security 
-| lookup asset_lookup ip as src_ip OUTPUT asset_name, asset_criticality, owner
-| table _time, src_ip, asset_name, asset_criticality, event_type
+                <!-- Subsearches -->
+                <h2><i class="fas fa-code-branch"></i> Subsearches</h2>
+                <div class="config-section">
+                    <p>Subsearches run first and pass results to the outer search. Enclosed in square brackets <code>[ ]</code>.</p>
 
-# Check against threat intel
-index=network 
-| lookup threat_intel_ip ip as dest_ip OUTPUT threat_type, confidence
-| where isnotnull(threat_type)
+                    <h4>Basic Subsearch</h4>
+                    <div class="code-block">// Find all activity from IPs that had failed logins
+index=firewall src_ip IN 
+    [search index=security EventCode=4625 earliest=-1h
+    | stats count by src_ip 
+    | where count > 5 
+    | fields src_ip]
 
-# Automatic lookup (configured in transforms.conf)
-# Just query - enrichment happens automatically
-index=authentication
-| table user, department, manager  # department/manager from identity lookup
-</pre>
+// The subsearch:
+// 1. Runs first
+// 2. Finds IPs with >5 failed logins
+// 3. Returns list of src_ip values
+// 4. Outer search filters firewall logs to those IPs</div>
+
+                    <h4>Return Command (More Efficient)</h4>
+                    <div class="code-block">// return command is more efficient for subsearches
+index=firewall src_ip IN 
+    [search index=security EventCode=4625 earliest=-1h
+    | stats count by src_ip 
+    | where count > 5 
+    | return 100 src_ip]
+
+// return N fieldname - returns up to N values
+// More efficient than fields command for subsearches</div>
+
+                    <h4>Format Command for Complex Subsearches</h4>
+                    <div class="code-block">// format creates OR'd search string
+index=web 
+    [search index=threat_intel type=malicious_ip
+    | fields ip
+    | format]
+
+// format output: ( ( ip="1.2.3.4" ) OR ( ip="5.6.7.8" ) ... )</div>
+
+                    <h4>Subsearch Use Cases</h4>
+                    <div class="code-block">// Find all activity from users who accessed sensitive files
+index=endpoint 
+    [search index=security EventCode=4663 ObjectName="*sensitive*"
+    | dedup user
+    | fields user]
+
+// Find network connections from processes that also wrote files
+index=firewall 
+    [search index=endpoint action=file_write file_path="*temp*"
+    | stats count by process_name
+    | return 50 process_name]
+
+// Alert context: Get all events for hosts with critical alerts
+index=* host IN 
+    [search index=alerts severity=critical earliest=-1h
+    | dedup host
+    | return 100 host]</div>
+
+                    <h4>Subsearch Limitations</h4>
+                    <ul style="color: #8b949e;">
+                        <li>Default timeout: 60 seconds</li>
+                        <li>Default max results: 10,000</li>
+                        <li>Results truncated to ~10,000 characters when passed to outer search</li>
+                        <li>Consider <code>join</code> for larger datasets</li>
+                    </ul>
                 </div>
 
+                <!-- Join Command -->
+                <h2><i class="fas fa-object-group"></i> Join Command</h2>
+                <div class="config-section">
+                    <p>Combines results from two searches based on common field values. More powerful than subsearches for large datasets.</p>
+
+                    <div class="cmd-card">
+                        <span class="cmd-name">join</span> - Combine search results
+                        <span class="cmd-syntax">join [type=inner|outer|left] field [search ...]</span>
+                    </div>
+
+                    <h4>Inner Join (Default)</h4>
+                    <div class="code-block">// Only matching records from both searches
+index=security EventCode=4625
+| stats count as failed_logins by src_ip
+| join src_ip 
+    [search index=assets 
+    | fields ip, hostname, owner, department
+    | rename ip as src_ip]
+| table src_ip, hostname, owner, failed_logins</div>
+
+                    <h4>Left Join</h4>
+                    <div class="code-block">// All records from main search, matching from subsearch
+index=security EventCode=4625
+| stats count as failed_logins by src_ip
+| join type=left src_ip 
+    [search index=assets | fields ip, hostname | rename ip as src_ip]
+| fillnull hostname value="Unknown"
+| table src_ip, hostname, failed_logins</div>
+
+                    <h4>Outer Join</h4>
+                    <div class="code-block">// All records from both searches
+index=security EventCode=4625
+| stats count by src_ip
+| join type=outer src_ip 
+    [search index=threat_intel | fields ip, threat_type | rename ip as src_ip]
+| table src_ip, count, threat_type</div>
+
+                    <h4>Join on Multiple Fields</h4>
+                    <div class="code-block">// Join on src_ip AND user
+index=vpn
+| join src_ip, user 
+    [search index=security EventCode=4624 
+    | fields src_ip, user, workstation]</div>
+
+                    <h4>Alternative: stats + where (Often Better)</h4>
+                    <div class="code-block">// Instead of join, combine in single search
+index=security OR index=assets
+| stats 
+    values(EventCode) as events,
+    values(hostname) as hostname,
+    values(owner) as owner,
+    count as event_count
+    by src_ip
+| where isnotnull(events)</div>
+                </div>
+
+                <!-- Lookups -->
+                <h2><i class="fas fa-table"></i> Advanced Lookups</h2>
+                <div class="config-section">
+                    <h4>Lookup Command</h4>
+                    <div class="code-block">// Basic lookup
+index=firewall
+| lookup geo_ip_lookup ip as src_ip OUTPUT country, city, latitude, longitude
+
+// Lookup with field renaming
+index=security
+| lookup user_info.csv username as user OUTPUT department, manager, title
+
+// Case-insensitive lookup
+index=security
+| lookup case_insensitive=true user_info.csv username as user OUTPUT department</div>
+
+                    <h4>Inputlookup - Search a Lookup Directly</h4>
+                    <div class="code-block">// View entire lookup
+| inputlookup threat_intel.csv
+
+// Filter lookup contents
+| inputlookup threat_intel.csv 
+| where threat_type="malware" AND confidence > 80
+
+// Use lookup for threat hunting
+| inputlookup known_bad_hashes.csv
+| rename hash as file_hash
+| join file_hash [search index=endpoint | fields file_hash, host, file_path]</div>
+
+                    <h4>Outputlookup - Save Results to Lookup</h4>
+                    <div class="code-block">// Create/overwrite lookup
+index=security EventCode=4625
+| stats count by src_ip
+| where count > 10
+| outputlookup suspicious_ips.csv
+
+// Append to existing lookup
+index=security EventCode=4625 earliest=-1h
+| stats count by src_ip
+| outputlookup append=true suspicious_ips.csv
+
+// Create with key for updates
+index=assets
+| stats latest(hostname) as hostname, latest(os) as os by ip
+| outputlookup createinapp=true assets_inventory.csv</div>
+
+                    <h4>Automatic Lookups</h4>
+                    <div class="code-block">// Configure in transforms.conf and props.conf for automatic enrichment
+// When configured, lookups run automatically on search
+
+// Example: Automatic user department lookup
+// Every search on index=security automatically gets department field
+index=security EventCode=4624
+| table user, department, src_ip  // department added automatically</div>
+                </div>
+
+                <!-- Eval Advanced Functions -->
                 <h2><i class="fas fa-calculator"></i> Advanced Eval Functions</h2>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Eval Examples</div>
-<pre>
-# Multiple conditions with case
-| eval severity = case(
-    count > 100, "critical",
-    count > 50, "high",
-    count > 10, "medium",
-    true(), "low"
+                <div class="config-section">
+                    <h4>Conditional Logic</h4>
+                    <div class="code-block">// Nested if statements
+| eval risk_level = if(count > 100, "Critical", 
+                    if(count > 50, "High",
+                    if(count > 10, "Medium", "Low")))
+
+// Case function (cleaner for multiple conditions)
+| eval risk_level = case(
+    count > 100, "Critical",
+    count > 50, "High",
+    count > 10, "Medium",
+    1=1, "Low"
 )
 
-# Coalesce - first non-null value
-| eval user = coalesce(src_user, dest_user, "unknown")
+// Coalesce - first non-null value
+| eval user = coalesce(src_user, dest_user, target_user, "unknown")
 
-# String manipulation
+// Nullif - return null if condition met
+| eval clean_user = nullif(user, "N/A")</div>
+
+                    <h4>String Manipulation</h4>
+                    <div class="code-block">// Extract domain from email
 | eval domain = mvindex(split(email, "@"), 1)
+
+// Extract filename from path
 | eval filename = mvindex(split(file_path, "\\"), -1)
 
-# Time functions
-| eval hour = strftime(_time, "%H")
-| eval day_of_week = strftime(_time, "%A")
-| eval is_business_hours = if(hour >= 9 AND hour <= 17, "yes", "no")
+// URL decode
+| eval decoded_url = urldecode(url)
 
-# Regex extraction
-| rex field=message "user=(?<extracted_user>[^\s]+)"
-| rex field=url "https?://(?<domain>[^/]+)"
-</pre>
+// Base64 decode (for investigating encoded commands)
+| eval decoded_cmd = base64decode(encoded_string)
+
+// Replace with regex
+| eval clean_cmd = replace(command, "password=\S+", "password=REDACTED")
+
+// Padding
+| eval padded_id = printf("%08d", id)</div>
+
+                    <h4>Time Calculations</h4>
+                    <div class="code-block">// Time since event
+| eval hours_ago = round((now() - _time) / 3600, 2)
+
+// Business hours check
+| eval hour = strftime(_time, "%H")
+| eval is_business_hours = if(hour >= 8 AND hour <= 18, "yes", "no")
+
+// Day of week
+| eval day = strftime(_time, "%A")
+| eval is_weekend = if(day IN ("Saturday", "Sunday"), "yes", "no")
+
+// Time difference between events
+| sort _time
+| streamstats current=f last(_time) as prev_time by session_id
+| eval gap_seconds = _time - prev_time</div>
+
+                    <h4>Network Functions</h4>
+                    <div class="code-block">// CIDR matching
+| where cidrmatch("10.0.0.0/8", src_ip)
+
+// Check if IP is internal
+| eval is_internal = if(
+    cidrmatch("10.0.0.0/8", src_ip) OR
+    cidrmatch("172.16.0.0/12", src_ip) OR
+    cidrmatch("192.168.0.0/16", src_ip),
+    "internal", "external"
+)
+
+// Convert IP to integer for sorting
+| eval ip_num = tonumber(replace(src_ip, "\.", ""))</div>
                 </div>
 
+                <!-- Eventstats and Streamstats -->
+                <h2><i class="fas fa-chart-line"></i> Eventstats and Streamstats</h2>
+                <div class="config-section">
+                    <h4>Eventstats - Add Aggregations Without Reducing Rows</h4>
+                    <div class="code-block">// Add total to each event
+index=security EventCode=4625
+| eventstats count as total_failures
+| eval percentage = round(count * 100 / total_failures, 2)
+
+// Compare event to group average
+index=firewall
+| eventstats avg(bytes) as avg_bytes by src_ip
+| eval deviation = bytes - avg_bytes
+| where deviation > avg_bytes * 2  // More than 2x average
+
+// Add group statistics
+index=security
+| eventstats 
+    count as total_events,
+    dc(src_ip) as unique_ips,
+    earliest(_time) as first_seen,
+    latest(_time) as last_seen
+    by user</div>
+
+                    <h4>Streamstats - Running Statistics</h4>
+                    <div class="code-block">// Running count
+index=security
+| sort _time
+| streamstats count as running_total
+
+// Running count by group
+index=security
+| sort _time
+| streamstats count as user_event_num by user
+
+// Windowed statistics (last N events)
+index=firewall
+| sort _time
+| streamstats avg(bytes) as rolling_avg window=10
+
+// Time-windowed statistics
+index=security EventCode=4625
+| sort _time
+| streamstats time_window=5m count as failures_5min by src_ip
+| where failures_5min > 10
+
+// Detect velocity spikes
+index=web
+| sort _time
+| streamstats time_window=1m count as requests_per_min by src_ip
+| where requests_per_min > 100</div>
+
+                    <h4>Streamstats for Anomaly Detection</h4>
+                    <div class="code-block">// Compare current event to recent baseline
+index=firewall
+| sort _time
+| streamstats avg(bytes) as baseline_avg, stdev(bytes) as baseline_std window=100 current=f
+| eval zscore = (bytes - baseline_avg) / baseline_std
+| where zscore > 3  // More than 3 standard deviations
+
+// Detect gaps in expected events
+index=heartbeat
+| sort _time
+| streamstats current=f last(_time) as prev_time by host
+| eval gap_minutes = (_time - prev_time) / 60
+| where gap_minutes > 5</div>
+                </div>
+
+                <!-- Macros -->
+                <h2><i class="fas fa-code"></i> Search Macros</h2>
+                <div class="config-section">
+                    <p>Macros are reusable search snippets defined in macros.conf or via Splunk UI.</p>
+
+                    <h4>Using Macros</h4>
+                    <div class="code-block">// Macro with no arguments
+`security_index`
+// Expands to: index=security sourcetype=WinEventLog:Security
+
+// Macro with arguments
+`failed_logins(10)`
+// Expands to: index=security EventCode=4625 | stats count by src_ip | where count > 10
+
+// Nested macro usage
+index=security `exclude_service_accounts` `business_hours_only`</div>
+
+                    <h4>Defining Macros (in macros.conf)</h4>
+                    <div class="code-block"># macros.conf
+
+[security_index]
+definition = index=security sourcetype=WinEventLog:Security
+
+[failed_logins(1)]
+args = threshold
+definition = index=security EventCode=4625 | stats count by src_ip | where count > $threshold$
+
+[exclude_service_accounts]
+definition = NOT user IN ("svc_*", "SYSTEM", "LOCAL SERVICE", "NETWORK SERVICE")
+
+[business_hours_only]
+definition = | where (date_hour >= 8 AND date_hour <= 18) AND NOT (date_wday="saturday" OR date_wday="sunday")
+
+[get_risk_score(2)]
+args = field, weight
+definition = eval risk_score = $field$ * $weight$</div>
+
+                    <h4>Security Macro Examples</h4>
+                    <div class="code-block"># Useful security macros
+
+[internal_ip]
+definition = (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("172.16.0.0/12", src_ip) OR cidrmatch("192.168.0.0/16", src_ip))
+
+[external_ip]
+definition = NOT `internal_ip`
+
+[windows_security]
+definition = index=security sourcetype=WinEventLog:Security
+
+[authentication_events]
+definition = EventCode IN (4624, 4625, 4634, 4647, 4648, 4672)
+
+[high_risk_processes]
+definition = process_name IN ("mimikatz.exe", "procdump.exe", "psexec.exe", "wmic.exe", "certutil.exe")</div>
+                </div>
+
+                <!-- Tstats for Performance -->
+                <h2><i class="fas fa-tachometer-alt"></i> Tstats for High Performance</h2>
+                <div class="config-section">
+                    <p><code>tstats</code> queries indexed fields directly, providing 10-100x performance improvement over regular searches.</p>
+
+                    <div class="code-block">// Basic tstats query
+| tstats count where index=security by source, sourcetype
+
+// With time bucketing
+| tstats count where index=security by _time span=1h
+
+// Using data model (most powerful)
+| tstats count from datamodel=Authentication where Authentication.action=failure by Authentication.src, Authentication.user
+
+// Prestats with regular search
+| tstats prestats=t count where index=security by host
+| stats count by host
+
+// Summariesonly for accelerated data models
+| tstats summariesonly=t count from datamodel=Network_Traffic by All_Traffic.dest_port</div>
+
+                    <h4>When to Use Tstats</h4>
+                    <ul style="color: #8b949e;">
+                        <li>Counting and basic aggregations over large datasets</li>
+                        <li>Dashboard searches that need sub-second response</li>
+                        <li>Data model accelerations are configured</li>
+                        <li>Searching indexed fields only (not _raw)</li>
+                    </ul>
+                </div>
+
+                <!-- Security Analysis Patterns -->
+                <h2><i class="fas fa-shield-alt"></i> Security Analysis Patterns</h2>
+                <div class="config-section">
+                    <h4>Baseline and Anomaly Detection</h4>
+                    <div class="code-block">// Build baseline and detect anomalies
+index=proxy
+| stats count as daily_requests by user, _time span=1d
+| eventstats avg(daily_requests) as baseline, stdev(daily_requests) as std by user
+| where daily_requests > baseline + (3 * std)
+| table _time, user, daily_requests, baseline</div>
+
+                    <h4>First-Time Activity Detection</h4>
+                    <div class="code-block">// First time user logged into system
+index=security EventCode=4624
+| stats earliest(_time) as first_login by user, ComputerName
+| where first_login > relative_time(now(), "-24h")
+| convert ctime(first_login)
+| table user, ComputerName, first_login</div>
+
+                    <h4>Peer Group Analysis</h4>
+                    <div class="code-block">// Compare user activity to department peers
+index=proxy
+| lookup user_department.csv user OUTPUT department
+| stats count as user_requests by user, department
+| eventstats avg(user_requests) as dept_avg by department
+| eval deviation_pct = round((user_requests - dept_avg) / dept_avg * 100, 1)
+| where deviation_pct > 200
+| table user, department, user_requests, dept_avg, deviation_pct</div>
+
+                    <h4>Threshold Alerting</h4>
+                    <div class="code-block">// Failed login threshold with context
+index=security EventCode=4625
+| bin _time span=10m
+| stats count, values(user) as targeted_users, dc(user) as user_count by src_ip, _time
+| where count > 10
+| eval alert_type = case(
+    user_count > 5 AND count > 50, "Credential Stuffing",
+    user_count == 1 AND count > 20, "Brute Force",
+    1=1, "Multiple Failed Logins"
+)</div>
+                </div>
+
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: What's the difference between subsearch and join?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When would you use transaction vs stats?</button>
                         <div class="qa-answer">
-                            <p><strong>Subsearch:</strong></p>
+                            <p><strong>Use transaction when:</strong></p>
                             <ul>
-                                <li>Runs first, returns values used in main search</li>
-                                <li>Limited to ~10,000 results, 60 seconds</li>
-                                <li>Good for: filtering main search by dynamic list</li>
+                                <li>You need to see the actual events grouped together</li>
+                                <li>Events have start/end conditions (login/logout)</li>
+                                <li>You need duration between first and last event</li>
+                                <li>Order of events matters</li>
                             </ul>
-                            <p><strong>Join:</strong></p>
+                            <p><strong>Use stats when:</strong></p>
                             <ul>
-                                <li>Combines fields from two datasets</li>
-                                <li>More flexible but memory-intensive</li>
-                                <li>Good for: enrichment, correlation between datasets</li>
+                                <li>You only need aggregated values (counts, sums)</li>
+                                <li>Performance is critical (stats is faster)</li>
+                                <li>You don't need to see individual events</li>
                             </ul>
-                            <p><strong>Best practice:</strong> Use subsearch for filtering, join for enrichment, stats for aggregation-based correlation</p>
+                            <p><strong>Example:</strong> Use transaction to trace a user's session; use stats to count failed logins per user.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between eventstats and streamstats?</button>
+                        <div class="qa-answer">
+                            <p><strong>eventstats:</strong></p>
+                            <ul>
+                                <li>Calculates statistics across ALL events in results</li>
+                                <li>Adds the same calculated value to every event</li>
+                                <li>Good for: comparing each event to total, calculating percentages</li>
+                            </ul>
+                            <p><strong>streamstats:</strong></p>
+                            <ul>
+                                <li>Calculates running statistics as it processes events</li>
+                                <li>Each event gets statistics based on events before it</li>
+                                <li>Supports time windows and event windows</li>
+                                <li>Good for: running totals, detecting velocity changes, anomaly detection</li>
+                            </ul>
+                            <div class="code-block">// eventstats: same total on all rows
+| eventstats count as total
+
+// streamstats: cumulative count
+| streamstats count as running_total</div>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you optimize a slow search that uses subsearch?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Use return command:</strong> <code>| return 100 field</code> is more efficient than <code>| fields field</code></li>
+                                <li><strong>Limit subsearch scope:</strong> Add time ranges and filters to subsearch</li>
+                                <li><strong>Consider join:</strong> For larger datasets, join can be more efficient</li>
+                                <li><strong>Use lookups:</strong> If subsearch data is static, save as lookup</li>
+                                <li><strong>Increase limits:</strong> <code>maxout</code>, <code>maxtime</code> in limits.conf</li>
+                            </ol>
+                            <div class="code-block">// Slow
+src_ip IN [search index=threat_intel | fields ip]
+
+// Better
+src_ip IN [search index=threat_intel | return 1000 ip]
+
+// Best (for static data)
+| lookup threat_intel.csv ip as src_ip OUTPUT threat_type</div>
                         </div>
                     </div>
                 </div>
+
             </main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="index.html">Splunk</a>
-                    </div>
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
         </div>
     </div>
-    <script>document.querySelectorAll('.qa-question').forEach(b=>{b.addEventListener('click',()=>{const a=b.nextElementSibling,o=a.style.display==='block';document.querySelectorAll('.qa-answer').forEach(x=>x.style.display='none');document.querySelectorAll('.qa-question').forEach(x=>x.classList.remove('active'));if(!o){a.style.display='block';b.classList.add('active');}});});</script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Append and Appendcols -->
+                <h2><i class="fas fa-plus-square"></i> Append Commands</h2>
+                <div class="config-section">
+                    <h4>Append - Add Results from Another Search</h4>
+                    <div class="code-block">// Combine results from two searches
+index=security EventCode=4625
+| stats count as failed_logins by user
+| append 
+    [search index=security EventCode=4624
+    | stats count as successful_logins by user]
+| stats sum(failed_logins) as failed, sum(successful_logins) as success by user
+
+// Add summary row
+index=firewall
+| stats count by action
+| append 
+    [search index=firewall | stats count as count | eval action="TOTAL"]</div>
+
+                    <h4>Appendcols - Add Columns from Another Search</h4>
+                    <div class="code-block">// Add threat intel context as new column
+index=security EventCode=4625
+| stats count by src_ip
+| appendcols 
+    [search index=threat_intel
+    | stats values(threat_type) as threats by ip
+    | rename ip as src_ip]</div>
+
+                    <h4>Appendpipe - Send Results Through Another Pipeline</h4>
+                    <div class="code-block">// Add summary statistics to results
+index=security EventCode=4625
+| stats count by src_ip
+| appendpipe [stats sum(count) as count | eval src_ip="TOTAL"]
+| sort - count</div>
+                </div>
+
+                <!-- Dedup and Cluster -->
+                <h2><i class="fas fa-filter"></i> Dedup and Cluster</h2>
+                <div class="config-section">
+                    <h4>Dedup - Remove Duplicates</h4>
+                    <div class="code-block">// Keep first occurrence
+index=security EventCode=4625
+| dedup user
+
+// Keep first N occurrences
+index=security EventCode=4625
+| dedup 5 user
+
+// Dedup on multiple fields
+index=firewall
+| dedup src_ip, dest_ip, dest_port
+
+// Sort before dedup to control which event is kept
+index=security EventCode=4625
+| sort - _time
+| dedup user  // Keeps most recent for each user</div>
+
+                    <h4>Cluster - Group Similar Events</h4>
+                    <div class="code-block">// Cluster similar raw events
+index=application error
+| cluster showcount=t
+| sort - cluster_count
+| table cluster_count, _raw
+
+// Cluster with custom threshold
+index=application
+| cluster t=0.8  // Higher threshold = more similar events grouped</div>
+                </div>
+
+                <!-- Bucket and Bin -->
+                <h2><i class="fas fa-archive"></i> Bucket and Bin</h2>
+                <div class="config-section">
+                    <div class="code-block">// Time bucketing
+index=security
+| bin _time span=1h
+| stats count by _time
+
+// Custom spans
+| bin _time span=15m  // 15 minutes
+| bin _time span=1d   // 1 day
+| bin _time span=1w   // 1 week
+
+// Numeric bucketing
+index=firewall
+| bin bytes bins=10
+| stats count by bytes
+
+// Bucket by logarithmic scale
+index=firewall
+| eval bytes_bucket = case(
+    bytes < 1000, "<1KB",
+    bytes < 10000, "1-10KB",
+    bytes < 100000, "10-100KB",
+    bytes < 1000000, "100KB-1MB",
+    1=1, ">1MB"
+)</div>
+                </div>
+
+                <!-- Fillnull and Filldown -->
+                <h2><i class="fas fa-fill"></i> Fillnull and Filldown</h2>
+                <div class="config-section">
+                    <div class="code-block">// Fill null values with default
+index=security
+| stats count by user, action
+| fillnull value="N/A"
+
+// Fill specific fields
+| fillnull value=0 failed_count, success_count
+
+// Filldown - propagate values down
+index=security
+| sort _time
+| filldown user  // Fill empty user values with previous value</div>
+                </div>
+
+                <!-- Multisearch -->
+                <h2><i class="fas fa-layer-group"></i> Multisearch</h2>
+                <div class="config-section">
+                    <div class="code-block">// Run multiple independent searches and combine
+| multisearch 
+    [search index=security EventCode=4625 | stats count as failed_logins]
+    [search index=security EventCode=4624 | stats count as successful_logins]
+    [search index=security EventCode=4634 | stats count as logoffs]
+
+// With labels
+| multisearch 
+    [search index=security earliest=-1h | stats count | eval period="last_hour"]
+    [search index=security earliest=-24h latest=-1h | stats count | eval period="last_24h"]
+    [search index=security earliest=-7d latest=-24h | stats count | eval period="last_week"]</div>
+                </div>
+
+                <!-- Map Command -->
+                <h2><i class="fas fa-map"></i> Map Command</h2>
+                <div class="config-section">
+                    <p>The <code>map</code> command runs a search for each result from the base search.</p>
+                    <div class="code-block">// Get details for each suspicious IP
+index=security EventCode=4625
+| stats count by src_ip
+| where count > 10
+| map search="search index=firewall src_ip=$src_ip$ | stats count by action"
+
+// Get user activity for each alert
+index=alerts severity=high
+| dedup user
+| map maxsearches=10 search="search index=security user=$user$ earliest=-1h | stats count by EventCode"</div>
+                </div>
+
+                <!-- Advanced Rex Patterns -->
+                <h2><i class="fas fa-asterisk"></i> Advanced Rex Patterns</h2>
+                <div class="config-section">
+                    <h4>Complex Extractions</h4>
+                    <div class="code-block">// Extract key-value pairs
+| rex "(?<key>\w+)=(?<value>[^\s]+)"
+
+// Extract with optional groups
+| rex "user=(?<user>\w+)(\s+domain=(?<domain>\w+))?"
+
+// Extract multiple values (mode=sed)
+| rex mode=sed "s/password=\S+/password=REDACTED/g"
+
+// Named groups with backreferences
+| rex "src=(?<src_ip>\d+\.\d+\.\d+\.\d+).*dst=(?<dst_ip>\d+\.\d+\.\d+\.\d+)"
+
+// Non-greedy matching
+| rex "start:(?<content>.*?)end"
+
+// Extract from JSON-like strings
+| rex "\"user\":\s*\"(?<user>[^\"]+)\""</div>
+
+                    <h4>Security-Specific Patterns</h4>
+                    <div class="code-block">// Extract encoded PowerShell command
+| rex field=CommandLine "-[eE]nc(?:odedcommand)?\s+(?<encoded_cmd>\S+)"
+
+// Extract IP from any text
+| rex "(?<found_ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+
+// Extract URLs
+| rex "(?<url>https?://[^\s\"']+)"
+
+// Extract file paths
+| rex "(?<file_path>[A-Za-z]:\\\\[^\s\"']+)"
+
+// Extract email addresses
+| rex "(?<email>[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})"
+
+// Extract hashes
+| rex "(?<md5>[a-fA-F0-9]{32})"
+| rex "(?<sha256>[a-fA-F0-9]{64})"</div>
+                </div>
+
+                <!-- Foreach Command -->
+                <h2><i class="fas fa-repeat"></i> Foreach Command</h2>
+                <div class="config-section">
+                    <div class="code-block">// Apply operation to multiple fields
+index=firewall
+| stats sum(bytes_in) as bytes_in, sum(bytes_out) as bytes_out by src_ip
+| foreach bytes_* [eval <<FIELD>>_mb = round('<<FIELD>>'/1048576, 2)]
+
+// Iterate over field values
+index=security
+| stats values(EventCode) as codes by user
+| foreach codes [eval code_<<ITEM>> = "<<ITEM>>"]</div>
+                </div>
+
+                <!-- More Security Use Cases -->
+                <h2><i class="fas fa-user-secret"></i> Advanced Security Searches</h2>
+                <div class="config-section">
+                    <h4>Detect Data Exfiltration</h4>
+                    <div class="code-block">index=firewall direction=outbound
+| bin _time span=1h
+| stats sum(bytes_sent) as hourly_bytes by _time, src_ip
+| eventstats avg(hourly_bytes) as avg_hourly, stdev(hourly_bytes) as stdev_hourly by src_ip
+| where hourly_bytes > avg_hourly + (3 * stdev_hourly)
+| eval MB = round(hourly_bytes/1048576, 2)
+| table _time, src_ip, MB, avg_hourly, stdev_hourly</div>
+
+                    <h4>Lateral Movement Detection</h4>
+                    <div class="code-block">index=security EventCode=4624 Logon_Type=3
+| bin _time span=1h
+| stats dc(Workstation_Name) as unique_hosts by Account_Name, _time
+| where unique_hosts > 5
+| table _time, Account_Name, unique_hosts</div>
+
+                    <h4>Process Injection Indicators</h4>
+                    <div class="code-block">index=sysmon EventCode=8  // CreateRemoteThread
+| stats count by SourceImage, TargetImage
+| where SourceImage != TargetImage
+| lookup known_good_injections.csv SourceImage, TargetImage
+| where isnull(known_good)
+| table SourceImage, TargetImage, count</div>
+
+                    <h4>Beaconing Detection</h4>
+                    <div class="code-block">index=firewall direction=outbound
+| bin _time span=1m
+| stats count by _time, src_ip, dest_ip
+| streamstats count as sequence by src_ip, dest_ip
+| stats stdev(count) as interval_stdev, avg(count) as interval_avg by src_ip, dest_ip
+| where interval_stdev < 2 AND interval_avg > 0
+| eval regularity = round(interval_stdev / interval_avg, 3)
+| where regularity < 0.1
+| table src_ip, dest_ip, interval_avg, regularity</div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
 </body>
 </html>

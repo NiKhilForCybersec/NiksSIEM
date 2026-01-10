@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Use Cases | Splunk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .usecase-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #3fb950; }
+        .mitre-tag { background: #1f6feb; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                                                                <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models (CIM)</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> SPL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">ES Detection</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR Integration</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
+                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Splunk</a><span class="separator">/</span>
+                    <span class="current">Security Use Cases</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-shield-alt"></i> Security Use Cases</h1>
+                <p class="lead">Production-ready SPL queries for common security monitoring scenarios. Each use case includes the query, explanation, and guidance for implementation.</p>
+
+                <!-- Authentication Monitoring -->
+                <h2><i class="fas fa-sign-in-alt"></i> Authentication Monitoring</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1110</span> Brute Force Detection</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4625
+| bin _time span=10m
+| stats count as failed_attempts, 
+        dc(TargetUserName) as targeted_accounts,
+        values(TargetUserName) as accounts 
+        by src_ip, _time
+| where failed_attempts > 10 OR targeted_accounts > 3
+| eval attack_type = case(
+    targeted_accounts > 5 AND failed_attempts > 20, "Credential Stuffing",
+    targeted_accounts == 1 AND failed_attempts > 10, "Brute Force - Single Account",
+    targeted_accounts > 1, "Password Spraying",
+    1=1, "Multiple Failed Logins"
+)
+| table _time, src_ip, attack_type, failed_attempts, targeted_accounts, accounts</div>
+                    <p style="color: #8b949e; margin-top: 12px;"><strong>Explanation:</strong> Groups failed logins by source IP in 10-minute windows. Triggers on >10 failures or >3 targeted accounts. Classifies attack type based on pattern.</p>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> Successful Login After Multiple Failures</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode IN (4625, 4624)
+| eval status = if(EventCode=4625, "failure", "success")
+| stats 
+    count(eval(status="failure")) as failures,
+    count(eval(status="success")) as successes,
+    latest(_time) as last_event
+    by src_ip, TargetUserName
+| where failures > 5 AND successes > 0
+| eval risk = if(failures > 20, "High", if(failures > 10, "Medium", "Low"))
+| table src_ip, TargetUserName, failures, successes, risk, last_event</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> After-Hours Authentication</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4624 Logon_Type IN (2, 10)
+| eval hour = strftime(_time, "%H")
+| eval day = strftime(_time, "%w")
+| where (hour < "06" OR hour > "20") OR (day = "0" OR day = "6")
+| eval time_context = case(
+    day = "0" OR day = "6", "Weekend",
+    hour < "06", "Early Morning",
+    hour > "20", "Late Night"
+)
+| stats count by TargetUserName, Workstation_Name, src_ip, time_context
+| sort - count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> Impossible Travel Detection</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4624
+| iplocation src_ip
+| sort TargetUserName, _time
+| streamstats current=f last(City) as prev_city, last(lat) as prev_lat, 
+              last(lon) as prev_lon, last(_time) as prev_time by TargetUserName
+| eval time_diff_hours = (_time - prev_time) / 3600
+| eval distance_km = round(3959 * acos(
+    sin(lat * 3.14159/180) * sin(prev_lat * 3.14159/180) + 
+    cos(lat * 3.14159/180) * cos(prev_lat * 3.14159/180) * 
+    cos((lon - prev_lon) * 3.14159/180)
+) * 1.60934, 0)
+| eval speed_kmh = round(distance_km / time_diff_hours, 0)
+| where speed_kmh > 800 AND distance_km > 500
+| table _time, TargetUserName, prev_city, City, distance_km, time_diff_hours, speed_kmh</div>
+                </div>
+
+                <!-- Malware Detection -->
+                <h2><i class="fas fa-bug"></i> Malware Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059.001</span> PowerShell Encoded Commands</h3>
+                    <div class="code-block">index=sysmon EventCode=1 
+    (Image="*powershell.exe" OR Image="*pwsh.exe")
+    (CommandLine="*-enc*" OR CommandLine="*-EncodedCommand*" OR CommandLine="*-e *")
+| eval encoded_length = len(mvindex(split(CommandLine, " "), -1))
+| where encoded_length > 100
+| table _time, host, User, CommandLine, ParentImage, encoded_length
+| sort - encoded_length</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059.001</span> PowerShell Download Cradle</h3>
+                    <div class="code-block">index=sysmon EventCode=1 
+    (Image="*powershell.exe" OR Image="*pwsh.exe")
+    (CommandLine="*Net.WebClient*" OR CommandLine="*DownloadString*" OR 
+     CommandLine="*DownloadFile*" OR CommandLine="*Invoke-WebRequest*" OR
+     CommandLine="*iwr *" OR CommandLine="*wget *" OR CommandLine="*curl *" OR
+     CommandLine="*Start-BitsTransfer*" OR CommandLine="*Invoke-RestMethod*")
+| rex field=CommandLine "(?i)(https?://[^\s\"']+)" as download_url
+| table _time, host, User, CommandLine, download_url, ParentImage
+| sort - _time</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1218</span> LOLBin Abuse</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+    (Image="*certutil.exe" OR Image="*mshta.exe" OR Image="*regsvr32.exe" OR
+     Image="*rundll32.exe" OR Image="*msiexec.exe" OR Image="*cmstp.exe" OR
+     Image="*wmic.exe" OR Image="*installutil.exe" OR Image="*regasm.exe")
+    (CommandLine="*http*" OR CommandLine="*ftp*" OR CommandLine="*\\\\*" OR
+     CommandLine="*-decode*" OR CommandLine="*/i:*" OR CommandLine="*scrobj*")
+| eval technique = case(
+    match(Image, "certutil"), "Certutil download/decode",
+    match(Image, "mshta"), "MSHTA script execution",
+    match(Image, "regsvr32"), "Regsvr32 COM scriptlet",
+    match(Image, "wmic"), "WMIC remote execution",
+    1=1, "LOLBin abuse"
+)
+| table _time, host, User, Image, CommandLine, technique, ParentImage</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1055</span> Suspicious Process Injection Indicators</h3>
+                    <div class="code-block">index=sysmon EventCode=8
+| where SourceImage != TargetImage
+| eval suspicious = if(
+    match(TargetImage, "(?i)(lsass|services|svchost|winlogon|csrss)"), "High", "Medium")
+| where NOT match(SourceImage, "(?i)(mcafee|symantec|defender|crowdstrike)")
+| stats count by SourceImage, TargetImage, suspicious
+| where count > 1
+| sort - suspicious, - count</div>
+                </div>
+
+                <!-- Lateral Movement -->
+                <h2><i class="fas fa-arrows-alt"></i> Lateral Movement Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1021.002</span> SMB Lateral Movement</h3>
+                    <div class="code-block">index=firewall dest_port=445
+| where NOT cidrmatch("0.0.0.0/0", src_ip) AND cidrmatch("10.0.0.0/8", dest_ip)
+| stats dc(dest_ip) as unique_targets, 
+        values(dest_ip) as targets,
+        count as connection_count 
+        by src_ip
+| where unique_targets > 5
+| sort - unique_targets
+| eval alert = if(unique_targets > 20, "Critical", if(unique_targets > 10, "High", "Medium"))</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1021.001</span> RDP Connection Monitoring</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4624 Logon_Type=10
+| stats 
+    count as rdp_connections,
+    dc(Workstation_Name) as unique_sources,
+    values(Workstation_Name) as sources 
+    by TargetUserName
+| where rdp_connections > 10 OR unique_sources > 5
+| table TargetUserName, rdp_connections, unique_sources, sources
+
+// Also check for RDP to non-standard ports
+index=firewall dest_port!=3389 application=rdp
+| stats count by src_ip, dest_ip, dest_port</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1047</span> WMI Remote Execution</h3>
+                    <div class="code-block">index=sysmon EventCode=1 
+    Image="*wmic.exe" CommandLine="*/node:*"
+| rex field=CommandLine "/node:(?<target_host>\S+)"
+| stats count by host, User, target_host, CommandLine
+| table _time, host, User, target_host, CommandLine
+
+// WMI process spawning
+index=sysmon EventCode=1 ParentImage="*WmiPrvSE.exe"
+| where Image IN ("*cmd.exe", "*powershell.exe", "*cscript.exe", "*wscript.exe")
+| table _time, host, User, ParentImage, Image, CommandLine</div>
+                </div>
+
+                <!-- Persistence Detection -->
+                <h2><i class="fas fa-anchor"></i> Persistence Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1547.001</span> Registry Run Key Modification</h3>
+                    <div class="code-block">index=sysmon EventCode=13 
+    (TargetObject="*\\CurrentVersion\\Run*" OR 
+     TargetObject="*\\CurrentVersion\\RunOnce*")
+    EventType=SetValue
+| rex field=TargetObject "\\\\(?<key_name>[^\\\\]+)$"
+| where NOT match(Details, "(?i)(microsoft|windows|vmware|crowdstrike)")
+| table _time, host, User, TargetObject, key_name, Details, Image
+| sort - _time</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1053.005</span> Scheduled Task Creation</h3>
+                    <div class="code-block">index=sysmon EventCode=1 Image="*schtasks.exe" CommandLine="*/create*"
+| rex field=CommandLine "/tn\s+\"?(?<task_name>[^\"\/]+)"
+| rex field=CommandLine "/tr\s+\"?(?<task_action>[^\"]+)"
+| where NOT match(task_name, "(?i)(microsoft|windows|adobe|google)")
+| table _time, host, User, task_name, task_action, CommandLine
+| sort - _time
+
+// Also check Windows Event Log
+index=security sourcetype=WinEventLog:Security EventCode=4698
+| table _time, host, SubjectUserName, TaskName, TaskContent</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1543.003</span> Service Creation</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4697
+| where NOT match(ServiceFileName, "(?i)(microsoft|windows|system32)")
+| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceType
+
+// Via sc.exe
+index=sysmon EventCode=1 Image="*sc.exe" CommandLine="*create*"
+| rex field=CommandLine "binPath=\s*\"?(?<binary_path>[^\"]+)"
+| table _time, host, User, CommandLine, binary_path</div>
+                </div>
+
+                <!-- Data Exfiltration -->
+                <h2><i class="fas fa-cloud-upload-alt"></i> Data Exfiltration Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1048</span> Large Data Transfer</h3>
+                    <div class="code-block">index=firewall direction=outbound
+| where NOT cidrmatch("10.0.0.0/8", dest_ip)
+| bin _time span=1h
+| stats sum(bytes_out) as total_bytes by src_ip, dest_ip, _time
+| where total_bytes > 104857600
+| eval MB_transferred = round(total_bytes/1048576, 2)
+| sort - MB_transferred
+| table _time, src_ip, dest_ip, MB_transferred</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1567</span> Cloud Storage Upload</h3>
+                    <div class="code-block">index=proxy 
+    (url="*dropbox.com*" OR url="*drive.google.com*" OR url="*onedrive.live.com*" OR
+     url="*mega.nz*" OR url="*box.com*" OR url="*wetransfer.com*")
+    (http_method=POST OR http_method=PUT)
+| stats sum(bytes_out) as total_bytes, count as upload_count by src_ip, user, url
+| where total_bytes > 10485760
+| eval MB_uploaded = round(total_bytes/1048576, 2)
+| table src_ip, user, url, upload_count, MB_uploaded
+| sort - MB_uploaded</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1041</span> DNS Tunneling Detection</h3>
+                    <div class="code-block">index=dns 
+| eval query_length = len(query)
+| where query_length > 50
+| rex field=query "\.(?<domain>[^\.]+\.[^\.]+)$"
+| stats 
+    count as query_count,
+    avg(query_length) as avg_length,
+    dc(query) as unique_queries
+    by src_ip, domain
+| where query_count > 100 AND avg_length > 40
+| eval suspicion = case(
+    avg_length > 60 AND unique_queries > 1000, "High - Likely DNS Tunnel",
+    avg_length > 50, "Medium - Investigate",
+    1=1, "Low"
+)
+| table src_ip, domain, query_count, avg_length, unique_queries, suspicion</div>
+                </div>
+
+                <!-- Credential Access -->
+                <h2><i class="fas fa-key"></i> Credential Access Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1003.001</span> LSASS Access</h3>
+                    <div class="code-block">index=sysmon EventCode=10 TargetImage="*lsass.exe"
+| where NOT match(SourceImage, "(?i)(csrss|wininit|svchost|mrt|defender)")
+| stats count by SourceImage, SourceUser, GrantedAccess, host
+| eval risk = case(
+    match(GrantedAccess, "0x1FFFFF"), "Critical - Full Access",
+    match(GrantedAccess, "0x1010"), "High - Read Memory",
+    1=1, "Medium"
+)
+| sort - risk
+| table host, SourceImage, SourceUser, GrantedAccess, risk, count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1558.003</span> Kerberoasting Detection</h3>
+                    <div class="code-block">index=security sourcetype=WinEventLog:Security EventCode=4769 
+    Ticket_Encryption_Type=0x17
+| stats count by Client_Address, Service_Name, Account_Name
+| where count > 5
+| table Client_Address, Account_Name, Service_Name, count
+| sort - count</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you detect credential stuffing vs brute force?</button>
+                        <div class="qa-answer">
+                            <p><strong>Key difference:</strong> Credential stuffing targets many accounts with few attempts each; brute force targets few accounts with many attempts.</p>
+                            <div class="code-block">// Credential Stuffing Pattern
+| stats dc(user) as unique_users, count as attempts by src_ip
+| where unique_users > 10 AND attempts/unique_users < 3
+
+// Brute Force Pattern
+| stats dc(user) as unique_users, count as attempts by src_ip
+| where unique_users <= 3 AND attempts > 20</div>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you reduce false positives in security alerts?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Whitelist known good:</strong> Exclude legitimate automation, service accounts</li>
+                                <li><strong>Add context:</strong> Correlate with asset criticality, user role</li>
+                                <li><strong>Tune thresholds:</strong> Adjust based on baseline analysis</li>
+                                <li><strong>Time context:</strong> Consider business hours, maintenance windows</li>
+                                <li><strong>Multi-stage detection:</strong> Require multiple indicators before alerting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Defense Evasion -->
+                <h2><i class="fas fa-eye-slash"></i> Defense Evasion Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1070.001</span> Event Log Clearing</h3>
+                    <div class="code-block">// Windows Security Log Cleared
+index=security sourcetype=WinEventLog:Security EventCode=1102
+| table _time, host, SubjectUserName, SubjectDomainName
+
+// Via wevtutil
+index=sysmon EventCode=1 Image="*wevtutil.exe"
+    (CommandLine="*cl*" OR CommandLine="*clear-log*")
+| table _time, host, User, CommandLine
+
+// Via PowerShell
+index=sysmon EventCode=1 
+    (Image="*powershell.exe" OR Image="*pwsh.exe")
+    CommandLine="*Clear-EventLog*"
+| table _time, host, User, CommandLine</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1562.001</span> Security Tool Tampering</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+| where match(CommandLine, "(?i)(Set-MpPreference.*Disable|sc.*stop.*WinDefend|net.*stop.*WinDefend|DisableRealtimeMonitoring)")
+| table _time, host, User, Image, CommandLine
+
+// Service stopped
+index=security sourcetype=WinEventLog:System EventCode=7036
+    Service_Name IN ("Windows Defender*", "McAfee*", "Symantec*", "CrowdStrike*")
+    Message="*stopped*"
+| table _time, host, Service_Name, Message</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1036</span> Process Masquerading</h3>
+                    <div class="code-block">// System binaries running from wrong location
+index=sysmon EventCode=1
+| where Image IN ("*cmd.exe", "*powershell.exe", "*svchost.exe", 
+                  "*lsass.exe", "*csrss.exe", "*services.exe")
+| where NOT match(Image, "(?i)C:\\\\Windows\\\\(System32|SysWOW64)")
+| table _time, host, Image, CommandLine, ParentImage, User
+| sort - _time</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1027</span> Suspicious Script Execution</h3>
+                    <div class="code-block">// Obfuscated PowerShell
+index=sysmon EventCode=1 
+    (Image="*powershell.exe" OR Image="*pwsh.exe")
+| eval obfuscation_indicators = 0
+| eval obfuscation_indicators = obfuscation_indicators + if(match(CommandLine, "(?i)\^"), 1, 0)
+| eval obfuscation_indicators = obfuscation_indicators + if(match(CommandLine, "(?i)(\$|%)[a-z0-9]{1,3}:"), 2, 0)
+| eval obfuscation_indicators = obfuscation_indicators + if(match(CommandLine, "(?i)-jo(i)?n"), 2, 0)
+| eval obfuscation_indicators = obfuscation_indicators + if(match(CommandLine, "(?i)replace"), 1, 0)
+| eval obfuscation_indicators = obfuscation_indicators + if(match(CommandLine, "(?i)\[char\]"), 2, 0)
+| where obfuscation_indicators >= 3
+| table _time, host, User, CommandLine, obfuscation_indicators</div>
+                </div>
+
+                <!-- Network Security -->
+                <h2><i class="fas fa-network-wired"></i> Network Security Monitoring</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1071</span> Beaconing Detection</h3>
+                    <div class="code-block">index=firewall direction=outbound
+| bin _time span=1m
+| stats count by src_ip, dest_ip, _time
+| stats stdev(count) as interval_stdev, 
+        avg(count) as interval_avg,
+        count as total_intervals 
+        by src_ip, dest_ip
+| where total_intervals > 60 AND interval_avg > 0
+| eval coefficient_of_variation = round(interval_stdev / interval_avg, 3)
+| where coefficient_of_variation < 0.3
+| sort coefficient_of_variation
+| head 20</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1071.001</span> Suspicious User-Agent</h3>
+                    <div class="code-block">index=proxy 
+| rex field=user_agent "^(?<ua_product>[^\/\s]+)"
+| stats count, dc(src_ip) as unique_sources by user_agent
+| where count < 10 AND unique_sources < 3
+| where NOT match(user_agent, "(?i)(chrome|firefox|safari|edge|mozilla|msie)")
+| sort - count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1571</span> Non-Standard Port Usage</h3>
+                    <div class="code-block">index=firewall direction=outbound
+| where NOT cidrmatch("10.0.0.0/8", dest_ip)
+| where dest_port NOT IN (80, 443, 8080, 8443, 53, 21, 22, 25, 110, 143, 993, 995)
+| where dest_port < 49152
+| stats count, dc(src_ip) as sources by dest_ip, dest_port
+| where count > 10 OR sources > 3
+| sort - count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1090</span> Tor Exit Node Communication</h3>
+                    <div class="code-block">// Using threat intel lookup
+index=firewall
+| lookup tor_exit_nodes.csv ip as dest_ip OUTPUT is_tor
+| where is_tor="true"
+| stats count by src_ip, dest_ip, dest_port, user
+| table src_ip, user, dest_ip, dest_port, count
+
+// Without lookup - detect Tor patterns
+index=firewall dest_port IN (9001, 9030, 9050, 9051, 9150)
+| stats count by src_ip, dest_ip, dest_port
+| where count > 5</div>
+                </div>
+
+                <!-- Email Security -->
+                <h2><i class="fas fa-envelope"></i> Email Security</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1566</span> Phishing Detection</h3>
+                    <div class="code-block">index=email sourcetype=proofpoint OR sourcetype=mimecast
+| where threat_score > 50 OR category="phishing"
+| stats count as phishing_count, 
+        dc(recipient) as targeted_users,
+        values(recipient) as targets
+        by sender_domain, subject
+| where targeted_users > 5
+| table sender_domain, subject, phishing_count, targeted_users, targets</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1114</span> Email Forwarding Rule Created</h3>
+                    <div class="code-block">// Office 365 / Exchange Online
+index=o365 Workload=Exchange Operation=New-InboxRule
+| spath output=forward_to path=Parameters{}.ForwardTo
+| spath output=forward_smtp path=Parameters{}.ForwardAsAttachmentTo
+| where isnotnull(forward_to) OR isnotnull(forward_smtp)
+| table _time, UserId, ClientIP, forward_to, forward_smtp</div>
+                </div>
+
+                <!-- Endpoint Security -->
+                <h2><i class="fas fa-desktop"></i> Endpoint Security</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059</span> Office Application Spawning Shell</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+| where ParentImage IN ("*WINWORD.EXE", "*EXCEL.EXE", "*POWERPNT.EXE", 
+                        "*OUTLOOK.EXE", "*MSACCESS.EXE")
+| where Image IN ("*cmd.exe", "*powershell.exe", "*wscript.exe", 
+                  "*cscript.exe", "*mshta.exe", "*regsvr32.exe")
+| table _time, host, User, ParentImage, Image, CommandLine
+| sort - _time</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1105</span> Suspicious File Download</h3>
+                    <div class="code-block">index=sysmon EventCode=11
+| where TargetFilename="*\\Downloads\\*" OR TargetFilename="*\\Temp\\*" OR
+        TargetFilename="*\\AppData\\*"
+| where match(TargetFilename, "\.(exe|dll|scr|bat|ps1|vbs|hta|js)$")
+| stats count by host, User, Image, TargetFilename
+| sort - _time</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1204</span> User Execution of Suspicious File</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+| where ParentImage="*explorer.exe"
+| where match(Image, "\\\\(Downloads|Desktop|Temp)\\\\")
+| where match(Image, "\.(exe|scr|bat|cmd|ps1|vbs|js|hta)$")
+| table _time, host, User, Image, CommandLine</div>
+                </div>
+
+                <!-- Cloud Security -->
+                <h2><i class="fas fa-cloud"></i> Cloud Security (AWS/Azure)</h2>
+
+                <div class="usecase-card">
+                    <h3>AWS Console Login Without MFA</h3>
+                    <div class="code-block">index=aws sourcetype=aws:cloudtrail eventName=ConsoleLogin
+| spath output=mfa_used path=additionalEventData.MFAUsed
+| where mfa_used="No" AND responseElements.ConsoleLogin="Success"
+| table _time, userIdentity.userName, sourceIPAddress, userAgent</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Azure Suspicious Sign-in</h3>
+                    <div class="code-block">index=azure sourcetype=azure:aad:signin
+| where RiskLevel IN ("high", "medium")
+| table _time, UserPrincipalName, IPAddress, Location, RiskLevel, RiskState, AppDisplayName</div>
+                </div>
+
+                <!-- Dashboard Searches -->
+                <h2><i class="fas fa-tachometer-alt"></i> Dashboard Searches</h2>
+                <div class="config-section">
+                    <h4>Security Overview Dashboard</h4>
+                    <div class="code-block">// Total alerts by severity (single value panels)
+index=alerts earliest=-24h
+| stats count by severity
+| xyseries severity count
+
+// Top alerting hosts
+index=alerts earliest=-24h
+| top limit=10 host
+
+// Alert trend over time
+index=alerts earliest=-7d
+| timechart span=1h count by severity
+
+// Failed login trend
+index=security EventCode=4625 earliest=-24h
+| timechart span=1h count as "Failed Logins"</div>
+                </div>
+
+                <!-- Additional Interview Q&A -->
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you baseline normal activity in Splunk?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">// Build baseline of normal process executions
+index=sysmon EventCode=1 earliest=-30d@d latest=-1d@d
+| stats count, dc(host) as host_count by Image
+| where count > 100 AND host_count > 10
+| outputlookup normal_processes.csv
+
+// Use baseline to find anomalies
+index=sysmon EventCode=1
+| lookup normal_processes.csv Image OUTPUT count as baseline_count
+| where isnull(baseline_count)
+| table _time, host, Image, CommandLine</div>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you create an alert for data exfiltration?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Define normal:</strong> Baseline typical upload volumes per user</li>
+                                <li><strong>Set thresholds:</strong> Alert when >2x normal or >100MB</li>
+                                <li><strong>Add context:</strong> Consider time of day, destination</li>
+                                <li><strong>Exclude legitimate:</strong> Whitelist backup services, approved cloud</li>
+                            </ol>
+                            <div class="code-block">index=proxy http_method IN (POST, PUT)
+| stats sum(bytes_out) as bytes_uploaded by user, dest_domain
+| eventstats avg(bytes_uploaded) as avg_upload, 
+             stdev(bytes_uploaded) as stdev_upload by user
+| where bytes_uploaded > avg_upload + (3 * stdev_upload)
+| where bytes_uploaded > 52428800</div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+                <!-- Insider Threat -->
+                <h2><i class="fas fa-user-secret"></i> Insider Threat Detection</h2>
+
+                <div class="usecase-card">
+                    <h3>User Activity Anomaly Detection</h3>
+                    <div class="code-block">// User accessing more files than usual
+index=security EventCode=4663
+| stats dc(ObjectName) as files_accessed by SubjectUserName
+| eventstats avg(files_accessed) as avg_files, stdev(files_accessed) as stdev_files
+| eval zscore = (files_accessed - avg_files) / stdev_files
+| where zscore > 3
+| table SubjectUserName, files_accessed, avg_files, zscore</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>After-Hours File Access</h3>
+                    <div class="code-block">index=security EventCode=4663 ObjectType="File"
+| eval hour = strftime(_time, "%H")
+| eval day = strftime(_time, "%w")
+| where (hour < "06" OR hour > "20") OR (day = "0" OR day = "6")
+| stats count, dc(ObjectName) as unique_files, values(ObjectName) as files 
+        by SubjectUserName
+| where count > 50
+| sort - count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>USB Device Usage</h3>
+                    <div class="code-block">index=sysmon EventCode=6
+| where match(Device, "(?i)usb")
+| table _time, host, User, Device, DeviceClass
+| dedup Device
+
+// File copy to removable drive
+index=sysmon EventCode=11 
+| where TargetFilename="*:\\*"
+| rex field=TargetFilename "^(?<drive>[A-Z]):"
+| where NOT drive IN ("C", "D")
+| table _time, host, User, TargetFilename, Image</div>
+                </div>
+
+                <!-- Threat Hunting Searches -->
+                <h2><i class="fas fa-binoculars"></i> Threat Hunting Searches</h2>
+
+                <div class="usecase-card">
+                    <h3>First Time Seen Process</h3>
+                    <div class="code-block">// Compare to baseline
+index=sysmon EventCode=1 earliest=-1d
+| stats earliest(_time) as first_seen, count by Image
+| lookup process_baseline.csv Image OUTPUT baseline_first_seen
+| where isnull(baseline_first_seen)
+| table Image, first_seen, count
+| sort - count</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Rare Parent-Child Process Relationship</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+| stats count by ParentImage, Image
+| where count < 5
+| sort count
+| head 100</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Process Running from Unusual Path</h3>
+                    <div class="code-block">index=sysmon EventCode=1
+| where NOT match(Image, "(?i)^(C:\\\\Windows|C:\\\\Program Files)")
+| where match(Image, "\\.exe$")
+| stats count by Image, User
+| sort - count
+| head 50</div>
+                </div>
+
+                <!-- Alert Configuration Examples -->
+                <h2><i class="fas fa-bell"></i> Alert Configuration</h2>
+                <div class="config-section">
+                    <h4>Scheduled Alert Settings</h4>
+                    <div class="code-block">Alert Name: Brute Force Authentication
+Search: [brute force detection query]
+Schedule: Every 15 minutes
+Time Range: Last 20 minutes (with 5 min overlap)
+Trigger: When number of results > 0
+Throttle: 1 hour by src_ip
+
+Actions:
+- Add to Notable Events (ES)
+- Send Email to SOC team
+- Execute adaptive response</div>
+
+                    <h4>Correlation Search (Splunk ES)</h4>
+                    <div class="code-block">| tstats summariesonly=t count from datamodel=Authentication 
+  where Authentication.action=failure by _time, Authentication.src, 
+  Authentication.user span=10m
+| where count > 10
+| `drop_dm_object_name("Authentication")`
+| adaptive_response action="notable" description="Brute Force Detected"</div>
+                </div>
+
+                <!-- More Interview Questions -->
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle false positives in security monitoring?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Track and categorize:</strong> Document all FPs with root cause</li>
+                                <li><strong>Identify patterns:</strong> Look for common FP sources</li>
+                                <li><strong>Tune searches:</strong> Add exclusions for known-good activity</li>
+                                <li><strong>Use lookups:</strong> Create whitelists for approved services/users</li>
+                                <li><strong>Add context:</strong> Enrich with asset/identity data to filter</li>
+                                <li><strong>Review regularly:</strong> Periodic review of tuning effectiveness</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's your approach to building a new detection rule?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Define the threat:</strong> What attack/behavior to detect?</li>
+                                <li><strong>Map to MITRE:</strong> Which technique(s)?</li>
+                                <li><strong>Identify data sources:</strong> What logs are needed?</li>
+                                <li><strong>Build initial query:</strong> Start broad, refine</li>
+                                <li><strong>Test against baseline:</strong> How many results normally?</li>
+                                <li><strong>Add exclusions:</strong> Known legitimate activity</li>
+                                <li><strong>Validate with testing:</strong> Use Atomic Red Team</li>
+                                <li><strong>Deploy and monitor:</strong> Track FP rate</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+                <!-- Quick Reference -->
+                <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
+                <div class="config-section">
+                    <h4>Common Event Codes</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Event Code</th><th>Description</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>4624</td><td>Successful logon</td><td>Authentication monitoring</td></tr>
+                            <tr><td>4625</td><td>Failed logon</td><td>Brute force detection</td></tr>
+                            <tr><td>4648</td><td>Explicit credentials</td><td>Credential usage</td></tr>
+                            <tr><td>4672</td><td>Admin logon</td><td>Privilege monitoring</td></tr>
+                            <tr><td>4688</td><td>Process creation</td><td>Execution monitoring</td></tr>
+                            <tr><td>4697</td><td>Service installed</td><td>Persistence detection</td></tr>
+                            <tr><td>4698</td><td>Scheduled task created</td><td>Persistence detection</td></tr>
+                            <tr><td>4720</td><td>User account created</td><td>Account monitoring</td></tr>
+                            <tr><td>4732</td><td>Member added to group</td><td>Privilege escalation</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Sysmon Event Codes</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Event Code</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>Process creation</td></tr>
+                            <tr><td>3</td><td>Network connection</td></tr>
+                            <tr><td>7</td><td>Image loaded (DLL)</td></tr>
+                            <tr><td>8</td><td>CreateRemoteThread</td></tr>
+                            <tr><td>10</td><td>Process access</td></tr>
+                            <tr><td>11</td><td>File create</td></tr>
+                            <tr><td>13</td><td>Registry value set</td></tr>
+                            <tr><td>22</td><td>DNS query</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>

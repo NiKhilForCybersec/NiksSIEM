@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Use Cases | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .usecase-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #0078d4; }
+        .mitre-tag { background: #0078d4; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                                                        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> KQL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation (Playbooks)</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users"></i> SOC Operations</a>
+                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
+                    <span class="current">Security Use Cases</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-shield-alt"></i> Sentinel Security Use Cases</h1>
+                <p class="lead">Production-ready KQL queries for Microsoft Sentinel covering authentication, malware, lateral movement, and more. Each query includes MITRE mapping and implementation guidance.</p>
+
+                <!-- Authentication Monitoring -->
+                <h2><i class="fas fa-sign-in-alt"></i> Authentication Monitoring</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1110</span> Brute Force Detection</h3>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != 0  // Failed logins
+| summarize 
+    FailedAttempts = count(),
+    TargetedAccounts = dcount(UserPrincipalName),
+    Accounts = make_set(UserPrincipalName, 10)
+    by IPAddress, bin(TimeGenerated, 10m)
+| where FailedAttempts > 10 or TargetedAccounts > 3
+| extend AttackType = case(
+    TargetedAccounts > 5 and FailedAttempts > 20, "Credential Stuffing",
+    TargetedAccounts == 1 and FailedAttempts > 10, "Brute Force",
+    TargetedAccounts > 1, "Password Spraying",
+    "Multiple Failed Logins"
+)
+| project TimeGenerated, IPAddress, AttackType, FailedAttempts, TargetedAccounts, Accounts</div>
+                    <p style="color: #8b949e; margin-top: 12px;"><strong>Data Source:</strong> SigninLogs (Azure AD)</p>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> Successful Login After Failures</h3>
+                    <div class="code-block">let FailedLogins = SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != 0
+| summarize FailCount = count() by IPAddress, UserPrincipalName;
+let SuccessfulLogins = SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == 0
+| summarize SuccessCount = count(), LastSuccess = max(TimeGenerated) by IPAddress, UserPrincipalName;
+FailedLogins
+| join kind=inner SuccessfulLogins on IPAddress, UserPrincipalName
+| where FailCount > 5
+| project UserPrincipalName, IPAddress, FailCount, SuccessCount, LastSuccess
+| extend RiskLevel = case(FailCount > 20, "High", FailCount > 10, "Medium", "Low")</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> Impossible Travel</h3>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, 
+          Latitude = toreal(LocationDetails.geoCoordinates.latitude),
+          Longitude = toreal(LocationDetails.geoCoordinates.longitude)
+| order by UserPrincipalName, TimeGenerated asc
+| serialize
+| extend PrevTime = prev(TimeGenerated, 1), 
+         PrevLat = prev(Latitude, 1), 
+         PrevLon = prev(Longitude, 1),
+         PrevUser = prev(UserPrincipalName, 1)
+| where UserPrincipalName == PrevUser
+| extend TimeDiffHours = datetime_diff('hour', TimeGenerated, PrevTime)
+| extend DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLon, PrevLat) / 1000
+| where TimeDiffHours > 0
+| extend SpeedKmH = DistanceKm / TimeDiffHours
+| where SpeedKmH > 800 and DistanceKm > 500
+| project TimeGenerated, UserPrincipalName, DistanceKm, TimeDiffHours, SpeedKmH</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> Off-Hours Sign-in</h3>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType == 0
+| extend HourOfDay = datetime_part("hour", TimeGenerated)
+| extend DayOfWeek = dayofweek(TimeGenerated)
+| where (HourOfDay < 6 or HourOfDay > 20) or (DayOfWeek == 0d or DayOfWeek == 6d)
+| extend TimeContext = case(
+    DayOfWeek == 0d or DayOfWeek == 6d, "Weekend",
+    HourOfDay < 6, "Early Morning",
+    HourOfDay > 20, "Late Night",
+    "Unknown"
+)
+| summarize Count = count() by UserPrincipalName, AppDisplayName, TimeContext
+| order by Count desc</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1078</span> First-Time User Login to Application</h3>
+                    <div class="code-block">let LookbackPeriod = 30d;
+let RecentLogins = SigninLogs
+| where TimeGenerated > ago(1d)
+| where ResultType == 0
+| distinct UserPrincipalName, AppDisplayName, TimeGenerated;
+let HistoricalLogins = SigninLogs
+| where TimeGenerated between (ago(LookbackPeriod) .. ago(1d))
+| where ResultType == 0
+| distinct UserPrincipalName, AppDisplayName;
+RecentLogins
+| join kind=leftanti HistoricalLogins on UserPrincipalName, AppDisplayName
+| project TimeGenerated, UserPrincipalName, AppDisplayName
+| extend AlertReason = "First time user accessed this application"</div>
+                </div>
+
+                <!-- Malware and Execution -->
+                <h2><i class="fas fa-bug"></i> Malware & Execution Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059.001</span> PowerShell Encoded Commands</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-EncodedCommand", "-e ")
+| extend EncodedPart = extract(@"-[eE]nc(?:odedCommand)?\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine)
+| where strlen(EncodedPart) > 100
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine, 
+          InitiatingProcessFileName, EncodedLength = strlen(EncodedPart)
+| order by EncodedLength desc</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059.001</span> PowerShell Download Cradle</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "Net.WebClient", "DownloadString", "DownloadFile",
+    "Invoke-WebRequest", "iwr ", "wget ", "curl ",
+    "Start-BitsTransfer", "Invoke-RestMethod"
+)
+| extend URL = extract(@"(https?://[^\s'\"]+)", 1, ProcessCommandLine)
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine, URL,
+          InitiatingProcessFileName</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1218</span> LOLBin Abuse</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName in~ ("certutil.exe", "mshta.exe", "regsvr32.exe", 
+                      "rundll32.exe", "msiexec.exe", "cmstp.exe",
+                      "wmic.exe", "installutil.exe", "regasm.exe")
+| where ProcessCommandLine has_any ("http", "ftp", "\\\\", "-decode", "/i:", "scrobj")
+| extend Technique = case(
+    FileName =~ "certutil.exe", "Certutil download/decode",
+    FileName =~ "mshta.exe", "MSHTA script execution",
+    FileName =~ "regsvr32.exe", "Regsvr32 COM scriptlet",
+    FileName =~ "wmic.exe", "WMIC remote execution",
+    "LOLBin abuse"
+)
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, 
+          Technique, InitiatingProcessFileName</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1059</span> Office Application Spawning Shell</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where InitiatingProcessFileName in~ ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE", 
+                                        "OUTLOOK.EXE", "MSACCESS.EXE")
+| where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe", 
+                      "cscript.exe", "mshta.exe", "regsvr32.exe")
+| project TimeGenerated, DeviceName, AccountName, 
+          InitiatingProcessFileName, FileName, ProcessCommandLine</div>
+                </div>
+
+                <!-- Lateral Movement -->
+                <h2><i class="fas fa-arrows-alt"></i> Lateral Movement</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1021.001</span> RDP Connection Monitoring</h3>
+                    <div class="code-block">SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4624 and LogonType == 10
+| summarize 
+    ConnectionCount = count(),
+    UniqueSourceIPs = dcount(IpAddress),
+    SourceIPs = make_set(IpAddress, 10)
+    by TargetUserName, Computer
+| where ConnectionCount > 10 or UniqueSourceIPs > 5
+| project TargetUserName, Computer, ConnectionCount, UniqueSourceIPs, SourceIPs</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1021.002</span> SMB Lateral Movement</h3>
+                    <div class="code-block">DeviceNetworkEvents
+| where TimeGenerated > ago(1d)
+| where RemotePort == 445
+| where not(ipv4_is_private(RemoteIP) == false)
+| summarize 
+    UniqueTargets = dcount(RemoteIP),
+    Targets = make_set(RemoteIP, 20),
+    ConnectionCount = count()
+    by DeviceName, InitiatingProcessFileName
+| where UniqueTargets > 5
+| extend AlertLevel = case(
+    UniqueTargets > 20, "Critical",
+    UniqueTargets > 10, "High",
+    "Medium"
+)
+| order by UniqueTargets desc</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1047</span> WMI Remote Execution</h3>
+                    <div class="code-block">// WMI remote command
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName =~ "wmic.exe"
+| where ProcessCommandLine has "/node:"
+| extend TargetHost = extract(@"/node:(\S+)", 1, ProcessCommandLine)
+| project TimeGenerated, DeviceName, AccountName, TargetHost, ProcessCommandLine
+
+// WMI spawning processes
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where InitiatingProcessFileName =~ "WmiPrvSE.exe"
+| where FileName in~ ("cmd.exe", "powershell.exe", "cscript.exe", "wscript.exe")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1021.006</span> Windows Remote Management</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where InitiatingProcessFileName =~ "wsmprovhost.exe"
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| order by TimeGenerated desc</div>
+                </div>
+
+                <!-- Persistence -->
+                <h2><i class="fas fa-anchor"></i> Persistence Detection</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1547.001</span> Registry Run Key Modification</h3>
+                    <div class="code-block">DeviceRegistryEvents
+| where TimeGenerated > ago(1d)
+| where ActionType == "RegistryValueSet"
+| where RegistryKey has_any (@"\CurrentVersion\Run", @"\CurrentVersion\RunOnce")
+| where not(RegistryValueData has_any ("Microsoft", "Windows", "VMware", "CrowdStrike"))
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName,
+          RegistryKey, RegistryValueName, RegistryValueData,
+          InitiatingProcessFileName</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1053.005</span> Scheduled Task Creation</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName =~ "schtasks.exe"
+| where ProcessCommandLine has "/create"
+| extend TaskName = extract(@"/tn\s+[\"']?([^\"'/]+)", 1, ProcessCommandLine)
+| extend TaskAction = extract(@"/tr\s+[\"']?([^\"']+)", 1, ProcessCommandLine)
+| where not(TaskName has_any ("Microsoft", "Windows", "Adobe", "Google"))
+| project TimeGenerated, DeviceName, AccountName, TaskName, TaskAction, ProcessCommandLine
+
+// Also check Security Events
+SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4698
+| project TimeGenerated, Computer, SubjectUserName, TaskName, TaskContent</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1543.003</span> Service Creation</h3>
+                    <div class="code-block">SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4697
+| where not(ServiceFileName has_any ("Microsoft", "Windows", "System32"))
+| project TimeGenerated, Computer, SubjectUserName, ServiceName, 
+          ServiceFileName, ServiceType
+
+// Via sc.exe
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName =~ "sc.exe"
+| where ProcessCommandLine has "create"
+| extend ServicePath = extract(@"binPath=\s*[\"']?([^\"']+)", 1, ProcessCommandLine)
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine, ServicePath</div>
+                </div>
+
+                <!-- Credential Access -->
+                <h2><i class="fas fa-key"></i> Credential Access</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1003.001</span> LSASS Memory Access</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName in~ ("procdump.exe", "procdump64.exe", "mimikatz.exe", 
+                      "nanodump.exe", "sqldumper.exe")
+| where ProcessCommandLine has_any ("lsass", "-ma", "sekurlsa")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+
+// comsvcs.dll MiniDump
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName =~ "rundll32.exe"
+| where ProcessCommandLine has "comsvcs.dll" and ProcessCommandLine has "MiniDump"
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1558.003</span> Kerberoasting</h3>
+                    <div class="code-block">SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4769
+| where TicketEncryptionType == "0x17"  // RC4
+| summarize RequestCount = count() by IpAddress, ServiceName, TargetUserName
+| where RequestCount > 5
+| order by RequestCount desc</div>
+                </div>
+
+                <!-- Data Exfiltration -->
+                <h2><i class="fas fa-cloud-upload-alt"></i> Data Exfiltration</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1048</span> Large Data Transfer</h3>
+                    <div class="code-block">DeviceNetworkEvents
+| where TimeGenerated > ago(1d)
+| where not(ipv4_is_private(RemoteIP))
+| summarize TotalBytes = sum(SentBytes) by DeviceName, RemoteIP, bin(TimeGenerated, 1h)
+| where TotalBytes > 104857600  // 100MB
+| extend MBTransferred = round(TotalBytes / 1048576.0, 2)
+| order by MBTransferred desc</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1567</span> Cloud Storage Upload</h3>
+                    <div class="code-block">// Web proxy or firewall logs
+CommonSecurityLog
+| where TimeGenerated > ago(1d)
+| where RequestURL has_any ("dropbox.com", "drive.google.com", "onedrive.live.com",
+                            "mega.nz", "box.com", "wetransfer.com")
+| where RequestMethod in ("POST", "PUT")
+| summarize TotalBytes = sum(SentBytes), UploadCount = count() 
+            by SourceIP, SourceUserName, RequestURL
+| where TotalBytes > 10485760  // 10MB
+| extend MBUploaded = round(TotalBytes / 1048576.0, 2)</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1041</span> DNS Tunneling Detection</h3>
+                    <div class="code-block">DnsEvents
+| where TimeGenerated > ago(1d)
+| extend QueryLength = strlen(Name)
+| where QueryLength > 50
+| extend Domain = tostring(split(Name, ".")[-2]) + "." + tostring(split(Name, ".")[-1])
+| summarize 
+    QueryCount = count(),
+    AvgLength = avg(QueryLength),
+    UniqueQueries = dcount(Name)
+    by ClientIP, Domain
+| where QueryCount > 100 and AvgLength > 40
+| extend Suspicion = case(
+    AvgLength > 60 and UniqueQueries > 1000, "High - Likely DNS Tunnel",
+    AvgLength > 50, "Medium - Investigate",
+    "Low"
+)</div>
+                </div>
+
+                <!-- Defense Evasion -->
+                <h2><i class="fas fa-eye-slash"></i> Defense Evasion</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1070.001</span> Security Log Cleared</h3>
+                    <div class="code-block">SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 1102
+| project TimeGenerated, Computer, SubjectUserName, SubjectDomainName
+
+// Via command line
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName =~ "wevtutil.exe"
+| where ProcessCommandLine has_any ("cl", "clear-log")
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1562.001</span> Security Tool Tampering</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where ProcessCommandLine has_any (
+    "Set-MpPreference", "DisableRealtimeMonitoring",
+    "sc stop WinDefend", "net stop WinDefend"
+)
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1036</span> Process Masquerading</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName in~ ("cmd.exe", "powershell.exe", "svchost.exe", 
+                      "lsass.exe", "csrss.exe", "services.exe")
+| where not(FolderPath has_any (@"C:\Windows\System32", @"C:\Windows\SysWOW64"))
+| project TimeGenerated, DeviceName, FileName, FolderPath, ProcessCommandLine</div>
+                </div>
+
+                <!-- Azure AD Specific -->
+                <h2><i class="fas fa-cloud"></i> Azure AD Security</h2>
+
+                <div class="usecase-card">
+                    <h3>Risky Sign-in Detection</h3>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(1d)
+| where RiskLevelDuringSignIn in ("high", "medium")
+| project TimeGenerated, UserPrincipalName, IPAddress, Location,
+          RiskLevelDuringSignIn, RiskState, AppDisplayName, 
+          ConditionalAccessStatus
+| order by RiskLevelDuringSignIn</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>New App Consent Granted</h3>
+                    <div class="code-block">AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName == "Consent to application"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend UserWhoConsented = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, AppName, UserWhoConsented, 
+          TargetResources, AdditionalDetails</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Privileged Role Assignment</h3>
+                    <div class="code-block">AuditLogs
+| where TimeGenerated > ago(1d)
+| where OperationName has "Add member to role"
+| extend RoleName = tostring(TargetResources[0].displayName)
+| extend UserAdded = tostring(TargetResources[1].userPrincipalName)
+| extend AddedBy = tostring(InitiatedBy.user.userPrincipalName)
+| where RoleName has_any ("Global Administrator", "Security Administrator", 
+                          "Privileged Role Administrator", "Exchange Administrator")
+| project TimeGenerated, RoleName, UserAdded, AddedBy</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you correlate Azure AD and endpoint data in Sentinel?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">// Join SigninLogs with DeviceProcessEvents
+let SuspiciousLogins = SigninLogs
+| where TimeGenerated > ago(1d)
+| where RiskLevelDuringSignIn == "high"
+| project LoginTime = TimeGenerated, UserPrincipalName, IPAddress;
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| join kind=inner SuspiciousLogins on $left.AccountUpn == $right.UserPrincipalName
+| where TimeGenerated between (LoginTime .. (LoginTime + 1h))
+| project TimeGenerated, DeviceName, AccountUpn, FileName, ProcessCommandLine</div>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect credential theft in Sentinel?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>LSASS access:</strong> Monitor for tools accessing lsass.exe</li>
+                                <li><strong>Kerberoasting:</strong> Look for RC4 ticket requests (Event 4769)</li>
+                                <li><strong>DCSync:</strong> Replication requests from non-DCs</li>
+                                <li><strong>Mimikatz patterns:</strong> Known command line patterns</li>
+                                <li><strong>SAM/NTDS access:</strong> File access to credential stores</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Microsoft 365 Security -->
+                <h2><i class="fas fa-envelope"></i> Microsoft 365 Security</h2>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1566</span> Phishing Email Detection</h3>
+                    <div class="code-block">EmailEvents
+| where TimeGenerated > ago(1d)
+| where ThreatTypes has_any ("Phish", "Malware")
+| summarize 
+    EmailCount = count(),
+    Recipients = make_set(RecipientEmailAddress, 10)
+    by SenderFromAddress, Subject
+| where EmailCount > 5
+| project SenderFromAddress, Subject, EmailCount, Recipients</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3><span class="mitre-tag">T1114</span> Email Forwarding Rule Created</h3>
+                    <div class="code-block">OfficeActivity
+| where TimeGenerated > ago(7d)
+| where Operation == "New-InboxRule"
+| extend RuleParams = parse_json(Parameters)
+| extend ForwardTo = RuleParams.ForwardTo
+| extend ForwardAsAttachment = RuleParams.ForwardAsAttachmentTo
+| where isnotempty(ForwardTo) or isnotempty(ForwardAsAttachment)
+| project TimeGenerated, UserId, ClientIP, ForwardTo, ForwardAsAttachment</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Suspicious File Download from SharePoint/OneDrive</h3>
+                    <div class="code-block">OfficeActivity
+| where TimeGenerated > ago(1d)
+| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
+| where SourceFileName has_any (".exe", ".dll", ".ps1", ".bat", ".vbs", ".js")
+| project TimeGenerated, UserId, SourceFileName, SourceRelativeUrl, ClientIP</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Mass File Deletion</h3>
+                    <div class="code-block">OfficeActivity
+| where TimeGenerated > ago(1d)
+| where Operation == "FileDeleted"
+| summarize DeletedCount = count(), Files = make_set(SourceFileName, 10)
+            by UserId, bin(TimeGenerated, 1h)
+| where DeletedCount > 50
+| extend AlertSeverity = case(
+    DeletedCount > 500, "Critical",
+    DeletedCount > 100, "High",
+    "Medium"
+)</div>
+                </div>
+
+                <!-- Threat Intelligence -->
+                <h2><i class="fas fa-crosshairs"></i> Threat Intelligence</h2>
+
+                <div class="usecase-card">
+                    <h3>IOC Match - IP Address</h3>
+                    <div class="code-block">let ThreatIntelIPs = ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where isnotempty(NetworkIP)
+| summarize by NetworkIP;
+DeviceNetworkEvents
+| where TimeGenerated > ago(1d)
+| where RemoteIP in (ThreatIntelIPs)
+| project TimeGenerated, DeviceName, RemoteIP, RemotePort, 
+          InitiatingProcessFileName, InitiatingProcessAccountName</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>IOC Match - Domain</h3>
+                    <div class="code-block">let ThreatDomains = ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where isnotempty(DomainName)
+| summarize by DomainName;
+DnsEvents
+| where TimeGenerated > ago(1d)
+| where Name in (ThreatDomains)
+| project TimeGenerated, ClientIP, Name, IPAddresses</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>IOC Match - File Hash</h3>
+                    <div class="code-block">let ThreatHashes = ThreatIntelligenceIndicator
+| where TimeGenerated > ago(30d)
+| where isnotempty(FileHashValue)
+| summarize by FileHashValue;
+DeviceFileEvents
+| where TimeGenerated > ago(1d)
+| where SHA256 in (ThreatHashes) or SHA1 in (ThreatHashes) or MD5 in (ThreatHashes)
+| project TimeGenerated, DeviceName, FileName, FolderPath, SHA256, 
+          InitiatingProcessFileName</div>
+                </div>
+
+                <!-- Investigation Queries -->
+                <h2><i class="fas fa-search"></i> Investigation Queries</h2>
+
+                <div class="usecase-card">
+                    <h3>User Activity Timeline</h3>
+                    <div class="code-block">let TargetUser = "user@domain.com";
+union
+    (SigninLogs 
+     | where UserPrincipalName == TargetUser 
+     | project TimeGenerated, Activity = "SignIn", Details = strcat(AppDisplayName, " from ", IPAddress)
+    ),
+    (AuditLogs 
+     | where InitiatedBy.user.userPrincipalName == TargetUser 
+     | project TimeGenerated, Activity = "AuditAction", Details = OperationName
+    ),
+    (OfficeActivity 
+     | where UserId == TargetUser 
+     | project TimeGenerated, Activity = "OfficeAction", Details = Operation
+    )
+| order by TimeGenerated desc
+| take 100</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Device Activity Timeline</h3>
+                    <div class="code-block">let TargetDevice = "WORKSTATION01";
+union
+    (DeviceProcessEvents | where DeviceName == TargetDevice 
+     | project TimeGenerated, EventType = "Process", Details = strcat(FileName, " - ", ProcessCommandLine)
+    ),
+    (DeviceNetworkEvents | where DeviceName == TargetDevice 
+     | project TimeGenerated, EventType = "Network", Details = strcat(RemoteIP, ":", RemotePort)
+    ),
+    (DeviceFileEvents | where DeviceName == TargetDevice 
+     | project TimeGenerated, EventType = "File", Details = strcat(ActionType, " - ", FileName)
+    ),
+    (DeviceRegistryEvents | where DeviceName == TargetDevice 
+     | project TimeGenerated, EventType = "Registry", Details = RegistryKey
+    )
+| order by TimeGenerated desc
+| take 200</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Process Tree Reconstruction</h3>
+                    <div class="code-block">let TargetProcess = "suspicious.exe";
+let StartTime = ago(1d);
+DeviceProcessEvents
+| where TimeGenerated > StartTime
+| where FileName =~ TargetProcess or InitiatingProcessFileName =~ TargetProcess
+| project TimeGenerated, DeviceName, ProcessId, FileName, ProcessCommandLine,
+          InitiatingProcessId, InitiatingProcessFileName, InitiatingProcessCommandLine,
+          AccountName
+| order by TimeGenerated asc</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Related Alerts for Entity</h3>
+                    <div class="code-block">let TargetEntity = "user@domain.com";  // or hostname, IP
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| where Entities contains TargetEntity
+| project TimeGenerated, AlertName, AlertSeverity, Description,
+          Tactics, Techniques, ProviderName
+| order by TimeGenerated desc</div>
+                </div>
+
+                <!-- Hunting Queries -->
+                <h2><i class="fas fa-binoculars"></i> Hunting Queries</h2>
+
+                <div class="usecase-card">
+                    <h3>Rare Process Execution</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| summarize ExecutionCount = count(), Devices = dcount(DeviceName) by FileName
+| where ExecutionCount < 5 and Devices < 3
+| join kind=inner (
+    DeviceProcessEvents
+    | where TimeGenerated > ago(1d)
+    | project TimeGenerated, DeviceName, FileName, ProcessCommandLine, AccountName
+) on FileName
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, ExecutionCount</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>Unusual Parent-Child Process</h3>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| summarize Count = count() by InitiatingProcessFileName, FileName
+| where Count < 5
+| order by Count asc
+| take 50</div>
+                </div>
+
+                <div class="usecase-card">
+                    <h3>First Time Process on Device</h3>
+                    <div class="code-block">let Baseline = DeviceProcessEvents
+| where TimeGenerated between (ago(30d) .. ago(1d))
+| distinct DeviceName, FileName;
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| join kind=leftanti Baseline on DeviceName, FileName
+| summarize FirstSeen = min(TimeGenerated), Count = count() 
+            by DeviceName, FileName, AccountName
+| order by FirstSeen desc</div>
+                </div>
+
+                <!-- Analytics Rule Examples -->
+                <h2><i class="fas fa-cog"></i> Analytics Rule Configuration</h2>
+                <div class="config-section">
+                    <h4>Scheduled Rule Settings</h4>
+                    <div class="code-block">Rule Name: Brute Force Attack Detected
+Query: [brute force KQL query]
+Run Query Every: 15 minutes
+Lookup Data From: Last 20 minutes
+Alert Threshold: Greater than 0
+Event Grouping: Group all events into single alert
+
+Entity Mapping:
+- Account: TargetUserName
+- IP: IPAddress
+
+Incident Settings:
+- Create incidents from alerts: Enabled
+- Group related alerts: Enabled (within 5 hours)</div>
+
+                    <h4>Near Real-Time (NRT) Rule</h4>
+                    <div class="code-block">// NRT rules run every minute for critical detections
+Rule Name: LSASS Memory Access Detected
+Query:
+DeviceProcessEvents
+| where FileName in~ ("procdump.exe", "mimikatz.exe")
+| where ProcessCommandLine has "lsass"
+
+Run Mode: NRT (Near Real-Time)
+// No scheduling options - runs continuously</div>
+                </div>
+
+                <!-- Quick Reference -->
+                <h2><i class="fas fa-bookmark"></i> Table Quick Reference</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Table</th><th>Data Source</th><th>Key Columns</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SigninLogs</td>
+                                <td>Azure AD Sign-ins</td>
+                                <td>UserPrincipalName, IPAddress, ResultType, RiskLevel</td>
+                            </tr>
+                            <tr>
+                                <td>AuditLogs</td>
+                                <td>Azure AD Audit</td>
+                                <td>OperationName, InitiatedBy, TargetResources</td>
+                            </tr>
+                            <tr>
+                                <td>SecurityEvent</td>
+                                <td>Windows Security</td>
+                                <td>EventID, Account, Computer, Activity</td>
+                            </tr>
+                            <tr>
+                                <td>DeviceProcessEvents</td>
+                                <td>MDE Processes</td>
+                                <td>FileName, ProcessCommandLine, AccountName</td>
+                            </tr>
+                            <tr>
+                                <td>DeviceNetworkEvents</td>
+                                <td>MDE Network</td>
+                                <td>RemoteIP, RemotePort, InitiatingProcessFileName</td>
+                            </tr>
+                            <tr>
+                                <td>DeviceFileEvents</td>
+                                <td>MDE Files</td>
+                                <td>FileName, FolderPath, SHA256, ActionType</td>
+                            </tr>
+                            <tr>
+                                <td>OfficeActivity</td>
+                                <td>M365 Activity</td>
+                                <td>Operation, UserId, ClientIP</td>
+                            </tr>
+                            <tr>
+                                <td>EmailEvents</td>
+                                <td>MDO Email</td>
+                                <td>SenderFromAddress, RecipientEmailAddress, Subject</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- More Interview Questions -->
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between SecurityEvent and DeviceProcessEvents?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>SecurityEvent:</strong> Windows Security Event Log (4688, 4624, etc.), requires Log Analytics agent or Azure Arc</li>
+                                <li><strong>DeviceProcessEvents:</strong> Microsoft Defender for Endpoint data, richer process telemetry, requires MDE license</li>
+                            </ul>
+                            <p style="margin-top: 12px;">DeviceProcessEvents provides more detail (command line by default, parent process info) but requires MDE. SecurityEvent is available with any Windows logging.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you optimize slow KQL queries?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Filter early:</strong> Add time and specific filters first</li>
+                                <li><strong>Use has instead of contains:</strong> <code>has</code> uses indexes</li>
+                                <li><strong>Avoid regex when possible:</strong> Use string operators</li>
+                                <li><strong>Project early:</strong> Reduce columns before joins</li>
+                                <li><strong>Use summarize:</strong> Aggregate before complex operations</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -3,22 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Ingestion Methods - Complete Configuration Guide | XSIAM</title>
+    <title>Data Ingestion | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
         .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
-        .config-step { display: flex; gap: 16px; padding: 16px; background: #21262d; border-radius: 8px; margin: 12px 0; }
-        .step-num { width: 32px; height: 32px; background: #58a6ff; color: #0d1117; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
         .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .method-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin: 20px 0; }
-        .method-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #30363d; }
-        .method-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .decision-tree { background: #0d1117; border: 2px solid #d29922; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .decision-node { background: #21262d; padding: 12px 16px; border-radius: 8px; margin: 8px 0; }
-        .decision-yes { border-left: 4px solid #3fb950; }
-        .decision-no { border-left: 4px solid #f85149; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
     </style>
 </head>
 <body>
@@ -79,474 +70,695 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-database"></i> Data Ingestion Methods - Complete Configuration Guide</h1>
-                <p class="lead">Comprehensive guide to all XSIAM data ingestion methods. For each method: what it is, when to use it, how to configure it step-by-step, and how to verify data is flowing.</p>
+                <h1><i class="fas fa-upload"></i> Data Ingestion</h1>
+                <p class="lead">Configure data collection in Cortex XSIAM from endpoints, network devices, cloud services, and third-party security tools. Master data normalization and storage optimization.</p>
 
-                <!-- Decision Tree -->
-                <h2><i class="fas fa-sitemap"></i> Which Ingestion Method Should I Use?</h2>
-                
-                <div class="decision-tree">
-                    <h3 style="color: #d29922; margin-bottom: 16px;"><i class="fas fa-question-circle"></i> Decision Tree</h3>
-                    
-                    <div class="decision-node">
-                        <strong>Q1: What type of source are you onboarding?</strong>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ Endpoint (Windows, Mac, Linux workstation/server)</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>XDR Agent</strong> - Install Cortex agent for rich telemetry and response</p>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ Network device (Firewall, Router, Switch, IDS/IPS)</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>Broker VM Syslog</strong> - Deploy Broker VM, configure syslog forwarding</p>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ Cloud platform (AWS, Azure, GCP)</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>Cloud Collector</strong> - Native API integration, no infrastructure needed</p>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ SaaS application (Okta, M365, Salesforce)</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>Cloud Collector</strong> - Check if native integration exists first</p>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ Custom app with API/webhook capability</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>HTTP Collector</strong> - Send logs via REST API</p>
-                    </div>
-                    
-                    <div class="decision-node decision-yes" style="margin-left: 20px;">
-                        <strong>→ Windows servers without agent (Domain Controllers, etc.)</strong>
-                        <p style="color: #3fb950; margin: 8px 0 0 0;">Use: <strong>Broker VM + Windows Event Forwarding</strong></p>
-                    </div>
-                </div>
+                <!-- Data Sources Overview -->
+                <h2><i class="fas fa-database"></i> Data Sources Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Sources</span></p>
 
-                <!-- Method 1: XDR Agent -->
-                <div class="method-card">
-                    <div class="method-header">
-                        <div class="method-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-desktop"></i></div>
-                        <div>
-                            <h2 style="margin: 0;">Method 1: XDR Agent</h2>
-                            <p style="color: #8b949e; margin: 4px 0 0 0;">For endpoints - richest telemetry, response capabilities</p>
-                        </div>
-                    </div>
-
-                    <h3>When to Use</h3>
-                    <ul style="color: #8b949e;">
-                        <li>Windows, macOS, or Linux workstations and servers</li>
-                        <li>You need process execution, file operations, network connections</li>
-                        <li>You want remote response capabilities (isolate, kill, shell)</li>
-                    </ul>
-
-                    <h3>What Data You Get</h3>
-                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
-                        <tr><td style="padding: 4px;">Process execution</td><td>Command line, parent process, user, hash</td></tr>
-                        <tr><td style="padding: 4px;">File operations</td><td>Create, modify, delete, rename</td></tr>
-                        <tr><td style="padding: 4px;">Network connections</td><td>Src/dst IP, port, bytes, process</td></tr>
-                        <tr><td style="padding: 4px;">Registry changes</td><td>Key create/modify/delete (Windows)</td></tr>
-                        <tr><td style="padding: 4px;">Module loads</td><td>DLLs loaded by processes</td></tr>
-                    </table>
-
-                    <h3>How to Configure</h3>
-                    <div class="console-path">Settings → Endpoints → Agent Installation</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div style="width: 100%;">
-                            <strong>Download Agent Package</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Settings → Endpoints → Agent Installation → Select OS → Download</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div style="width: 100%;">
-                            <strong>Install on Endpoint</strong>
-                            <div class="code-block">
-# Windows
-msiexec /i CortexXDR_x64.msi /qn DISTRIBUTION_ID="your-distribution-id"
-
-# macOS
-sudo installer -pkg CortexXDR.pkg -target /
-
-# Linux
-sudo rpm -ivh cortex-xdr-agent.rpm
-                            </div>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div style="width: 100%;">
-                            <strong>Configure Data Collection Policy</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Settings → Endpoints → Policy Management → Profiles → Edit → Data Collection</p>
-                            <p style="color: #8b949e; margin: 4px 0;">Enable: Process Execution, Command Line Logging, Network Connections, File Operations</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div style="width: 100%;">
-                            <strong>Verify Data</strong>
-                            <div class="code-block">
-dataset = xdr_data
-| filter agent_hostname = "YOUR-HOSTNAME"
-| filter _time > ago(1h)
-| comp count() by event_type
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Method 2: Broker VM Syslog -->
-                <div class="method-card">
-                    <div class="method-header">
-                        <div class="method-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-server"></i></div>
-                        <div>
-                            <h2 style="margin: 0;">Method 2: Broker VM (Syslog)</h2>
-                            <p style="color: #8b949e; margin: 4px 0 0 0;">For on-premises devices - firewalls, servers, network equipment</p>
-                        </div>
-                    </div>
-
-                    <h3>When to Use</h3>
-                    <ul style="color: #8b949e;">
-                        <li>Firewalls, routers, switches, load balancers</li>
-                        <li>Linux servers sending syslog</li>
-                        <li>Applications with syslog output</li>
-                        <li>Any device that can send syslog (TCP/UDP)</li>
-                    </ul>
-
-                    <h3>Prerequisites</h3>
-                    <ul style="color: #8b949e;">
-                        <li>VMware or Hyper-V environment for Broker VM</li>
-                        <li>Network path from log sources to Broker VM</li>
-                        <li>Outbound HTTPS (443) from Broker VM to internet</li>
-                    </ul>
-
-                    <h3>How to Configure</h3>
-                    
-                    <h4>Part A: Deploy Broker VM</h4>
-                    <div class="console-path">Settings → Data Sources → Broker VM → + Add Broker VM</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div style="width: 100%;">
-                            <strong>Download OVA and Registration Token</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Click "Download OVA" and copy the registration token</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div style="width: 100%;">
-                            <strong>Deploy in VMware</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">vSphere → Deploy OVF Template → Configure: 8 vCPU, 32 GB RAM, 1 TB disk</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div style="width: 100%;">
-                            <strong>Configure Network & Register</strong>
-                            <div class="code-block">
-# Access VM console, login with admin/admin
-broker-vm> configure network
-IP Address: 10.0.1.50
-Subnet: 255.255.255.0
-Gateway: 10.0.1.1
-DNS: 10.0.1.10
-
-broker-vm> register
-Token: [paste your token]
-# Wait for "Registration successful"
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4>Part B: Create Syslog Data Source</h4>
-                    <div class="console-path">Settings → Data Sources → Add Data Source → Syslog Collector</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div style="width: 100%;">
-                            <strong>Configure Syslog Listener</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; width: 100%; margin-top: 8px;">
-                                <tr><td style="padding: 4px; width: 120px;">Name:</td><td>paloalto-firewall-logs</td></tr>
-                                <tr><td style="padding: 4px;">Broker VM:</td><td>[Select your Broker VM]</td></tr>
-                                <tr><td style="padding: 4px;">Protocol:</td><td>TCP (recommended)</td></tr>
-                                <tr><td style="padding: 4px;">Port:</td><td>514</td></tr>
-                                <tr><td style="padding: 4px;">Vendor:</td><td>Palo Alto Networks</td></tr>
-                                <tr><td style="padding: 4px;">Product:</td><td>Firewall</td></tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <h4>Part C: Configure Source Device</h4>
-                    <div class="config-step">
-                        <div class="step-num">5</div>
-                        <div style="width: 100%;">
-                            <strong>Point Firewall to Broker VM</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">On Palo Alto NGFW:</p>
-                            <div class="code-block">
-# Device → Server Profiles → Syslog → Add
-Name: XSIAM-Broker
-Server: 10.0.1.50
-Transport: TCP
-Port: 514
-Format: BSD
-
-# Objects → Log Forwarding → Add
-Apply to security rules → Log at Session End
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="config-step">
-                        <div class="step-num">6</div>
-                        <div style="width: 100%;">
-                            <strong>Verify Data</strong>
-                            <div class="code-block">
-// Check Broker VM
-broker-vm> show listeners
-
-// Query in XSIAM
-dataset = panw_ngfw_traffic_raw
-| filter _time > ago(1h)
-| limit 10
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Method 3: Cloud Collectors -->
-                <div class="method-card">
-                    <div class="method-header">
-                        <div class="method-icon" style="background: #3d1f5c; color: #a371f7;"><i class="fas fa-cloud"></i></div>
-                        <div>
-                            <h2 style="margin: 0;">Method 3: Cloud Collectors</h2>
-                            <p style="color: #8b949e; margin: 4px 0 0 0;">For cloud platforms and SaaS - native API integration</p>
-                        </div>
-                    </div>
-
-                    <h3>When to Use</h3>
-                    <ul style="color: #8b949e;">
-                        <li>AWS (CloudTrail, GuardDuty, VPC Flow Logs)</li>
-                        <li>Azure (Activity Log, Entra ID, Defender)</li>
-                        <li>GCP (Cloud Audit Logs)</li>
-                        <li>SaaS apps (Okta, Microsoft 365, Salesforce)</li>
-                    </ul>
-
-                    <h3>How to Configure: AWS CloudTrail Example</h3>
-                    <div class="console-path">Settings → Data Sources → Cloud Collectors → + Add</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div style="width: 100%;">
-                            <strong>Create Cloud Collector</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Select "Amazon Web Services" → "CloudTrail"</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div style="width: 100%;">
-                            <strong>Configure AWS Credentials</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; width: 100%; margin-top: 8px;">
-                                <tr><td style="padding: 4px; width: 150px;">AWS Account ID:</td><td>123456789012</td></tr>
-                                <tr><td style="padding: 4px;">Region:</td><td>us-east-1</td></tr>
-                                <tr><td style="padding: 4px;">SQS Queue URL:</td><td>https://sqs.us-east-1.amazonaws.com/123456789012/xsiam-cloudtrail</td></tr>
-                                <tr><td style="padding: 4px;">IAM Role ARN:</td><td>arn:aws:iam::123456789012:role/XSIAMCloudTrailRole</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div style="width: 100%;">
-                            <strong>Configure AWS Side</strong>
-                            <div class="code-block">
-# Create IAM Role with trust policy for XSIAM
-# Attach policy: CloudTrailReadOnlyAccess, SQS permissions
-
-# Create SQS Queue for CloudTrail notifications
-# Configure CloudTrail to send to S3 with SQS notification
-                            </div>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div style="width: 100%;">
-                            <strong>Verify Data</strong>
-                            <div class="code-block">
-dataset = aws_cloudtrail_raw
-| filter _time > ago(1h)
-| comp count() by eventName
-| sort desc count
-| limit 20
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3>How to Configure: Okta Example</h3>
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div style="width: 100%;">
-                            <strong>Create Okta API Token</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">Okta Admin → Security → API → Tokens → Create Token</p>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div style="width: 100%;">
-                            <strong>Configure in XSIAM</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; width: 100%; margin-top: 8px;">
-                                <tr><td style="padding: 4px; width: 150px;">Okta Domain:</td><td>yourcompany.okta.com</td></tr>
-                                <tr><td style="padding: 4px;">API Token:</td><td>[paste token]</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div style="width: 100%;">
-                            <strong>Verify Data</strong>
-                            <div class="code-block">
-dataset = okta_okta_raw
-| filter _time > ago(1h)
-| limit 10
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Method 4: HTTP Collector -->
-                <div class="method-card">
-                    <div class="method-header">
-                        <div class="method-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-plug"></i></div>
-                        <div>
-                            <h2 style="margin: 0;">Method 4: HTTP Collector</h2>
-                            <p style="color: #8b949e; margin: 4px 0 0 0;">For API-based log submission</p>
-                        </div>
-                    </div>
-
-                    <h3>When to Use</h3>
-                    <ul style="color: #8b949e;">
-                        <li>Custom applications that can send HTTP POST</li>
-                        <li>Sources without syslog capability</li>
-                        <li>Cloud services with webhook output</li>
-                        <li>Custom scripts pulling from APIs</li>
-                    </ul>
-
-                    <h3>How to Configure</h3>
-                    <div class="console-path">Settings → Data Sources → HTTP Collector → + Add</div>
-                    
-                    <div class="config-step">
-                        <div class="step-num">1</div>
-                        <div style="width: 100%;">
-                            <strong>Create HTTP Collector</strong>
-                            <table style="color: #8b949e; font-size: 0.9rem; width: 100%; margin-top: 8px;">
-                                <tr><td style="padding: 4px; width: 120px;">Name:</td><td>custom-app-http</td></tr>
-                                <tr><td style="padding: 4px;">Vendor:</td><td>Custom</td></tr>
-                                <tr><td style="padding: 4px;">Product:</td><td>MyApplication</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">2</div>
-                        <div style="width: 100%;">
-                            <strong>Get Endpoint URL and Token</strong>
-                            <p style="color: #8b949e; margin: 4px 0;">After saving, XSIAM provides:</p>
-                            <div class="code-block">
-URL: https://api-{tenant}.xsiam.paloaltonetworks.com/logs/v1/event
-Token: eyJhbGciOiJIUzI1NiIs...
-                            </div>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">3</div>
-                        <div style="width: 100%;">
-                            <strong>Send Logs via HTTP POST</strong>
-                            <div class="code-block">
-curl -X POST "https://api-{tenant}.xsiam.paloaltonetworks.com/logs/v1/event" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
-  -H "Content-Type: application/json" \
-  -d '[{"timestamp":"2024-02-15T14:30:00Z","user":"jsmith","action":"login"}]'
-                            </div>
-                        </div>
-                    </div>
-                    <div class="config-step">
-                        <div class="step-num">4</div>
-                        <div style="width: 100%;">
-                            <strong>Verify Data</strong>
-                            <div class="code-block">
-dataset = custom_myapplication_raw
-| filter _time > ago(1h)
-| limit 10
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Reference Table -->
-                <h2><i class="fas fa-table"></i> Quick Reference: All Methods</h2>
-                
-                <div class="styled-table">
-                    <table>
+                    <h4>Data Source Categories</h4>
+                    <table class="styled-table">
                         <thead>
-                            <tr>
-                                <th>Method</th>
-                                <th>Console Location</th>
-                                <th>Dataset Pattern</th>
-                                <th>Best For</th>
-                            </tr>
+                            <tr><th>Category</th><th>Examples</th><th>Collection Method</th></tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>XDR Agent</strong></td>
-                                <td>Settings → Endpoints</td>
-                                <td><code>xdr_data</code></td>
-                                <td>Endpoints</td>
+                                <td><strong>Endpoint</strong></td>
+                                <td>Windows, macOS, Linux</td>
+                                <td>Cortex XDR Agent</td>
                             </tr>
                             <tr>
-                                <td><strong>Broker VM Syslog</strong></td>
-                                <td>Settings → Data Sources → Broker VM</td>
-                                <td><code>{vendor}_{product}_raw</code></td>
-                                <td>On-prem devices</td>
+                                <td><strong>Network</strong></td>
+                                <td>Firewalls, proxies, IDS</td>
+                                <td>Syslog, API</td>
                             </tr>
                             <tr>
-                                <td><strong>Cloud Collector</strong></td>
-                                <td>Settings → Data Sources → Cloud Collectors</td>
-                                <td><code>{vendor}_{product}_raw</code></td>
-                                <td>AWS/Azure/GCP/SaaS</td>
+                                <td><strong>Cloud</strong></td>
+                                <td>AWS, Azure, GCP</td>
+                                <td>API integration</td>
                             </tr>
                             <tr>
-                                <td><strong>HTTP Collector</strong></td>
-                                <td>Settings → Data Sources → HTTP Collector</td>
-                                <td><code>{vendor}_{product}_raw</code></td>
-                                <td>API/Webhook sources</td>
+                                <td><strong>Identity</strong></td>
+                                <td>Active Directory, Azure AD</td>
+                                <td>Agent, API</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Applications</strong></td>
+                                <td>SaaS apps, custom apps</td>
+                                <td>API, log forwarding</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Third-Party Security</strong></td>
+                                <td>Other SIEMs, EDR, email</td>
+                                <td>API, syslog</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Interview Q&A -->
+                <!-- Cortex XDR Agent -->
+                <h2><i class="fas fa-desktop"></i> Cortex XDR Agent Data</h2>
+                <div class="config-section">
+                    <h4>Agent Data Collection</h4>
+                    <div class="code-block">Data Collected by Agent:
+
+Process Events:
+- Process creation/termination
+- Command line arguments
+- Parent-child relationships
+- User context
+- Hash values
+
+File Events:
+- File create/modify/delete
+- File path and attributes
+- Hash on creation
+- Signature information
+
+Network Events:
+- Connection attempts
+- Source/destination IPs and ports
+- Process making connection
+- Protocol information
+
+Registry Events (Windows):
+- Key create/delete
+- Value set/modify
+- Persistence locations monitored
+
+Additional Data:
+- Module loads
+- DNS queries
+- Script content
+- Memory operations</div>
+
+                    <h4>Agent Data Settings</h4>
+                    <p><span class="console-path">Settings → Configurations → Agent Profiles</span></p>
+                    <div class="code-block">Data Collection Options:
+
+Extended Data Collection:
+├── Enabled: Rich telemetry for hunting
+├── Disabled: Reduced data, basic protection
+└── Selective: Per-host group configuration
+
+Network Monitoring:
+├── All connections
+├── External only
+└── Suspicious only
+
+File Monitoring:
+├── All file operations
+├── Executable files only
+└── Specific paths</div>
+                </div>
+
+                <!-- Syslog Collection -->
+                <h2><i class="fas fa-server"></i> Syslog Collection</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Sources → Syslog Collector</span></p>
+
+                    <h4>Syslog Collector Configuration</h4>
+                    <div class="code-block">Syslog Collector Setup:
+
+1. Deploy Broker VM
+   - Download from XSIAM console
+   - Deploy in network accessible to log sources
+   - Configure network settings
+
+2. Configure Collection
+   - Protocol: TCP/UDP
+   - Port: 514 (default) or custom
+   - TLS: Enable for secure transport
+
+3. Create Parsing Rules
+   - Map to vendor/product
+   - Define log format
+   - Set dataset destination
+
+4. Point Sources
+   - Configure devices to send to collector
+   - Verify connectivity
+   - Check for data flow</div>
+
+                    <h4>Common Syslog Sources</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Source</th><th>Vendor</th><th>Dataset</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Palo Alto Firewall</td><td>Palo Alto Networks</td><td>panw_ngfw</td></tr>
+                            <tr><td>Cisco ASA</td><td>Cisco</td><td>cisco_asa</td></tr>
+                            <tr><td>Fortinet FortiGate</td><td>Fortinet</td><td>fortinet_fortigate</td></tr>
+                            <tr><td>Check Point</td><td>Check Point</td><td>checkpoint_firewall</td></tr>
+                            <tr><td>Linux Syslog</td><td>Generic</td><td>linux_syslog</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Cloud Data Sources -->
+                <h2><i class="fas fa-cloud"></i> Cloud Data Sources</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Sources → Cloud</span></p>
+
+                    <h4>AWS Integration</h4>
+                    <div class="code-block">AWS Data Sources:
+
+CloudTrail:
+- API activity
+- Management events
+- Data events (S3, Lambda)
+
+GuardDuty:
+- Threat findings
+- Anomaly detection
+
+VPC Flow Logs:
+- Network traffic
+- Connection metadata
+
+Security Hub:
+- Aggregated findings
+- Compliance status
+
+Setup Requirements:
+1. IAM role with read permissions
+2. Cross-account trust (if applicable)
+3. S3 bucket for CloudTrail
+4. API credentials in XSIAM</div>
+
+                    <h4>Azure Integration</h4>
+                    <div class="code-block">Azure Data Sources:
+
+Azure AD Sign-in Logs:
+- Authentication events
+- Conditional access
+
+Azure AD Audit Logs:
+- Directory changes
+- Application activity
+
+Azure Activity Logs:
+- Resource operations
+- Administrative actions
+
+Microsoft 365:
+- Audit logs
+- Security alerts
+
+Setup Requirements:
+1. App registration in Azure AD
+2. API permissions granted
+3. Certificate or secret
+4. Configure in XSIAM</div>
+
+                    <h4>GCP Integration</h4>
+                    <div class="code-block">GCP Data Sources:
+
+Cloud Audit Logs:
+- Admin activity
+- Data access
+- System events
+
+VPC Flow Logs:
+- Network telemetry
+
+Security Command Center:
+- Findings and threats
+
+Setup Requirements:
+1. Service account with permissions
+2. JSON key file
+3. Pub/Sub subscription (optional)
+4. Configure in XSIAM</div>
+                </div>
+
+                <!-- Third-Party Integrations -->
+                <h2><i class="fas fa-plug"></i> Third-Party Integrations</h2>
+                <div class="config-section">
+                    <h4>Integration Methods</h4>
+                    <div class="code-block">Integration Types:
+
+API-Based:
+- Pull data via REST API
+- Scheduled collection
+- Real-time webhooks
+
+Examples:
+├── CrowdStrike Falcon
+├── Microsoft Defender
+├── Okta
+├── ServiceNow
+└── Custom APIs
+
+Log Forwarding:
+- Push data to XSIAM
+- Syslog or HTTP
+- Native integrations
+
+Examples:
+├── Firewalls (syslog)
+├── Proxy logs
+├── Custom applications
+└── Legacy systems</div>
+
+                    <h4>Popular Integrations</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Integration</th><th>Data Type</th><th>Method</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Microsoft 365</td><td>Email, audit, security</td><td>API</td></tr>
+                            <tr><td>Okta</td><td>Authentication, SSO</td><td>API</td></tr>
+                            <tr><td>CrowdStrike</td><td>Endpoint alerts</td><td>API</td></tr>
+                            <tr><td>Proofpoint</td><td>Email security</td><td>API</td></tr>
+                            <tr><td>Zscaler</td><td>Web proxy</td><td>API/Log</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Data Normalization -->
+                <h2><i class="fas fa-filter"></i> Data Normalization</h2>
+                <div class="config-section">
+                    <h4>XDM (XSIAM Data Model)</h4>
+                    <div class="code-block">XDM Normalization:
+
+Purpose:
+- Standardize field names across sources
+- Enable cross-source correlation
+- Consistent query experience
+
+Common XDM Fields:
+├── xdm.source.ipv4
+├── xdm.target.ipv4
+├── xdm.source.user.username
+├── xdm.target.host.hostname
+├── xdm.event.type
+├── xdm.event.outcome
+└── xdm.alert.severity
+
+Mapping Process:
+1. Raw data ingested
+2. Parsing rules applied
+3. Fields mapped to XDM
+4. Normalized data stored</div>
+
+                    <h4>Custom Parsing Rules</h4>
+                    <p><span class="console-path">Settings → Data Sources → Parsing Rules</span></p>
+                    <div class="code-block">Creating Custom Parser:
+
+1. Identify Log Format
+   - Sample logs
+   - Field delimiters
+   - Timestamp format
+
+2. Create Parsing Rule
+   - Regex extraction
+   - Field mapping
+   - XDM normalization
+
+3. Test Parser
+   - Use sample data
+   - Verify field extraction
+   - Check XDM mapping
+
+4. Deploy
+   - Apply to data source
+   - Monitor for errors</div>
+                </div>
+
+                <!-- Storage and Retention -->
+                <h2><i class="fas fa-archive"></i> Storage and Retention</h2>
+                <div class="config-section">
+                    <h4>Storage Tiers</h4>
+                    <div class="code-block">XSIAM Storage Architecture:
+
+HOT Storage:
+- Recent data (configurable)
+- Fast query performance
+- Full functionality
+
+COLD Storage:
+- Older data
+- Archived for compliance
+- Slower queries
+- Rehydration needed for analysis
+
+Retention Settings:
+- Per dataset configuration
+- Based on compliance needs
+- Cost optimization</div>
+
+                    <h4>Retention Configuration</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Data Type</th><th>Recommended Hot</th><th>Recommended Total</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>XDR Endpoint</td><td>30-90 days</td><td>1 year</td></tr>
+                            <tr><td>Firewall Logs</td><td>30 days</td><td>90-180 days</td></tr>
+                            <tr><td>Authentication</td><td>90 days</td><td>1 year</td></tr>
+                            <tr><td>Alerts</td><td>90 days</td><td>1+ years</td></tr>
+                            <tr><td>Cloud Audit</td><td>30-90 days</td><td>1 year</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Monitoring Data Flow -->
+                <h2><i class="fas fa-chart-line"></i> Monitoring Data Flow</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Sources → Data Sources Dashboard</span></p>
+
+                    <h4>Data Flow Monitoring</h4>
+                    <div class="code-block">Key Metrics to Monitor:
+
+Ingestion Rate:
+- Events per second (EPS)
+- Bytes per day
+- Trend analysis
+
+Data Source Health:
+- Active/inactive sources
+- Last seen timestamp
+- Error rates
+
+Parsing Success:
+- Parsed vs unparsed events
+- Parsing errors
+- Missing field mappings
+
+XQL for Monitoring:
+// Check data ingestion
+dataset in (xdr_data, firewall_data, cloud_audit_logs)
+| comp count() by _dataset, bin(_time, 1h)
+
+// Find data gaps
+dataset = xdr_data
+| comp count() by agent_hostname, bin(_time, 1h)
+| where count < 10</div>
+
+                    <h4>Troubleshooting Data Issues</h4>
+                    <div class="code-block">Common Issues:
+
+No Data Arriving:
+1. Check source connectivity
+2. Verify collector status
+3. Check parsing rules
+4. Review firewall rules
+
+Parsing Failures:
+1. Review raw logs
+2. Check parser configuration
+3. Update regex patterns
+4. Test with sample data
+
+Missing Fields:
+1. Verify source configuration
+2. Check field extraction
+3. Update XDM mapping</div>
+                </div>
+
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the different data ingestion methods in XSIAM and when would you use each?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you onboard a new data source in XSIAM?</button>
                         <div class="qa-answer">
-                            <p><strong>Four main methods:</strong></p>
                             <ol>
-                                <li><strong>XDR Agent:</strong> For endpoints. Install on Windows/Mac/Linux for process, file, network telemetry plus response capabilities.</li>
-                                <li><strong>Broker VM:</strong> For on-prem devices. Deploy VM to collect syslog from firewalls, servers, network equipment. Buffers and securely uploads to cloud.</li>
-                                <li><strong>Cloud Collectors:</strong> For cloud/SaaS. Native integrations with AWS, Azure, GCP, Okta, M365. Direct cloud-to-cloud, no infrastructure needed.</li>
-                                <li><strong>HTTP Collector:</strong> For custom sources. REST API endpoint for applications that can send HTTP POST. Good for webhooks and custom scripts.</li>
+                                <li><strong>Identify data source:</strong> What type, what data needed?</li>
+                                <li><strong>Check native support:</strong> Built-in parser available?</li>
+                                <li><strong>Configure collection:</strong> API, syslog, or agent</li>
+                                <li><strong>Set up parsing:</strong> Map fields to XDM</li>
+                                <li><strong>Test data flow:</strong> Verify in Query Center</li>
+                                <li><strong>Create detections:</strong> Build correlation rules</li>
                             </ol>
-                            <p><strong>Decision framework:</strong> Endpoint → Agent. Network device → Broker VM. Cloud/SaaS → Check for native collector first. Custom app → HTTP if no syslog.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is XDM and why is it important?</button>
+                        <div class="qa-answer">
+                            <p><strong>XDM (XSIAM Data Model):</strong> Standardized field naming schema</p>
+                            <ul>
+                                <li><strong>Normalization:</strong> Same field names across all sources</li>
+                                <li><strong>Correlation:</strong> Join data from different sources</li>
+                                <li><strong>Consistent queries:</strong> One query works for all data</li>
+                                <li><strong>Analytics:</strong> ML models work across sources</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you troubleshoot missing log data?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Check source:</strong> Is it generating logs?</li>
+                                <li><strong>Verify network:</strong> Can logs reach collector?</li>
+                                <li><strong>Check collector:</strong> Is broker VM healthy?</li>
+                                <li><strong>Review parsing:</strong> Are logs being parsed?</li>
+                                <li><strong>Query raw data:</strong> Check _raw_log dataset</li>
+                            </ol>
                         </div>
                     </div>
                 </div>
 
             </main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Datasets Reference -->
+                <h2><i class="fas fa-table"></i> Common Datasets</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Dataset</th><th>Description</th><th>Key Fields</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>xdr_data</strong></td>
+                                <td>Cortex XDR endpoint telemetry</td>
+                                <td>agent_hostname, event_type, actor_*</td>
+                            </tr>
+                            <tr>
+                                <td><strong>xdr_alerts</strong></td>
+                                <td>XDR alert data</td>
+                                <td>alert_name, severity, agent_hostname</td>
+                            </tr>
+                            <tr>
+                                <td><strong>panw_ngfw</strong></td>
+                                <td>Palo Alto firewall</td>
+                                <td>src_ip, dst_ip, action, app</td>
+                            </tr>
+                            <tr>
+                                <td><strong>azure_ad_signin</strong></td>
+                                <td>Azure AD sign-ins</td>
+                                <td>user, ip, result, app</td>
+                            </tr>
+                            <tr>
+                                <td><strong>aws_cloudtrail</strong></td>
+                                <td>AWS CloudTrail</td>
+                                <td>event_name, user, source_ip</td>
+                            </tr>
+                            <tr>
+                                <td><strong>okta_logs</strong></td>
+                                <td>Okta authentication</td>
+                                <td>user, action, outcome, client_ip</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Querying Multiple Datasets</h4>
+                    <div class="code-block">// Query single dataset
+dataset = xdr_data
+| filter event_type = PROCESS
+| limit 100
+
+// Query multiple datasets
+dataset in (xdr_data, panw_ngfw)
+| filter xdm.source.ipv4 = "10.0.1.50"
+| fields _dataset, xdm.source.ipv4, xdm.target.ipv4
+
+// All datasets
+dataset = *
+| filter xdm.source.user.username = "john.doe"
+| comp count() by _dataset</div>
                 </div>
-            </footer>
+
+                <!-- Broker VM -->
+                <h2><i class="fas fa-server"></i> Broker VM Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Sources → Broker VMs</span></p>
+
+                    <h4>Broker VM Functions</h4>
+                    <div class="code-block">Broker VM Capabilities:
+
+Syslog Collection:
+- Receive TCP/UDP syslog
+- Parse and forward to cloud
+- Buffer during network issues
+
+HTTP Collection:
+- Receive HTTP/HTTPS logs
+- Webhook endpoint
+- Custom log formats
+
+Windows Event Collection:
+- WEF (Windows Event Forwarding)
+- Collect from servers
+- Forward to XSIAM
+
+Database Collection:
+- JDBC connections
+- Query database tables
+- Scheduled pulls</div>
+
+                    <h4>Broker Deployment</h4>
+                    <div class="code-block">Deployment Steps:
+
+1. Download OVA/ISO
+   Settings → Data Sources → Broker VMs → Download
+
+2. Deploy to Hypervisor
+   - VMware, Hyper-V, or KVM
+   - 4 vCPU, 8GB RAM minimum
+   - Network accessible by log sources
+
+3. Initial Configuration
+   - Network settings
+   - Register with XSIAM tenant
+   - Configure collectors
+
+4. Monitoring
+   - Check broker status
+   - Monitor resource usage
+   - Review error logs</div>
+                </div>
+
+                <!-- Data Quality -->
+                <h2><i class="fas fa-check-circle"></i> Data Quality Best Practices</h2>
+                <div class="config-section">
+                    <h4>Ensuring Data Quality</h4>
+                    <div class="code-block">Data Quality Checklist:
+
+COMPLETENESS:
+☐ All expected sources sending data
+☐ No unexpected gaps in timeline
+☐ All fields populated correctly
+
+ACCURACY:
+☐ Timestamps correct (timezone)
+☐ Field values make sense
+☐ No parsing errors
+
+TIMELINESS:
+☐ Data arriving in near real-time
+☐ No significant latency
+☐ Alerts triggering promptly
+
+CONSISTENCY:
+☐ Same events parse consistently
+☐ Field names normalized
+☐ XDM mapping complete</div>
+
+                    <h4>Data Validation Queries</h4>
+                    <div class="code-block">// Check for data gaps
+dataset = xdr_data
+| comp count() by bin(_time, 1h)
+| where count < 1000
+| sort asc _time
+
+// Check parsing success
+dataset = _raw_log
+| filter parsing_status != "success"
+| comp count() by parsing_status, vendor, product
+
+// Verify field population
+dataset = panw_ngfw
+| comp 
+    count() as total,
+    count(src_ip != null) as has_src,
+    count(dst_ip != null) as has_dst
+| alter src_pct = round(has_src * 100.0 / total, 2)
+
+// Check latency
+dataset = xdr_data
+| alter latency_mins = timestamp_diff(_insert_time, _time, "MINUTE")
+| where latency_mins > 5
+| comp avg(latency_mins) by agent_hostname</div>
+                </div>
+
+                <!-- Licensing -->
+                <h2><i class="fas fa-file-contract"></i> Data Licensing</h2>
+                <div class="config-section">
+                    <h4>XSIAM Licensing Model</h4>
+                    <div class="code-block">Licensing Considerations:
+
+Pro per Endpoint:
+- Priced per endpoint
+- XDR agent data included
+- Limited third-party data
+
+Pro per TB:
+- Priced per data volume
+- All data types supported
+- Third-party integrations
+- More flexible
+
+Data Counting:
+- Compressed data size
+- After normalization
+- Excludes XDR agent data (in per-endpoint)
+
+Optimization:
+- Filter unnecessary logs at source
+- Use appropriate retention
+- Monitor usage dashboards</div>
+                </div>
+
+                <!-- More Interview Questions -->
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSIAM handle high-volume data ingestion?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Cloud-native architecture:</strong> Auto-scales to handle load</li>
+                                <li><strong>Broker VMs:</strong> Buffer and forward logs</li>
+                                <li><strong>Distributed processing:</strong> Parallel parsing and normalization</li>
+                                <li><strong>Compression:</strong> Efficient storage of normalized data</li>
+                                <li><strong>Hot/cold tiering:</strong> Optimize based on data age</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between hot and cold storage in XSIAM?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Hot storage:</strong> Recent data, fast queries, full functionality, higher cost</li>
+                                <li><strong>Cold storage:</strong> Archived data, slower access, requires rehydration, lower cost</li>
+                            </ul>
+                            <p style="margin-top: 12px;"><strong>Strategy:</strong> Keep frequently queried data in hot storage, archive older data to cold for compliance.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
         </div>
     </div>
     <script>

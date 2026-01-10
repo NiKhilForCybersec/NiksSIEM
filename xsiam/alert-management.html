@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alert Management | XSIAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
+        .severity-critical { background: #f85149; color: white; padding: 4px 12px; border-radius: 4px; }
+        .severity-high { background: #f97316; color: white; padding: 4px 12px; border-radius: 4px; }
+        .severity-medium { background: #d29922; color: black; padding: 4px 12px; border-radius: 4px; }
+        .severity-low { background: #3fb950; color: black; padding: 4px 12px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+                                                        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">XSIAM Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="comparison.html" class="nav-link"><i class="fas fa-balance-scale"></i> vs Competitors</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Log Onboarding</a>
+                    <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM</a>
+                    <a href="agents.html" class="nav-link"><i class="fas fa-desktop"></i> Cortex Agents</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">XQL Query Language</div>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> XQL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-crosshairs"></i> XDR Capabilities</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> ASM / Xpanse</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
+                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Alert Management</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-bell"></i> Alert Management</h1>
+                <p class="lead">Master alert handling in Cortex XSIAM from triage to resolution. Learn the alert lifecycle, investigation workflows, and best practices for efficient alert management.</p>
+
+                <!-- Alert Sources -->
+                <h2><i class="fas fa-stream"></i> Alert Sources in XSIAM</h2>
+                <div class="config-section">
+                    <p>XSIAM aggregates alerts from multiple sources into a unified queue:</p>
+                    
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Source</th><th>Description</th><th>Alert Types</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cortex XDR Analytics</strong></td>
+                                <td>Built-in detection rules</td>
+                                <td>Behavioral, BIOC, IOC matches</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Correlation Rules</strong></td>
+                                <td>Custom XQL-based detections</td>
+                                <td>Custom correlation alerts</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Third-Party Integrations</strong></td>
+                                <td>External security tools</td>
+                                <td>Firewall, email security, cloud</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Threat Intelligence</strong></td>
+                                <td>IOC feed matches</td>
+                                <td>Hash, IP, domain matches</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Identity Analytics</strong></td>
+                                <td>User behavior analytics</td>
+                                <td>Anomalous user activity</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <p><span class="console-path">XSIAM → Incident Response → Alerts</span></p>
+                </div>
+
+                <!-- Alert Lifecycle -->
+                <h2><i class="fas fa-sync-alt"></i> Alert Lifecycle</h2>
+                <div class="config-section">
+                    <div class="code-block">Alert Lifecycle States:
+
+NEW
+ │  Alert created, awaiting triage
+ │
+ ▼
+UNDER_INVESTIGATION
+ │  Analyst actively working on alert
+ │
+ ├──► RESOLVED_TRUE_POSITIVE
+ │    Confirmed malicious, incident created
+ │
+ ├──► RESOLVED_FALSE_POSITIVE
+ │    Confirmed benign, rule tuning needed
+ │
+ ├──► RESOLVED_DUPLICATE
+ │    Same as existing alert/incident
+ │
+ └──► RESOLVED_OTHER
+      Other resolution (informational, etc.)</div>
+
+                    <h4>Alert Status Transitions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>From</th><th>To</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>New</td>
+                                <td>Under Investigation</td>
+                                <td>Analyst claims alert</td>
+                            </tr>
+                            <tr>
+                                <td>Under Investigation</td>
+                                <td>Resolved - True Positive</td>
+                                <td>Confirm malicious activity</td>
+                            </tr>
+                            <tr>
+                                <td>Under Investigation</td>
+                                <td>Resolved - False Positive</td>
+                                <td>Confirm benign, add exclusion</td>
+                            </tr>
+                            <tr>
+                                <td>Any Resolved</td>
+                                <td>Under Investigation</td>
+                                <td>Reopen if new information</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Alert Queue Management -->
+                <h2><i class="fas fa-list"></i> Alert Queue Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Incident Response → Alerts → Alert Queue</span></p>
+
+                    <h4>Queue Filters</h4>
+                    <div class="code-block">Common Filter Combinations:
+
+High Priority Queue:
+- Severity: Critical, High
+- Status: New
+- Sort: Newest first
+
+My Alerts:
+- Assigned To: [Your username]
+- Status: Under Investigation
+
+Unassigned Critical:
+- Severity: Critical
+- Assigned To: Unassigned
+- Status: New
+
+Specific Source:
+- Alert Source: Cortex XDR Analytics
+- Severity: Any
+- Time: Last 24 hours</div>
+
+                    <h4>Bulk Operations</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Bulk Assign:</strong> Assign multiple alerts to an analyst</li>
+                        <li><strong>Bulk Close:</strong> Close multiple false positives</li>
+                        <li><strong>Bulk Link:</strong> Link alerts to existing incident</li>
+                        <li><strong>Bulk Exclude:</strong> Add exclusions for FP patterns</li>
+                    </ul>
+                </div>
+
+                <!-- Alert Details -->
+                <h2><i class="fas fa-info-circle"></i> Alert Details View</h2>
+                <div class="config-section">
+                    <h4>Alert Information Sections</h4>
+                    <div class="code-block">Alert Detail Panels:
+
+┌─────────────────────────────────────────────────────┐
+│ ALERT SUMMARY                                       │
+│ ─────────────────────────────────────────────────── │
+│ Alert Name: Suspicious PowerShell Execution         │
+│ Severity: High                                      │
+│ Source: Cortex XDR Analytics                        │
+│ MITRE: T1059.001 - Command and Scripting           │
+│ Time: 2024-01-15 14:30:00 UTC                       │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ AFFECTED ENTITIES                                   │
+│ ─────────────────────────────────────────────────── │
+│ Host: WORKSTATION-01                                │
+│ User: DOMAIN\john.doe                               │
+│ IP: 10.0.1.50                                       │
+│ Process: powershell.exe (PID: 4532)                 │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ DETECTION DETAILS                                   │
+│ ─────────────────────────────────────────────────── │
+│ Rule: PowerShell Encoded Command Execution          │
+│ Command Line: powershell -enc [base64]...           │
+│ Parent Process: excel.exe                           │
+│ Action: Detected (not blocked)                      │
+└─────────────────────────────────────────────────────┘</div>
+
+                    <h4>Key Sections to Review</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Section</th><th>What to Look For</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Causality Chain</strong></td>
+                                <td>Process tree showing how activity originated</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timeline</strong></td>
+                                <td>Chronological events on the endpoint</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Activity</strong></td>
+                                <td>Connections made by suspicious processes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Activity</strong></td>
+                                <td>Files created, modified, or deleted</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Related Alerts</strong></td>
+                                <td>Other alerts on same host/user</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Causality View -->
+                <h2><i class="fas fa-project-diagram"></i> Causality Chain Analysis</h2>
+                <div class="config-section">
+                    <p>The Causality Chain shows the process tree and relationships leading to the alert.</p>
+                    <p><span class="console-path">Alert Details → Causality View</span></p>
+
+                    <div class="code-block">Example Causality Chain:
+
+explorer.exe (User shell)
+    │
+    └── outlook.exe (Email client)
+            │
+            └── WINWORD.EXE (Opened attachment)
+                    │
+                    └── cmd.exe (Macro execution)
+                            │
+                            └── powershell.exe ← ALERT TRIGGERED
+                                    │
+                                    ├── Network: 185.x.x.x:443
+                                    └── File: C:\Users\...\payload.exe
+
+Key Analysis Points:
+1. What initiated the chain? (explorer = user action)
+2. What's the attack vector? (Word document from email)
+3. What actions did the alert process take?
+4. Is there C2 communication?
+5. Were additional payloads dropped?</div>
+
+                    <h4>Causality Investigation Steps</h4>
+                    <ol style="color: #8b949e;">
+                        <li>Identify the Causality Group Owner (CGO) - top of chain</li>
+                        <li>Trace the execution path to the alert</li>
+                        <li>Examine child processes of the alert process</li>
+                        <li>Check network connections at each stage</li>
+                        <li>Look for file drops and persistence</li>
+                    </ol>
+                </div>
+
+                <!-- Investigation Actions -->
+                <h2><i class="fas fa-search"></i> Investigation Actions</h2>
+                <div class="config-section">
+                    <h4>Right-Click Actions on Entities</h4>
+                    <div class="code-block">Actions available from alert entities:
+
+On Process:
+├── View in Query Center (full process details)
+├── Get process tree
+├── View network connections
+├── View file operations
+└── Check VirusTotal
+
+On Host:
+├── View host timeline
+├── Get host details
+├── Isolate endpoint
+├── Run script
+└── Collect investigation package
+
+On File/Hash:
+├── Check VirusTotal
+├── Search across environment
+├── Add to blocklist
+├── Download for analysis
+└── View file execution history
+
+On IP/Domain:
+├── Check threat intelligence
+├── View all connections
+├── Block at firewall
+└── Search for other hosts connecting
+
+On User:
+├── View user activity
+├── Check authentication events
+├── View other alerts for user
+└── Disable account</div>
+
+                    <h4>Query Center Pivots</h4>
+                    <div class="code-block">// Find other processes with same hash
+dataset = xdr_data
+| filter action_file_sha256 = "abc123..."
+| fields agent_hostname, actor_process_image_name, action_file_name
+
+// Find other hosts connecting to same IP
+dataset = xdr_data
+| filter event_type = NETWORK and action_remote_ip = "1.2.3.4"
+| fields agent_hostname, actor_process_image_name, action_remote_port
+
+// Find same user on other hosts
+dataset = xdr_data
+| filter actor_effective_username = "DOMAIN\\john.doe"
+| fields agent_hostname, event_type, actor_process_image_name</div>
+                </div>
+
+                <!-- Response Actions -->
+                <h2><i class="fas fa-shield-alt"></i> Response Actions</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Action</th><th>When to Use</th><th>Impact</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Isolate Endpoint</strong></td>
+                                <td>Confirmed compromise, active threat</td>
+                                <td>Blocks all network except XSIAM</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Kill Process</strong></td>
+                                <td>Malicious process running</td>
+                                <td>Terminates specific process</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quarantine File</strong></td>
+                                <td>Malicious file identified</td>
+                                <td>Moves file to quarantine</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Block Hash</strong></td>
+                                <td>Known malicious file</td>
+                                <td>Prevents execution globally</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Run Script</strong></td>
+                                <td>Custom remediation needed</td>
+                                <td>Execute remediation script</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Collect Package</strong></td>
+                                <td>Need forensic data</td>
+                                <td>Gathers logs and artifacts</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Response Action Paths</h4>
+                    <div class="code-block">Isolate Endpoint:
+Alert Details → Host → Actions → Isolate
+
+Block Hash:
+Alert Details → File → Actions → Add to Block List
+
+Run Script:
+Alert Details → Host → Actions → Run Script
+Select script → Set parameters → Execute
+
+Collect Investigation Package:
+Alert Details → Host → Actions → Collect Investigation Package
+Wait for collection → Download package</div>
+                </div>
+
+                <!-- Alert Resolution -->
+                <h2><i class="fas fa-check-circle"></i> Alert Resolution</h2>
+                <div class="config-section">
+                    <h4>Resolution Types</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Resolution</th><th>When to Use</th><th>Follow-up Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="severity-critical">True Positive</span></td>
+                                <td>Confirmed malicious activity</td>
+                                <td>Create incident, containment actions</td>
+                            </tr>
+                            <tr>
+                                <td><span class="severity-low">False Positive</span></td>
+                                <td>Benign activity, detection error</td>
+                                <td>Add exclusion, tune rule</td>
+                            </tr>
+                            <tr>
+                                <td><span class="severity-medium">Duplicate</span></td>
+                                <td>Already covered by another alert</td>
+                                <td>Link to existing incident</td>
+                            </tr>
+                            <tr>
+                                <td><span class="severity-low">Informational</span></td>
+                                <td>Legitimate but worth noting</td>
+                                <td>Document, no action needed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Resolution Documentation</h4>
+                    <div class="code-block">Good Resolution Note Example:
+
+"Alert investigated and confirmed as false positive.
+- Process: PowerShell script is part of SCCM deployment
+- Parent: sccm-agent.exe (legitimate)
+- Network: Connection to internal SCCM server (10.0.5.20)
+- User: SYSTEM account (expected for SCCM)
+- Action: Added exclusion for SCCM PowerShell executions
+- Exclusion ID: EXC-2024-001"</div>
+                </div>
+
+                <!-- Exclusions -->
+                <h2><i class="fas fa-ban"></i> Managing Exclusions</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Exclusions → Create Exclusion</span></p>
+
+                    <h4>Exclusion Types</h4>
+                    <div class="code-block">Exclusion Scopes:
+
+Process Path Exclusion:
+- Exclude specific executable paths
+- Example: C:\Program Files\App\legitimate.exe
+
+Process + Command Line:
+- Exclude based on process and arguments
+- Example: powershell.exe with -File "C:\Scripts\approved.ps1"
+
+Hash Exclusion:
+- Exclude specific file hashes
+- Use for known-good files
+
+Signer Exclusion:
+- Exclude by code signing certificate
+- Example: Signed by "Microsoft Corporation"
+
+Host Exclusion:
+- Exclude specific hosts from rule
+- Use for test/lab systems</div>
+
+                    <h4>Exclusion Best Practices</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Be specific:</strong> Narrow exclusions to minimize gaps</li>
+                        <li><strong>Document reason:</strong> Explain why exclusion was added</li>
+                        <li><strong>Track in tickets:</strong> Reference FP ticket number</li>
+                        <li><strong>Review regularly:</strong> Audit exclusions quarterly</li>
+                        <li><strong>Test impact:</strong> Verify exclusion works as expected</li>
+                    </ul>
+                </div>
+
+                <!-- Incidents from Alerts -->
+                <h2><i class="fas fa-folder-open"></i> Creating Incidents</h2>
+                <div class="config-section">
+                    <h4>When to Create Incident</h4>
+                    <ul style="color: #8b949e;">
+                        <li>Confirmed true positive requiring investigation</li>
+                        <li>Multiple related alerts indicating attack</li>
+                        <li>Activity requiring response actions</li>
+                        <li>Need to track remediation progress</li>
+                    </ul>
+
+                    <h4>Incident Creation Options</h4>
+                    <div class="code-block">From Single Alert:
+Alert Details → Actions → Create Incident
+- Auto-links alert to new incident
+- Carries over alert details
+
+From Multiple Alerts:
+Alert Queue → Select alerts → Link to Incident
+- Create new incident
+- OR link to existing incident
+
+Automatic Incident Creation:
+Configured in detection rules
+- Auto-create on high-severity alerts
+- Auto-group related alerts</div>
+                </div>
+
+                <!-- Alert Metrics -->
+                <h2><i class="fas fa-chart-bar"></i> Alert Metrics</h2>
+                <div class="config-section">
+                    <h4>Key Metrics to Track</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Metric</th><th>Target</th><th>Why It Matters</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mean Time to Triage</td>
+                                <td>< 15 minutes</td>
+                                <td>Initial response speed</td>
+                            </tr>
+                            <tr>
+                                <td>Mean Time to Close</td>
+                                <td>< 4 hours</td>
+                                <td>Overall efficiency</td>
+                            </tr>
+                            <tr>
+                                <td>False Positive Rate</td>
+                                <td>< 50%</td>
+                                <td>Detection quality</td>
+                            </tr>
+                            <tr>
+                                <td>Alert Backlog</td>
+                                <td>< 50 new alerts</td>
+                                <td>Queue health</td>
+                            </tr>
+                            <tr>
+                                <td>Escalation Rate</td>
+                                <td>10-30%</td>
+                                <td>True positive detection</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>XQL for Alert Metrics</h4>
+                    <div class="code-block">// Alerts by severity over time
+dataset = xdr_alerts
+| filter insert_timestamp >= now() - 7d
+| comp count() by severity, bin(insert_timestamp, 1d)
+
+// False positive rate by rule
+dataset = xdr_alerts
+| filter insert_timestamp >= now() - 30d
+| comp 
+    count() as total,
+    count(resolution = "RESOLVED_FALSE_POSITIVE") as false_positives
+    by alert_name
+| alter fp_rate = round(false_positives * 100.0 / total, 2)
+| sort desc fp_rate
+
+// Mean time to close
+dataset = xdr_alerts
+| filter resolution_timestamp != null
+| alter close_time_hours = timestamp_diff(resolution_timestamp, insert_timestamp, "HOUR")
+| comp avg(close_time_hours) as avg_close_hours by alert_name</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prioritize alerts in XSIAM?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Severity:</strong> Critical and High first</li>
+                                <li><strong>Asset criticality:</strong> Servers before workstations</li>
+                                <li><strong>Alert source:</strong> High-fidelity sources first</li>
+                                <li><strong>Related activity:</strong> Multiple alerts on same host</li>
+                                <li><strong>Time sensitivity:</strong> Active threats over old alerts</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk through investigating a PowerShell alert.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Check command line:</strong> Is it encoded? What does it do?</li>
+                                <li><strong>Review parent process:</strong> How was PowerShell launched?</li>
+                                <li><strong>Check user context:</strong> Expected for this user?</li>
+                                <li><strong>Network connections:</strong> Any external communication?</li>
+                                <li><strong>File operations:</strong> Did it drop any files?</li>
+                                <li><strong>Historical:</strong> First time on this host/network?</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you reduce false positives?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Document patterns:</strong> Track FP root causes</li>
+                                <li><strong>Create specific exclusions:</strong> Target the exact FP scenario</li>
+                                <li><strong>Tune detection rules:</strong> Add conditions to reduce noise</li>
+                                <li><strong>Whitelist known-good:</strong> Applications, paths, signers</li>
+                                <li><strong>Regular review:</strong> Audit high-FP rules monthly</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
+
+                <!-- Alert Workflows -->
+                <h2><i class="fas fa-sitemap"></i> Alert Workflow Examples</h2>
+                <div class="config-section">
+                    <h4>Malware Alert Workflow</h4>
+                    <div class="code-block">1. INITIAL TRIAGE
+   □ Check severity and detection source
+   □ Review affected host criticality
+   □ Check if file was blocked or just detected
+
+2. INVESTIGATION
+   □ Examine causality chain (how did malware arrive?)
+   □ Check file hash in threat intel
+   □ Review parent process (email, browser, USB?)
+   □ Check for execution (did it run?)
+   □ Look for persistence mechanisms
+   □ Check network connections (C2?)
+
+3. SCOPE ASSESSMENT
+   □ Search for same hash across environment
+   □ Check if same user on other hosts
+   □ Look for related alerts
+
+4. RESPONSE DECISION
+   If Blocked + No Execution:
+   └─ Close as True Positive - Prevented
+   
+   If Executed:
+   └─ Isolate endpoint
+   └─ Block hash globally
+   └─ Create incident
+   └─ Begin full investigation
+
+5. DOCUMENTATION
+   □ Record findings in alert notes
+   □ Update incident if created
+   □ Note any exclusions needed</div>
+
+                    <h4>Suspicious Login Alert Workflow</h4>
+                    <div class="code-block">1. INITIAL TRIAGE
+   □ Which account triggered alert?
+   □ Source IP - internal or external?
+   □ What was the alert trigger? (impossible travel, unusual time, etc.)
+
+2. INVESTIGATION
+   □ Check user's normal login patterns
+   □ Verify source IP geolocation
+   □ Check if VPN or corporate proxy
+   □ Look for successful vs failed attempts
+   □ Check what was accessed after login
+
+3. VERIFICATION
+   □ Contact user if possible
+   □ Check with manager for expected travel
+   □ Verify MFA was used
+
+4. RESPONSE DECISION
+   If Confirmed Legitimate:
+   └─ Close as False Positive
+   └─ Document explanation
+   
+   If Suspicious:
+   └─ Force password reset
+   └─ Revoke sessions
+   └─ Enable additional monitoring
+   └─ Create incident
+
+5. FOLLOW-UP
+   □ Review access logs for compromised period
+   □ Check for data access/exfiltration
+   □ Audit account permissions</div>
+                </div>
+
+                <!-- Alert Categories -->
+                <h2><i class="fas fa-tags"></i> Alert Categories</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Examples</th><th>Typical Priority</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Malware</strong></td>
+                                <td>Ransomware, trojan, spyware, PUP</td>
+                                <td>High/Critical</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Exploitation</strong></td>
+                                <td>Buffer overflow, injection, RCE</td>
+                                <td>Critical</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Credential Theft</strong></td>
+                                <td>LSASS dump, Kerberoasting, Pass-the-Hash</td>
+                                <td>Critical</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lateral Movement</strong></td>
+                                <td>PsExec, WMI, RDP spread</td>
+                                <td>High</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Persistence</strong></td>
+                                <td>Registry run keys, scheduled tasks</td>
+                                <td>Medium/High</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Command & Control</strong></td>
+                                <td>Beaconing, DNS tunneling, reverse shell</td>
+                                <td>Critical</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Discovery</strong></td>
+                                <td>Network scanning, AD enumeration</td>
+                                <td>Medium</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Data Exfiltration</strong></td>
+                                <td>Large uploads, cloud storage, email</td>
+                                <td>High/Critical</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Common Alert Types -->
+                <h2><i class="fas fa-exclamation-triangle"></i> Common Alert Types in XSIAM</h2>
+                <div class="config-section">
+                    <h4>Behavioral IOC (BIOC) Alerts</h4>
+                    <div class="code-block">BIOC Alert Examples:
+
+"Behavioral Threat - Process Injection"
+- Process accessing another process memory
+- Key indicators: CreateRemoteThread, WriteProcessMemory
+- Investigation: Check source and target process
+
+"Behavioral Threat - Credential Dumping"
+- Process accessing LSASS memory
+- Key indicators: PROCESS_VM_READ access to lsass.exe
+- Investigation: Check if legitimate tool or malicious
+
+"Behavioral Threat - Ransomware Activity"
+- Mass file encryption detected
+- Key indicators: Rapid file modifications, extension changes
+- Investigation: IMMEDIATE - isolate endpoint</div>
+
+                    <h4>Analytics Alerts</h4>
+                    <div class="code-block">XDR Analytics Alert Examples:
+
+"Suspicious PowerShell Execution"
+- Encoded commands, download cradles
+- Check command line, parent process
+
+"LOLBin Abuse Detected"
+- certutil, mshta, regsvr32 misuse
+- Check command line parameters
+
+"Uncommon Process Execution"
+- First time seen process in environment
+- Verify if legitimate or suspicious
+
+"Anomalous Network Connection"
+- Connection to unusual destination
+- Check IP reputation, connection purpose</div>
+                </div>
+
+                <!-- Integration with Playbooks -->
+                <h2><i class="fas fa-robot"></i> XSOAR Playbook Integration</h2>
+                <div class="config-section">
+                    <h4>Auto-Triggered Playbooks</h4>
+                    <div class="code-block">Alert triggers playbook automatically based on:
+- Alert type/category
+- Severity level
+- Alert source
+- Affected asset type
+
+Common Auto-Playbooks:
+├─ Malware Alert → Enrichment + Containment Check
+├─ Phishing Alert → Email Analysis + User Notification
+├─ Authentication Alert → User Verification + Risk Check
+└─ Network Alert → Threat Intel Lookup + Block Check</div>
+
+                    <h4>Manual Playbook Execution</h4>
+                    <div class="code-block">From Alert:
+Alert Details → Actions → Run Playbook
+
+Available Actions:
+- Endpoint isolation playbook
+- Hash enrichment playbook
+- User investigation playbook
+- Escalation playbook
+- Custom remediation playbook</div>
+                </div>
+
+                <!-- Shift Handoff -->
+                <h2><i class="fas fa-exchange-alt"></i> Shift Handoff Procedures</h2>
+                <div class="config-section">
+                    <div class="code-block">Alert Queue Handoff Checklist:
+
+CURRENT QUEUE STATUS
+□ Total alerts in queue: ___
+□ Critical alerts: ___
+□ Alerts under investigation: ___
+□ Oldest unresolved alert age: ___
+
+ACTIVE INVESTIGATIONS
+For each active alert:
+□ Alert ID
+□ Summary of findings so far
+□ Current status
+□ Next steps needed
+□ Any pending actions
+
+NOTABLE EVENTS
+□ Any unusual patterns observed
+□ Ongoing incidents
+□ Escalations in progress
+
+TOOL STATUS
+□ XSIAM console operational
+□ Any data ingestion issues
+□ Integration status</div>
+                </div>
+
+                <!-- Additional Interview Questions -->
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What makes XSIAM different from traditional SIEM for alert management?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Unified data:</strong> Combines SIEM, EDR, SOAR in one platform</li>
+                                <li><strong>Built-in analytics:</strong> ML-based detections out of the box</li>
+                                <li><strong>Causality chain:</strong> Automatic process tree visualization</li>
+                                <li><strong>Response actions:</strong> Direct endpoint actions from alerts</li>
+                                <li><strong>Automated playbooks:</strong> Integrated XSOAR for automation</li>
+                                <li><strong>XQL:</strong> Powerful query language for investigation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle alert fatigue in XSIAM?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Tune detection rules:</strong> Reduce noise at source</li>
+                                <li><strong>Create targeted exclusions:</strong> Eliminate known FPs</li>
+                                <li><strong>Use playbooks:</strong> Automate enrichment and triage</li>
+                                <li><strong>Alert grouping:</strong> Group related alerts into incidents</li>
+                                <li><strong>Severity adjustment:</strong> Re-classify based on environment</li>
+                                <li><strong>Track metrics:</strong> Identify high-FP rules for improvement</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
