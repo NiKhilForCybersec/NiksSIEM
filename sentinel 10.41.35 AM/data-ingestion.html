@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Ingestion Deep Dive | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Data Tiers & Costs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="data-ingestion.html" class="nav-link active"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-route"></i> DCR/DCE Pipeline</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & ASIM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-code"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> KQL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools & Content</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
+                    <span class="current">Data Ingestion</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-database"></i> Sentinel Data Ingestion Deep Dive</h1>
+                <p class="lead">Complete technical guide to data ingestion: custom tables, DCRs, transformations, ASIM normalization, storage tiers, and cost optimization.</p>
+
+                <div class="warning-box">
+                    <strong>⚠️ Critical Updates (January 2025)</strong>
+                    <ul>
+                        <li><strong>Azure AD → Microsoft Entra ID</strong> (renamed July 2023) - Tables retain "AAD" prefix</li>
+                        <li><strong>MMA Agent FULLY DEPRECATED</strong> (August 31, 2024) - Do NOT deploy new MMA agents. Use Azure Monitor Agent (AMA) only.</li>
+                        <li><strong>Pricing varies by region</strong> - Always verify current rates in Azure Calculator</li>
+                    </ul>
+                </div>
+
+                <!-- Complete Architecture Diagram -->
+                <h2><i class="fas fa-sitemap"></i> Data Ingestion Pipeline Architecture</h2>
+                <div class="config-section">
+                    <div class="arch-diagram">
+DATA INGESTION PIPELINE - COMPLETE ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     DATA INGESTION FLOW                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+                          ┌─────────────────────┐
+                          │   LOG SOURCES       │
+                          │                     │
+                          │  • Windows Events   │
+                          │  • Linux Syslog     │
+                          │  • Network Devices  │
+                          │  • Cloud Services   │
+                          │  • Custom Apps      │
+                          │  • SaaS APIs        │
+                          └──────────┬──────────┘
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+              │                      │                      │
+              ▼                      ▼                      ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │  Azure Monitor  │   │  Log Forwarder  │   │  Logs Ingestion │
+     │  Agent (AMA)    │   │  (CEF/Syslog)   │   │  API (Custom)   │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   DATA COLLECTION RULE (DCR)    │
+                    │                                 │
+                    │  • Data Sources                 │
+                    │  • Transformations (KQL)        │
+                    │  • Destinations                 │
+                    │  • Filtering                    │
+                    └────────────────┬────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   INGESTION TRANSFORMATION      │
+                    │                                 │
+                    │  source                         │
+                    │  | where Severity != "Info"     │ ← Filter noise
+                    │  | extend Region = "US-East"    │ ← Add fields
+                    │  | project-away TempField       │ ← Remove fields
+                    │                                 │
+                    └────────────────┬────────────────┘
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+              │                      │                      │
+              ▼                      ▼                      ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │  ANALYTICS TIER │   │   BASIC LOGS    │   │  AUXILIARY LOGS │
+     │  (Full Query)   │   │  (Limited)      │   │  (Minimal)      │
+     │  $$$$$          │   │  $$             │   │  $              │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   LOG ANALYTICS WORKSPACE       │
+                    │                                 │
+                    │  • Interactive Retention        │
+                    │  • Archive Tier (cold)          │
+                    │  • Total Retention policies     │
+                    └─────────────────────────────────┘</div>
+                </div>
+
+                <!-- End-to-End Flow 1: Windows Servers -->
+                <h2><i class="fas fa-route"></i> End-to-End Flows (Interview-Ready)</h2>
+                <div class="config-section">
+                    <h4>Flow 1: Windows Servers to Sentinel (AMA + DCR)</h4>
+                    <div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 1: WINDOWS SERVERS TO SENTINEL
+                         (Azure Monitor Agent + DCR)
+═══════════════════════════════════════════════════════════════════════════════
+
+  [Windows Servers]                  [Azure Infrastructure]
+        │                                    │
+        ▼                                    │
+  ┌─────────────────┐                        │
+  │ Azure Monitor   │                        │
+  │ Agent (AMA)     │                        │
+  │                 │─────── HTTPS ──────────┼─────►┌──────────────────────┐
+  │ Collects:       │        443             │      │ Data Collection      │
+  │ • Windows Events│                        │      │ Endpoint (DCE)       │
+  │ • Performance   │                        │      └──────────┬───────────┘
+  │ • Custom logs   │                        │                 │
+  └─────────────────┘                        │                 ▼
+        │                                    │      ┌──────────────────────┐
+        │                                    │      │ Data Collection      │
+  Configured by:                             │      │ Rule (DCR)           │
+  Data Collection Rule (DCR)                 │      │                      │
+                                             │      │ • What to collect    │
+                                             │      │ • Transformations    │
+                                             │      │ • Destination table  │
+                                             │      └──────────┬───────────┘
+                                             │                 │
+                                             │                 ▼
+                                             │      ┌──────────────────────┐
+                                             │      │ Log Analytics        │
+                                             │      │ Workspace            │
+                                             │      │ (SecurityEvent,      │
+                                             │      │  Event, Syslog)      │
+                                             └──────┴──────────────────────┘
+
+KEY COMPONENTS EXPLAINED:
+─────────────────────────────────────────────────────────────────────────────
+
+AZURE MONITOR AGENT (AMA) - THE COLLECTOR:
+  • Agent installed on Windows/Linux VMs
+  • Collects logs and sends to Azure
+  • Replaced deprecated MMA (Log Analytics Agent)
+  
+WHY AMA (NOT MMA):
+  • MMA deprecated August 31, 2024 - DO NOT DEPLOY NEW MMA
+  • AMA supports Data Collection Rules (DCRs)
+  • AMA supports ingestion-time transformations
+  • Better security (managed identity, private endpoints)
+
+DATA COLLECTION ENDPOINT (DCE):
+  • Regional endpoint that receives data from AMA
+  • Provides HTTPS endpoint for secure ingestion
+  
+WHEN YOU NEED DCE:
+  ✅ Custom table ingestion
+  ✅ Private link scenarios
+  ✅ Text log collection
+  ❌ NOT needed for standard Windows Events to built-in tables
+
+DATA COLLECTION RULE (DCR):
+  • Defines WHAT data to collect
+  • Defines WHERE to send it (destination table)
+  • Can include transformations (filter, enrich, parse)</div>
+
+                    <h4>Flow 2: Syslog/CEF Sources (Linux Forwarder)</h4>
+                    <div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 2: SYSLOG/CEF NETWORK DEVICES
+                         (Linux Forwarder + AMA)
+═══════════════════════════════════════════════════════════════════════════════
+
+  [Network Devices]                    [Linux VM Forwarder]         [Azure]
+                                                │
+  ┌──────────────┐                              │
+  │ Firewall     │──┐                           │
+  └──────────────┘  │    Syslog                 │
+                    │    UDP/TCP 514            │
+  ┌──────────────┐  │         │      ┌──────────────────────────┐
+  │ Router       │──┼─────────┼─────►│ rsyslog/syslog-ng        │
+  └──────────────┘  │         │      │                          │
+                    │         │      │ Receives syslog on 514   │
+  ┌──────────────┐  │         │      │ Writes to local file     │
+  │ Load Balancer│──┘         │      │ /var/log/messages or     │
+  └──────────────┘            │      │ /var/log/syslog          │
+                              │      └────────────┬─────────────┘
+                              │                   │
+                              │      ┌────────────▼─────────────┐
+                              │      │ Azure Monitor Agent      │
+                              │      │ (AMA)                    │
+                              │      │                          │
+                              │      │ Reads from local files   │
+                              │      │ Configured by DCR        │
+                              └──────┴────────────┬─────────────┘
+                                                  │ HTTPS 443
+                                                  ▼
+                                     ┌──────────────────────────┐
+                                     │ Log Analytics Workspace  │
+                                     │                          │
+                                     │ Tables:                  │
+                                     │ • Syslog (standard)      │
+                                     │ • CommonSecurityLog (CEF)│
+                                     └──────────────────────────┘
+
+SETUP STEPS:
+─────────────────────────────────────────────────────────────────────────────
+1. Deploy Linux VM (Ubuntu 20.04+ or RHEL 8+)
+2. Configure rsyslog to receive on UDP/TCP 514
+3. Install Azure Monitor Agent (AMA)
+4. Create DCR for Syslog collection
+5. Associate DCR with Linux VM
+6. Configure network devices to send to Linux VM IP
+
+CEF VS SYSLOG:
+─────────────────────────────────────────────────────────────────────────────
+CEF (Common Event Format):
+  • Structured format with standard fields
+  • Goes to CommonSecurityLog table
+  • Better for security devices (firewalls, IDS)
+
+Syslog:
+  • Standard Unix logging format
+  • Goes to Syslog table
+  • Facility + Severity + Message</div>
+
+                    <h4>Flow 3: Native Microsoft Connectors</h4>
+                    <div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 3: NATIVE MICROSOFT CONNECTORS
+                         (One-Click Enablement)
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    MICROSOFT CLOUD SERVICES                              │
+  │                                                                          │
+  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐             │
+  │  │ Microsoft      │  │ Microsoft      │  │ Microsoft 365  │             │
+  │  │ Entra ID       │  │ Defender XDR   │  │ (Office)       │             │
+  │  │                │  │                │  │                │             │
+  │  │ • SigninLogs   │  │ • Alerts       │  │ • OfficeActivity│            │
+  │  │ • AuditLogs    │  │ • Incidents    │  │                │             │
+  │  │ • AADNonInter..│  │ • Device*Events│  │                │             │
+  │  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘             │
+  │          │                   │                   │                       │
+  │          └───────────────────┼───────────────────┘                       │
+  │                              │                                           │
+  │                    Diagnostic Settings /                                 │
+  │                    Native API Integration                                │
+  │                              │                                           │
+  └──────────────────────────────┼───────────────────────────────────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │  Microsoft Sentinel      │
+                    │  Data Connectors         │
+                    │                          │
+                    │  "Connect" button        │
+                    │  enables streaming       │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │  Log Analytics Workspace │
+                    │                          │
+                    │  Native tables:          │
+                    │  • SigninLogs            │
+                    │  • SecurityAlert         │
+                    │  • DeviceProcessEvents   │
+                    └──────────────────────────┘
+
+STEP-BY-STEP: ENABLE ENTRA ID CONNECTOR
+─────────────────────────────────────────────────────────────────────────────
+1. Sentinel → Content Hub → Search "Microsoft Entra ID"
+2. Install the solution
+3. Data Connectors → Microsoft Entra ID → Open connector page
+4. Select log types to enable:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ☑ Sign-in logs (requires Entra P1/P2)                              │
+   │ ☑ Audit logs (free with any Entra license)                         │
+   │ ☑ Non-interactive sign-in logs                                      │
+   │ ☑ Service principal sign-in logs                                    │
+   │ ☐ Risky users (requires Entra P2)                                   │
+   └─────────────────────────────────────────────────────────────────────┘
+5. Click "Connect" for each log type
+
+LICENSE REQUIREMENTS:
+─────────────────────────────────────────────────────────────────────────────
+  ┌────────────────────────┬───────────────────────────────────────────────┐
+  │ Log Type               │ License Required                              │
+  ├────────────────────────┼───────────────────────────────────────────────┤
+  │ Audit Logs             │ Any Entra license (free)                     │
+  │ Sign-in Logs           │ Entra P1 or P2                               │
+  │ Risky Users/Events     │ Entra P2 only                                │
+  │ Defender XDR Data      │ Requires Defender licensing                  │
+  └────────────────────────┴───────────────────────────────────────────────┘</div>
+
+                    <h4>Flow 4: Custom/API-Based Sources</h4>
+                    <div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 4: CUSTOM/API-BASED SOURCES
+                         When There's No Native Connector
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO: Ingest logs from third-party SaaS, custom apps, or cloud providers
+
+OPTION 1: LOGS INGESTION API + AZURE FUNCTION
+─────────────────────────────────────────────────────────────────────────────
+
+  [External API]                    [Azure]
+       │                               
+       │ Polls API                  ┌─────────────────────┐
+       ▼                            │ Azure Function      │
+  ┌─────────────┐                   │ (Timer Triggered)   │
+  │ Third-party │◄─────────────────│                     │
+  │ SaaS API    │   Request logs    │ Python/PowerShell   │
+  └─────────────┘                   │ code polls API      │
+       │                            └─────────┬───────────┘
+       │ Returns JSON                         │
+       │                                      ▼
+       │                            ┌─────────────────────┐
+       └───────────────────────────►│ Logs Ingestion API  │
+                                    │ (DCE endpoint)      │
+                                    └─────────┬───────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │ Custom Table        │
+                                    │ (MyLogs_CL)         │
+                                    └─────────────────────┘
+
+OPTION 2: LOGIC APPS (NO CODE)
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐
+  │ Logic App           │
+  │ (Recurrence Trigger)│
+  │                     │
+  │ 1. HTTP action      │───────► [Third-party API]
+  │    (Get logs)       │
+  │                     │
+  │ 2. Parse JSON       │
+  │                     │
+  │ 3. Send to Log      │───────► [Log Analytics Workspace]
+  │    Analytics        │          Custom Table
+  └─────────────────────┘
+
+WHEN TO USE WHICH:
+─────────────────────────────────────────────────────────────────────────────
+  Logic Apps:                      Azure Function:
+  ✅ Simple integrations           ✅ Complex transformations
+  ✅ Low volume (<10K events/hr)   ✅ High volume
+  ✅ No custom code needed         ✅ Full programming control
+  ✅ Built-in connectors exist     ✅ Cheaper at scale
+
+OPTION 3: CHECK CONTENT HUB FIRST!
+─────────────────────────────────────────────────────────────────────────────
+Before building custom, check Content Hub for existing solutions:
+  • Okta Single Sign-On
+  • AWS CloudTrail
+  • Google Cloud Platform
+  • Salesforce, Zoom, and many more...</div>
+                </div>
+
+                <!-- Storage Tiers Section -->
+                <h2><i class="fas fa-layer-group"></i> Storage Tiers & Cost Optimization</h2>
+                <div class="config-section">
+                    <div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+     SENTINEL / LOG ANALYTICS STORAGE TIERS (CRITICAL FOR INTERVIEWS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     LOG TIERS COMPARISON                                 │
+  │                                                                          │
+  │   ANALYTICS LOGS ──► BASIC LOGS ──► AUXILIARY LOGS ──► ARCHIVE         │
+  │      (Full)          (Limited)       (Minimal)         (Offline)        │
+  │        │                │                │                │              │
+  │        ▼                ▼                ▼                ▼              │
+  │    $$$$$$$            $$                $               $               │
+  │    Full Query      Limited Query    Very Limited    Query = $$         │
+  │    30 day min      8 day min        30 day min      Restore needed     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+TIER DETAILS:
+═══════════════════════════════════════════════════════════════════════════════
+
+ANALYTICS LOGS (Default - Full Featured)
+─────────────────────────────────────────────────────────────────────────────
+Cost:        ~$2.76/GB ingestion (Pay-as-you-go)
+Retention:   30-730 days interactive
+Query:       Full KQL - joins, aggregations, functions, alerts
+Use for:     Security tables that power analytics rules
+             SecurityEvent, SigninLogs, CommonSecurityLog
+
+WHY SO EXPENSIVE?
+  • Full-text indexes built on EVERY field during ingestion
+  • Indexes can be 30-50% of raw data size
+  • Stored on fast SSD with replicas
+  • Enables sub-second complex queries
+
+BASIC LOGS (Cost Optimized)
+─────────────────────────────────────────────────────────────────────────────
+Cost:        ~$0.65/GB ingestion (76% cheaper!)
+             + $0.007/GB scanned at query time
+Retention:   8 days minimum, up to 30 days
+Query:       Limited - single table, no joins, basic operators only
+Use for:     High-volume, low-value logs
+             ContainerLogV2, AppTraces, verbose debug logs
+
+LIMITATIONS:
+  ❌ No joins with other tables
+  ❌ No summarize (aggregations limited)
+  ❌ Cannot be used in analytics rules
+  ❌ No scheduled queries
+
+AUXILIARY LOGS (Minimal Cost)
+─────────────────────────────────────────────────────────────────────────────
+Cost:        ~$0.20/GB ingestion
+             + query costs per GB scanned
+Retention:   30 days minimum
+Query:       Very limited - basic filtering only
+Use for:     Compliance/audit data rarely queried
+             Verbose telemetry, application traces
+
+ARCHIVE TIER (Long-term Storage)
+─────────────────────────────────────────────────────────────────────────────
+Cost:        ~$0.026/GB/month storage
+             + $0.007/GB for search jobs
+             + $0.12/GB for restore
+Retention:   Up to 12 years
+Query:       Not directly queryable - must use Search Job or Restore
+Use for:     Compliance retention (7+ years)
+             Forensic investigations (historical)</div>
+
+                    <h4>Accessing Archived Data</h4>
+                    <div class="code-block">TWO METHODS TO ACCESS ARCHIVED DATA:
+
+METHOD 1: SEARCH JOBS (Cheaper, Async)
+─────────────────────────────────────────────────────────────────────────────
+// Submit search job for archived data
+.create async search SecurityEvent
+| where TimeGenerated between(datetime(2023-01-01) .. datetime(2023-01-31))
+| where EventID == 4625
+| project TimeGenerated, Computer, TargetUserName
+
+Cost: ~$0.007/GB scanned
+Time: Minutes to hours depending on data volume
+Results: Saved to temporary table for 30 days
+
+METHOD 2: RESTORE (Full Query Capability)
+─────────────────────────────────────────────────────────────────────────────
+Steps:
+1. Log Analytics workspace → Tables
+2. Find table with archived data
+3. Click "..." → "Restore"
+4. Select time range to restore
+5. Set restore duration
+6. Wait for restore (can take hours)
+
+Cost: $0.12/GB restored + Analytics tier costs while restored
+Use: Only when you need FULL query capability with joins
+
+WHEN TO USE WHICH:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────┬─────────────────────────────────────────────┐
+│ Scenario                    │ Use                                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Find specific events        │ SEARCH JOB - cheaper, sufficient           │
+│ Full forensic investigation │ RESTORE - need joins, aggregations         │
+│ Legal discovery request     │ SEARCH JOB first, RESTORE if needed        │
+│ Quick check if data exists  │ SEARCH JOB - fast, cheap                   │
+└─────────────────────────────┴─────────────────────────────────────────────┘</div>
+                </div>
+
+                <!-- Python/PowerShell Examples -->
+                <h2><i class="fas fa-code"></i> Logs Ingestion API Examples</h2>
+                <div class="config-section">
+                    <h4>Python: Send Custom Logs to Sentinel</h4>
+                    <div class="code-block"># Python example - Send logs via Logs Ingestion API
+import json
+import datetime
+from azure.identity import DefaultAzureCredential
+from azure.monitor.ingestion import LogsIngestionClient
+
+# Configuration
+DCE_ENDPOINT = "https://my-dce-xxxx.eastus-1.ingest.monitor.azure.com"
+DCR_IMMUTABLE_ID = "dcr-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+STREAM_NAME = "Custom-MyApp_CL"
+
+# Initialize client with managed identity
+credential = DefaultAzureCredential()
+client = LogsIngestionClient(endpoint=DCE_ENDPOINT, credential=credential)
+
+# Prepare log entries
+logs = [
+    {
+        "TimeGenerated": datetime.datetime.utcnow().isoformat() + "Z",
+        "SourceIP": "192.168.1.100",
+        "UserName": "john.doe",
+        "Action": "login",
+        "Status": "success",
+        "Application": "MyApp"
+    },
+    {
+        "TimeGenerated": datetime.datetime.utcnow().isoformat() + "Z",
+        "SourceIP": "10.0.0.50",
+        "UserName": "jane.smith",
+        "Action": "login",
+        "Status": "failed",
+        "Application": "MyApp"
+    }
+]
+
+# Send logs
+try:
+    client.upload(
+        rule_id=DCR_IMMUTABLE_ID,
+        stream_name=STREAM_NAME,
+        logs=logs
+    )
+    print(f"Successfully sent {len(logs)} log entries")
+except Exception as e:
+    print(f"Error sending logs: {e}")</div>
+
+                    <h4>PowerShell: Send Custom Logs to Sentinel</h4>
+                    <div class="code-block"># PowerShell example - Send logs via Logs Ingestion API
+
+# Configuration
+$DceEndpoint = "https://my-dce-xxxx.eastus-1.ingest.monitor.azure.com"
+$DcrImmutableId = "dcr-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+$StreamName = "Custom-MyApp_CL"
+
+# Get access token (using managed identity or service principal)
+$TokenResponse = Invoke-RestMethod -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://monitor.azure.com/" `
+    -Headers @{Metadata="true"} -Method Get
+$AccessToken = $TokenResponse.access_token
+
+# Prepare log entries
+$Logs = @(
+    @{
+        TimeGenerated = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        SourceIP = "192.168.1.100"
+        UserName = "john.doe"
+        Action = "login"
+        Status = "success"
+        Application = "MyApp"
+    },
+    @{
+        TimeGenerated = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        SourceIP = "10.0.0.50"
+        UserName = "jane.smith"
+        Action = "failed_login"
+        Status = "failed"
+        Application = "MyApp"
+    }
+)
+
+# Convert to JSON
+$Body = $Logs | ConvertTo-Json -AsArray
+
+# Send to Logs Ingestion API
+$Uri = "$DceEndpoint/dataCollectionRules/$DcrImmutableId/streams/$($StreamName)?api-version=2023-01-01"
+
+$Headers = @{
+    "Authorization" = "Bearer $AccessToken"
+    "Content-Type" = "application/json"
+}
+
+try {
+    Invoke-RestMethod -Uri $Uri -Method Post -Headers $Headers -Body $Body
+    Write-Host "Successfully sent $($Logs.Count) log entries" -ForegroundColor Green
+}
+catch {
+    Write-Host "Error sending logs: $_" -ForegroundColor Red
+}</div>
+                </div>
+
+                <!-- ASIM Section -->
+                <h2><i class="fas fa-layer-group"></i> ASIM (Advanced Security Information Model)</h2>
+                <div class="config-section">
+                    <div class="code-block">ASIM - ADVANCED SECURITY INFORMATION MODEL
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT IS ASIM?
+─────────────────────────────────────────────────────────────────────────────
+ASIM is Microsoft's normalization layer for Sentinel. It provides:
+  • Standardized schema across different data sources
+  • Parser functions that normalize raw data
+  • Enables writing source-agnostic detection rules
+
+EXAMPLE: Authentication events from different sources all normalize to:
+  • TargetUsername (instead of user, username, usr, etc.)
+  • SrcIpAddr (instead of src_ip, client_ip, source_address, etc.)
+  • EventResult (instead of status, result, outcome, etc.)
+
+ASIM SCHEMAS AVAILABLE:
+─────────────────────────────────────────────────────────────────────────────
+  ┌─────────────────────┬────────────────────────────────────────────────────┐
+  │ Schema              │ Use Case                                           │
+  ├─────────────────────┼────────────────────────────────────────────────────┤
+  │ Authentication      │ Sign-ins, logons across all sources               │
+  │ Dns                 │ DNS queries and responses                          │
+  │ NetworkSession      │ Firewall, proxy, NetFlow                          │
+  │ ProcessEvent        │ Process creation/termination                       │
+  │ RegistryEvent       │ Windows registry changes                           │
+  │ FileEvent           │ File creation, modification, deletion              │
+  │ WebSession          │ HTTP/HTTPS traffic                                 │
+  │ AuditEvent          │ Audit trail events                                 │
+  └─────────────────────┴────────────────────────────────────────────────────┘
+
+USING ASIM PARSERS:
+─────────────────────────────────────────────────────────────────────────────
+// Instead of querying specific tables:
+SigninLogs
+| where ResultType != "0"
+
+SecurityEvent
+| where EventID == 4625
+
+// Use ASIM unified parser:
+imAuthentication
+| where EventResult == "Failure"
+| summarize FailureCount = count() by TargetUsername, SrcIpAddr
+| where FailureCount > 10
+
+// This query works across ALL authentication sources:
+// - Azure AD SigninLogs
+// - Windows Security Events
+// - Linux auth.log
+// - Okta, AWS, etc.
+
+BENEFITS FOR SOC:
+─────────────────────────────────────────────────────────────────────────────
+1. Write once, detect everywhere - one rule covers all sources
+2. Easier onboarding - new sources automatically covered
+3. Consistent field names - no more field mapping confusion
+4. Microsoft maintains parsers - less maintenance for you</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk me through how data gets into Sentinel from a Windows server.</button>
+                        <div class="qa-answer">
+                            <p>"The Azure Monitor Agent (AMA) is installed on the Windows server. A Data Collection Rule (DCR) defines what events to collect - like Security Event IDs 4624, 4625. The AMA reads Windows Event Logs and sends them over HTTPS 443 to a Data Collection Endpoint (DCE) in Azure. The DCR can apply transformations - filtering or enriching data before it reaches the Log Analytics workspace. Data lands in the SecurityEvent table where Sentinel analytics rules can detect threats."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Why is Analytics tier so much more expensive than Basic Logs?</button>
+                        <div class="qa-answer">
+                            <p>"Analytics tier builds full-text indexes on every field during ingestion. This indexing is compute-intensive and the indexes themselves take storage space - sometimes 30-50% of the raw data size. The data is also stored on fast SSD with replicas. All this enables sub-second queries with complex operations like joins. Basic Logs skips the indexing - data is just parsed and stored. Without indexes, queries must scan the entire table, which is why you pay per GB scanned and can't do complex operations. The 76% cost difference reflects skipping that expensive indexing."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you access archived data in Sentinel?</button>
+                        <div class="qa-answer">
+                            <p>"Two methods. First, Search Jobs - submit an async query that scans archived data and saves results to a temporary table. Takes minutes to hours but is cheap at $0.007/GB. Second, Restore - physically move data back to hot storage, costs $0.12/GB plus Analytics tier costs while restored. I use Search Jobs for most investigations since it's sufficient for finding specific events. I only use Restore when I need full KQL with joins and aggregations."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: When would you use Event Hub instead of direct ingestion?</button>
+                        <div class="qa-answer">
+                            <p>"Event Hub makes sense for three scenarios. First, high volume - millions of events per second like IoT or Defender raw tables. Second, when you need to send the same data to multiple destinations - Sentinel AND Splunk. Third, when you need a buffer - if Sentinel is slow or down, Event Hub retains data for replay. It also lets you filter/transform data BEFORE ingestion to reduce costs."</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
