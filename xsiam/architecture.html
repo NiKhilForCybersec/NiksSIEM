@@ -3,13 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architecture | XSIAM | Nik's SIEM Compendium</title>
+    <title>XSIAM Architecture - Complete Technical Reference | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
+        .component-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #58a6ff; }
+        .component-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .component-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .arch-diagram { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin: 20px 0; }
+        .arch-layer { background: #21262d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .arch-layer-title { font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
+        .arch-boxes { display: flex; flex-wrap: wrap; gap: 12px; }
+        .arch-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px; min-width: 150px; text-align: center; }
+        .data-flow { display: flex; align-items: center; justify-content: center; margin: 16px 0; }
+        .flow-arrow { color: #58a6ff; font-size: 1.5rem; margin: 0 16px; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+    </style>
 </head>
 <body>
     <div class="app-container">
-        <aside class="sidebar">
+                <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -29,26 +44,30 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Log Onboarding</a>
                     <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM</a>
                     <a href="agents.html" class="nav-link"><i class="fas fa-desktop"></i> Cortex Agents</a>
                     <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">XQL Query Language</div>
-                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> XQL Advanced</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
-                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-bell"></i> Correlation Rules</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
                     <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-crosshairs"></i> XDR Capabilities</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> ASM / Xpanse</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Operations</div>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
                     <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC</a>
                 </div>
             </nav>
         </aside>
@@ -61,726 +80,395 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-sitemap"></i> XSIAM Architecture</h1>
-                <p class="lead">Complete technical breakdown of XSIAM's cloud-native architecture - from data collection to automated response. Understanding this architecture is essential for deployment, troubleshooting, and interview success.</p>
+                <h1><i class="fas fa-sitemap"></i> XSIAM Architecture - Complete Technical Reference</h1>
+                <p class="lead">Deep dive into XSIAM's architecture, components, data flow, and how each piece fits together. Includes where to find and configure each component in the console.</p>
 
-                <!-- HIGH-LEVEL OVERVIEW -->
-                <h2><i class="fas fa-eye"></i> High-Level Architecture Overview</h2>
+                <!-- High-Level Architecture -->
+                <h2><i class="fas fa-layer-group"></i> High-Level Architecture</h2>
                 
-                <div class="info-box">
-                    <h4><i class="fas fa-lightbulb"></i> XSIAM Design Philosophy</h4>
-                    <p>XSIAM (Extended Security Intelligence and Automation Management) is Palo Alto Networks' cloud-native security operations platform that combines:</p>
-                    <ul>
-                        <li><strong>SIEM:</strong> Log collection, correlation, and detection</li>
-                        <li><strong>XDR:</strong> Endpoint detection and response via Cortex XDR agent</li>
-                        <li><strong>SOAR:</strong> XSOAR automation and playbook orchestration</li>
-                        <li><strong>ASM:</strong> Attack surface management (Cortex Xpanse)</li>
-                        <li><strong>TI:</strong> Threat intelligence from Unit 42 and AutoFocus</li>
+                <div class="arch-diagram">
+                    <h3 style="text-align: center; margin-bottom: 20px;">XSIAM Platform Architecture</h3>
+                    
+                    <!-- Data Sources Layer -->
+                    <div class="arch-layer" style="border-left: 4px solid #3fb950;">
+                        <div class="arch-layer-title" style="color: #3fb950;"><i class="fas fa-database"></i> DATA SOURCES (Where logs come from)</div>
+                        <div class="arch-boxes">
+                            <div class="arch-box">
+                                <i class="fas fa-desktop" style="color: #58a6ff;"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">XDR Agents</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Endpoints</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-server" style="color: #d29922;"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Broker VM</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Syslog, WEF</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-cloud" style="color: #a371f7;"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Cloud Collectors</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">AWS, Azure, GCP</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-plug" style="color: #f85149;"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">HTTP Collector</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">API/Webhook</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-globe" style="color: #3fb950;"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Xpanse (ASM)</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">External scanning</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-flow">
+                        <span class="flow-arrow">↓</span>
+                    </div>
+
+                    <!-- Processing Layer -->
+                    <div class="arch-layer" style="border-left: 4px solid #58a6ff;">
+                        <div class="arch-layer-title" style="color: #58a6ff;"><i class="fas fa-cogs"></i> PROCESSING (How data is transformed)</div>
+                        <div class="arch-boxes">
+                            <div class="arch-box">
+                                <i class="fas fa-stream"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Parsing Engine</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Field extraction</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-exchange-alt"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">XDM Normalization</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Standard schema</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Enrichment</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">TI, geo, user context</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-flow">
+                        <span class="flow-arrow">↓</span>
+                    </div>
+
+                    <!-- Storage Layer -->
+                    <div class="arch-layer" style="border-left: 4px solid #d29922;">
+                        <div class="arch-layer-title" style="color: #d29922;"><i class="fas fa-hdd"></i> STORAGE (Where data lives)</div>
+                        <div class="arch-boxes">
+                            <div class="arch-box">
+                                <i class="fas fa-bolt"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Hot Storage</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">0-90 days, fast query</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-thermometer-half"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Warm Storage</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">90-365 days</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-snowflake"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Cold Storage</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">1-7 years, archive</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-flow">
+                        <span class="flow-arrow">↓</span>
+                    </div>
+
+                    <!-- Detection Layer -->
+                    <div class="arch-layer" style="border-left: 4px solid #f85149;">
+                        <div class="arch-layer-title" style="color: #f85149;"><i class="fas fa-shield-alt"></i> DETECTION (How threats are found)</div>
+                        <div class="arch-boxes">
+                            <div class="arch-box">
+                                <i class="fas fa-project-diagram"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Correlation Rules</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">XQL-based detection</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-brain"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">ML Analytics</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Anomaly detection</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-skull-crossbones"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">IOC Matching</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Threat intel</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-fingerprint"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">BIOC Rules</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Behavioral indicators</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-flow">
+                        <span class="flow-arrow">↓</span>
+                    </div>
+
+                    <!-- Response Layer -->
+                    <div class="arch-layer" style="border-left: 4px solid #a371f7;">
+                        <div class="arch-layer-title" style="color: #a371f7;"><i class="fas fa-robot"></i> RESPONSE (How we react)</div>
+                        <div class="arch-boxes">
+                            <div class="arch-box">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Incidents</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Alert grouping</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-magic"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">XSOAR Playbooks</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Automation</div>
+                            </div>
+                            <div class="arch-box">
+                                <i class="fas fa-hand-paper"></i>
+                                <div style="font-weight: 600; margin: 8px 0;">Response Actions</div>
+                                <div style="font-size: 0.75rem; color: #8b949e;">Isolate, block, kill</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Component Details -->
+                <h2><i class="fas fa-puzzle-piece"></i> Component Deep Dive</h2>
+
+                <div class="component-card" style="border-left-color: #3fb950;">
+                    <div class="component-header">
+                        <div class="component-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-desktop"></i></div>
+                        <div>
+                            <h3 style="margin: 0;">Cortex XDR Agent</h3>
+                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Endpoint sensor and protection</p>
+                        </div>
+                    </div>
+                    
+                    <h4>What It Does</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Collects telemetry:</strong> Process execution, file operations, network connections, registry changes</li>
+                        <li><strong>Provides protection:</strong> Malware blocking, exploit prevention, ransomware protection</li>
+                        <li><strong>Enables response:</strong> Remote shell, file retrieval, network isolation, process kill</li>
                     </ul>
-                </div>
 
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> XSIAM Platform Architecture</div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
-                        <!-- Data Sources Row -->
-                        <div style="text-align: center; padding: 12px; background: #161b22; border-radius: 8px;">
-                            <h4 style="color: #8b949e; margin: 0 0 12px 0; font-size: 0.85rem;">DATA SOURCES</h4>
-                            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                                <div style="background: #1c3a5e; color: #58a6ff; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-laptop"></i> Endpoints</div>
-                                <div style="background: #1c3a5e; color: #58a6ff; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-network-wired"></i> Network</div>
-                                <div style="background: #1c3a5e; color: #58a6ff; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-cloud"></i> Cloud</div>
-                                <div style="background: #1c3a5e; color: #58a6ff; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-shield-alt"></i> Security Tools</div>
-                                <div style="background: #1c3a5e; color: #58a6ff; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-id-card"></i> Identity</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; color: #8b949e;"><i class="fas fa-arrow-down"></i></div>
-                        
-                        <!-- Collection Layer -->
-                        <div style="text-align: center; padding: 12px; background: #161b22; border-radius: 8px;">
-                            <h4 style="color: #8b949e; margin: 0 0 12px 0; font-size: 0.85rem;">COLLECTION LAYER</h4>
-                            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                                <div style="background: #1a4d2e; color: #3fb950; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-user-secret"></i> Cortex XDR Agent</div>
-                                <div style="background: #1a4d2e; color: #3fb950; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-server"></i> Broker VM</div>
-                                <div style="background: #1a4d2e; color: #3fb950; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-plug"></i> Cloud Collectors</div>
-                                <div style="background: #1a4d2e; color: #3fb950; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-code"></i> HTTP Collectors</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; color: #8b949e;"><i class="fas fa-arrow-down"></i></div>
-                        
-                        <!-- Processing Layer -->
-                        <div style="text-align: center; padding: 12px; background: #161b22; border-radius: 8px;">
-                            <h4 style="color: #8b949e; margin: 0 0 12px 0; font-size: 0.85rem;">PROCESSING LAYER (XSIAM Cloud)</h4>
-                            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                                <div style="background: #4d3a0d; color: #d29922; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-cogs"></i> Parsing Engine</div>
-                                <div style="background: #4d3a0d; color: #d29922; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-link"></i> Normalization</div>
-                                <div style="background: #4d3a0d; color: #d29922; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-plus-circle"></i> Enrichment</div>
-                                <div style="background: #4d3a0d; color: #d29922; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-database"></i> Data Lake</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; color: #8b949e;"><i class="fas fa-arrow-down"></i></div>
-                        
-                        <!-- Analytics Layer -->
-                        <div style="text-align: center; padding: 12px; background: #161b22; border-radius: 8px;">
-                            <h4 style="color: #8b949e; margin: 0 0 12px 0; font-size: 0.85rem;">ANALYTICS LAYER</h4>
-                            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                                <div style="background: #3d2a5e; color: #a371f7; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-brain"></i> ML Analytics</div>
-                                <div style="background: #3d2a5e; color: #a371f7; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-project-diagram"></i> Correlation Rules</div>
-                                <div style="background: #3d2a5e; color: #a371f7; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-crosshairs"></i> Threat Intel</div>
-                                <div style="background: #3d2a5e; color: #a371f7; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-chart-line"></i> UEBA</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; color: #8b949e;"><i class="fas fa-arrow-down"></i></div>
-                        
-                        <!-- Response Layer -->
-                        <div style="text-align: center; padding: 12px; background: #161b22; border-radius: 8px;">
-                            <h4 style="color: #8b949e; margin: 0 0 12px 0; font-size: 0.85rem;">RESPONSE LAYER</h4>
-                            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                                <div style="background: #4d1a1a; color: #f85149; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-bell"></i> Alerts & Incidents</div>
-                                <div style="background: #4d1a1a; color: #f85149; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-robot"></i> XSOAR Playbooks</div>
-                                <div style="background: #4d1a1a; color: #f85149; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-shield-alt"></i> Auto-Response</div>
-                                <div style="background: #4d1a1a; color: #f85149; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-chart-bar"></i> Dashboards</div>
-                            </div>
-                        </div>
+                    <h4>Where in Console</h4>
+                    <div class="console-path">Settings → Endpoints → Agents (view deployed agents)</div>
+                    <div class="console-path">Settings → Endpoints → Policy Management → Profiles (configure behavior)</div>
+                    <div class="console-path">Settings → Endpoints → Agent Installation (download packages)</div>
+
+                    <h4>Key Configuration</h4>
+                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                        <tr><td style="padding: 4px;"><strong>Data Collection:</strong></td><td>Profile → Data Collection → Enable Process/Network/File/Registry collection</td></tr>
+                        <tr><td style="padding: 4px;"><strong>Protection Mode:</strong></td><td>Profile → Malware Protection → Block and Quarantine vs Report Only</td></tr>
+                        <tr><td style="padding: 4px;"><strong>Response Actions:</strong></td><td>Profile → Response Actions → Enable Live Terminal, Isolation, etc.</td></tr>
+                    </table>
+
+                    <h4>Data Produced</h4>
+                    <div class="code-block">
+// Agent data goes to xdr_data dataset
+dataset = xdr_data
+| filter agent_hostname = "WORKSTATION-001"
+| comp count() by event_type
+
+// Common event_type values:
+// PROCESS, FILE, NETWORK, REGISTRY, LOAD_IMAGE, AUTH
                     </div>
                 </div>
 
-                <!-- THE 6 LAYERS -->
-                <h2><i class="fas fa-layer-group"></i> The 6 Processing Layers</h2>
-                
-                <div class="info-box" style="border-color: #58a6ff;">
-                    <h4><i class="fas fa-brain"></i> Memory Trick: "ICE-DAR"</h4>
-                    <p>Remember the 6 layers of XSIAM data processing:</p>
-                    <ul>
-                        <li><strong>I</strong>ngestion - Raw data comes in</li>
-                        <li><strong>C</strong>ollection - Gathered by collectors/agents</li>
-                        <li><strong>E</strong>ngine (Parsing) - Parsed and structured</li>
-                        <li><strong>D</strong>ata Lake - Stored for analysis</li>
-                        <li><strong>A</strong>nalytics - ML, rules, correlation</li>
-                        <li><strong>R</strong>esponse - Alerts, automation, action</li>
+                <div class="component-card" style="border-left-color: #d29922;">
+                    <div class="component-header">
+                        <div class="component-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-server"></i></div>
+                        <div>
+                            <h3 style="margin: 0;">Broker VM</h3>
+                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">On-premises data collection gateway</p>
+                        </div>
+                    </div>
+                    
+                    <h4>What It Does</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Receives logs:</strong> Syslog (TCP/UDP), Windows Event Forwarding, SNMP traps</li>
+                        <li><strong>Buffers data:</strong> Queues logs during network issues</li>
+                        <li><strong>Securely uploads:</strong> Encrypted transmission to XSIAM cloud</li>
                     </ul>
-                    <p style="color: #8b949e; font-size: 0.85rem; margin-top: 12px;">Think of it as ICE (cold data coming in) being processed to create DAR (detection and response).</p>
-                </div>
 
-                <div class="pipeline">
-                    <div class="pipeline-stage" data-step="1">
-                        <div class="pipeline-stage-title">Ingestion</div>
-                        <div class="pipeline-stage-desc">Raw data entry point</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>Sources:</strong> Any log source</li>
-                                <li><strong>Formats:</strong> Syslog, CEF, JSON, XML</li>
-                                <li><strong>Transport:</strong> TCP, UDP, HTTPS, API</li>
-                                <li><strong>Scale:</strong> Petabyte-scale ingestion</li>
-                            </ul>
-                        </div>
+                    <h4>Where in Console</h4>
+                    <div class="console-path">Settings → Data Sources → Broker VM (view status, download OVA)</div>
+                    <div class="console-path">Settings → Data Sources → Add Data Source → Syslog Collector (configure listeners)</div>
+
+                    <h4>Architecture Placement</h4>
+                    <div style="background: #0d1117; padding: 16px; border-radius: 8px; margin: 12px 0; font-family: monospace; font-size: 0.8rem;">
+[On-Prem Network]          [DMZ]              [Internet]         [XSIAM Cloud]
+                                              
+Firewalls ────┐                                                    
+Servers ──────┼──► Broker VM ──────────────────────────────────► XSIAM
+Network ──────┘    (10.0.1.50)     HTTPS/443                     Tenant
+Devices            Syslog TCP/514
                     </div>
-                    
-                    <div class="pipeline-stage" data-step="2">
-                        <div class="pipeline-stage-title">Collection</div>
-                        <div class="pipeline-stage-desc">Data gathering mechanisms</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>XDR Agent:</strong> Endpoint telemetry</li>
-                                <li><strong>Broker VM:</strong> On-prem collection</li>
-                                <li><strong>Cloud Collectors:</strong> SaaS APIs</li>
-                                <li><strong>HTTP Collectors:</strong> Custom webhooks</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="3">
-                        <div class="pipeline-stage-title">Parsing Engine</div>
-                        <div class="pipeline-stage-desc">Structure and normalize</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>Parsing:</strong> Extract fields from raw</li>
-                                <li><strong>Normalization:</strong> Map to XDM schema</li>
-                                <li><strong>Enrichment:</strong> Add context (geo, TI)</li>
-                                <li><strong>Filtering:</strong> Drop unwanted data</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="4">
-                        <div class="pipeline-stage-title">Data Lake</div>
-                        <div class="pipeline-stage-desc">Storage and indexing</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>Hot:</strong> Real-time queries (7-90 days)</li>
-                                <li><strong>Cold:</strong> Long-term archive (1+ year)</li>
-                                <li><strong>Indexed:</strong> Fast search capability</li>
-                                <li><strong>Compressed:</strong> Cost-optimized</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="5">
-                        <div class="pipeline-stage-title">Analytics</div>
-                        <div class="pipeline-stage-desc">Detection and insights</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>ML Models:</strong> Anomaly detection</li>
-                                <li><strong>Correlation:</strong> Custom rules</li>
-                                <li><strong>UEBA:</strong> User behavior</li>
-                                <li><strong>TI Matching:</strong> IOC correlation</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="6">
-                        <div class="pipeline-stage-title">Response</div>
-                        <div class="pipeline-stage-desc">Action and automation</div>
-                        <div class="pipeline-stage-details">
-                            <ul>
-                                <li><strong>Alerts:</strong> Prioritized incidents</li>
-                                <li><strong>XSOAR:</strong> Automated playbooks</li>
-                                <li><strong>Actions:</strong> Block, isolate, disable</li>
-                                <li><strong>Reporting:</strong> Dashboards, reports</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- DATA COLLECTION COMPONENTS -->
-                <h2><i class="fas fa-download"></i> Data Collection Components</h2>
-
-                <h3>1. Cortex XDR Agent</h3>
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-laptop"></i></div>
-                            <div class="comparison-item-title">What It Is</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Lightweight agent on endpoints</li>
-                            <li><i class="fas fa-check"></i> Supports Windows, Linux, macOS, mobile</li>
-                            <li><i class="fas fa-check"></i> Provides EDR capabilities</li>
-                            <li><i class="fas fa-check"></i> Sends telemetry directly to XSIAM</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-cogs"></i></div>
-                            <div class="comparison-item-title">Key Functions</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-terminal"></i> Process execution monitoring (Sysmon-like)</li>
-                            <li><i class="fas fa-folder"></i> File/Registry/Network activity tracking</li>
-                            <li><i class="fas fa-shield-alt"></i> Malware prevention (NGAV)</li>
-                            <li><i class="fas fa-brain"></i> Behavioral threat protection</li>
-                            <li><i class="fas fa-usb"></i> Device control & USB blocking</li>
-                            <li><i class="fas fa-fire"></i> Host firewall</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Interview Answer: "Explain how the Cortex XDR agent works in standalone XDR vs XSIAM"</button>
-                        <div class="qa-answer">
-                            <p><strong>Key Point:</strong> The agent software is IDENTICAL. What changes is the backend platform and the detection capabilities.</p>
-                            
-                            <div class="flow-diagram" style="margin: 16px 0;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                    <div style="background: #161b22; padding: 16px; border-radius: 8px; border-left: 4px solid #58a6ff;">
-                                        <h4 style="color: #58a6ff; margin-top: 0;">Standalone Cortex XDR</h4>
-                                        <p style="color: #8b949e; font-size: 0.9rem;">Agent → <strong>XDR Cloud</strong> → Endpoint-only alerts</p>
-                                        <p style="color: #8b949e; font-size: 0.85rem;"><strong>Example:</strong> "Suspicious PowerShell detected on HOST-123"</p>
-                                        <p style="color: #f85149; font-size: 0.85rem;"><strong>Limitation:</strong> No visibility into how the attack started or what else happened</p>
-                                    </div>
-                                    <div style="background: #161b22; padding: 16px; border-radius: 8px; border-left: 4px solid #3fb950;">
-                                        <h4 style="color: #3fb950; margin-top: 0;">XSIAM Platform</h4>
-                                        <p style="color: #8b949e; font-size: 0.9rem;">Agent + All Logs → <strong>XSIAM Data Lake</strong> → Correlated incidents</p>
-                                        <p style="color: #8b949e; font-size: 0.85rem;"><strong>Example:</strong> "Attack Chain: Phishing email → Download → PowerShell → C2 blocked"</p>
-                                        <p style="color: #3fb950; font-size: 0.85rem;"><strong>Benefit:</strong> Complete attack story from all data sources</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <p><strong>The Agent Collects the Same Data:</strong></p>
-                            <ul>
-                                <li>Process executions with command lines</li>
-                                <li>File operations (create, modify, delete)</li>
-                                <li>Network connections from the endpoint</li>
-                                <li>Registry changes, DLL loading, script execution</li>
-                            </ul>
-                            
-                            <p><strong>What XSIAM Adds:</strong></p>
-                            <ul>
-                                <li><strong>Correlation:</strong> Links endpoint events with firewall, email, cloud, and identity logs</li>
-                                <li><strong>SIEM Capabilities:</strong> Ingest ANY log source, not just endpoint</li>
-                                <li><strong>XSOAR Automation:</strong> Built-in playbooks for automated response</li>
-                                <li><strong>Attack Surface Management:</strong> External asset discovery</li>
-                            </ul>
-                            
-                            <p><strong>Analogy:</strong> The XDR agent is like a security camera. With standalone XDR, you're watching one camera. With XSIAM, that same camera feed is integrated with door access logs, alarm systems, visitor management, and all other security systems - giving you the complete picture."</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>2. Broker VM (Data Broker)</h3>
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-server"></i></div>
-                            <div class="comparison-item-title">What It Is</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> On-premises virtual machine</li>
-                            <li><i class="fas fa-check"></i> Collects logs from sources that can't send directly to cloud</li>
-                            <li><i class="fas fa-check"></i> Forwards data securely to XSIAM</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-list"></i></div>
-                            <div class="comparison-item-title">Use Cases</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-server"></i> Syslog collection (UDP/TCP 514)</li>
-                            <li><i class="fab fa-windows"></i> Windows Event forwarding (WEF)</li>
-                            <li><i class="fas fa-file-alt"></i> CEF/LEEF log collection</li>
-                            <li><i class="fas fa-database"></i> Database audit logs</li>
-                            <li><i class="fas fa-building"></i> Legacy systems without internet access</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-terminal"></i> Broker VM Deployment</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;"># Broker VM Requirements</span>
-<span style="color: #79c0ff;">vCPU:</span>      8 cores minimum (16 recommended for high volume)
-<span style="color: #79c0ff;">RAM:</span>       32 GB minimum (64 GB recommended)
-<span style="color: #79c0ff;">Storage:</span>   500 GB SSD (for buffering during connectivity loss)
-<span style="color: #79c0ff;">Network:</span>   Outbound HTTPS (443) to XSIAM cloud
-<span style="color: #79c0ff;">OS:</span>        Provided as OVA/VHD image by Palo Alto
-
-<span style="color: #8b949e;"># Capacity Guidelines (per Broker VM)</span>
-<span style="color: #f97583;">Syslog:</span>     Up to 50,000 EPS
-<span style="color: #f97583;">WEF:</span>        Up to 20,000 EPS per WEC
-<span style="color: #f97583;">Total:</span>      Multiple Broker VMs for high-volume environments
-</pre>
-                </div>
-
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Interview Answer: "Broker VM vs Heavy Forwarder (Splunk) vs Log Forwarder (Sentinel)"</button>
-                        <div class="qa-answer">
-                            <p><strong>XSIAM Broker VM:</strong></p>
-                            <ul>
-                                <li>VM image provided by Palo Alto, pre-configured for XSIAM</li>
-                                <li>Does minimal parsing on-prem - most parsing happens in the cloud</li>
-                                <li>This is opposite to Splunk's "parse at the forwarder" philosophy</li>
-                            </ul>
-                            <p><strong>Splunk Heavy Forwarder:</strong></p>
-                            <ul>
-                                <li>Full Splunk installation with parsing capability</li>
-                                <li>Can parse, filter, and route data before sending</li>
-                                <li>More processing on-prem, less in cloud</li>
-                            </ul>
-                            <p><strong>Sentinel Log Forwarder (AMA):</strong></p>
-                            <ul>
-                                <li>Azure Monitor Agent with DCR (Data Collection Rules)</li>
-                                <li>Lightweight collection with transformation capability</li>
-                                <li>Can filter/transform via KQL in DCRs</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>3. Cloud Collectors (API-Based)</h3>
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-cloud"></i></div>
-                            <div class="comparison-item-title">What It Is</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Built-in integrations that pull logs from cloud services via API</li>
-                            <li><i class="fas fa-check"></i> No on-prem infrastructure needed</li>
-                            <li><i class="fas fa-check"></i> Configured in XSIAM console</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-plug"></i></div>
-                            <div class="comparison-item-title">Supported Sources</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fab fa-aws"></i> AWS CloudTrail, GuardDuty, VPC Flow</li>
-                            <li><i class="fab fa-microsoft"></i> Azure Activity, Azure AD, M365</li>
-                            <li><i class="fab fa-google"></i> GCP Audit, Workspace</li>
-                            <li><i class="fas fa-cloud"></i> Okta, Salesforce, Box, Zoom</li>
-                            <li><i class="fas fa-shield-alt"></i> CrowdStrike, Zscaler, Proofpoint</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <h3>4. HTTP Collectors</h3>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Custom HTTP Collector</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;">// Send custom JSON logs to XSIAM HTTP Collector</span>
-POST https://api-{tenant}.xdr.{region}.paloaltonetworks.com/logs/v1/event
-
-<span style="color: #79c0ff;">Headers:</span>
-  Authorization: {API_KEY}
-  Content-Type: application/json
-
-<span style="color: #79c0ff;">Body:</span>
-{
-  "logs": [
-    {
-      "vendor": "custom_app",
-      "product": "my_application",
-      "version": "1.0",
-      "log_type": "authentication",
-      "event": {
-        "timestamp": "2024-01-15T10:30:00Z",
-        "user": "john.doe@example.com",
-        "action": "login",
-        "result": "success",
-        "source_ip": "192.168.1.100"
-      }
-    }
-  ]
-}
-</pre>
-                </div>
-
-                <!-- XDM SCHEMA -->
-                <h2><i class="fas fa-sitemap"></i> XDM (Cross Data Model) Schema</h2>
-
-                <div class="info-box">
-                    <h4><i class="fas fa-lightbulb"></i> What is XDM?</h4>
-                    <p>XDM is XSIAM's normalized data schema - similar to Splunk's CIM or Sentinel's ASIM. All incoming data is mapped to XDM fields, enabling:</p>
-                    <ul>
-                        <li>Vendor-agnostic correlation rules</li>
-                        <li>Consistent field names across data sources</li>
-                        <li>Reusable queries regardless of original format</li>
-                    </ul>
-                </div>
-
-                <div class="styled-table">
-                    <table>
-                        <thead>
-                            <tr><th>XDM Category</th><th>Key Fields</th><th>Example Sources</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Network</strong></td>
-                                <td>xdm.network.src_ip, xdm.network.dst_ip, xdm.network.dst_port</td>
-                                <td>Firewalls, IDS, VPN</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Auth</strong></td>
-                                <td>xdm.auth.user, xdm.auth.outcome, xdm.auth.method</td>
-                                <td>Azure AD, Okta, Windows</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Endpoint</strong></td>
-                                <td>xdm.source.host.hostname, xdm.target.process.name</td>
-                                <td>XDR Agent, Sysmon, EDR</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Email</strong></td>
-                                <td>xdm.email.sender, xdm.email.recipient, xdm.email.subject</td>
-                                <td>Exchange, Gmail, Proofpoint</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Cloud</strong></td>
-                                <td>xdm.cloud.provider, xdm.cloud.resource_type</td>
-                                <td>AWS, Azure, GCP</td>
-                            </tr>
-                        </tbody>
+                    <h4>Sizing Guide</h4>
+                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                        <tr style="border-bottom: 1px solid #30363d;">
+                            <td style="padding: 8px;"><strong>Small</strong></td>
+                            <td>4 vCPU, 16 GB RAM, 500 GB disk</td>
+                            <td>Up to 5,000 EPS</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #30363d;">
+                            <td style="padding: 8px;"><strong>Medium</strong></td>
+                            <td>8 vCPU, 32 GB RAM, 1 TB disk</td>
+                            <td>Up to 15,000 EPS</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px;"><strong>Large</strong></td>
+                            <td>16 vCPU, 64 GB RAM, 2 TB disk</td>
+                            <td>Up to 40,000 EPS</td>
+                        </tr>
                     </table>
                 </div>
 
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> XQL Query Using XDM Fields</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;">// Query across all authentication sources using XDM</span>
-<span style="color: #79c0ff;">dataset</span> = xdr_data
-| <span style="color: #f97583;">filter</span> xdm.event.type = "AUTHENTICATION"
-| <span style="color: #f97583;">filter</span> xdm.auth.outcome = "FAILURE"
-| <span style="color: #f97583;">comp</span> count() <span style="color: #f97583;">as</span> failed_logins <span style="color: #f97583;">by</span> xdm.auth.user, xdm.source.host.hostname
-| <span style="color: #f97583;">filter</span> failed_logins > 10
-| <span style="color: #f97583;">sort</span> desc failed_logins
+                <div class="component-card" style="border-left-color: #a371f7;">
+                    <div class="component-header">
+                        <div class="component-icon" style="background: #3d1f5c; color: #a371f7;"><i class="fas fa-cloud"></i></div>
+                        <div>
+                            <h3 style="margin: 0;">Cloud Collectors</h3>
+                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Native cloud and SaaS integrations</p>
+                        </div>
+                    </div>
+                    
+                    <h4>What It Does</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Connects to cloud APIs:</strong> AWS CloudTrail, Azure Activity, GCP Audit, etc.</li>
+                        <li><strong>No on-prem infrastructure:</strong> Direct cloud-to-cloud connection</li>
+                        <li><strong>Pre-built parsing:</strong> Data is automatically normalized</li>
+                    </ul>
 
-<span style="color: #8b949e;">// This works regardless of whether the data came from:</span>
-<span style="color: #8b949e;">// - Windows Security Events</span>
-<span style="color: #8b949e;">// - Azure AD Sign-in logs</span>
-<span style="color: #8b949e;">// - Okta authentication logs</span>
-<span style="color: #8b949e;">// - Linux auth.log</span>
-</pre>
+                    <h4>Where in Console</h4>
+                    <div class="console-path">Settings → Data Sources → Cloud Collectors</div>
+
+                    <h4>Available Collectors</h4>
+                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                        <tr><td style="padding: 4px; width: 150px;"><strong>AWS:</strong></td><td>CloudTrail, GuardDuty, Security Hub, VPC Flow Logs</td></tr>
+                        <tr><td style="padding: 4px;"><strong>Azure:</strong></td><td>Activity Log, Entra ID (Azure AD), Defender for Cloud</td></tr>
+                        <tr><td style="padding: 4px;"><strong>GCP:</strong></td><td>Cloud Audit Logs, Security Command Center</td></tr>
+                        <tr><td style="padding: 4px;"><strong>SaaS:</strong></td><td>Okta, Microsoft 365, Salesforce, Workday, Box</td></tr>
+                    </table>
                 </div>
 
-                <!-- DATA FLOW DETAILED -->
-                <h2><i class="fas fa-stream"></i> Detailed Data Flow</h2>
-
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-route"></i> End-to-End Data Journey</div>
+                <div class="component-card" style="border-left-color: #f85149;">
+                    <div class="component-header">
+                        <div class="component-icon" style="background: #4d0f0f; color: #f85149;"><i class="fas fa-project-diagram"></i></div>
+                        <div>
+                            <h3 style="margin: 0;">Correlation Engine</h3>
+                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Detection rule execution</p>
+                        </div>
+                    </div>
                     
-                    <div class="flow-row centered">
-                        <div class="flow-box"><div class="flow-box-title">Raw Log</div><div class="flow-box-subtitle">Original format</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box primary"><div class="flow-box-title">Collector</div><div class="flow-box-subtitle">Agent/Broker/API</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box success"><div class="flow-box-title">Parser</div><div class="flow-box-subtitle">Field extraction</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box warning"><div class="flow-box-title">XDM Mapper</div><div class="flow-box-subtitle">Normalize</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box purple"><div class="flow-box-title">Enricher</div><div class="flow-box-subtitle">Add context</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box danger"><div class="flow-box-title">Data Lake</div><div class="flow-box-subtitle">Storage</div></div>
+                    <h4>What It Does</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Runs XQL queries:</strong> Continuously executes correlation rules against streaming data</li>
+                        <li><strong>Generates alerts:</strong> Creates incidents when rule conditions are met</li>
+                        <li><strong>Supports multiple rule types:</strong> Correlation, BIOC, IOC, Analytics</li>
+                    </ul>
+
+                    <h4>Where in Console</h4>
+                    <div class="console-path">Rules → Correlation Rules (custom XQL rules)</div>
+                    <div class="console-path">Rules → BIOC Rules (behavioral indicators)</div>
+                    <div class="console-path">Rules → Analytics (ML-based detection)</div>
+                    <div class="console-path">Threat Intel → IOC Rules (indicator matching)</div>
+
+                    <h4>Rule Execution Flow</h4>
+                    <div style="background: #0d1117; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <p style="color: #8b949e; margin: 0;">
+                            <span style="color: #3fb950;">1. Data Ingested</span> → 
+                            <span style="color: #58a6ff;">2. Parsed & Normalized</span> → 
+                            <span style="color: #d29922;">3. Rules Evaluated (every X minutes)</span> → 
+                            <span style="color: #f85149;">4. Alert Generated</span> → 
+                            <span style="color: #a371f7;">5. Incident Created</span>
+                        </p>
                     </div>
                 </div>
 
-                <h3>Example: Windows Event to Alert</h3>
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-route"></i> Data Transformation Journey</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #58a6ff;">═══ STEP 1: Raw Windows Event (from XDR Agent) ═══</span>
-&lt;Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"&gt;
-  &lt;EventID&gt;4625&lt;/EventID&gt;
-  &lt;TimeCreated SystemTime="2024-01-15T10:30:00.000Z"/&gt;
-  &lt;EventData&gt;
-    &lt;Data Name="TargetUserName"&gt;admin&lt;/Data&gt;
-    &lt;Data Name="IpAddress"&gt;192.168.1.50&lt;/Data&gt;
-    &lt;Data Name="WorkstationName"&gt;DESKTOP-ABC123&lt;/Data&gt;
-  &lt;/EventData&gt;
-&lt;/Event&gt;
+                <div class="component-card" style="border-left-color: #58a6ff;">
+                    <div class="component-header">
+                        <div class="component-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-robot"></i></div>
+                        <div>
+                            <h3 style="margin: 0;">XSOAR (Built-in)</h3>
+                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Security orchestration and automation</p>
+                        </div>
+                    </div>
+                    
+                    <h4>What It Does</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Playbook automation:</strong> Auto-enrich, auto-respond, auto-close</li>
+                        <li><strong>Integration hub:</strong> Connects to 700+ security tools</li>
+                        <li><strong>Case management:</strong> Track investigations, assign analysts</li>
+                    </ul>
 
-<span style="color: #3fb950;">═══ STEP 2: Parsed Fields ═══</span>
-{
-  "event_id": 4625,
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "target_username": "admin",
-  "source_ip": "192.168.1.50",
-  "workstation": "DESKTOP-ABC123"
-}
+                    <h4>Where in Console</h4>
+                    <div class="console-path">Automation → Playbooks (view/edit playbooks)</div>
+                    <div class="console-path">Settings → Integrations (configure 3rd party connections)</div>
+                    <div class="console-path">Marketplace → Browse (install content packs)</div>
 
-<span style="color: #d29922;">═══ STEP 3: XDM Normalized ═══</span>
-{
-  "xdm.event.type": "AUTHENTICATION",
-  "xdm.event.id": "4625",
-  "xdm.event.timestamp": "2024-01-15T10:30:00.000Z",
-  "xdm.auth.user": "admin",
-  "xdm.auth.outcome": "FAILURE",
-  "xdm.source.ipv4": "192.168.1.50",
-  "xdm.source.host.hostname": "DESKTOP-ABC123"
-}
-
-<span style="color: #a371f7;">═══ STEP 4: Enriched ═══</span>
-{
-  ... (all XDM fields) ...
-  "xdm.source.location.country": "United States",
-  "xdm.source.location.city": "Seattle",
-  "xdm.source.user.department": "IT",
-  "xdm.source.host.is_critical": true,
-  "threat_intel_match": false
-}
-
-<span style="color: #f85149;">═══ STEP 5: Correlation Rule Match → Alert ═══</span>
-Rule: "Brute Force - Multiple Failed Logins"
-Matched: 15 failures from 192.168.1.50 in 5 minutes
-Alert Created: SEVERITY=HIGH, MITRE=T1110
-</pre>
+                    <h4>Playbook Trigger Points</h4>
+                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                        <tr><td style="padding: 4px;"><strong>Incident Created:</strong></td><td>Auto-run playbook when new incident appears</td></tr>
+                        <tr><td style="padding: 4px;"><strong>Manual:</strong></td><td>Analyst clicks "Run Playbook" on incident</td></tr>
+                        <tr><td style="padding: 4px;"><strong>Scheduled:</strong></td><td>Run playbook on schedule (e.g., daily IOC import)</td></tr>
+                        <tr><td style="padding: 4px;"><strong>API:</strong></td><td>External system triggers playbook via API</td></tr>
+                    </table>
                 </div>
 
-                <!-- ANALYTICS ENGINE -->
-                <h2><i class="fas fa-brain"></i> Analytics Engine</h2>
+                <!-- Data Flow Detailed -->
+                <h2><i class="fas fa-route"></i> Data Flow: End-to-End</h2>
                 
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-brain"></i></div>
-                            <div class="comparison-item-title">ML-Based Analytics</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-chart-line"></i> Anomaly detection (behavioral baselines)</li>
-                            <li><i class="fas fa-user"></i> UEBA (User Entity Behavior Analytics)</li>
-                            <li><i class="fas fa-network-wired"></i> Network traffic analysis</li>
-                            <li><i class="fas fa-cogs"></i> Pre-built ML models from Palo Alto</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-project-diagram"></i></div>
-                            <div class="comparison-item-title">Correlation Rules</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-code"></i> Custom XQL-based rules</li>
-                            <li><i class="fas fa-box-open"></i> OOTB content packs</li>
-                            <li><i class="fas fa-link"></i> Cross-source correlation</li>
-                            <li><i class="fas fa-clock"></i> Real-time + scheduled</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d1a1a; color: #f85149;"><i class="fas fa-crosshairs"></i></div>
-                            <div class="comparison-item-title">Threat Intelligence</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-globe"></i> Unit 42 threat intel (included)</li>
-                            <li><i class="fas fa-database"></i> AutoFocus integration</li>
-                            <li><i class="fas fa-upload"></i> Custom IOC uploads</li>
-                            <li><i class="fas fa-plug"></i> TAXII/STIX feeds</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-search"></i></div>
-                            <div class="comparison-item-title">Identity Analytics</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-user-shield"></i> Risky user detection</li>
-                            <li><i class="fas fa-key"></i> Credential abuse detection</li>
-                            <li><i class="fas fa-arrows-alt"></i> Lateral movement tracking</li>
-                            <li><i class="fas fa-user-plus"></i> Privilege escalation alerts</li>
-                        </ul>
-                    </div>
+                <div class="config-section">
+                    <h3>Example: Firewall Log Journey</h3>
+                    <ol style="color: #8b949e; line-height: 2.2;">
+                        <li><strong>Generation:</strong> Palo Alto NGFW blocks suspicious connection, generates log</li>
+                        <li><strong>Transmission:</strong> Firewall sends syslog to Broker VM (10.0.1.50:514)</li>
+                        <li><strong>Receipt:</strong> Broker VM receives, queues in local buffer</li>
+                        <li><strong>Upload:</strong> Broker VM sends to XSIAM cloud (HTTPS/443)</li>
+                        <li><strong>Parsing:</strong> XSIAM applies built-in PANW parser, extracts fields</li>
+                        <li><strong>Normalization:</strong> Fields mapped to XDM (src→xdm.source.ipv4)</li>
+                        <li><strong>Storage:</strong> Data written to Hot tier (panw_ngfw_traffic_raw dataset)</li>
+                        <li><strong>Detection:</strong> Correlation rules check for matches</li>
+                        <li><strong>Alert:</strong> Rule triggers, incident created</li>
+                        <li><strong>Automation:</strong> XSOAR playbook enriches, notifies analyst</li>
+                        <li><strong>Investigation:</strong> Analyst queries data with XQL, investigates</li>
+                        <li><strong>Response:</strong> Analyst isolates endpoint, blocks IP at firewall</li>
+                    </ol>
                 </div>
 
-                <!-- ENTERPRISE EXAMPLE -->
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-building"></i>
-                        <div class="enterprise-example-title">Enterprise Example: Global Retail XSIAM Deployment</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> Global retail company with 50,000 endpoints, 500 stores, AWS/Azure cloud, and PCI compliance requirements.
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #3fb950; margin-top: 0;">Data Collection</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>XDR Agents:</strong> 50,000 (all endpoints)<br>
-                                <strong>Broker VMs:</strong> 8 (2 per region)<br>
-                                <strong>Cloud Collectors:</strong> AWS, Azure, M365<br>
-                                <strong>Daily Ingestion:</strong> 2 TB/day<br>
-                                <strong>EPS Peak:</strong> 150,000
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #58a6ff; margin-top: 0;">Data Sources</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Endpoint:</strong> Windows, Linux POS systems<br>
-                                <strong>Network:</strong> PA Firewalls, Prisma Access<br>
-                                <strong>Cloud:</strong> AWS CloudTrail, Azure AD<br>
-                                <strong>Apps:</strong> SAP, ServiceNow, Workday<br>
-                                <strong>PCI:</strong> POS transaction logs
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #d29922; margin-top: 0;">Detection & Response</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Correlation Rules:</strong> 150 (80 OOTB + 70 custom)<br>
-                                <strong>ML Analytics:</strong> UEBA, Anomaly detection<br>
-                                <strong>XSOAR Playbooks:</strong> 45 active<br>
-                                <strong>Daily Alerts:</strong> ~500 (90% auto-handled)<br>
-                                <strong>MTTR:</strong> 15 minutes average
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- INTERVIEW QUESTIONS -->
+                <!-- Interview Q&A -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Explain XSIAM's architecture at a high level</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the XSIAM architecture at a high level.</button>
                         <div class="qa-answer">
-                            <p>"XSIAM is a cloud-native SOC platform that combines SIEM, XDR, SOAR, and threat intelligence in one platform. The architecture follows six layers:</p>
+                            <p><strong>XSIAM is a cloud-native platform with five main layers:</strong></p>
                             <ol>
-                                <li><strong>Ingestion:</strong> Data enters via multiple methods</li>
-                                <li><strong>Collection:</strong> XDR agents, Broker VMs, cloud collectors, HTTP APIs</li>
-                                <li><strong>Parsing:</strong> Raw logs are parsed and normalized to XDM schema</li>
-                                <li><strong>Data Lake:</strong> Centralized storage with hot/cold tiers</li>
-                                <li><strong>Analytics:</strong> ML models, correlation rules, UEBA analyze data</li>
-                                <li><strong>Response:</strong> Alerts, incidents, and XSOAR automation</li>
+                                <li><strong>Data Collection:</strong> XDR agents (endpoints), Broker VMs (on-prem syslog), Cloud Collectors (AWS/Azure/GCP), HTTP Collectors (APIs)</li>
+                                <li><strong>Processing:</strong> Parsing engine extracts fields, XDM normalization maps to standard schema, enrichment adds context (TI, geo)</li>
+                                <li><strong>Storage:</strong> Hot tier (0-90 days, fast), Warm tier (90-365 days), Cold tier (1-7 years archive)</li>
+                                <li><strong>Detection:</strong> Correlation rules (XQL), ML Analytics, IOC matching, BIOC behavioral rules</li>
+                                <li><strong>Response:</strong> Incidents, XSOAR playbooks, response actions (isolate, block, remediate)</li>
                             </ol>
-                            <p>The key differentiator is that XSIAM combines native XDR telemetry with third-party logs in the same data lake, enabling better correlation than standalone SIEM or XDR products."</p>
+                            <p><strong>Key differentiator:</strong> Everything integrated in one platform - no separate SIEM, SOAR, EDR, TI platforms to manage.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: When would you use a Broker VM vs a Cloud Collector?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does data flow from an on-premises firewall to XSIAM?</button>
                         <div class="qa-answer">
-                            <p><strong>Use Broker VM when:</strong></p>
-                            <ul>
-                                <li>Source only supports Syslog (UDP/TCP)</li>
-                                <li>Source cannot reach the internet directly</li>
-                                <li>Need to collect from legacy systems</li>
-                                <li>Windows Event forwarding (WEF)</li>
-                                <li>Network devices like firewalls, switches</li>
-                            </ul>
-                            <p><strong>Use Cloud Collector when:</strong></p>
-                            <ul>
-                                <li>Source is a SaaS application with API</li>
-                                <li>AWS, Azure, GCP cloud services</li>
-                                <li>Want zero on-prem infrastructure</li>
-                                <li>Pre-built integration exists in XSIAM</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question">Q: What is XDM and why is it important?</button>
-                        <div class="qa-answer">
-                            <p>"XDM (Cross Data Model) is XSIAM's normalized schema - similar to Splunk CIM or Sentinel ASIM.</p>
-                            <p><strong>Why it's important:</strong></p>
-                            <ul>
-                                <li><strong>Vendor agnostic:</strong> Write one correlation rule that works across all authentication sources</li>
-                                <li><strong>Consistent analysis:</strong> Same field names regardless of original log format</li>
-                                <li><strong>Faster onboarding:</strong> New data sources automatically map to existing rules</li>
-                                <li><strong>Better correlation:</strong> Compare Windows events with Okta logs using same fields</li>
-                            </ul>
-                            <p>For example, <code>xdm.auth.user</code> contains the username whether the log came from Windows, Okta, or Azure AD."</p>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question">Q: How does XSIAM differ from standalone Cortex XDR?</button>
-                        <div class="qa-answer">
-                            <p><strong>Cortex XDR (standalone):</strong></p>
-                            <ul>
-                                <li>Focus on endpoint detection and response</li>
-                                <li>Limited to XDR agent telemetry + some network data</li>
-                                <li>Great for EDR use cases</li>
-                            </ul>
-                            <p><strong>XSIAM:</strong></p>
-                            <ul>
-                                <li>Full SIEM + XDR + SOAR platform</li>
-                                <li>Ingests any log source (not just endpoints)</li>
-                                <li>XDR agent data correlates with all other sources</li>
-                                <li>XSOAR automation built-in</li>
-                                <li>Attack surface management (ASM)</li>
-                            </ul>
-                            <p>Think of XDR as a component, XSIAM as the complete SOC platform that includes XDR."</p>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question">Q: Describe the data retention options in XSIAM</button>
-                        <div class="qa-answer">
-                            <p><strong>Hot Storage (Online):</strong></p>
-                            <ul>
-                                <li>Default 7-90 days depending on license</li>
-                                <li>Fully indexed for fast queries</li>
-                                <li>Used for real-time alerting and investigation</li>
-                            </ul>
-                            <p><strong>Cold Storage (Archive):</strong></p>
-                            <ul>
-                                <li>Long-term retention (1+ years)</li>
-                                <li>Lower cost storage tier</li>
-                                <li>Must be "thawed" for queries (takes time)</li>
-                                <li>Used for compliance and historical investigation</li>
-                            </ul>
-                            <p><strong>Best Practice:</strong> Keep high-value data (endpoint, auth) in hot longer, move verbose logs (network flow) to cold faster."</p>
+                            <p><strong>Complete data flow:</strong></p>
+                            <ol>
+                                <li><strong>Firewall sends syslog</strong> to Broker VM IP (e.g., 10.0.1.50:514 TCP)</li>
+                                <li><strong>Broker VM receives</strong> and buffers locally (handles network blips)</li>
+                                <li><strong>Broker VM uploads</strong> to XSIAM cloud via HTTPS/443 (compressed, encrypted)</li>
+                                <li><strong>XSIAM cloud receives</strong> and routes to parsing engine</li>
+                                <li><strong>Parsing:</strong> Built-in parser extracts fields (or custom parsing rule)</li>
+                                <li><strong>XDM normalization:</strong> Vendor fields mapped to standard schema</li>
+                                <li><strong>Storage:</strong> Data written to appropriate dataset (e.g., panw_ngfw_traffic_raw)</li>
+                                <li><strong>Indexing:</strong> Data becomes queryable in XQL</li>
+                            </ol>
+                            <p><strong>Typical latency:</strong> ~30 seconds to 2 minutes from log generation to searchable in XSIAM.</p>
                         </div>
                     </div>
                 </div>
@@ -788,7 +476,7 @@ Alert Created: SEVERITY=HIGH, MITRE=T1110
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <p>Nik's SIEM Compendium</p>
+                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
                 </div>
             </footer>
         </div>
@@ -800,10 +488,7 @@ Alert Created: SEVERITY=HIGH, MITRE=T1110
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

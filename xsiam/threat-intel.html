@@ -3,48 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intelligence Management (TIM) | XSIAM | Nik's SIEM</title>
+    <title>Threat Intelligence - Complete Configuration Guide | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
     <style>
-        .ioc-type { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.6rem; background: var(--bg-tertiary); border-radius: 6px; font-size: 0.8rem; }
-        .ioc-type i { color: var(--accent-primary); }
-        .feed-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; }
-        .feed-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-        .feed-type { font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-tertiary); padding: 0.2rem 0.5rem; border-radius: 4px; }
-        .feed-stats { display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); }
-        .confidence-high { color: #22c55e; }
-        .confidence-medium { color: #f59e0b; }
-        .confidence-low { color: #ef4444; }
-        .intel-flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; align-items: center; text-align: center; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); margin: 1.5rem 0; }
-        .intel-step { padding: 1rem; }
-        .intel-step-icon { width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-size: 1.2rem; }
-        .intel-arrow { color: var(--text-muted); font-size: 1.2rem; }
-        @media (max-width: 768px) { .intel-flow { grid-template-columns: 1fr; } .intel-arrow { transform: rotate(90deg); } }
+        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #58a6ff; margin: 8px 0; display: inline-block; }
+        .config-step { display: flex; gap: 16px; padding: 16px; background: #21262d; border-radius: 8px; margin: 12px 0; }
+        .step-num { width: 32px; height: 32px; background: #58a6ff; color: #0d1117; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
+        .ioc-type { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px; }
+        .ioc-hash { background: #1c3a5e; color: #58a6ff; }
+        .ioc-ip { background: #1a4d2e; color: #3fb950; }
+        .ioc-domain { background: #4d3a0d; color: #d29922; }
+        .ioc-url { background: #3d1f5c; color: #a371f7; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
                 <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
                     <div class="brand-text">
                         <span class="brand-title">Nik's SIEM</span>
-                        <span class="brand-subtitle">SIEM Reference Guide</span>
+                        <span class="brand-subtitle">Security Operations</span>
                     </div>
                 </a>
             </div>
-            <div class="platform-selector">
-                <div class="platform-tabs">
-                    <a href="../xsiam/index.html" class="platform-tab xsiam active"><i class="fas fa-fire"></i> XSIAM</a>
-                    <a href="../sentinel/index.html" class="platform-tab sentinel"><i class="fas fa-shield-alt"></i> Sentinel</a>
-                    <a href="../splunk/index.html" class="platform-tab splunk"><i class="fas fa-search"></i> Splunk</a>
-                    <a href="../mde/index.html" class="platform-tab mde"><i class="fas fa-desktop"></i> MDE</a>
-                </div>
-            </div>
-<nav class="sidebar-nav">
+            <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">XSIAM Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
@@ -54,408 +41,437 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Methods</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Log Onboarding</a>
                     <a href="broker-vm.html" class="nav-link"><i class="fas fa-server"></i> Broker VM</a>
                     <a href="agents.html" class="nav-link"><i class="fas fa-desktop"></i> Cortex Agents</a>
                     <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & XDM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">XQL Query Language</div>
-                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> Fundamentals</a>
-                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> Advanced</a>
+                    <a href="xql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> XQL Fundamentals</a>
+                    <a href="xql-advanced.html" class="nav-link"><i class="fas fa-code"></i> XQL Advanced</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
-                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-bell"></i> Correlation Rules</a>
+                    <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="threat-intel.html" class="nav-link active"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
                     <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="threat-intel.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Intel</a>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-crosshairs"></i> XDR Capabilities</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> ASM / Xpanse</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Operations</div>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention Tiers</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
                     <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
+                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC</a>
                 </div>
             </nav>
         </aside>
-        <!-- Main Content -->
         <div class="main-wrapper">
             <header class="top-bar">
                 <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">XSIAM</a>
-                    <span class="separator">/</span>
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
                     <span class="current">Threat Intelligence</span>
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-skull-crossbones"></i> Threat Intelligence Management (TIM)</h1>
-                <p class="lead">XSIAM's built-in Threat Intelligence Management provides enrichment, correlation, and actionable context from Unit 42 research and third-party feeds to enhance detection and response.</p>
-                <div class="concept-box">
-                    <h3><i class="fas fa-lightbulb"></i> What is TIM in XSIAM?</h3>
-                    <p><strong>Threat Intelligence Management (TIM)</strong> is the native capability to collect, normalize, analyze, and operationalize threat intelligence data. XSIAM includes:</p>
-                    <ul>
-                        <li><strong>Unit 42 Intelligence</strong> - Premium threat research from Palo Alto's dedicated team</li>
-                        <li><strong>AutoFocus Tags</strong> - Malware family and campaign classification</li>
-                        <li><strong>Third-Party Feeds</strong> - STIX/TAXII, CSV, JSON imports</li>
-                        <li><strong>Custom Indicators</strong> - Your own organizational IoCs</li>
-                    </ul>
-                    <div class="memory-trick">
-                        <h4><i class="fas fa-brain"></i> Memory Trick: "TIM = Threat Info Made-actionable"</h4>
-                        <p>TIM takes raw threat data and makes it actionable by enriching alerts, correlating across datasets, and providing context for investigation.</p>
-                    </div>
+                <h1><i class="fas fa-skull-crossbones"></i> Threat Intelligence - Complete Configuration Guide</h1>
+                <p class="lead">How to configure, import, and operationalize threat intelligence in XSIAM. Covers IOC management, feed integration, and using TI in detection rules.</p>
+
+                <!-- What is Threat Intel in XSIAM -->
+                <h2><i class="fas fa-question-circle"></i> What is Threat Intelligence in XSIAM?</h2>
+                
+                <div class="info-box" style="border-color: #58a6ff;">
+                    <h4><i class="fas fa-info-circle"></i> Definition</h4>
+                    <p><strong>Threat Intelligence (TI)</strong> in XSIAM consists of Indicators of Compromise (IOCs) that are matched against your logs to detect known threats. When network traffic, file hashes, or URLs match a known-bad indicator, an alert is generated.</p>
                 </div>
-                <!-- Intelligence Flow -->
-                <h2><i class="fas fa-stream"></i> Intelligence Flow</h2>
-                <div class="intel-flow">
-                    <div class="intel-step">
-                        <div class="intel-step-icon"><i class="fas fa-download"></i></div>
-                        <strong>Collect</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Ingest feeds</div>
-                    </div>
-                    <div class="intel-arrow">→</div>
-                    <div class="intel-step">
-                        <div class="intel-step-icon"><i class="fas fa-filter"></i></div>
-                        <strong>Normalize</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Standardize format</div>
-                    </div>
-                    <div class="intel-arrow">→</div>
-                    <div class="intel-step">
-                        <div class="intel-step-icon"><i class="fas fa-brain"></i></div>
-                        <strong>Analyze</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Score & classify</div>
-                    </div>
-                    <div class="intel-arrow">→</div>
-                    <div class="intel-step">
-                        <div class="intel-step-icon"><i class="fas fa-link"></i></div>
-                        <strong>Correlate</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Match to alerts</div>
-                    </div>
-                    <div class="intel-arrow">→</div>
-                    <div class="intel-step">
-                        <div class="intel-step-icon"><i class="fas fa-bolt"></i></div>
-                        <strong>Action</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Block/Alert/Enrich</div>
-                    </div>
+
+                <h3>IOC Types Supported</h3>
+                <div style="margin: 16px 0;">
+                    <span class="ioc-type ioc-hash">SHA256 Hash</span>
+                    <span class="ioc-type ioc-hash">SHA1 Hash</span>
+                    <span class="ioc-type ioc-hash">MD5 Hash</span>
+                    <span class="ioc-type ioc-ip">IPv4 Address</span>
+                    <span class="ioc-type ioc-ip">IPv6 Address</span>
+                    <span class="ioc-type ioc-domain">Domain</span>
+                    <span class="ioc-type ioc-url">URL</span>
+                    <span class="ioc-type" style="background: #4d0f0f; color: #f85149;">Email</span>
                 </div>
-                <!-- Indicator Types -->
-                <h2><i class="fas fa-fingerprint"></i> Indicator Types (IoCs)</h2>
-                <div class="table-container">
+
+                <div class="styled-table">
                     <table>
                         <thead>
                             <tr>
+                                <th>IOC Type</th>
+                                <th>What It Matches</th>
+                                <th>Data Sources</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>File Hash</strong></td>
+                                <td>Files on endpoints</td>
+                                <td>XDR agent data</td>
+                                <td>e99a18c428cb38d5f260853678922e03...</td>
+                            </tr>
+                            <tr>
+                                <td><strong>IP Address</strong></td>
+                                <td>Network connections</td>
+                                <td>Firewall, XDR agent, cloud logs</td>
+                                <td>185.220.101.1</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Domain</strong></td>
+                                <td>DNS queries, URLs</td>
+                                <td>DNS logs, proxy, XDR agent</td>
+                                <td>malware-c2.evil.com</td>
+                            </tr>
+                            <tr>
+                                <td><strong>URL</strong></td>
+                                <td>Web requests</td>
+                                <td>Proxy, firewall URL filtering</td>
+                                <td>http://evil.com/payload.exe</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Where to Find TI in Console -->
+                <h2><i class="fas fa-map-marker-alt"></i> Where to Find Threat Intel in XSIAM</h2>
+                
+                <div class="config-section">
+                    <h3>Console Navigation</h3>
+                    <div class="console-path">XSIAM Console → Threat Intel (left navigation)</div>
+                    
+                    <div style="margin-top: 16px;">
+                        <h4>Threat Intel Sub-sections:</h4>
+                        <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                            <tr style="border-bottom: 1px solid #30363d;">
+                                <td style="padding: 8px;"><strong>Threat Intel → Overview</strong></td>
+                                <td style="padding: 8px;">Dashboard showing IOC counts, matches, feed status</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #30363d;">
+                                <td style="padding: 8px;"><strong>Threat Intel → Indicators</strong></td>
+                                <td style="padding: 8px;">View/search all IOCs in system</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #30363d;">
+                                <td style="padding: 8px;"><strong>Threat Intel → Feeds</strong></td>
+                                <td style="padding: 8px;">Configure external TI feed integrations</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #30363d;">
+                                <td style="padding: 8px;"><strong>Threat Intel → IOC Rules</strong></td>
+                                <td style="padding: 8px;">Configure what happens when IOC matches</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;"><strong>Threat Intel → Import</strong></td>
+                                <td style="padding: 8px;">Manual upload of IOC files</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- How to Import IOCs -->
+                <h2><i class="fas fa-file-import"></i> How to Import IOCs Manually</h2>
+                
+                <div class="config-section">
+                    <h3>Method 1: CSV Upload</h3>
+                    <div class="console-path">Threat Intel → Import → Upload File</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Prepare CSV File</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Create CSV with required columns:</p>
+                            <div class="code-block">
+indicator,type,severity,expiration,description
+185.220.101.1,IP,HIGH,2024-12-31,Tor exit node - C2 traffic
+e99a18c428cb38d5f260853678922e03,MD5,CRITICAL,2024-12-31,Emotet loader
+malware-c2.evil.com,DOMAIN,HIGH,2024-12-31,APT29 C2 domain
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Upload in Console</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Threat Intel → Import → Choose File → Select your CSV</p>
+                            <p style="color: #8b949e; margin: 4px 0;">Map columns to fields if needed</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Verify Import</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Go to Threat Intel → Indicators → Search for your IOCs</p>
+                            <p style="color: #3fb950; margin: 4px 0;">IOCs are now active and will match against incoming data</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h3>Method 2: STIX/TAXII Feed Integration</h3>
+                    <div class="console-path">Threat Intel → Feeds → + Add Feed</div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Add New Feed</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Click "+ Add Feed" button</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Configure Feed Settings</strong>
+                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px; width: 100%;">
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px; width: 150px;"><strong>Feed Name:</strong></td>
+                                    <td style="padding: 8px;">AlienVault OTX</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Feed Type:</strong></td>
+                                    <td style="padding: 8px;">TAXII (or STIX, CSV URL, etc.)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>URL:</strong></td>
+                                    <td style="padding: 8px;">https://otx.alienvault.com/taxii/discovery</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>API Key:</strong></td>
+                                    <td style="padding: 8px;">[Your OTX API key]</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Polling Interval:</strong></td>
+                                    <td style="padding: 8px;">Every 1 hour</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Default Severity:</strong></td>
+                                    <td style="padding: 8px;">High</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">3</div>
+                        <div>
+                            <strong>Test Connection</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Click "Test" to verify connectivity</p>
+                            <p style="color: #8b949e; margin: 4px 0;">If successful, click "Save"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-step">
+                        <div class="step-num">4</div>
+                        <div>
+                            <strong>Monitor Feed Health</strong>
+                            <p style="color: #8b949e; margin: 4px 0;">Threat Intel → Feeds → Check "Last Sync" and "Indicators" count</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular TI Feeds -->
+                <h3>Popular Threat Intel Feeds</h3>
+                <div class="styled-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feed</th>
                                 <th>Type</th>
-                                <th>Examples</th>
-                                <th>Common Sources</th>
-                                <th>Detection Use</th>
+                                <th>Cost</th>
+                                <th>Best For</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-network-wired"></i> IP Address</span></td>
-                                <td>203.0.113.50, 10.0.0.0/8</td>
-                                <td>C2 feeds, blocklists, Unit 42</td>
-                                <td>Network traffic matching</td>
+                                <td><strong>Palo Alto Unit 42</strong></td>
+                                <td>Built-in</td>
+                                <td>Included</td>
+                                <td>Already integrated, Palo Alto threat research</td>
                             </tr>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-globe"></i> Domain</span></td>
-                                <td>evil.com, *.malware.net</td>
-                                <td>DNS feeds, sandbox analysis</td>
-                                <td>DNS queries, URL filtering</td>
+                                <td><strong>AlienVault OTX</strong></td>
+                                <td>TAXII</td>
+                                <td>Free</td>
+                                <td>Community-sourced, broad coverage</td>
                             </tr>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-link"></i> URL</span></td>
-                                <td>https://evil.com/payload.exe</td>
-                                <td>Web traffic analysis, phishing</td>
-                                <td>Proxy logs, browser activity</td>
+                                <td><strong>Abuse.ch</strong></td>
+                                <td>CSV URL</td>
+                                <td>Free</td>
+                                <td>Malware hashes, botnet C2s</td>
                             </tr>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-file"></i> File Hash</span></td>
-                                <td>SHA256, SHA1, MD5</td>
-                                <td>Malware repos, VirusTotal</td>
-                                <td>Endpoint file scanning</td>
+                                <td><strong>MISP</strong></td>
+                                <td>MISP API</td>
+                                <td>Free (self-hosted)</td>
+                                <td>Sector-specific sharing communities</td>
                             </tr>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-envelope"></i> Email</span></td>
-                                <td>attacker@evil.com</td>
-                                <td>Phishing campaigns, BEC</td>
-                                <td>Email gateway matching</td>
+                                <td><strong>Recorded Future</strong></td>
+                                <td>API</td>
+                                <td>$$$$</td>
+                                <td>Premium, curated, low false positive</td>
                             </tr>
                             <tr>
-                                <td><span class="ioc-type"><i class="fas fa-certificate"></i> Certificate</span></td>
-                                <td>SHA256 thumbprint</td>
-                                <td>SSL analysis, malware signing</td>
-                                <td>HTTPS inspection</td>
-                            </tr>
-                            <tr>
-                                <td><span class="ioc-type"><i class="fas fa-code"></i> YARA Rule</span></td>
-                                <td>rule Emotet { ... }</td>
-                                <td>Malware research, custom</td>
-                                <td>File/memory scanning</td>
-                            </tr>
-                            <tr>
-                                <td><span class="ioc-type"><i class="fas fa-shield-alt"></i> CVE</span></td>
-                                <td>CVE-2023-44487</td>
-                                <td>NVD, vendor advisories</td>
-                                <td>Vulnerability correlation</td>
+                                <td><strong>CrowdStrike Falcon X</strong></td>
+                                <td>API</td>
+                                <td>$$$</td>
+                                <td>Nation-state APT focus</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <!-- Intelligence Sources -->
-                <h2><i class="fas fa-rss"></i> Intelligence Sources</h2>
-                <h3>Built-in Sources</h3>
-                <div class="card-grid">
-                    <div class="feed-card">
-                        <div class="feed-header">
-                            <div>
-                                <h4 style="margin: 0;">Unit 42 Threat Research</h4>
-                                <span class="feed-type">Premium • Auto-Updated</span>
-                            </div>
-                            <span class="badge badge-primary">Included</span>
+
+                <!-- Using TI in XQL -->
+                <h2><i class="fas fa-terminal"></i> Using Threat Intel in XQL Queries</h2>
+                
+                <div class="config-section">
+                    <h4>Query 1: Find All IOC Matches in Last 24 Hours</h4>
+                    <div class="code-block">
+<span style="color: #ff7b72;">dataset</span> = threat_intel_matches
+| <span style="color: #ff7b72;">filter</span> _time > ago(24h)
+| <span style="color: #ff7b72;">fields</span> _time, indicator_value, indicator_type, severity, 
+         matched_data_source, matched_field, matched_value
+| <span style="color: #ff7b72;">sort</span> desc _time
+                    </div>
+
+                    <h4>Query 2: Correlate IOC Match with Endpoint Context</h4>
+                    <div class="code-block">
+<span style="color: #8b949e;">// Join TI matches with endpoint data for full context</span>
+<span style="color: #ff7b72;">dataset</span> = threat_intel_matches
+| <span style="color: #ff7b72;">filter</span> indicator_type = "IP"
+| <span style="color: #ff7b72;">join</span> type=inner (
+    <span style="color: #ff7b72;">dataset</span> = xdr_data
+    | <span style="color: #ff7b72;">filter</span> event_type = NETWORK
+  ) as endpoint_data
+  on matched_value = endpoint_data.xdm.target.ipv4
+| <span style="color: #ff7b72;">fields</span> _time, indicator_value, endpoint_data.agent_hostname,
+         endpoint_data.action_process_image_name
+                    </div>
+
+                    <h4>Query 3: Check Specific IOC Across All Data</h4>
+                    <div class="code-block">
+<span style="color: #8b949e;">// Search for a specific suspicious IP</span>
+<span style="color: #ff7b72;">dataset</span> = xdr_data, panw_ngfw_traffic_raw
+| <span style="color: #ff7b72;">filter</span> xdm.target.ipv4 = "185.220.101.1" 
+         <span style="color: #ff7b72;">or</span> xdm.source.ipv4 = "185.220.101.1"
+| <span style="color: #ff7b72;">fields</span> _time, xdm.source.ipv4, xdm.target.ipv4, 
+         xdm.source.host.hostname, xdm.event.type
+| <span style="color: #ff7b72;">sort</span> desc _time
+                    </div>
+                </div>
+
+                <!-- IOC Rules Configuration -->
+                <h2><i class="fas fa-cog"></i> Configuring IOC Matching Rules</h2>
+                
+                <div class="config-section">
+                    <div class="console-path">Threat Intel → IOC Rules → + New Rule</div>
+                    
+                    <div class="info-box" style="border-color: #d29922;">
+                        <h4><i class="fas fa-exclamation-triangle"></i> What Are IOC Rules?</h4>
+                        <p>IOC Rules define what happens when an IOC matches. You can configure different actions based on severity, IOC type, or feed source.</p>
+                    </div>
+
+                    <h4>Creating an IOC Rule</h4>
+                    <div class="config-step">
+                        <div class="step-num">1</div>
+                        <div>
+                            <strong>Define Match Criteria</strong>
+                            <table style="color: #8b949e; font-size: 0.9rem; margin-top: 8px; width: 100%;">
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>IOC Types:</strong></td>
+                                    <td style="padding: 8px;">IP, Domain (select which types this rule applies to)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #30363d;">
+                                    <td style="padding: 8px;"><strong>Severity:</strong></td>
+                                    <td style="padding: 8px;">High, Critical (only match high-confidence IOCs)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Feed:</strong></td>
+                                    <td style="padding: 8px;">Unit 42, AlienVault (specific feeds only)</td>
+                                </tr>
+                            </table>
                         </div>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">World-class threat research team providing IoCs, campaign analysis, and threat actor profiles.</p>
-                        <div class="feed-stats">
-                            <span><i class="fas fa-fingerprint"></i> 10M+ indicators</span>
-                            <span><i class="fas fa-sync"></i> Real-time updates</span>
-                        </div>
                     </div>
-                    <div class="feed-card">
-                        <div class="feed-header">
-                            <div>
-                                <h4 style="margin: 0;">AutoFocus Tags</h4>
-                                <span class="feed-type">Malware Classification</span>
-                            </div>
-                            <span class="badge badge-primary">Included</span>
-                        </div>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">Malware family tags, campaign identifiers, and threat actor attribution from WildFire analysis.</p>
-                        <div class="feed-stats">
-                            <span><i class="fas fa-tags"></i> 5,000+ tags</span>
-                            <span><i class="fas fa-bug"></i> Malware families</span>
-                        </div>
-                    </div>
-                    <div class="feed-card">
-                        <div class="feed-header">
-                            <div>
-                                <h4 style="margin: 0;">WildFire Intelligence</h4>
-                                <span class="feed-type">Sandbox Analysis</span>
-                            </div>
-                            <span class="badge badge-primary">Included</span>
-                        </div>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">File verdicts and behavioral analysis from Palo Alto's cloud sandbox network.</p>
-                        <div class="feed-stats">
-                            <span><i class="fas fa-file-code"></i> 10B+ samples</span>
-                            <span><i class="fas fa-clock"></i> 5-min verdicts</span>
+                    
+                    <div class="config-step">
+                        <div class="step-num">2</div>
+                        <div>
+                            <strong>Define Actions</strong>
+                            <ul style="color: #8b949e; font-size: 0.9rem;">
+                                <li><strong>Generate Alert:</strong> Create incident in XSIAM (always recommended)</li>
+                                <li><strong>Trigger Playbook:</strong> Auto-run XSOAR playbook for enrichment/response</li>
+                                <li><strong>Block at Firewall:</strong> Push block rule to NGFW (if integrated)</li>
+                                <li><strong>Isolate Endpoint:</strong> Auto-isolate affected host (use carefully!)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-                <h3>Third-Party Integrations</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Feed Type</th>
-                                <th>Format</th>
-                                <th>Examples</th>
-                                <th>Update Method</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>STIX/TAXII</strong></td>
-                                <td>Structured Threat Exchange</td>
-                                <td>Anomali, ThreatConnect, MISP</td>
-                                <td>Pull (polling) or Push</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Commercial Feeds</strong></td>
-                                <td>API, JSON, CSV</td>
-                                <td>Recorded Future, Mandiant, CrowdStrike</td>
-                                <td>API integration</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Open Source</strong></td>
-                                <td>Various</td>
-                                <td>AlienVault OTX, Abuse.ch, Feodo Tracker</td>
-                                <td>Scheduled pull</td>
-                            </tr>
-                            <tr>
-                                <td><strong>ISAC Feeds</strong></td>
-                                <td>STIX, Email, API</td>
-                                <td>FS-ISAC, H-ISAC, Auto-ISAC</td>
-                                <td>TAXII server</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Custom/Internal</strong></td>
-                                <td>CSV, JSON, Manual</td>
-                                <td>Internal blocklists, incident IoCs</td>
-                                <td>Upload or API</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Confidence Scoring -->
-                <h2><i class="fas fa-star-half-alt"></i> Confidence Scoring</h2>
-                <p>XSIAM assigns confidence scores to indicators to help prioritize alerts:</p>
-                <div class="card-grid">
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="confidence-high">● HIGH</span> Confidence (80-100)</h3>
-                        <p>Verified malicious with multiple confirmations. Suitable for automated blocking.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Unit 42 confirmed C2 infrastructure</li>
-                            <li>Multiple vendor consensus</li>
-                            <li>Recent sandbox detection</li>
-                            <li>Active campaign attribution</li>
-                        </ul>
+
+                <!-- Interview Q&A -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you integrate external threat intelligence feeds into XSIAM?</button>
+                        <div class="qa-answer">
+                            <p><strong>Step-by-step process:</strong></p>
+                            <ol>
+                                <li><strong>Navigate:</strong> Threat Intel → Feeds → + Add Feed</li>
+                                <li><strong>Select feed type:</strong> TAXII, STIX, CSV URL, or vendor-specific API</li>
+                                <li><strong>Configure connection:</strong> Enter URL, API key, polling interval</li>
+                                <li><strong>Map fields:</strong> Ensure indicator types and severity are mapped correctly</li>
+                                <li><strong>Test and save:</strong> Verify connectivity, then enable the feed</li>
+                                <li><strong>Create IOC rules:</strong> Define what happens when indicators match (alert, playbook, block)</li>
+                            </ol>
+                            <p><strong>Example:</strong> For AlienVault OTX, I'd use TAXII feed type, enter their discovery URL, add my API key, set 1-hour polling, and create a rule to generate High severity alerts on matches.</p>
+                        </div>
                     </div>
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="confidence-medium">● MEDIUM</span> Confidence (40-79)</h3>
-                        <p>Likely malicious but requires verification. Good for alerting.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Single vendor report</li>
-                            <li>Historical association</li>
-                            <li>Heuristic detection</li>
-                            <li>Aged but unverified IoC</li>
-                        </ul>
-                    </div>
-                    <div class="card" style="cursor: default;">
-                        <h3><span class="confidence-low">● LOW</span> Confidence (1-39)</h3>
-                        <p>Suspicious activity, use for hunting and context only.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li>Open-source unverified</li>
-                            <li>Very old indicators</li>
-                            <li>Generic suspicious patterns</li>
-                            <li>Community submissions</li>
-                        </ul>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle false positives from threat intelligence feeds?</button>
+                        <div class="qa-answer">
+                            <p><strong>False positive management strategies:</strong></p>
+                            <ol>
+                                <li><strong>Use severity filtering:</strong> Only alert on High/Critical IOCs, not Low/Medium</li>
+                                <li><strong>Whitelist legitimate indicators:</strong> Threat Intel → Indicators → Select → Add to Exclusion List</li>
+                                <li><strong>Evaluate feed quality:</strong> Track FP rate per feed, disable low-quality feeds</li>
+                                <li><strong>Require correlation:</strong> Don't alert on IOC match alone - require additional context (e.g., IOC match + suspicious process)</li>
+                                <li><strong>Set expiration dates:</strong> Old IOCs become stale - ensure feeds include expiration or set default TTL</li>
+                            </ol>
+                            <p><strong>XQL for analysis:</strong></p>
+                            <div class="code-block" style="margin: 8px 0;">dataset = threat_intel_matches
+| filter _time > ago(30d)
+| comp total = count(), fp = countif(resolution = "FALSE_POSITIVE") by feed_name
+| alter fp_rate = round(fp / total * 100, 1)
+| sort desc fp_rate</div>
+                        </div>
                     </div>
                 </div>
-                <!-- XQL Queries -->
-                <h2><i class="fas fa-terminal"></i> XQL Queries for Threat Intel</h2>
-                <h3>Find Alerts Matching Known Threat Actors</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
-                    </div>
-                    <pre>dataset = xdr_alerts
-| join type = inner (
-    dataset = threat_intelligence_indicators
-    | filter threat_actor != null
-    | fields indicator_value, threat_actor, confidence
-) as ti on dst_ip = ti.indicator_value or src_ip = ti.indicator_value
-| filter ti.confidence >= 70
-| fields alert_name, src_ip, dst_ip, ti.threat_actor, ti.confidence, timestamp
-| sort desc timestamp</pre>
-                </div>
-                <h3>Enrich Incidents with Intel Context</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
-                    </div>
-                    <pre>dataset = xdr_incidents
-| arrayexpand network_artifacts as ip
-| join type = left (
-    dataset = threat_intelligence_indicators
-    | fields indicator_value, indicator_type, source, tags, first_seen, last_seen
-) as intel on ip = intel.indicator_value
-| filter intel.indicator_value != null
-| fields incident_id, description, ip, intel.source, intel.tags, intel.first_seen
-| dedup incident_id, ip</pre>
-                </div>
-                <h3>Hunt for Specific Malware Family</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
-                    </div>
-                    <pre>// Get all Emotet-related indicators
-dataset = threat_intelligence_indicators
-| filter tags contains "Emotet" or malware_family = "Emotet"
-| fields indicator_type, indicator_value, confidence, last_seen
-// Then hunt in network logs
-dataset = firewall_logs
-| join type = inner (
-    dataset = threat_intelligence_indicators
-    | filter malware_family = "Emotet"
-    | fields indicator_value
-) as emotet on dst_ip = emotet.indicator_value or url contains emotet.indicator_value
-| fields timestamp, src_ip, dst_ip, url, action</pre>
-                </div>
-                <h3>Dashboard: Indicator Statistics</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">XQL</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
-                    </div>
-                    <pre>dataset = threat_intelligence_indicators
-| comp count() as total_indicators,
-       count_distinct(source) as sources,
-       count_distinct(threat_actor) as threat_actors
-       by indicator_type
-| sort desc total_indicators</pre>
-                </div>
-                <!-- STIX/TAXII Configuration -->
-                <h2><i class="fas fa-cog"></i> STIX/TAXII Configuration</h2>
-                <div class="tip-box">
-                    <strong>STIX 2.1 Support:</strong> XSIAM supports STIX 2.0 and 2.1 formats for indicator ingestion via TAXII 2.0/2.1 servers.
-                </div>
-                <h3>TAXII Server Configuration Example</h3>
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="code-lang">JSON</span>
-                        <button class="code-copy"><i class="fas fa-copy"></i> Copy</button>
-                    </div>
-                    <pre>{
-    "name": "ISAC Threat Feed",
-    "type": "taxii",
-    "enabled": true,
-    "config": {
-        "server_url": "https://taxii.fs-isac.org/taxii2/",
-        "collection_id": "threat-indicators",
-        "api_root": "api-root-01",
-        "username": "${TAXII_USER}",
-        "password": "${TAXII_PASS}",
-        "poll_interval_minutes": 60,
-        "stix_version": "2.1"
-    },
-    "mapping": {
-        "confidence_threshold": 50,
-        "default_expiration_days": 90,
-        "indicator_types": ["ipv4-addr", "domain-name", "file", "url"]
-    }
-}</pre>
-                </div>
-                <!-- Automation -->
-                <h2><i class="fas fa-robot"></i> TIM Automation with XSOAR</h2>
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> Diagram</h4>
-                    <p style="color: #8b949e;">See Data Ingestion page for detailed visual diagrams of this architecture.</p>
-                </div>
-                <!-- Interview Answer -->
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "How do you operationalize threat intelligence?"</h4>
-                    <p>"Operationalizing threat intelligence means making it actionable in your security operations. In XSIAM, I configure multiple intel sources - Unit 42 as our primary high-confidence feed, plus ISAC feeds for sector-specific threats, and open-source feeds like Abuse.ch for breadth. Each indicator gets a confidence score based on source reliability, age, and corroboration. High-confidence indicators (80+) are pushed to prevention controls like firewalls. Medium confidence triggers alerts that analysts review. Low confidence goes into a hunting database. We use XSOAR playbooks to automatically enrich every alert with intel context - if an IP in an alert matches a known C2 server, the analyst immediately sees the threat actor, associated malware family, and TTPs. This context dramatically speeds up triage decisions."</p>
-                </div>
-                <div class="interview-box">
-                    <h4><i class="fas fa-user-tie"></i> Interview Answer: "What is STIX/TAXII?"</h4>
-                    <p>"STIX (Structured Threat Information eXpression) is a standardized language for describing cyber threat intelligence - things like indicators, threat actors, campaigns, and TTPs. TAXII (Trusted Automated eXchange of Indicator Information) is the transport protocol for sharing STIX data. Think of STIX as the format and TAXII as the delivery mechanism. In XSIAM, we configure TAXII clients to poll servers like our ISAC's threat feed, automatically ingesting STIX 2.1 bundles containing indicators. The standardization means we can consume intel from any STIX-compliant source without custom parsing. XSIAM normalizes these into its native indicator format for correlation against alerts."</p>
-                </div>
+
             </main>
             <footer class="main-footer">
                 <div class="footer-content">
-                    <div class="footer-links">
-                        <a href="../index.html">Home</a>
-                        <a href="index.html">XSIAM</a>
-                        <a href="../sentinel/index.html">Sentinel</a>
-                        <a href="../splunk/index.html">Splunk</a>
-                    </div>
-                    <div class="footer-copy">Nik's SIEM - Security Operations Knowledge Base</div>
+                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
                 </div>
             </footer>
         </div>
     </div>
-    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
-    <script src="../assets/js/main.js"></script>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
 </body>
 </html>
