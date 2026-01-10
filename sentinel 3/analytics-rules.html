@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Rules | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Data Tiers & Costs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-route"></i> DCR/DCE Pipeline</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & ASIM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-code"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> KQL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link active"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools & Content</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
+                    <span class="current">Analytics Rules</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-project-diagram"></i> Analytics Rules</h1>
+                <p class="lead">Master Microsoft Sentinel detection rules. Learn rule types, creation workflows, entity mapping, alert grouping, and best practices for building effective detections.</p>
+
+                <!-- Rule Types Overview -->
+                <h2><i class="fas fa-layer-group"></i> Rule Types Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Sentinel → Configuration → Analytics</span></p>
+
+                    <h4>Analytics Rule Types</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Type</th><th>Description</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Scheduled</strong></td><td>KQL query runs on schedule</td><td>Custom detections, complex logic</td></tr>
+                            <tr><td><strong>NRT (Near Real-Time)</strong></td><td>Runs every minute</td><td>Critical alerts, time-sensitive</td></tr>
+                            <tr><td><strong>Microsoft Security</strong></td><td>Ingests M365 Defender alerts</td><td>Unified incident view</td></tr>
+                            <tr><td><strong>Fusion</strong></td><td>ML-based correlation</td><td>Advanced attack detection</td></tr>
+                            <tr><td><strong>ML Behavior Analytics</strong></td><td>Anomaly detection</td><td>UEBA, baseline deviations</td></tr>
+                            <tr><td><strong>Threat Intelligence</strong></td><td>IOC matching</td><td>Known bad indicators</td></tr>
+                            <tr><td><strong>Anomaly</strong></td><td>Built-in anomaly rules</td><td>Unusual patterns</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Rule Type Selection</h4>
+                    <div class="code-block">When to Use Each Rule Type:
+
+SCHEDULED RULES:
+├── Complex queries with joins
+├── Aggregations and thresholds
+├── Custom detection logic
+├── Flexible scheduling (5min - 14 days)
+└── Most common rule type
+
+NRT (NEAR REAL-TIME):
+├── Critical security events
+├── Simple, fast queries
+├── No aggregations allowed
+├── 1-minute detection latency
+└── Limited to certain tables
+
+MICROSOFT SECURITY:
+├── M365 Defender alerts
+├── Defender for Cloud alerts
+├── Azure AD Identity Protection
+├── Unified incident management
+└── Automatic alert import
+
+FUSION:
+├── Multi-stage attack detection
+├── Correlates signals across sources
+├── ML-powered (no query needed)
+├── Advanced persistent threats
+└── Cannot be customized
+
+ANOMALY:
+├── Behavior baseline deviations
+├── Pre-built anomaly types
+├── Threshold tuning only
+├── Good for UEBA scenarios
+└── Requires baseline period</div>
+                </div>
+
+                <!-- Scheduled Rules Deep Dive -->
+                <h2><i class="fas fa-clock"></i> Scheduled Rules Deep Dive</h2>
+                <div class="config-section">
+                    <h4>Rule Configuration</h4>
+                    <div class="code-block">Scheduled Rule Components:
+
+1. GENERAL
+   ├── Name: Descriptive, unique name
+   ├── Description: What it detects, why it matters
+   ├── Severity: Informational, Low, Medium, High
+   ├── MITRE ATT&CK: Tactics and techniques
+   └── Status: Enabled/Disabled
+
+2. RULE LOGIC
+   ├── KQL Query: Detection logic
+   ├── Entity Mapping: Map fields to entities
+   ├── Custom Details: Add context fields
+   └── Alert Details: Dynamic alert title/description
+
+3. SCHEDULING
+   ├── Query Frequency: How often to run (5min - 14d)
+   ├── Lookup Period: Time range to query
+   ├── Start Running: Immediate or scheduled
+   └── Suppress alerts: Group similar alerts
+
+4. INCIDENT SETTINGS
+   ├── Create Incidents: Yes/No
+   ├── Grouping: Alert aggregation rules
+   └── Re-open closed incidents: Optional
+
+5. AUTOMATED RESPONSE
+   ├── Playbooks: Attach automation
+   └── Trigger on: Alert creation</div>
+
+                    <h4>Query Best Practices</h4>
+                    <div class="code-block">// GOOD: Filter early, project needed fields
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4625
+| where AccountType == "User"
+| summarize FailedAttempts = count() by TargetUserName, IpAddress
+| where FailedAttempts > 10
+| project TargetUserName, IpAddress, FailedAttempts
+
+// BAD: Expensive operations first
+SecurityEvent
+| extend ParsedData = parse_json(EventData)
+| where EventID == 4625  // Filter should be first!
+
+// SCHEDULING ALIGNMENT
+// Query frequency: 5 minutes
+// Lookup period: 10 minutes (2x frequency for overlap)
+// This ensures no events are missed
+
+// DEDUPLICATION
+// If rule might fire multiple times for same event:
+| summarize arg_min(TimeGenerated, *) by UniqueField
+
+// THRESHOLD TUNING
+let threshold = 10;  // Easy to adjust
+SecurityEvent
+| where EventID == 4625
+| summarize count() by TargetUserName
+| where count_ > threshold</div>
+                </div>
+
+                <!-- Entity Mapping -->
+                <h2><i class="fas fa-project-diagram"></i> Entity Mapping</h2>
+                <div class="config-section">
+                    <h4>Entity Types</h4>
+                    <div class="code-block">Sentinel Entity Types:
+
+ACCOUNT:
+├── Name: Username
+├── AadUserId: Azure AD Object ID
+├── UPNSuffix: Domain portion of UPN
+├── Sid: Windows SID
+└── NTDomain: Windows domain
+
+HOST:
+├── HostName: Computer name
+├── DnsDomain: FQDN domain
+├── AzureID: Azure resource ID
+├── OMSAgentID: Log Analytics agent ID
+└── OSFamily: Windows/Linux/macOS
+
+IP:
+├── Address: IP address
+└── (Automatic geolocation enrichment)
+
+URL:
+├── Url: Full URL
+└── (Automatic domain extraction)
+
+FILE:
+├── Name: Filename
+├── Directory: Path
+└── Hash: SHA256/SHA1/MD5
+
+PROCESS:
+├── ProcessId: PID
+├── CommandLine: Full command
+├── ElevationToken: Elevated/Limited
+└── CreationTime: Start time
+
+MAILBOX:
+├── MailboxPrimaryAddress: Email
+├── DisplayName: User display name
+└── Upn: User principal name
+
+CLOUD APPLICATION:
+├── Name: App name
+├── AppId: Application ID
+└── InstanceName: Specific instance</div>
+
+                    <h4>Entity Mapping Examples</h4>
+                    <div class="code-block">// Failed Login Detection with Entity Mapping
+SecurityEvent
+| where EventID == 4625
+| where AccountType == "User"
+| project 
+    TimeGenerated,
+    TargetUserName,      // Map to Account.Name
+    TargetDomainName,    // Map to Account.NTDomain
+    IpAddress,           // Map to IP.Address
+    Computer,            // Map to Host.HostName
+    LogonType
+
+ENTITY MAPPING IN RULE:
+Account:
+  - Identifier: Name
+    ColumnName: TargetUserName
+  - Identifier: NTDomain
+    ColumnName: TargetDomainName
+
+Host:
+  - Identifier: HostName
+    ColumnName: Computer
+
+IP:
+  - Identifier: Address
+    ColumnName: IpAddress
+
+// Process Execution with Entity Mapping
+SecurityEvent
+| where EventID == 4688
+| project
+    TimeGenerated,
+    Account = TargetUserName,
+    Computer,
+    NewProcessName,      // Map to Process.CommandLine
+    ProcessId = NewProcessId,
+    ParentProcessName,
+    CommandLine
+
+ENTITY MAPPING:
+Account:
+  - Identifier: Name
+    ColumnName: Account
+
+Host:
+  - Identifier: HostName
+    ColumnName: Computer
+
+Process:
+  - Identifier: ProcessId
+    ColumnName: ProcessId
+  - Identifier: CommandLine
+    ColumnName: NewProcessName</div>
+                </div>
+
+                <!-- Alert Grouping -->
+                <h2><i class="fas fa-object-group"></i> Alert Grouping & Incidents</h2>
+                <div class="config-section">
+                    <h4>Grouping Configuration</h4>
+                    <div class="code-block">Alert Grouping Options:
+
+1. ENABLED/DISABLED
+   ├── Enabled: Group alerts into incidents
+   └── Disabled: Each alert = new incident
+
+2. GROUP BY
+   ├── Entities: Group by mapped entities
+   ├── Alert details: Group by custom fields
+   └── Time frame: Group within window
+
+3. TIME WINDOW
+   ├── 5 minutes to 24 hours
+   └── Alerts within window grouped together
+
+4. RE-OPEN CLOSED INCIDENTS
+   ├── Enabled: New alerts re-open closed incident
+   └── Disabled: Always create new incident
+
+GROUPING STRATEGIES:
+
+STRATEGY 1: Per Entity
+// Group all alerts for same user
+Group by: Account entity
+Time window: 24 hours
+Result: One incident per user per day
+
+STRATEGY 2: Per Attack Chain
+// Group related attack stages
+Group by: Account + Host entities
+Time window: 4 hours
+Result: Track attack progression
+
+STRATEGY 3: Per Source
+// Group by attacker IP
+Group by: IP entity
+Time window: 1 hour
+Result: Track attacker activity
+
+STRATEGY 4: No Grouping
+// Each alert is unique incident
+Grouping: Disabled
+Result: Maximum granularity</div>
+
+                    <h4>Custom Details</h4>
+                    <div class="code-block">// Custom Details add context to alerts/incidents
+SecurityEvent
+| where EventID == 4625
+| summarize 
+    FailedAttempts = count(),
+    TargetAccounts = make_set(TargetUserName, 10),
+    SourceIPs = make_set(IpAddress, 10)
+  by Computer, bin(TimeGenerated, 1h)
+| where FailedAttempts > 20
+
+CUSTOM DETAILS MAPPING:
+Key: FailedLoginCount
+Value: FailedAttempts
+
+Key: TargetedUsers
+Value: TargetAccounts
+
+Key: AttackerIPs
+Value: SourceIPs
+
+// These appear in the incident details panel
+// Useful for quick triage without re-running query
+
+// Dynamic Alert Details (title/description)
+Alert Name Format: 
+"Brute Force Attack on {{Computer}} - {{FailedAttempts}} failures"
+
+Alert Description Format:
+"Detected {{FailedAttempts}} failed login attempts on host {{Computer}}. 
+Targeted accounts: {{TargetAccounts}}. Source IPs: {{SourceIPs}}"</div>
+                </div>
+
+                <!-- NRT Rules -->
+                <h2><i class="fas fa-bolt"></i> Near Real-Time (NRT) Rules</h2>
+                <div class="config-section">
+                    <h4>NRT Rule Characteristics</h4>
+                    <div class="code-block">NRT Rule Specifications:
+
+TIMING:
+├── Runs every 1 minute
+├── No configurable schedule
+├── ~1 minute detection latency
+└── Processes events as they arrive
+
+LIMITATIONS:
+├── No aggregations (summarize, count, etc.)
+├── No joins between tables
+├── No time-based windowing
+├── Simple filtering only
+├── Limited to supported tables
+└── Cannot use let statements
+
+SUPPORTED TABLES:
+├── SecurityEvent
+├── WindowsEvent
+├── Syslog
+├── CommonSecurityLog
+├── AzureActivity
+├── SigninLogs
+├── AuditLogs
+└── (Check docs for full list)
+
+USE CASES:
+├── Critical file access
+├── High-privilege account usage
+├── Known malware hash detection
+├── Specific attack signatures
+└── Policy violations</div>
+
+                    <h4>NRT Rule Examples</h4>
+                    <div class="code-block">// NRT: Critical Service Account Login
+SecurityEvent
+| where EventID == 4624
+| where TargetUserName in ("svc_backup", "svc_admin", "domain_admin")
+| where LogonType in (2, 10)  // Interactive or RDP
+| project TimeGenerated, Computer, TargetUserName, IpAddress, LogonType
+
+// NRT: Sensitive File Access
+SecurityEvent
+| where EventID == 4663
+| where ObjectName has_any ("passwords", "credentials", "secret")
+| project TimeGenerated, Computer, SubjectUserName, ObjectName, AccessMask
+
+// NRT: Known Bad Hash Execution
+DeviceFileEvents
+| where SHA256 in ("abc123...", "def456...")
+| project TimeGenerated, DeviceName, FileName, SHA256, InitiatingProcessFileName
+
+// NRT: PowerShell Encoded Command
+SecurityEvent
+| where EventID == 4688
+| where NewProcessName endswith "powershell.exe"
+| where CommandLine contains "-enc" or CommandLine contains "-EncodedCommand"
+| project TimeGenerated, Computer, Account, CommandLine</div>
+                </div>
+
+                <!-- Built-in Rules -->
+                <h2><i class="fas fa-box"></i> Built-in Rule Templates</h2>
+                <div class="config-section">
+                    <h4>Rule Template Categories</h4>
+                    <div class="code-block">Built-in Rule Template Categories:
+
+IDENTITY:
+├── Suspicious sign-in activity
+├── Impossible travel
+├── MFA bypass attempts
+├── Privileged account usage
+└── Password spray detection
+
+ENDPOINT:
+├── Malware detection
+├── Suspicious process execution
+├── Persistence mechanisms
+├── Credential dumping
+└── Lateral movement
+
+NETWORK:
+├── Suspicious connections
+├── Data exfiltration
+├── C2 communication
+├── DNS tunneling
+└── Port scanning
+
+CLOUD:
+├── Azure resource changes
+├── AWS/GCP suspicious activity
+├── Cloud storage access
+├── Privilege escalation
+└── Service principal abuse
+
+OFFICE 365:
+├── Mail forwarding rules
+├── Mass file downloads
+├── Sharing external
+├── Admin activity
+└── eDiscovery abuse
+
+THREAT INTELLIGENCE:
+├── Known malicious IPs
+├── Known malicious domains
+├── Malware hashes
+├── Threat actor TTPs
+└── Emerging threats</div>
+
+                    <h4>Enabling Templates</h4>
+                    <div class="code-block">Enabling Rule Templates:
+
+PATH: Sentinel → Analytics → Rule Templates
+
+STEPS:
+1. Filter by data source or MITRE tactic
+2. Review rule logic and description
+3. Click "Create rule" to customize
+4. Modify thresholds, entity mapping
+5. Configure scheduling and grouping
+6. Enable and monitor
+
+CUSTOMIZATION OPTIONS:
+├── Modify KQL query
+├── Adjust thresholds
+├── Change scheduling
+├── Update entity mapping
+├── Add custom details
+├── Attach playbooks
+
+BEST PRACTICES:
+├── Review query before enabling
+├── Understand data requirements
+├── Test in dev environment first
+├── Start with higher thresholds
+├── Monitor false positive rate
+└── Document customizations</div>
+                </div>
+
+                <!-- Detection Examples -->
+                <h2><i class="fas fa-code"></i> Detection Rule Examples</h2>
+                <div class="config-section">
+                    <h4>Brute Force Detection</h4>
+                    <div class="code-block">// Brute Force Detection Rule
+let FailureThreshold = 10;
+let TimeWindow = 10m;
+
+SigninLogs
+| where TimeGenerated > ago(TimeWindow)
+| where ResultType != 0  // Failed logins
+| where ResultType != 50140  // Exclude lockout
+| summarize 
+    FailedAttempts = count(),
+    SuccessfulAttempts = countif(ResultType == 0),
+    DistinctUsers = dcount(UserPrincipalName),
+    TargetUsers = make_set(UserPrincipalName, 10),
+    ResultCodes = make_set(ResultType, 5)
+  by IPAddress, Location, bin(TimeGenerated, TimeWindow)
+| where FailedAttempts >= FailureThreshold
+| extend 
+    AlertTitle = strcat("Brute Force from ", IPAddress),
+    AttackType = iff(DistinctUsers > 5, "Password Spray", "Brute Force")
+| project 
+    TimeGenerated,
+    IPAddress,
+    Location,
+    FailedAttempts,
+    DistinctUsers,
+    TargetUsers,
+    AttackType,
+    AlertTitle
+
+// Entity Mapping: IP (IPAddress)
+// Custom Details: FailedAttempts, TargetUsers, AttackType
+// Severity: High
+// MITRE: T1110 (Brute Force)</div>
+
+                    <h4>Privilege Escalation Detection</h4>
+                    <div class="code-block">// User Added to Privileged Group
+let PrivilegedGroups = dynamic([
+    "Domain Admins", "Enterprise Admins", "Schema Admins",
+    "Administrators", "Account Operators", "Backup Operators"
+]);
+
+SecurityEvent
+| where EventID == 4728 or EventID == 4732 or EventID == 4756
+| where TargetUserName has_any (PrivilegedGroups) 
+    or TargetSid startswith "S-1-5-21" and TargetSid endswith "-512"
+| project 
+    TimeGenerated,
+    GroupName = TargetUserName,
+    AddedUser = MemberName,
+    AddedBy = SubjectUserName,
+    Computer,
+    EventID,
+    GroupType = case(
+        EventID == 4728, "Global Security Group",
+        EventID == 4732, "Local Security Group",
+        EventID == 4756, "Universal Security Group",
+        "Unknown"
+    )
+| extend AlertSeverity = "High"
+
+// Entity Mapping:
+// Account (AddedUser) - the user being added
+// Account (AddedBy) - the user who made the change
+// Host (Computer)
+// MITRE: T1078 (Valid Accounts), T1098 (Account Manipulation)</div>
+
+                    <h4>Suspicious PowerShell</h4>
+                    <div class="code-block">// Suspicious PowerShell Activity
+let SuspiciousPatterns = dynamic([
+    "-enc", "-encodedcommand", "-e ", 
+    "downloadstring", "downloadfile",
+    "invoke-webrequest", "invoke-expression",
+    "iex(", "iwr ", "bypass", "-nop",
+    "hidden", "frombase64string"
+]);
+
+SecurityEvent
+| where EventID == 4688
+| where NewProcessName endswith "powershell.exe" 
+    or NewProcessName endswith "pwsh.exe"
+| where CommandLine has_any (SuspiciousPatterns)
+| extend 
+    EncodedCommand = CommandLine contains "-enc" or CommandLine contains "-e ",
+    DownloadActivity = CommandLine has_any ("downloadstring", "downloadfile", "invoke-webrequest"),
+    HiddenExecution = CommandLine contains "hidden" or CommandLine contains "-w hidden",
+    BypassPolicy = CommandLine contains "bypass"
+| project 
+    TimeGenerated,
+    Computer,
+    Account = TargetUserName,
+    ParentProcess = ParentProcessName,
+    CommandLine,
+    EncodedCommand,
+    DownloadActivity,
+    HiddenExecution,
+    BypassPolicy
+| extend 
+    RiskScore = toint(EncodedCommand) + toint(DownloadActivity) + 
+                toint(HiddenExecution) + toint(BypassPolicy)
+| where RiskScore >= 2
+
+// MITRE: T1059.001 (PowerShell)</div>
+                </div>
+
+                <!-- Rule Tuning -->
+                <h2><i class="fas fa-sliders-h"></i> Rule Tuning</h2>
+                <div class="config-section">
+                    <div class="code-block">Rule Tuning Best Practices:
+
+1. START CONSERVATIVE
+   ├── Higher thresholds initially
+   ├── Shorter time windows
+   ├── More specific filters
+   └── Enable in "Report" mode first
+
+2. MONITOR FALSE POSITIVES
+   ├── Track FP rate per rule
+   ├── Identify common exclusions
+   ├── Document tuning decisions
+   └── Review weekly
+
+3. ADD EXCLUSIONS
+   // Exclude known service accounts
+   | where Account !in ("svc_backup", "svc_monitoring")
+   
+   // Exclude known IPs
+   | where IPAddress !in ("10.0.0.1", "10.0.0.2")
+   
+   // Exclude known processes
+   | where ProcessName !has "legitimate_tool"
+
+4. USE ALLOWLISTS
+   let AllowedUsers = externaldata(user:string)
+       [@"https://storage.blob.core.windows.net/lists/allowed_users.csv"]
+       with (format="csv");
+   SigninLogs
+   | where UserPrincipalName !in (AllowedUsers)
+
+5. ADJUST THRESHOLDS
+   // Start high, lower as you understand baseline
+   let threshold = 50;  // Start
+   let threshold = 20;  // After tuning
+   let threshold = 10;  // Final
+
+6. TIME-BASED EXCEPTIONS
+   // Exclude scheduled maintenance windows
+   | where not (dayofweek(TimeGenerated) == 0 and 
+                datetime_part("hour", TimeGenerated) between (2 .. 6))</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the main analytics rule types in Sentinel?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Scheduled:</strong> Custom KQL queries on configurable schedule</li>
+                                <li><strong>NRT:</strong> Near real-time (1 min), simple queries only</li>
+                                <li><strong>Microsoft Security:</strong> Imports M365 Defender alerts</li>
+                                <li><strong>Fusion:</strong> ML-based multi-stage attack detection</li>
+                                <li><strong>Anomaly:</strong> Behavior baseline deviations</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is entity mapping and why is it important?</button>
+                        <div class="qa-answer">
+                            <p><strong>Entity mapping</strong> links query fields to Sentinel entity types (Account, Host, IP, etc.):</p>
+                            <ul>
+                                <li>Enables investigation graph visualization</li>
+                                <li>Allows entity behavior analytics</li>
+                                <li>Powers alert grouping by entity</li>
+                                <li>Enriches incidents with entity context</li>
+                            </ul>
+                            <p>Map key fields like username, hostname, IP to appropriate entity types.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: When would you use NRT vs Scheduled rules?</button>
+                        <div class="qa-answer">
+                            <p><strong>NRT Rules:</strong></p>
+                            <ul>
+                                <li>Critical, time-sensitive detections</li>
+                                <li>Simple filtering (no aggregations)</li>
+                                <li>Need ~1 minute detection latency</li>
+                            </ul>
+                            <p><strong>Scheduled Rules:</strong></p>
+                            <ul>
+                                <li>Complex queries with joins, aggregations</li>
+                                <li>Threshold-based detections</li>
+                                <li>Flexible scheduling needs</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you tune a rule with high false positives?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Analyze false positive patterns</li>
+                                <li>Add exclusions for known-good (users, IPs, processes)</li>
+                                <li>Increase thresholds if too sensitive</li>
+                                <li>Add time-based exceptions for maintenance</li>
+                                <li>Use allowlists for legitimate activity</li>
+                                <li>Document all tuning decisions</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>

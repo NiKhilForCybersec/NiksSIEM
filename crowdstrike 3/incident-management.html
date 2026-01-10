@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Management | CrowdStrike Falcon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">CrowdStrike Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
+                    <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection</div>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cog"></i> Detection Engineering</a>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-code"></i> IOA Rules</a>
+                    <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="falcon-intelligence.html" class="nav-link"><i class="fas fa-brain"></i> Falcon Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="incident-management.html" class="nav-link active"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
+                    <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">CrowdStrike</a><span class="separator">/</span>
+                    <span class="current">Incident Management</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-clipboard-list"></i> Incident Management</h1>
+                <p class="lead">Master incident investigation and management in CrowdStrike Falcon. Learn detection triage, investigation workflows, process trees, and incident response coordination.</p>
+
+                <!-- Incident Overview -->
+                <h2><i class="fas fa-info-circle"></i> Incident Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Endpoint security → Activity → Detections</span></p>
+
+                    <h4>Detection vs Incident</h4>
+                    <div class="code-block">CrowdStrike Detection Hierarchy:
+
+DETECTION (Single Alert):
+├── Single security event
+├── One technique/behavior detected
+├── Associated with one process/activity
+└── Example: "PowerShell.exe executed encoded command"
+
+INCIDENT (Grouped Detections):
+├── Multiple related detections
+├── Grouped by endpoint and timeframe
+├── Shows attack progression
+├── Example: "WIZARD SPIDER campaign on HOST01"
+
+HIERARCHY:
+┌─────────────────────────────────────────────────────────┐
+│ INCIDENT                                                │
+│ ┌─────────────────┐ ┌─────────────────┐                │
+│ │ Detection 1     │ │ Detection 2     │ ...            │
+│ │ (Initial Access)│ │ (Execution)     │                │
+│ └─────────────────┘ └─────────────────┘                │
+│     │                    │                              │
+│     ▼                    ▼                              │
+│ ┌─────────────────┐ ┌─────────────────┐                │
+│ │ Process Tree    │ │ Process Tree    │                │
+│ │ (Causality)     │ │ (Causality)     │                │
+│ └─────────────────┘ └─────────────────┘                │
+└─────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Detection Attributes</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Attribute</th><th>Description</th><th>Values</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Severity</strong></td><td>Threat level</td><td>Informational, Low, Medium, High, Critical</td></tr>
+                            <tr><td><strong>Confidence</strong></td><td>Detection accuracy</td><td>Low, Medium, High</td></tr>
+                            <tr><td><strong>Status</strong></td><td>Investigation state</td><td>New, In Progress, True Positive, False Positive, Ignored</td></tr>
+                            <tr><td><strong>Assigned To</strong></td><td>Analyst ownership</td><td>User or Group</td></tr>
+                            <tr><td><strong>Tactic</strong></td><td>MITRE ATT&CK tactic</td><td>Initial Access, Execution, etc.</td></tr>
+                            <tr><td><strong>Technique</strong></td><td>MITRE ATT&CK technique</td><td>T1059.001, etc.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Detection Queue -->
+                <h2><i class="fas fa-list"></i> Detection Queue Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Endpoint security → Activity → Detections</span></p>
+
+                    <h4>Queue Filtering</h4>
+                    <div class="code-block">Detection Queue Filters:
+
+TIME FILTERS:
+├── Last 24 hours (default)
+├── Last 7 days
+├── Last 30 days
+├── Custom range
+└── Real-time (auto-refresh)
+
+SEVERITY FILTERS:
+├── Critical (immediate action)
+├── High (priority review)
+├── Medium (standard review)
+├── Low (routine review)
+└── Informational (tracking)
+
+STATUS FILTERS:
+├── New (unreviewed)
+├── In Progress (assigned)
+├── Reopened (needs re-review)
+├── True Positive (confirmed)
+├── False Positive (tuning candidate)
+└── Ignored (dismissed)
+
+ADDITIONAL FILTERS:
+├── Host group
+├── Detection type
+├── MITRE tactic/technique
+├── Assigned analyst
+├── Sensor action (blocked/detected)
+└── Scenario (e.g., Ransomware)</div>
+
+                    <h4>Queue Prioritization</h4>
+                    <div class="code-block">Triage Priority Matrix:
+
+PRIORITY 1 - CRITICAL (Immediate):
+├── Severity: Critical
+├── Confidence: High
+├── Scenario: Ransomware, Active intrusion
+├── Action: Blocked (failed) or Detected
+└── SLA: 15 minutes
+
+PRIORITY 2 - HIGH (Urgent):
+├── Severity: High
+├── Confidence: Medium-High
+├── Scenario: Credential theft, C2
+├── Multiple detections same host
+└── SLA: 1 hour
+
+PRIORITY 3 - MEDIUM (Standard):
+├── Severity: Medium
+├── Confidence: Medium
+├── Scenario: Reconnaissance, Persistence
+├── Single detection
+└── SLA: 4 hours
+
+PRIORITY 4 - LOW (Routine):
+├── Severity: Low/Informational
+├── Confidence: Low-Medium
+├── Scenario: Policy violation
+├── Known behavior under review
+└── SLA: 24 hours</div>
+                </div>
+
+                <!-- Detection Investigation -->
+                <h2><i class="fas fa-search"></i> Detection Investigation</h2>
+                <div class="config-section">
+                    <h4>Investigation Workflow</h4>
+                    <div class="code-block">Detection Investigation Steps:
+
+1. INITIAL TRIAGE (2-5 minutes)
+   ├── Read detection summary
+   ├── Review severity and confidence
+   ├── Check MITRE ATT&CK mapping
+   ├── Note affected host and user
+   └── Quick assessment: legitimate or suspicious?
+
+2. CONTEXT GATHERING (5-10 minutes)
+   ├── Review process tree (causality chain)
+   ├── Examine command line arguments
+   ├── Check parent process legitimacy
+   ├── Review file metadata and hashes
+   ├── Check for related detections
+   └── Query Falcon Intelligence for IOCs
+
+3. SCOPING (10-15 minutes)
+   ├── Search for same activity on other hosts
+   ├── Check user activity timeline
+   ├── Review network connections
+   ├── Look for lateral movement indicators
+   └── Assess data access/exfiltration risk
+
+4. DETERMINATION
+   ├── True Positive → Escalate/Respond
+   ├── False Positive → Document and tune
+   ├── Needs More Info → Dig deeper
+   └── Suspicious → Elevate for review
+
+5. DOCUMENTATION
+   ├── Update detection status
+   ├── Add investigation notes
+   ├── Tag with relevant labels
+   ├── Assign for follow-up if needed
+   └── Create ticket in ITSM if required</div>
+
+                    <h4>Process Tree Analysis</h4>
+                    <div class="code-block">Process Tree (Causality Chain):
+
+The process tree shows parent-child relationships:
+
+Example - Malicious Macro:
+┌────────────────────────────────────────────────────────┐
+│ OUTLOOK.EXE (Parent)                                   │
+│   │                                                    │
+│   └─▶ WINWORD.EXE (Opened attachment)                 │
+│         │                                              │
+│         └─▶ POWERSHELL.EXE (Macro execution)          │
+│               │                                        │
+│               └─▶ CMD.EXE (System discovery)          │
+│                     │                                  │
+│                     ├─▶ WHOAMI.EXE                    │
+│                     ├─▶ IPCONFIG.EXE                  │
+│                     └─▶ NET.EXE (user enumeration)    │
+└────────────────────────────────────────────────────────┘
+
+KEY INDICATORS IN PROCESS TREE:
+├── Unusual parent-child relationships
+├── Suspicious command line arguments
+├── Encoded/obfuscated commands
+├── Network connections from process
+├── File writes (dropped files)
+├── Registry modifications
+└── Injection into other processes
+
+EXPANSION OPTIONS:
+├── View full command line
+├── See network activity
+├── View file operations
+├── Check DNS queries
+├── See registry changes
+└── View module loads</div>
+                </div>
+
+                <!-- Investigation Details -->
+                <h2><i class="fas fa-microscope"></i> Investigation Deep Dive</h2>
+                <div class="config-section">
+                    <h4>Execution Details Tab</h4>
+                    <div class="code-block">Execution Details Information:
+
+PROCESS INFORMATION:
+├── Process Name: powershell.exe
+├── Process ID: 4532
+├── Image Path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+├── Command Line: powershell.exe -NoP -NonI -W Hidden -Enc JABXA...
+├── SHA256: a1b2c3d4e5f6...
+├── Signer: Microsoft Windows
+└── Integrity Level: High
+
+EXECUTION CONTEXT:
+├── User: DOMAIN\jsmith
+├── Session: Interactive (RDP)
+├── Start Time: 2024-01-15 14:32:45 UTC
+├── End Time: 2024-01-15 14:33:12 UTC
+├── Parent Process: cmd.exe (PID: 3872)
+├── Parent Command: cmd.exe /c start powershell...
+└── Grandparent: explorer.exe
+
+DETECTION DETAILS:
+├── Detection Name: PowerShell Encoded Command
+├── Tactic: Execution (TA0002)
+├── Technique: PowerShell (T1059.001)
+├── Severity: High
+├── Confidence: High
+└── Sensor Action: Detected (not blocked)</div>
+
+                    <h4>Network Activity Analysis</h4>
+                    <div class="code-block">Network Activity from Detection:
+
+CONNECTIONS:
+┌─────────────────────────────────────────────────────────┐
+│ Time         │ Process      │ Dest IP       │ Port     │
+├─────────────────────────────────────────────────────────┤
+│ 14:32:47     │ powershell   │ 185.x.x.x     │ 443      │
+│ 14:32:48     │ powershell   │ 185.x.x.x     │ 443      │
+│ 14:33:01     │ cmd.exe      │ 10.0.0.1      │ 445      │
+│ 14:33:05     │ cmd.exe      │ 10.0.0.2      │ 445      │
+└─────────────────────────────────────────────────────────┘
+
+DNS QUERIES:
+├── update-server.malicious.com → 185.x.x.x
+├── cdn.legitimate.com → 172.x.x.x (Allowlisted)
+└── dc01.domain.local → 10.0.0.1
+
+ANALYSIS QUESTIONS:
+├── Is destination IP known malicious? (Check Intel)
+├── Is this expected network activity for process?
+├── Are there connections to internal systems? (Lateral)
+├── Data volume - large uploads? (Exfiltration)
+└── Beaconing pattern? (C2)</div>
+
+                    <h4>File Activity Analysis</h4>
+                    <div class="code-block">File Operations from Detection:
+
+FILE WRITES:
+┌─────────────────────────────────────────────────────────┐
+│ Time       │ Process      │ File Path                   │
+├─────────────────────────────────────────────────────────┤
+│ 14:32:48   │ powershell   │ C:\Users\jsmith\AppData\    │
+│            │              │ Local\Temp\update.ps1       │
+│ 14:32:49   │ powershell   │ C:\Users\jsmith\AppData\    │
+│            │              │ Local\Temp\payload.dll      │
+│ 14:33:02   │ cmd.exe      │ C:\Windows\Temp\data.zip    │
+└─────────────────────────────────────────────────────────┘
+
+FILE READS:
+├── C:\Users\jsmith\Documents\credentials.xlsx
+├── C:\Users\jsmith\Desktop\passwords.txt
+└── C:\ProgramData\VPN\config.xml
+
+FILE METADATA:
+├── File Name: payload.dll
+├── SHA256: def456...
+├── Size: 245,760 bytes
+├── First Seen: Never (new file)
+├── Signed: No
+└── Intel Match: WIZARD SPIDER tool</div>
+                </div>
+
+                <!-- Scoping and Pivoting -->
+                <h2><i class="fas fa-expand-arrows-alt"></i> Scoping and Pivoting</h2>
+                <div class="config-section">
+                    <h4>Searching for Related Activity</h4>
+                    <div class="code-block">Pivoting from Detection:
+
+1. SAME HOST ACTIVITY
+   Investigate → Event Search
+   └── Query: aid:[agent_id] | Timeline view
+
+2. SAME USER ACROSS HOSTS
+   Investigate → Event Search
+   └── Query: UserName:"DOMAIN\\jsmith"
+   └── Check: Other compromised systems?
+
+3. SAME IOC ACROSS ENVIRONMENT
+   Investigate → Event Search
+   └── Query: SHA256:"abc123..." OR DomainName:"malicious.com"
+   └── Check: Scope of compromise?
+
+4. SAME TECHNIQUE
+   Investigate → Event Search
+   └── Query: event_platform:win CommandLine:"*-enc*"
+   └── Check: Other affected systems?
+
+5. LATERAL MOVEMENT INDICATORS
+   Check for connections to:
+   ├── Domain Controllers (ports 88, 389, 445)
+   ├── File servers (port 445)
+   ├── Other workstations (ports 135, 445)
+   └── Remote management (ports 5985, 5986, 3389)</div>
+
+                    <h4>Event Search Queries</h4>
+                    <div class="code-block">Common Investigation Queries:
+
+// All activity for specific host
+aid:[agent_id]
+| sort _time desc
+
+// All activity for specific user
+UserName:"DOMAIN\\username"
+| sort _time desc
+
+// Search for specific file hash
+SHA256:"abc123def456..."
+
+// Search for domain/IP
+DomainName:"suspicious.com" OR RemoteAddressIP4:"185.x.x.x"
+
+// PowerShell activity
+event_platform:win ImageFileName:"*powershell.exe"
+| fields _time, ComputerName, UserName, CommandLine
+
+// Network connections from host
+event_platform:win aid:[agent_id] event_simpleName:NetworkConnectIP4
+| fields _time, RemoteAddressIP4, RemotePort, ContextProcessId
+
+// File writes
+event_platform:win aid:[agent_id] event_simpleName:*Written*
+| fields _time, TargetFileName, SHA256
+
+// Authentication events
+event_platform:win event_simpleName:UserLogon*
+| fields _time, ComputerName, UserName, LogonType, RemoteAddressIP4
+
+// Service installation
+event_platform:win event_simpleName:ServiceStarted
+| fields _time, ComputerName, ServiceDisplayName, ServiceImagePath</div>
+                </div>
+
+                <!-- Response Actions -->
+                <h2><i class="fas fa-bolt"></i> Response Actions from Detections</h2>
+                <div class="config-section">
+                    <h4>Immediate Actions</h4>
+                    <div class="code-block">Response Actions Menu (Right-click detection):
+
+CONTAINMENT:
+├── Network Contain Host
+│   └── Isolates endpoint (maintains sensor connectivity)
+├── Lift Containment
+│   └── Restores network access
+└── Network Contain by Host Group
+    └── Mass containment for outbreak
+
+PROCESS ACTIONS:
+├── Kill Process
+│   └── Terminates specific process
+├── Kill Process Tree
+│   └── Terminates process and children
+└── Prevent Execution (Add IOC)
+    └── Block hash from running
+
+FILE ACTIONS:
+├── Quarantine File
+│   └── Moves file to quarantine folder
+├── Delete File
+│   └── Removes file from system
+└── Download File
+    └── Retrieve for analysis
+
+INVESTIGATION:
+├── Real Time Response
+│   └── Opens interactive shell
+├── Add to IOC Watch List
+│   └── Monitor for recurrence
+└── View in Investigate
+    └── Opens detailed event search</div>
+
+                    <h4>Containment Decision Tree</h4>
+                    <div class="code-block">Containment Decision Framework:
+
+START: Active threat detected?
+│
+├─▶ YES → High severity + High confidence?
+│         │
+│         ├─▶ YES → Contain immediately
+│         │         └── Document reason, notify user
+│         │
+│         └─▶ NO → Active data exfiltration?
+│                   │
+│                   ├─▶ YES → Contain immediately
+│                   │
+│                   └─▶ NO → Ransomware indicators?
+│                             │
+│                             ├─▶ YES → Contain immediately
+│                             │
+│                             └─▶ NO → Investigate before containing
+│
+└─▶ NO → Historical detection?
+          │
+          └─▶ Investigate, scope, then decide
+
+CONTAINMENT CHECKLIST:
+□ Document justification
+□ Notify affected user/manager
+□ Create incident ticket
+□ Preserve evidence before remediation
+□ Plan for business continuity
+□ Set reminder to lift containment</div>
+                </div>
+
+                <!-- Incident Closure -->
+                <h2><i class="fas fa-check-circle"></i> Incident Closure</h2>
+                <div class="config-section">
+                    <h4>Status Workflow</h4>
+                    <div class="code-block">Detection Status Workflow:
+
+NEW → INVESTIGATION STARTED
+│
+├─▶ Assign to analyst
+├─▶ Status: In Progress
+└─▶ Add initial notes
+
+IN PROGRESS → DETERMINATION
+│
+├─▶ TRUE POSITIVE
+│   ├── Confirm malicious activity
+│   ├── Document evidence
+│   ├── Take response actions
+│   └── Status: True Positive
+│
+├─▶ FALSE POSITIVE
+│   ├── Document why false positive
+│   ├── Create exclusion rule if recurring
+│   ├── Submit for tuning review
+│   └── Status: False Positive
+│
+└─▶ IGNORED
+    ├── Expected behavior
+    ├── Test/lab activity
+    └── Status: Ignored
+
+CLOSED → POST-INCIDENT
+├── Lessons learned documented
+├── Tuning actions completed
+├── Metrics updated
+└── Knowledge base updated</div>
+
+                    <h4>Investigation Documentation</h4>
+                    <div class="code-block">Detection Notes Template:
+
+INVESTIGATION SUMMARY:
+───────────────────────
+Date: 2024-01-15
+Analyst: J. Smith
+Time Spent: 45 minutes
+
+DETECTION DETAILS:
+───────────────────────
+Host: WORKSTATION01
+User: DOMAIN\jsmith
+Detection: PowerShell Encoded Command
+Severity: High
+MITRE: T1059.001
+
+INVESTIGATION FINDINGS:
+───────────────────────
+- User received phishing email with malicious attachment
+- Word document macro executed PowerShell
+- PowerShell downloaded Cobalt Strike beacon
+- No lateral movement observed
+- User credentials potentially compromised
+
+EVIDENCE COLLECTED:
+───────────────────────
+- Malicious document hash: SHA256:abc123...
+- C2 domain: update-server.malicious.com
+- Beacon hash: SHA256:def456...
+- Process tree screenshot
+- Email headers
+
+ACTIONS TAKEN:
+───────────────────────
+1. Contained host at 14:45 UTC
+2. Reset user credentials
+3. Blocked C2 domain at firewall
+4. Added hashes to custom IOCs
+5. Submitted samples to sandbox
+6. Notified security leadership
+
+FOLLOW-UP REQUIRED:
+───────────────────────
+- Full forensic analysis
+- Email gateway rule update
+- User security awareness training
+- Check for other recipients of phishing email
+
+STATUS: True Positive - Contained</div>
+                </div>
+
+                <!-- Metrics and Reporting -->
+                <h2><i class="fas fa-chart-bar"></i> Metrics and Reporting</h2>
+                <div class="config-section">
+                    <h4>Key Metrics</h4>
+                    <div class="code-block">Incident Management Metrics:
+
+VOLUME METRICS:
+├── Total detections (daily/weekly/monthly)
+├── Detections by severity
+├── Detections by technique
+├── Detections by host group
+└── New vs recurring detections
+
+PERFORMANCE METRICS:
+├── Mean Time to Triage (MTTT)
+├── Mean Time to Contain (MTTC)
+├── Mean Time to Remediate (MTTR)
+├── Detection aging (time in queue)
+└── SLA compliance rate
+
+QUALITY METRICS:
+├── True positive rate
+├── False positive rate
+├── Detections requiring tuning
+├── Recurring false positives
+└── Detection coverage gaps
+
+ANALYST METRICS:
+├── Detections handled per analyst
+├── Average investigation time
+├── Escalation rate
+└── Documentation completeness
+
+BUSINESS IMPACT:
+├── Incidents requiring containment
+├── Systems affected
+├── Users affected
+├── Data potentially accessed
+└── Estimated business impact</div>
+
+                    <h4>Dashboard Views</h4>
+                    <div class="code-block">Falcon Detection Dashboards:
+
+EXECUTIVE DASHBOARD:
+├── Detection trend (30-day)
+├── Severity distribution
+├── Top attacked hosts
+├── MITRE ATT&CK heat map
+└── Mean time to respond
+
+SOC DASHBOARD:
+├── Open detections by severity
+├── Detection queue aging
+├── Analyst workload
+├── Containments active
+└── Recent critical detections
+
+THREAT LANDSCAPE:
+├── Top techniques observed
+├── Top actors (if attributed)
+├── IOC matches
+├── Campaign activity
+└── Industry comparison
+
+CUSTOM REPORTS:
+├── Schedule email delivery
+├── Export to PDF/CSV
+├── API access for SIEM
+└── Integration with ticketing</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your detection triage process.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Initial Assessment (2-5 min):</strong> Review detection summary, severity, confidence, MITRE mapping</li>
+                                <li><strong>Context Gathering (5-10 min):</strong> Examine process tree, command lines, parent process, related detections</li>
+                                <li><strong>Scoping (10-15 min):</strong> Search for same activity across environment, check lateral movement</li>
+                                <li><strong>Determination:</strong> True Positive (respond) or False Positive (document, tune)</li>
+                                <li><strong>Documentation:</strong> Update status, add notes, create ticket if needed</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What do you look for in a process tree?</button>
+                        <div class="qa-answer">
+                            <p>Key indicators in process tree analysis:</p>
+                            <ul>
+                                <li><strong>Unusual parent-child:</strong> Office app spawning PowerShell, cmd from services</li>
+                                <li><strong>Command line arguments:</strong> Encoded commands, download cradles, suspicious flags</li>
+                                <li><strong>Process chain depth:</strong> Multiple levels of spawned processes</li>
+                                <li><strong>Network activity:</strong> External connections from unexpected processes</li>
+                                <li><strong>File operations:</strong> Dropped files, especially in temp folders</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: When would you network contain a host?</button>
+                        <div class="qa-answer">
+                            <p>Contain immediately when:</p>
+                            <ul>
+                                <li>High severity + high confidence active threat</li>
+                                <li>Ransomware indicators (encryption activity)</li>
+                                <li>Active data exfiltration</li>
+                                <li>C2 beaconing with data transfer</li>
+                                <li>Lateral movement in progress</li>
+                            </ul>
+                            <p>Always: Document justification, notify user, preserve evidence, plan for business continuity.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you scope an incident in CrowdStrike?</button>
+                        <div class="qa-answer">
+                            <p>Scoping via Event Search:</p>
+                            <ol>
+                                <li><strong>Same host:</strong> Query by agent ID for full timeline</li>
+                                <li><strong>Same user:</strong> Search username across all hosts</li>
+                                <li><strong>Same IOC:</strong> Search hash, domain, IP across environment</li>
+                                <li><strong>Same technique:</strong> Search for similar command patterns</li>
+                            </ol>
+                            <p>Also check for lateral movement connections to DCs, file servers, other workstations.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What metrics do you track for incident management?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>MTTT:</strong> Mean Time to Triage</li>
+                                <li><strong>MTTC:</strong> Mean Time to Contain</li>
+                                <li><strong>MTTR:</strong> Mean Time to Remediate</li>
+                                <li><strong>True/False positive rate:</strong> Detection quality</li>
+                                <li><strong>SLA compliance:</strong> Meeting response targets</li>
+                                <li><strong>Detection volume:</strong> Trend analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
