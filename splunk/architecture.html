@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architecture | Splunk | Nik's SIEM Compendium</title>
+    <title>Architecture | Splunk Enterprise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="app-container">
-                                                                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -19,6 +19,7 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Splunk Platform</div>
@@ -30,30 +31,30 @@
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
-                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
-                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models (CIM)</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Fields</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
-                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> SPL Advanced</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-code"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> SPL Advanced</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">ES Detection</div>
+                    <div class="nav-section-title">Security Operations</div>
                     <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
                     <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR Integration</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Administration</div>
+                    <a href="administration.html" class="nav-link"><i class="fas fa-cog"></i> Administration</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & Add-ons</a>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
-                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
-                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Storage Tiers</a>
                 </div>
             </nav>
         </aside>
@@ -67,728 +68,551 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-sitemap"></i> Splunk Architecture</h1>
-                <p class="lead">Understanding Splunk's distributed architecture is essential for deployment planning, scaling, troubleshooting, and optimizing performance. Learn how forwarders, indexers, and search heads work together.</p>
+                <p class="lead">Master Splunk Enterprise architecture. Understand deployment topologies, component roles, data flow, clustering, and sizing for enterprise-scale deployments.</p>
 
-                <!-- DEPLOYMENT DECISION TREE -->
-                <h2><i class="fas fa-route"></i> Choosing Your Deployment Model</h2>
-                
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">What is your expected daily ingestion volume?</div>
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-info-circle"></i> Architecture Overview</h2>
+                <div class="config-section">
+                    <h4>Core Components</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        SPLUNK ENTERPRISE ARCHITECTURE                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   DATA SOURCES              FORWARDERS              INDEXER TIER                │
+│   ────────────              ──────────              ────────────                │
+│                                                                                 │
+│   ┌──────────┐           ┌─────────────┐         ┌─────────────────────┐       │
+│   │ Servers  │──────────▶│  Universal  │────────▶│                     │       │
+│   │ (Logs)   │           │  Forwarder  │         │   INDEXER CLUSTER   │       │
+│   └──────────┘           └─────────────┘         │                     │       │
+│                                                   │  ┌───┐ ┌───┐ ┌───┐ │       │
+│   ┌──────────┐           ┌─────────────┐         │  │IDX│ │IDX│ │IDX│ │       │
+│   │ Network  │──────────▶│    Heavy    │────────▶│  │ 1 │ │ 2 │ │ 3 │ │       │
+│   │ Devices  │           │  Forwarder  │         │  └───┘ └───┘ └───┘ │       │
+│   └──────────┘           │  (Parsing)  │         │         │          │       │
+│                          └─────────────┘         │    Cluster Master   │       │
+│   ┌──────────┐                                   │     (Manager)       │       │
+│   │  Cloud   │─────────────────────────────────▶│                     │       │
+│   │  APIs    │           HTTP/HEC                └─────────────────────┘       │
+│   └──────────┘                                            │                    │
+│                                                           │                    │
+├───────────────────────────────────────────────────────────┼────────────────────┤
+│                                                           │                    │
+│                         SEARCH TIER                       │                    │
+│                         ───────────                       ▼                    │
+│                                                                                │
+│   ┌─────────────────────────────────────────────────────────────────────┐     │
+│   │                        SEARCH HEAD CLUSTER                          │     │
+│   │                                                                     │     │
+│   │    ┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐      │     │
+│   │    │  SH 1  │      │  SH 2  │      │  SH 3  │      │Deployer│      │     │
+│   │    │(Captain│      │        │      │        │      │        │      │     │
+│   │    └────────┘      └────────┘      └────────┘      └────────┘      │     │
+│   │         │               │               │                          │     │
+│   │         └───────────────┴───────────────┘                          │     │
+│   │                         │                                          │     │
+│   │                    Load Balancer                                   │     │
+│   │                         │                                          │     │
+│   └─────────────────────────┼───────────────────────────────────────────┘     │
+│                             │                                                  │
+│                             ▼                                                  │
+│   ┌─────────────────────────────────────────────────────────────────────┐     │
+│   │                         END USERS                                   │     │
+│   │          (Analysts, Dashboards, API Clients)                        │     │
+│   └─────────────────────────────────────────────────────────────────────┘     │
+│                                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
                     </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">&lt; 50 GB/day</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Single Instance or Splunk Cloud</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">All-in-one server or cloud deployment. Simplest to manage.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">&gt; 50 GB/day</div>
-                            <div class="decision-path-content">
-                                <p style="color: #d29922; font-weight: 600;">→ Continue to distributed options</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">Do you require high availability and disaster recovery?</div>
-                    </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">Yes - HA Required</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Clustered Architecture</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Indexer cluster + Search Head cluster. Automatic failover, data replication.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">No - Can tolerate downtime</div>
-                            <div class="decision-path-content">
-                                <p style="color: #d29922; font-weight: 600;">→ Basic Distributed</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Separate indexers and search heads without clustering.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CORE COMPONENTS -->
-                <h2><i class="fas fa-cubes"></i> Core Components</h2>
-                
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-share"></i></div>
-                            <div class="comparison-item-title">Forwarders</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Collect data from sources</li>
-                            <li><i class="fas fa-check"></i> Universal Forwarder (UF) - lightweight</li>
-                            <li><i class="fas fa-check"></i> Heavy Forwarder (HF) - can parse</li>
-                            <li><i class="fas fa-check"></i> Deploy on every endpoint/server</li>
-                            <li><i class="fas fa-info-circle"></i> Does NOT index data</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-database"></i></div>
-                            <div class="comparison-item-title">Indexers</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Store and index data</li>
-                            <li><i class="fas fa-check"></i> Process search requests</li>
-                            <li><i class="fas fa-check"></i> Scale horizontally for volume</li>
-                            <li><i class="fas fa-check"></i> Can cluster for HA</li>
-                            <li><i class="fas fa-info-circle"></i> Main storage component</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-search"></i></div>
-                            <div class="comparison-item-title">Search Heads</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> User interface (Web UI)</li>
-                            <li><i class="fas fa-check"></i> Coordinate searches across indexers</li>
-                            <li><i class="fas fa-check"></i> Run dashboards and alerts</li>
-                            <li><i class="fas fa-check"></i> Can cluster for availability</li>
-                            <li><i class="fas fa-info-circle"></i> Does NOT store data</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-cogs"></i></div>
-                            <div class="comparison-item-title">Management</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Deployment Server - push configs</li>
-                            <li><i class="fas fa-check"></i> Cluster Manager - manage indexers</li>
-                            <li><i class="fas fa-check"></i> License Manager - track usage</li>
-                            <li><i class="fas fa-check"></i> Monitoring Console - health</li>
-                            <li><i class="fas fa-info-circle"></i> Usually combined on one server</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- ARCHITECTURE DIAGRAMS -->
-                <h2><i class="fas fa-project-diagram"></i> Architecture Patterns</h2>
-
-                <!-- Pattern 1: Single Instance -->
-                <h3>Pattern 1: Single Instance (< 50 GB/day)</h3>
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-server"></i> All-in-One Deployment</div>
-                    <div class="flow-row centered">
-                        <div class="flow-box"><div class="flow-box-title">UF</div><div class="flow-box-subtitle">Workstations</div></div>
-                        <div class="flow-box"><div class="flow-box-title">UF</div><div class="flow-box-subtitle">Servers</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Syslog</div><div class="flow-box-subtitle">Network</div></div>
-                    </div>
-                    <div class="flow-arrow down">↓ TCP 9997</div>
-                    <div class="flow-row centered">
-                        <div class="flow-box primary" style="min-width: 300px;">
-                            <div class="flow-box-title">Splunk Enterprise (All-in-One)</div>
-                            <div class="flow-box-subtitle">Indexer + Search Head + License Master</div>
-                        </div>
-                    </div>
-                    <div class="flow-arrow down">↓</div>
-                    <div class="flow-row centered">
-                        <div class="flow-box success"><div class="flow-box-title">Users</div><div class="flow-box-subtitle">Web UI :8000</div></div>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <h4><i class="fas fa-info-circle"></i> When to Use Single Instance</h4>
-                    <ul>
-                        <li>Lab/POC environments</li>
-                        <li>Small businesses < 50 GB/day</li>
-                        <li>Non-critical deployments (can tolerate downtime)</li>
-                        <li>Limited budget for infrastructure</li>
-                    </ul>
-                </div>
-
-                <!-- Pattern 2: Basic Distributed -->
-                <h3>Pattern 2: Basic Distributed (50-300 GB/day)</h3>
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> Separate Indexers & Search Heads</div>
-                    <div class="flow-row">
-                        <div class="flow-box"><div class="flow-box-title">UF Fleet</div><div class="flow-box-subtitle">Endpoints</div></div>
-                        <div class="flow-box"><div class="flow-box-title">HF</div><div class="flow-box-subtitle">Syslog Aggregation</div></div>
-                    </div>
-                    <div class="flow-arrow down">↓ Load Balanced to Indexers</div>
-                    <div class="flow-row centered">
-                        <div class="flow-box success"><div class="flow-box-title">Indexer 1</div><div class="flow-box-subtitle">Data Storage</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">Indexer 2</div><div class="flow-box-subtitle">Data Storage</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">Indexer 3</div><div class="flow-box-subtitle">Data Storage</div></div>
-                    </div>
-                    <div class="flow-arrow down">↓ Search Distribution</div>
-                    <div class="flow-row centered">
-                        <div class="flow-box warning"><div class="flow-box-title">Search Head 1</div><div class="flow-box-subtitle">Primary</div></div>
-                        <div class="flow-box warning"><div class="flow-box-title">Search Head 2</div><div class="flow-box-subtitle">Standby</div></div>
-                    </div>
-                    <div style="margin-top: 16px; text-align: center;">
-                        <div class="flow-box purple" style="display: inline-block;"><div class="flow-box-title">Management Server</div><div class="flow-box-subtitle">Deployment + License + Monitoring</div></div>
-                    </div>
-                </div>
-
-                <!-- Pattern 3: Clustered -->
-                <h3>Pattern 3: Clustered Enterprise (300+ GB/day)</h3>
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-network-wired"></i> Full High-Availability Cluster</div>
-                    
-                    <div style="text-align: center; margin-bottom: 16px;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Data Collection Tier</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box"><div class="flow-box-title">UF Fleet</div><div class="flow-box-subtitle">10,000+ endpoints</div></div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box warning"><div class="flow-box-title">HF Cluster</div><div class="flow-box-subtitle">Syslog + Routing</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓ Load Balanced (TCP 9997)</div>
-                    
-                    <div style="text-align: center; margin: 16px 0;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Indexer Cluster (RF=3, SF=2)</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box success"><div class="flow-box-title">IDX 1</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">IDX 2</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">IDX 3</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">IDX 4</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">IDX 5</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">IDX 6</div></div>
-                    </div>
-                    <div style="text-align: center; margin-top: 8px;">
-                        <div class="flow-box purple" style="display: inline-block;"><div class="flow-box-title">Cluster Manager</div><div class="flow-box-subtitle">Coordinates replication</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <div style="text-align: center; margin: 16px 0;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Search Head Cluster</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box primary"><div class="flow-box-title">SH 1</div><div class="flow-box-subtitle">Captain</div></div>
-                        <div class="flow-box primary"><div class="flow-box-title">SH 2</div><div class="flow-box-subtitle">Member</div></div>
-                        <div class="flow-box primary"><div class="flow-box-title">SH 3</div><div class="flow-box-subtitle">Member</div></div>
-                    </div>
-                    <div style="text-align: center; margin-top: 8px;">
-                        <div class="flow-box danger" style="display: inline-block;"><div class="flow-box-title">Deployer</div><div class="flow-box-subtitle">Push apps to SHC</div></div>
-                    </div>
-                </div>
-
-                <!-- CLUSTERING DETAILS -->
-                <h2><i class="fas fa-clone"></i> Clustering Concepts</h2>
-                
-                <div class="styled-table">
-                    <table>
+                    <h4>Component Roles</h4>
+                    <table class="styled-table">
                         <thead>
-                            <tr>
-                                <th>Concept</th>
-                                <th>Description</th>
-                                <th>Typical Setting</th>
-                            </tr>
+                            <tr><th>Component</th><th>Role</th><th>Scalability</th></tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><strong>Replication Factor (RF)</strong></td>
-                                <td>Number of copies of raw data stored across indexers</td>
-                                <td>RF=3 (three copies of each bucket)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Search Factor (SF)</strong></td>
-                                <td>Number of searchable copies (with index files)</td>
-                                <td>SF=2 (two copies are searchable)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Cluster Manager</strong></td>
-                                <td>Coordinates replication, manages bucket placement</td>
-                                <td>Standalone server (not in cluster)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>SH Captain</strong></td>
-                                <td>Elected leader of Search Head Cluster</td>
-                                <td>Auto-elected, can move between members</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Deployer</strong></td>
-                                <td>Pushes apps/configs to Search Head Cluster</td>
-                                <td>Standalone server</td>
-                            </tr>
+                            <tr><td><strong>Universal Forwarder</strong></td><td>Lightweight agent, collects and forwards raw data</td><td>Thousands per deployment</td></tr>
+                            <tr><td><strong>Heavy Forwarder</strong></td><td>Full Splunk instance, parses and routes data</td><td>Dozens (aggregation points)</td></tr>
+                            <tr><td><strong>Indexer</strong></td><td>Stores, indexes, and searches data</td><td>Scale horizontally (cluster)</td></tr>
+                            <tr><td><strong>Search Head</strong></td><td>Serves UI, runs searches, manages KO</td><td>Scale horizontally (SHC)</td></tr>
+                            <tr><td><strong>Cluster Master</strong></td><td>Manages indexer cluster, replication</td><td>Single (HA optional)</td></tr>
+                            <tr><td><strong>Deployer</strong></td><td>Distributes apps to SHC members</td><td>Single per SHC</td></tr>
+                            <tr><td><strong>Deployment Server</strong></td><td>Manages forwarder configurations</td><td>Single (or per region)</td></tr>
+                            <tr><td><strong>License Master</strong></td><td>Manages license pool allocation</td><td>Single (can be combined)</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- ENTERPRISE EXAMPLE -->
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-building"></i>
-                        <div class="enterprise-example-title">Enterprise Example: 500 GB/day Financial Services</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> Large financial institution with 15,000 endpoints, PCI compliance requirements, and 24/7 SOC operations.
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #3fb950; margin-top: 0;">Collection Tier</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Universal Forwarders:</strong> 15,000<br>
-                                <strong>Heavy Forwarders:</strong> 4 (2 per DC)<br>
-                                <strong>Deployment Server:</strong> 1 (manages UFs)
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #58a6ff; margin-top: 0;">Indexer Cluster</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Indexers:</strong> 8 (4 per DC)<br>
-                                <strong>RF/SF:</strong> 3/2<br>
-                                <strong>Storage:</strong> 2TB SSD per indexer<br>
-                                <strong>Cluster Manager:</strong> 1 (HA via Pacemaker)
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #d29922; margin-top: 0;">Search Tier</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Search Heads:</strong> 5 (SH Cluster)<br>
-                                <strong>Deployer:</strong> 1<br>
-                                <strong>ES App:</strong> Deployed to SHC<br>
-                                <strong>SOAR:</strong> Separate instance
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 16px; padding: 12px; background: #161b22; border-radius: 8px;">
-                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
-                            <strong style="color: #3fb950;">Why This Architecture?</strong><br>
-                            • <strong>RF=3:</strong> PCI requires data resilience - 3 copies survives 2 indexer failures<br>
-                            • <strong>Multi-site:</strong> DR capability across data centers<br>
-                            • <strong>SH Cluster:</strong> SOC needs 24/7 access, no single point of failure<br>
-                            • <strong>Heavy Forwarders:</strong> Centralize syslog from network devices, apply parsing
-                        </p>
-                    </div>
+                <!-- Deployment Topologies -->
+                <h2><i class="fas fa-project-diagram"></i> Deployment Topologies</h2>
+                <div class="config-section">
+                    <h4>Single Instance (Dev/Lab)</h4>
+                    <div class="code-block">Single Instance Deployment:
+
+┌─────────────────────────────────────┐
+│         SINGLE SPLUNK INSTANCE      │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │  All Roles Combined:        │   │
+│  │  • Indexer                  │   │
+│  │  • Search Head              │   │
+│  │  • Deployment Server        │   │
+│  │  • License Master           │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  Use Cases:                         │
+│  • Development/Testing              │
+│  • Small deployments (<50 GB/day)   │
+│  • POC environments                 │
+│                                     │
+│  Limitations:                       │
+│  • No redundancy                    │
+│  • Limited scalability              │
+│  • Single point of failure          │
+└─────────────────────────────────────┘</div>
+
+                    <h4>Distributed (Mid-Size)</h4>
+                    <div class="code-block">Distributed Non-Clustered:
+
+┌────────────────────────────────────────────────────┐
+│                                                    │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    │
+│  │   UF     │───▶│   HF     │───▶│  IDX 1   │    │
+│  │ Agents   │    │(Syslog)  │    │          │    │
+│  └──────────┘    └──────────┘    └──────────┘    │
+│                                        │          │
+│  ┌──────────┐                         │          │
+│  │   UF     │─────────────────────────┘          │
+│  │ Agents   │                                    │
+│  └──────────┘                   ┌──────────┐     │
+│                                 │   SH     │     │
+│                                 │(Search)  │     │
+│                                 └──────────┘     │
+│                                                   │
+│  Components:                                      │
+│  • 1 Search Head (or standalone)                 │
+│  • 1-3 Indexers (no replication)                 │
+│  • 1 Deployment Server                           │
+│  • Heavy Forwarder for syslog                    │
+│                                                   │
+│  Capacity: 50-200 GB/day                         │
+└────────────────────────────────────────────────────┘</div>
+
+                    <h4>Clustered (Enterprise)</h4>
+                    <div class="code-block">Enterprise Clustered Deployment:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    MANAGEMENT TIER                              │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐               │
+│  │  Cluster   │  │ Deployment │  │  License   │               │
+│  │  Master    │  │   Server   │  │  Master    │               │
+│  └────────────┘  └────────────┘  └────────────┘               │
+├─────────────────────────────────────────────────────────────────┤
+│                     INDEXER CLUSTER                             │
+│  Replication Factor: 2  |  Search Factor: 2                    │
+│                                                                 │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  │
+│  │ IDX 1  │  │ IDX 2  │  │ IDX 3  │  │ IDX 4  │  │ IDX 5  │  │
+│  │ Site1  │  │ Site1  │  │ Site2  │  │ Site2  │  │ Site3  │  │
+│  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                  SEARCH HEAD CLUSTER                            │
+│  ┌────────────┐                                                │
+│  │  Deployer  │ (App distribution)                             │
+│  └────────────┘                                                │
+│                                                                 │
+│  ┌────────┐  ┌────────┐  ┌────────┐                           │
+│  │  SH 1  │  │  SH 2  │  │  SH 3  │                           │
+│  │Captain │  │        │  │        │                           │
+│  └────────┘  └────────┘  └────────┘                           │
+│       └──────────┴──────────┘                                  │
+│              Load Balancer                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  Capacity: 200+ GB/day                                         │
+│  High Availability: Yes                                         │
+│  Disaster Recovery: Multi-site clustering                       │
+└─────────────────────────────────────────────────────────────────┘</div>
                 </div>
 
-                <!-- DATA FLOW -->
-                <h2><i class="fas fa-exchange-alt"></i> Data Flow & Ports</h2>
-                
-                <div class="styled-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Connection</th>
-                                <th>Port</th>
-                                <th>Protocol</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Forwarder → Indexer</td>
-                                <td>9997</td>
-                                <td>TCP (Splunk)</td>
-                                <td>Data forwarding (can use SSL)</td>
-                            </tr>
-                            <tr>
-                                <td>User → Search Head</td>
-                                <td>8000</td>
-                                <td>HTTPS</td>
-                                <td>Web UI access</td>
-                            </tr>
-                            <tr>
-                                <td>Search Head → Indexer</td>
-                                <td>8089</td>
-                                <td>HTTPS (REST)</td>
-                                <td>Search distribution</td>
-                            </tr>
-                            <tr>
-                                <td>Cluster Manager → Indexers</td>
-                                <td>8089</td>
-                                <td>HTTPS (REST)</td>
-                                <td>Cluster management</td>
-                            </tr>
-                            <tr>
-                                <td>Deployment Server → UFs</td>
-                                <td>8089</td>
-                                <td>HTTPS (REST)</td>
-                                <td>App/config deployment</td>
-                            </tr>
-                            <tr>
-                                <td>Syslog → HF</td>
-                                <td>514</td>
-                                <td>UDP/TCP</td>
-                                <td>Syslog collection</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Indexer Clustering -->
+                <h2><i class="fas fa-server"></i> Indexer Clustering</h2>
+                <div class="config-section">
+                    <h4>Cluster Concepts</h4>
+                    <div class="code-block">Indexer Cluster Key Concepts:
+
+REPLICATION FACTOR (RF):
+├── Number of copies of raw data
+├── RF=2: Two copies of each bucket
+├── RF=3: Three copies (recommended production)
+└── Higher RF = more disk, better fault tolerance
+
+SEARCH FACTOR (SF):
+├── Number of searchable copies
+├── SF=2: Two searchable copies
+├── Must be <= Replication Factor
+└── Higher SF = better search availability
+
+BUCKETS:
+├── Hot: Currently being written to (1 per index per indexer)
+├── Warm: Rolled from hot, searchable, read-only
+├── Cold: Rolled from warm, searchable, slower storage
+├── Frozen: Archived or deleted (not searchable)
+└── Thawed: Restored from frozen to warm
+
+BUCKET LIFECYCLE:
+Hot → Warm → Cold → Frozen → (Delete or Archive)
+
+CLUSTER STATES:
+├── Green: All buckets meet RF and SF
+├── Yellow: Searching available, replication incomplete
+├── Red: Search availability impacted
+└── Manual detention: Maintenance mode</div>
+
+                    <h4>Cluster Configuration</h4>
+                    <div class="code-block"># Cluster Master server.conf
+[clustering]
+mode = master
+replication_factor = 3
+search_factor = 2
+pass4SymmKey = your_secret_key
+cluster_label = production_cluster
+
+# Indexer (Peer) server.conf
+[replication_port://9887]
+
+[clustering]
+mode = slave
+master_uri = https://cm.domain.com:8089
+pass4SymmKey = your_secret_key
+
+# Multi-Site Clustering
+[clustering]
+mode = master
+multisite = true
+available_sites = site1,site2
+site_replication_factor = origin:1,total:2
+site_search_factor = origin:1,total:2
+
+# Site-specific indexer
+[clustering]
+mode = slave
+site = site1
+master_uri = https://cm.domain.com:8089</div>
+                </div>
+
+                <!-- Search Head Clustering -->
+                <h2><i class="fas fa-search"></i> Search Head Clustering</h2>
+                <div class="config-section">
+                    <h4>SHC Architecture</h4>
+                    <div class="code-block">Search Head Cluster Components:
+
+CAPTAIN:
+├── Elected leader of the cluster
+├── Coordinates job scheduling
+├── Manages artifact replication
+├── Dynamic election (automatic failover)
+└── Any member can become captain
+
+MEMBERS:
+├── Process search requests
+├── Serve Splunk Web UI
+├── Replicate knowledge objects
+└── Share scheduled search workload
+
+DEPLOYER:
+├── NOT a cluster member
+├── Distributes apps to SHC
+├── Single point for app management
+└── Uses shcluster/apps directory
+
+KNOWLEDGE OBJECTS REPLICATED:
+├── Saved searches
+├── Dashboards
+├── Reports
+├── Alerts
+├── Lookups
+├── Data models
+└── Field extractions</div>
+
+                    <h4>SHC Configuration</h4>
+                    <div class="code-block"># Initialize SHC member
+splunk init shcluster-config -auth admin:password \
+  -mgmt_uri https://sh1.domain.com:8089 \
+  -replication_port 9887 \
+  -replication_factor 3 \
+  -conf_deploy_fetch_url https://deployer.domain.com:8089 \
+  -secret your_shc_secret \
+  -shcluster_label production_shc
+
+# Bootstrap captain (first time only, on one member)
+splunk bootstrap shcluster-captain -servers_list \
+  "https://sh1.domain.com:8089,https://sh2.domain.com:8089,https://sh3.domain.com:8089" \
+  -auth admin:password
+
+# Check SHC status
+splunk show shcluster-status -auth admin:password
+
+# Deploy apps from Deployer
+splunk apply shcluster-bundle -target https://sh1.domain.com:8089 \
+  -auth admin:password
+
+# Rolling restart
+splunk rolling-restart shcluster-members -auth admin:password</div>
+                </div>
+
+                <!-- Data Flow -->
+                <h2><i class="fas fa-stream"></i> Data Flow</h2>
+                <div class="config-section">
+                    <h4>Ingestion Pipeline</h4>
+                    <div class="code-block">Splunk Data Processing Pipeline:
+
+1. INPUT PHASE (Forwarder or Indexer)
+   ├── Data source monitoring
+   ├── File/network input
+   └── Source assignment
+
+2. PARSING PHASE
+   ├── Line breaking (EVENT_BREAKER)
+   ├── Timestamp extraction (TIME_FORMAT)
+   ├── Charset encoding
+   └── Line merging
+
+3. INDEXING PHASE
+   ├── Segment data for search
+   ├── Create index structure
+   ├── Build bloom filters
+   └── Write to buckets
+
+PROCESSING QUEUES:
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+│  Input   │──▶│ Parsing  │──▶│ Indexing │──▶│  Index   │
+│  Queue   │   │  Queue   │   │  Queue   │   │ (Bucket) │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘
+   10KB/s        2MB max        2MB max
+
+PROPS.CONF (Parsing):
+[sourcetype_name]
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+TIME_PREFIX = timestamp=
+LINE_BREAKER = ([\r\n]+)
+SHOULD_LINEMERGE = false
+TRUNCATE = 10000
+
+TRANSFORMS.CONF (Field Extraction):
+[extract_fields]
+REGEX = user=(\w+)\s+action=(\w+)
+FORMAT = user::$1 action::$2</div>
+
+                    <h4>Search Pipeline</h4>
+                    <div class="code-block">Search Processing Pipeline:
+
+1. SEARCH HEAD PHASE
+   ├── Parse search string
+   ├── Generate search job
+   ├── Dispatch to indexers
+   └── Coordinate results
+
+2. INDEXER PHASE
+   ├── Identify relevant buckets
+   ├── Apply bloom filters
+   ├── Read raw data
+   ├── Apply transforming commands
+   └── Return results to SH
+
+3. RESULTS PHASE
+   ├── Merge indexer results
+   ├── Apply final transformations
+   ├── Generate visualization
+   └── Cache results
+
+COMMAND TYPES:
+├── Streaming: Process events one at a time (search, rex)
+├── Transforming: Aggregate events (stats, chart, timechart)
+├── Generating: Create events (inputlookup, makeresults)
+└── Dataset: Reference datasets (from, datamodel)
+
+DISTRIBUTED SEARCH:
+Search Head ──▶ Dispatch to Indexers ──▶ Parallel Processing
+              └──▶ Map Phase                └──▶ Reduce Phase</div>
+                </div>
+
+                <!-- Sizing Guidelines -->
+                <h2><i class="fas fa-calculator"></i> Sizing Guidelines</h2>
+                <div class="config-section">
+                    <h4>Component Sizing</h4>
+                    <div class="code-block">Splunk Sizing Guidelines:
+
+INDEXER SIZING (per indexer):
+┌──────────────────────────────────────────────────────────────┐
+│ Ingestion Rate    │ CPU     │ RAM    │ Storage             │
+├───────────────────┼─────────┼────────┼─────────────────────┤
+│ 50-100 GB/day     │ 8 cores │ 32 GB  │ 500GB SSD + HDD     │
+│ 100-200 GB/day    │ 16 cores│ 64 GB  │ 1TB SSD + HDD       │
+│ 200-500 GB/day    │ 24 cores│ 128 GB │ 2TB SSD + HDD       │
+└──────────────────────────────────────────────────────────────┘
+
+Storage Calculation:
+Daily Volume × Retention Days × Compression Factor × RF
+Example: 100GB × 90 days × 0.5 (compression) × 2 (RF) = 9TB
+
+SEARCH HEAD SIZING:
+├── 8-16 cores per SH
+├── 32-64 GB RAM
+├── SSD storage for KV Store and dispatch
+└── Add SH for: More concurrent users, scheduled searches
+
+FORWARDER CAPACITY:
+├── Universal Forwarder: 256KB-500KB/sec sustained
+├── Heavy Forwarder: Limited by parsing complexity
+└── Rule of thumb: 1 HF per 50,000-100,000 EPS
+
+REFERENCE NUMBERS:
+├── 1 Indexer ≈ 100-300 GB/day (with search load)
+├── 1 SH supports ≈ 16-32 concurrent searches
+├── SHC minimum: 3 members
+└── Indexer Cluster minimum: 3 nodes (RF=2, SF=2)</div>
+
+                    <h4>Capacity Planning</h4>
+                    <div class="code-block">Capacity Planning Checklist:
+
+1. ESTIMATE DAILY VOLUME
+   □ Inventory all data sources
+   □ Measure current log generation
+   □ Factor in growth (20-30% YoY)
+   □ Account for peak periods (2-3x average)
+
+2. DETERMINE RETENTION
+   □ Compliance requirements
+   □ Operational needs
+   □ Cost constraints
+   □ Hot/Warm/Cold distribution
+
+3. CALCULATE STORAGE
+   □ Raw data × retention × compression (0.5)
+   □ Multiply by RF for cluster
+   □ Add 20% overhead
+   □ Plan for growth
+
+4. SIZE COMPUTE
+   □ Indexers: Based on daily volume
+   □ Search Heads: Based on users/searches
+   □ Allow for scheduled searches
+   □ Consider Enterprise Security overhead
+
+5. NETWORK PLANNING
+   □ Forwarder → Indexer bandwidth
+   □ Inter-site replication
+   □ Search head to indexer traffic
+   □ 10 Gbps recommended for production</div>
+                </div>
+
+                <!-- High Availability -->
+                <h2><i class="fas fa-shield-alt"></i> High Availability</h2>
+                <div class="config-section">
+                    <div class="code-block">High Availability Design:
+
+INDEXER TIER HA:
+├── Indexer Clustering (RF=3, SF=2)
+├── Multi-site for DR
+├── Cluster Master HA (manual failover or DR)
+└── Automatic bucket repair
+
+SEARCH TIER HA:
+├── Search Head Cluster (3+ members)
+├── Captain election automatic
+├── Load balancer for user access
+└── Deployer (single, backup recommended)
+
+FORWARDER HA:
+├── Multiple indexer targets (autoLB)
+├── Persistent queue for reliability
+├── useACK for guaranteed delivery
+└── indexer_discovery for dynamic targets
+
+MANAGEMENT HA:
+├── License Master: DR standby
+├── Deployment Server: Cold standby or distributed
+├── Monitoring Console: Single (not critical path)
+
+DISASTER RECOVERY:
+├── Multi-site indexer clustering
+├── Site affinity for search heads
+├── Cross-site replication
+└── RTO/RPO based on site_replication_factor
+
+outputs.conf (Forwarder HA):
+[tcpout]
+defaultGroup = indexers
+
+[tcpout:indexers]
+server = idx1:9997, idx2:9997, idx3:9997
+autoLB = true
+useACK = true</div>
                 </div>
 
                 <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: Explain the difference between Replication Factor and Search Factor.</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain Splunk's replication factor and search factor.</button>
                         <div class="qa-answer">
-                            <p><strong>Replication Factor (RF):</strong></p>
-                            <ul>
-                                <li>How many copies of raw data are stored</li>
-                                <li>RF=3 means each bucket exists on 3 different indexers</li>
-                                <li>Protects against data loss if indexers fail</li>
-                            </ul>
-                            <p><strong>Search Factor (SF):</strong></p>
-                            <ul>
-                                <li>How many of those copies are searchable (have index files)</li>
-                                <li>SF=2 means 2 copies have .tsidx files built</li>
-                                <li>Other copies are raw-only (can be made searchable)</li>
-                            </ul>
-                            <p><strong>Key relationship:</strong> SF must be ≤ RF. Common setting: RF=3, SF=2</p>
+                            <p><strong>Replication Factor (RF):</strong> Number of copies of raw data maintained across the cluster. RF=3 means 3 copies of each bucket.</p>
+                            <p><strong>Search Factor (SF):</strong> Number of searchable copies. SF must be ≤ RF. SF=2 means 2 copies have indexed/searchable data.</p>
+                            <p><strong>Example:</strong> RF=3, SF=2 provides data redundancy (survive 2 indexer failures) with search availability (survive 1 failure for searching).</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: When would you use a Heavy Forwarder vs Universal Forwarder?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the role of the Cluster Master?</button>
                         <div class="qa-answer">
-                            <p><strong>Universal Forwarder:</strong></p>
                             <ul>
-                                <li>Lightweight (~50MB footprint)</li>
-                                <li>Collect and forward only - no parsing</li>
-                                <li>Deploy on endpoints, servers</li>
-                                <li>Best for: Most data collection scenarios</li>
+                                <li>Coordinates indexer cluster operations</li>
+                                <li>Manages bucket replication across peers</li>
+                                <li>Handles peer node failures and recovery</li>
+                                <li>Maintains cluster configuration (RF, SF)</li>
+                                <li>Does NOT store or search data itself</li>
                             </ul>
-                            <p><strong>Heavy Forwarder:</strong></p>
-                            <ul>
-                                <li>Full Splunk instance (~1GB+)</li>
-                                <li>Can parse, filter, route, transform</li>
-                                <li>Can receive syslog directly</li>
-                                <li>Best for: Syslog aggregation, data routing, parsing at edge</li>
-                            </ul>
+                            <p>Note: Renamed to "Cluster Manager" in recent versions.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: What happens if the Cluster Manager goes down?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Describe Splunk's bucket lifecycle.</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>Searches continue:</strong> Indexers keep serving searches</li>
-                                <li><strong>Ingestion continues:</strong> Data still indexed</li>
-                                <li><strong>Replication paused:</strong> No new bucket replication decisions</li>
-                                <li><strong>Recovery blocked:</strong> Can't recover failed indexers</li>
-                                <li><strong>Config changes blocked:</strong> Can't push new cluster configs</li>
-                            </ul>
-                            <p><strong>Best practice:</strong> Set up Cluster Manager HA using external tools like Pacemaker/Corosync for automatic failover.</p>
+                            <ol>
+                                <li><strong>Hot:</strong> Currently being written, one per index per indexer</li>
+                                <li><strong>Warm:</strong> Rolled from hot, read-only, still searchable</li>
+                                <li><strong>Cold:</strong> Rolled from warm, moved to slower storage</li>
+                                <li><strong>Frozen:</strong> Archived or deleted, not searchable</li>
+                                <li><strong>Thawed:</strong> Restored from frozen back to searchable</li>
+                            </ol>
+                            <p>Rollover triggers: Size (10GB default), time, or event count.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between Universal and Heavy Forwarder?</button>
+                        <div class="qa-answer">
+                            <table class="styled-table">
+                                <tr><td><strong>Universal Forwarder</strong></td><td>Lightweight (~100MB), forwards raw data, no parsing, CLI only</td></tr>
+                                <tr><td><strong>Heavy Forwarder</strong></td><td>Full Splunk (~1GB), parses data, routing logic, web UI available</td></tr>
+                            </table>
+                            <p>Use UF for endpoints, HF for syslog aggregation and data transformation.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you size a Splunk deployment?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Estimate daily ingestion volume (GB/day)</li>
+                                <li>Determine retention requirements</li>
+                                <li>Calculate storage: Volume × Days × 0.5 (compression) × RF</li>
+                                <li>Size indexers: ~100-300 GB/day per indexer</li>
+                                <li>Size search heads: Based on concurrent users/searches</li>
+                                <li>Add 20% overhead and plan for growth</li>
+                            </ol>
                         </div>
                     </div>
                 </div>
 
-            
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-
-
-                <!-- Comprehensive Troubleshooting -->
-                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
-                <div class="config-section">
-                    <h4>Systematic Troubleshooting Methodology</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <ol style="color: #8b949e;">
-                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
-                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
-                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
-                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
-                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
-                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
-                        </ol>
-                    </div>
-
-                    <h4>Common Issues and Resolutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="2"><strong>Connectivity</strong></td>
-                                <td>Agent not reporting</td>
-                                <td>Check agent service status, network connectivity, firewall rules</td>
-                                <td>Restart service, verify network path, update firewall rules</td>
-                            </tr>
-                            <tr>
-                                <td>API timeouts</td>
-                                <td>Test API endpoint, check rate limits, verify credentials</td>
-                                <td>Retry with backoff, request limit increase, refresh credentials</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Data Quality</strong></td>
-                                <td>Missing fields</td>
-                                <td>Review parsing rules, check source format, validate schema</td>
-                                <td>Update parser, fix source configuration, adjust schema mapping</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Audit data sources, check collection paths, review timestamps</td>
-                                <td>Consolidate sources, implement deduplication, fix time sync</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Performance</strong></td>
-                                <td>Slow queries</td>
-                                <td>Analyze query execution plan, check resource utilization</td>
-                                <td>Optimize query, add indexes, scale resources</td>
-                            </tr>
-                            <tr>
-                                <td>High latency</td>
-                                <td>Monitor queue depths, check processing bottlenecks</td>
-                                <td>Scale processing capacity, optimize data flow</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Authentication</strong></td>
-                                <td>Login failures</td>
-                                <td>Verify credentials, check account status, review permissions</td>
-                                <td>Reset password, unlock account, grant required permissions</td>
-                            </tr>
-                            <tr>
-                                <td>Token expiration</td>
-                                <td>Check token validity, review refresh mechanism</td>
-                                <td>Refresh token, update token management configuration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
-
-# Check system health status
-| filter log_type = "system_health"
-| sort _time desc
-| limit 50
-
-# Monitor error rates over time
-| filter severity in ("error", "critical")
-| timechart count by component span=1h
-
-# Identify slow operations
-| filter operation_time > 30000
-| stats avg(operation_time), max(operation_time), count by operation_name
-| sort avg(operation_time) desc
-
-# Check connectivity status
-| filter event_type = "connectivity"
-| stats latest(status), latest(_time) by source_name
-| where status != "connected"
-
-# Review authentication failures
-| filter event_type = "authentication" and result = "failure"
-| stats count by user, source_ip, failure_reason
-| sort count desc</div>
-                </div>
-
-
-                <!-- Real-World Use Cases -->
-                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
-                <div class="config-section">
-                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
-                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>High volume of security events (500+ million events/day)</li>
-                            <li>Multiple security tools with siloed data</li>
-                            <li>Alert fatigue from excessive false positives</li>
-                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Phased rollout starting with critical data sources</li>
-                            <li>Custom detection rules based on threat model</li>
-                            <li>Automated playbooks for common scenarios</li>
-                            <li>Integration with ITSM and CMDB systems</li>
-                        </ul>
-                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
-                    </div>
-
-                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
-                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Need for strict data isolation between customers</li>
-                            <li>Scalable operations with limited staff</li>
-                            <li>Standardized service delivery across customers</li>
-                            <li>Flexible SLA-based prioritization</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Shared detection content library with customization</li>
-                            <li>Centralized analyst console with customer context</li>
-                            <li>Automated reporting and SLA tracking</li>
-                        </ul>
-                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
-                    </div>
-
-                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
-                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>HIPAA compliance requirements for PHI protection</li>
-                            <li>Legacy medical devices with limited security logging</li>
-                            <li>Need for 6-year log retention</li>
-                            <li>Limited IT security staff</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive EHR and clinical application monitoring</li>
-                            <li>PHI access detection rules</li>
-                            <li>Long-term archival storage configuration</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                        </ul>
-                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
-                    </div>
-                </div>
-
-
-                <!-- Interview Preparation -->
-                <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
-                <div class="config-section">
-                    <h4>Common Interview Questions</h4>
-                    <div class="qa-section">
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach implementing a new security monitoring capability?</button>
-                            <div class="qa-answer">
-                                <p><strong>Structured approach:</strong></p>
-                                <ol>
-                                    <li><strong>Requirements Gathering:</strong> Understand use case, data sources, detection goals, and compliance needs</li>
-                                    <li><strong>Design:</strong> Plan data collection, parsing, storage, and detection logic</li>
-                                    <li><strong>Implementation:</strong> Configure data sources, build detection rules, set up dashboards</li>
-                                    <li><strong>Testing:</strong> Validate with test data, tune for false positives, verify performance</li>
-                                    <li><strong>Deployment:</strong> Roll out in phases, monitor for issues, gather feedback</li>
-                                    <li><strong>Optimization:</strong> Continuously tune based on operational experience</li>
-                                </ol>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle alert fatigue in a SOC environment?</button>
-                            <div class="qa-answer">
-                                <p><strong>Multi-pronged approach:</strong></p>
-                                <ul>
-                                    <li><strong>Tune Detection Rules:</strong> Adjust thresholds, add exclusions for known-good behavior</li>
-                                    <li><strong>Implement Alert Aggregation:</strong> Group related alerts into incidents</li>
-                                    <li><strong>Prioritization:</strong> Use risk scoring to surface high-priority alerts</li>
-                                    <li><strong>Automation:</strong> Auto-close or auto-enrich low-severity alerts</li>
-                                    <li><strong>Regular Review:</strong> Weekly review of noisy rules for tuning</li>
-                                    <li><strong>Metrics Tracking:</strong> Monitor false positive rates by rule</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe your experience with security data analysis and threat hunting.</button>
-                            <div class="qa-answer">
-                                <p><strong>Key competencies to highlight:</strong></p>
-                                <ul>
-                                    <li><strong>Query Languages:</strong> Proficiency in SPL, KQL, XQL, or similar</li>
-                                    <li><strong>Hypothesis-Driven Hunting:</strong> Developing and testing threat hypotheses</li>
-                                    <li><strong>IOC Analysis:</strong> Working with threat intelligence to hunt for indicators</li>
-                                    <li><strong>Behavioral Analysis:</strong> Identifying anomalous patterns in user and system behavior</li>
-                                    <li><strong>Tool Proficiency:</strong> Experience with SIEM, EDR, and analysis tools</li>
-                                    <li><strong>Documentation:</strong> Recording findings and developing new detection rules</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you stay current with security threats and platform updates?</button>
-                            <div class="qa-answer">
-                                <p><strong>Continuous learning approach:</strong></p>
-                                <ul>
-                                    <li><strong>Threat Intelligence:</strong> Follow threat reports, security blogs, and advisories</li>
-                                    <li><strong>Vendor Resources:</strong> Review release notes, attend webinars, complete training</li>
-                                    <li><strong>Community Engagement:</strong> Participate in forums, conferences, and user groups</li>
-                                    <li><strong>Hands-On Practice:</strong> Lab environments for testing new features</li>
-                                    <li><strong>Certifications:</strong> Pursue relevant certifications and continuing education</li>
-                                    <li><strong>Knowledge Sharing:</strong> Present learnings to team, write documentation</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4>Technical Scenarios to Prepare</h4>
-                    <ul style="color: #8b949e;">
-                        <li>Walk through investigating a phishing incident from alert to resolution</li>
-                        <li>Explain how you would detect lateral movement in your environment</li>
-                        <li>Describe your approach to onboarding a new log source</li>
-                        <li>Discuss how you would build a detection rule for a specific attack technique</li>
-                        <li>Explain capacity planning for a growing environment</li>
-                    </ul>
-                </div>
-
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-</main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
+            </main>
         </div>
     </div>
     <script>
@@ -798,10 +622,7 @@
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

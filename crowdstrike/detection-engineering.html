@@ -6,16 +6,10 @@
     <title>Detection Engineering | CrowdStrike</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
-        .ioa-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #fc4438; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -25,20 +19,29 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">CrowdStrike Falcon</div>
+                    <div class="nav-section-title">CrowdStrike Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
                     <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection</div>
-                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> IOA Custom Rules</a>
+                    <a href="detection-engineering.html" class="nav-link active"><i class="fas fa-cog"></i> Detection Engineering</a>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-code"></i> IOA Rules</a>
                     <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="falcon-intelligence.html" class="nav-link"><i class="fas fa-brain"></i> Falcon Intelligence</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Hunting & Response</div>
-                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-search"></i> Threat Hunting</a>
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="incident-management.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                     <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
                 </div>
             </nav>
@@ -566,298 +569,6 @@ procdump -ma lsass.exe lsass.dmp</div>
                         </div>
                     </div>
                 </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
-            });
-        });
-    </script>
-</body>
-</html>
-
-                <!-- Advanced IOA Patterns -->
-                <h2><i class="fas fa-puzzle-piece"></i> Advanced IOA Patterns</h2>
-                <div class="config-section">
-                    <h4>Multi-Stage Detection</h4>
-                    <div class="ioa-card">
-                        <h5>Detect Download and Execute Pattern</h5>
-                        <div class="code-block">Rule 1: Download Activity
-Rule Type: Process Creation
-Conditions:
-- Image File Name: powershell.exe, certutil.exe, bitsadmin.exe
-- Command Line CONTAINS ANY: http, ftp, DownloadFile, DownloadString
-
-Rule 2: Execution from Download Location
-Rule Type: Process Creation
-Conditions:
-- Image File Path CONTAINS: \Downloads\, \Temp\, \AppData\
-- Image File Extension: .exe, .dll, .scr
-
-Combined in same Rule Group for attack chain visibility</div>
-                    </div>
-
-                    <div class="ioa-card">
-                        <h5>Detect Persistence After Execution</h5>
-                        <div class="code-block">Rule 1: Suspicious Process
-Rule Type: Process Creation
-- Flag suspicious process execution
-
-Rule 2: Registry Persistence
-Rule Type: Registry
-- Image File Name matches Rule 1 process
-- Registry Path CONTAINS: \Run
-
-Rule 3: Scheduled Task Persistence
-Rule Type: Process Creation
-- Image File Name: schtasks.exe
-- Command Line CONTAINS: /create</div>
-                    </div>
-
-                    <h4>Parent-Child Relationship Rules</h4>
-                    <div class="ioa-card">
-                        <h5>Suspicious Parent Process</h5>
-                        <div class="code-block">Rule: Unusual Explorer Child
-Conditions:
-- Parent Image File Name: explorer.exe
-- Image File Name: powershell.exe
-- Command Line CONTAINS ANY: -enc, -nop, -w hidden, IEX
-
-Why: Direct PowerShell from Explorer with evasion flags is suspicious
-
-Rule: WMI Spawning Shell
-Conditions:
-- Parent Image File Name: WmiPrvSE.exe
-- Image File Name: cmd.exe, powershell.exe
-
-Why: WMI spawning command shell indicates remote execution</div>
-                    </div>
-                </div>
-
-                <!-- Detection Use Cases -->
-                <h2><i class="fas fa-shield-alt"></i> Detection Use Cases by Attack Stage</h2>
-                <div class="config-section">
-                    <h4>Initial Access Detection</h4>
-                    <div class="code-block">Phishing/Macro Execution:
-- Office app spawning cmd/powershell
-- Office app spawning wscript/cscript
-- Office app making network connections
-
-Exploit Detection:
-- Browser spawning suspicious processes
-- PDF reader spawning command shells
-- Unusual process from exploitable applications</div>
-
-                    <h4>Execution Detection</h4>
-                    <div class="code-block">Script Execution:
-- PowerShell with encoding flags
-- WScript/CScript execution
-- MSHTA script execution
-
-LOLBin Abuse:
-- Certutil with download/decode
-- Rundll32 with suspicious DLL
-- Regsvr32 with remote script
-- WMIC process call create</div>
-
-                    <h4>Persistence Detection</h4>
-                    <div class="code-block">Registry:
-- Run/RunOnce key modifications
-- Services registry changes
-- Winlogon helper DLLs
-
-Scheduled Tasks:
-- schtasks.exe /create
-- Task XML file creation
-- Task pointing to suspicious locations
-
-Services:
-- sc.exe create with suspicious binary
-- Service binary in unusual location</div>
-
-                    <h4>Credential Access Detection</h4>
-                    <div class="code-block">LSASS Access:
-- Process accessing lsass.exe memory
-- Known dumping tools (mimikatz, procdump)
-- comsvcs.dll MiniDump
-
-SAM/NTDS Access:
-- reg save of SAM/SECURITY
-- ntdsutil usage
-- Volume shadow copy creation for NTDS</div>
-
-                    <h4>Lateral Movement Detection</h4>
-                    <div class="code-block">Remote Services:
-- PsExec pattern (ADMIN$ + service creation)
-- WMI remote process creation
-- PowerShell remoting
-- RDP from unusual sources
-
-Credential Use:
-- Pass-the-hash patterns
-- PTT (Kerberos ticket reuse)
-- Stolen token impersonation</div>
-                </div>
-
-                <!-- Rule Tuning -->
-                <h2><i class="fas fa-sliders-h"></i> Rule Tuning Strategies</h2>
-                <div class="config-section">
-                    <h4>Reducing False Positives</h4>
-                    <div class="code-block">Strategies:
-
-1. Add Exclusion Conditions
-   - Exclude known-good parent processes
-   - Exclude specific command line patterns
-   - Exclude signed legitimate applications
-
-2. Narrow the Scope
-   - Add more specific path conditions
-   - Require multiple indicators
-   - Use AND logic for compound conditions
-
-3. Context-Based Tuning
-   - Different rules for servers vs workstations
-   - Adjust for specific host groups
-   - Time-based conditions if available
-
-Example:
-Before: Command Line CONTAINS -enc
-After: Command Line CONTAINS -enc 
-       AND Parent NOT IN (sccm-agent.exe, deployment.exe)
-       AND Command Line Length > 500</div>
-
-                    <h4>Improving Detection Coverage</h4>
-                    <div class="code-block">Strategies:
-
-1. Variant Coverage
-   - Consider case variations
-   - Account for path variations
-   - Cover command line obfuscation
-
-2. Technique Completeness
-   - Multiple rules per technique
-   - Cover all known procedures
-   - Update for new variants
-
-3. MITRE Mapping
-   - Map each rule to ATT&CK
-   - Identify coverage gaps
-   - Prioritize high-risk techniques</div>
-                </div>
-
-                <!-- Monitoring and Metrics -->
-                <h2><i class="fas fa-chart-line"></i> Detection Metrics</h2>
-                <div class="config-section">
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Target</th><th>How to Track</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Detection Rate</td>
-                                <td>Alerts per rule per day</td>
-                                <td>Event Search by rule name</td>
-                            </tr>
-                            <tr>
-                                <td>False Positive Rate</td>
-                                <td>< 50% per rule</td>
-                                <td>Track dispositions</td>
-                            </tr>
-                            <tr>
-                                <td>Coverage by MITRE</td>
-                                <td>% techniques covered</td>
-                                <td>Map rules to ATT&CK</td>
-                            </tr>
-                            <tr>
-                                <td>Time to Detection</td>
-                                <td>Minutes from activity</td>
-                                <td>Compare timestamps</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Event Search for Rule Metrics</h4>
-                    <div class="code-block">// Count detections by custom rule
-event_simpleName=CustomIOABasicDetection
-| stats count by RuleName
-| sort -count
-
-// False positive rate tracking
-event_simpleName=CustomIOABasicDetection
-| stats count by RuleName, Disposition
-| where Disposition="false_positive"
-
-// Detection trend over time
-event_simpleName=CustomIOABasicDetection
-| bucket _time span=1d
-| stats count by _time, RuleName</div>
-                </div>
-
-                <!-- Integration with Threat Intel -->
-                <h2><i class="fas fa-globe"></i> Threat Intelligence Integration</h2>
-                <div class="config-section">
-                    <h4>Falcon Intelligence Sources</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>CrowdStrike Intel:</strong> Built-in threat intelligence</li>
-                        <li><strong>Custom IOCs:</strong> Your own indicators</li>
-                        <li><strong>Third-Party Feeds:</strong> STIX/TAXII integration</li>
-                    </ul>
-
-                    <h4>Automating IOC Updates</h4>
-                    <div class="code-block">API Integration Options:
-
-1. CrowdStrike API
-   - POST /indicators/entities/iocs/v1
-   - Bulk upload IOCs programmatically
-
-2. STIX/TAXII Feeds
-   - Configure in Falcon console
-   - Automatic IOC ingestion
-
-3. SOAR Integration
-   - Falcon Fusion workflows
-   - Third-party SOAR platforms</div>
-                </div>
-
-                <!-- More Interview Questions -->
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prioritize which detections to build?</button>
-                        <div class="qa-answer">
-                            <ol>
-                                <li><strong>Threat intelligence:</strong> Techniques used against your industry</li>
-                                <li><strong>MITRE coverage gaps:</strong> Missing detection for common techniques</li>
-                                <li><strong>Incident learnings:</strong> What wasn't detected in past incidents</li>
-                                <li><strong>Risk assessment:</strong> High-impact techniques first</li>
-                                <li><strong>Data availability:</strong> Can you actually detect it?</li>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the CrowdStrike detection philosophy.</button>
-                        <div class="qa-answer">
-                            <ul>
-                                <li><strong>Behavior over signatures:</strong> IOAs detect techniques, not just known malware</li>
-                                <li><strong>Cloud + sensor:</strong> ML in cloud and on-device for speed and coverage</li>
-                                <li><strong>Layers of detection:</strong> ML, behavioral IOAs, custom rules, IOCs</li>
-                                <li><strong>Continuous improvement:</strong> OverWatch insights feed back to detections</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
 
             </main>
         </div>

@@ -6,16 +6,10 @@
     <title>KQL Intermediate | Microsoft Sentinel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .cmd-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
-        .cmd-name { color: #58a6ff; font-weight: 700; font-size: 1.1rem; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                                                                                                        <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -25,38 +19,40 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Sentinel Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Data Tiers & Costs</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
-                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-route"></i> DCR/DCE Pipeline</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
                     <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
-                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & ASIM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">KQL Query Language</div>
                     <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
-                    <a href="kql-intermediate.html" class="nav-link active"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
-                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> KQL Advanced</a>
+                    <a href="kql-intermediate.html" class="nav-link active"><i class="fas fa-code"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> KQL Advanced</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
                     <a href="analytics-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation (Playbooks)</a>
-                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Tools & Content</div>
                     <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
-                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users"></i> SOC Operations</a>
-                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
                 </div>
             </nav>
         </aside>
@@ -69,727 +65,691 @@
                 </div>
             </header>
             <main class="main-content">
-                <h1><i class="fas fa-layer-group"></i> KQL Intermediate</h1>
-                <p class="lead">Level up your KQL skills with joins, subqueries, time series analysis, and multi-table correlations for security investigations.</p>
+                <h1><i class="fas fa-code"></i> KQL Intermediate</h1>
+                <p class="lead">Elevate your KQL skills with joins, unions, advanced aggregations, string manipulation, time series analysis, and complex query patterns for security investigations.</p>
 
-                <!-- Joins -->
-                <h2><i class="fas fa-link"></i> Joins</h2>
-                <div class="cmd-card">
-                    <span class="cmd-name">join</span> - Combine tables on matching columns
-                    <div class="code-block"># Inner join - only matching rows
+                <!-- Joins Deep Dive -->
+                <h2><i class="fas fa-link"></i> Joins Deep Dive</h2>
+                <div class="config-section">
+                    <h4>Join Types Explained</h4>
+                    <div class="code-block">KQL Join Types:
+
+INNER JOIN (default):
+├── Returns only matching rows from both tables
+├── Use: Enrichment when match is required
+└── Lost records: Non-matching rows from both sides
+
 SigninLogs
 | where TimeGenerated > ago(1h)
-| where ResultType != 0  // Failed logins
 | join kind=inner (
     IdentityInfo
-    | project UserPrincipalName, Department, Manager
-) on $left.UserPrincipalName == $right.UserPrincipalName
+    | project AccountUPN, Department, JobTitle
+) on $left.UserPrincipalName == $right.AccountUPN
 
-# Left outer join - keep all from left table
+LEFTOUTER JOIN:
+├── Returns ALL left rows + matching right rows
+├── Non-matching right: NULL values
+├── Use: Keep all source records, add context if exists
+└── Lost records: None from left table
+
 SigninLogs
+| where TimeGenerated > ago(1h)
 | join kind=leftouter (
-    ThreatIntelligenceIndicator
-    | where Active == true
-    | project NetworkIP, ThreatType
-) on $left.IPAddress == $right.NetworkIP
+    SecurityAlert
+    | where TimeGenerated > ago(24h)
+    | project AlertTime = TimeGenerated, UserPrincipalName, AlertName
+) on UserPrincipalName
+| extend HasAlert = isnotnull(AlertName)
 
-# Anti join - rows in left NOT in right (find new users)
+LEFTANTI JOIN:
+├── Returns left rows NOT in right table
+├── Use: Find new/unique items, gap analysis
+├── Example: New users, first-time behaviors
+
+// Users logged in today who NEVER logged in before
+let TodayLogins = SigninLogs
+    | where TimeGenerated > ago(1d)
+    | where ResultType == 0
+    | distinct UserPrincipalName;
+let HistoricalLogins = SigninLogs
+    | where TimeGenerated between (ago(90d) .. ago(1d))
+    | where ResultType == 0
+    | distinct UserPrincipalName;
+TodayLogins
+| join kind=leftanti HistoricalLogins on UserPrincipalName
+
+LEFTSEMI JOIN:
+├── Returns left rows that EXIST in right table
+├── Only returns left columns (not right)
+├── Use: Filter left by existence in right
+
+// Users who have alerts
 SigninLogs
-| where TimeGenerated > ago(1d)
-| distinct UserPrincipalName
-| join kind=leftanti (
-    SigninLogs
-    | where TimeGenerated between (ago(30d) .. ago(1d))
+| where TimeGenerated > ago(1h)
+| join kind=leftsemi (
+    SecurityAlert
+    | where TimeGenerated > ago(24h)
     | distinct UserPrincipalName
 ) on UserPrincipalName</div>
+
+                    <h4>Join Best Practices</h4>
+                    <div class="code-block">Join Optimization Tips:
+
+1. REDUCE TABLE SIZE BEFORE JOINING
+   // BAD - joins full tables
+   SigninLogs | join IdentityInfo on UserPrincipalName
+   
+   // GOOD - filter first, then join
+   SigninLogs
+   | where TimeGenerated > ago(1h)
+   | where ResultType != 0
+   | join kind=inner (
+       IdentityInfo
+       | project AccountUPN, Department
+   ) on $left.UserPrincipalName == $right.AccountUPN
+
+2. USE LOOKUP FOR REFERENCE DATA
+   // More efficient than join for small reference tables
+   SigninLogs
+   | lookup kind=leftouter IdentityInfo on $left.UserPrincipalName == $right.AccountUPN
+
+3. JOIN KEY SYNTAX
+   // Same column name in both tables
+   | join OtherTable on UserPrincipalName
+   
+   // Different column names
+   | join OtherTable on $left.User == $right.AccountName
+   
+   // Multiple keys
+   | join OtherTable on UserPrincipalName, IPAddress
+
+4. AVOID CROSS JOINS
+   // Never join without ON clause
+   // This creates cartesian product (rows * rows)</div>
+
+                    <h4>Security Join Patterns</h4>
+                    <div class="code-block">// Enrich sign-ins with user risk
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| join kind=leftouter (
+    AADRiskyUsers
+    | where TimeGenerated > ago(7d)
+    | summarize arg_max(TimeGenerated, *) by UserPrincipalName
+    | project UserPrincipalName, RiskLevel, RiskState
+) on UserPrincipalName
+| where RiskLevel in ("high", "medium")
+
+// Correlate sign-ins with device compliance
+SigninLogs
+| where TimeGenerated > ago(24h)
+| join kind=leftouter (
+    IntuneDevices
+    | where TimeGenerated > ago(7d)
+    | summarize arg_max(TimeGenerated, *) by DeviceId
+    | project DeviceId, ComplianceState, EncryptionStatus
+) on DeviceId
+| where ComplianceState != "compliant"
+
+// Find alerts for users who signed in from new locations
+let NewLocationLogins = SigninLogs
+    | where TimeGenerated > ago(1d)
+    | where ResultType == 0
+    | join kind=leftanti (
+        SigninLogs
+        | where TimeGenerated between (ago(30d) .. ago(1d))
+        | distinct UserPrincipalName, Location
+    ) on UserPrincipalName, Location
+    | distinct UserPrincipalName;
+SecurityAlert
+| where TimeGenerated > ago(1d)
+| join kind=inner NewLocationLogins on $left.CompromisedEntity == $right.UserPrincipalName</div>
                 </div>
 
-                <div class="cmd-card">
-                    <span class="cmd-name">union</span> - Combine multiple tables
-                    <div class="code-block"># Simple union
+                <!-- Union Operations -->
+                <h2><i class="fas fa-object-group"></i> Union Operations</h2>
+                <div class="config-section">
+                    <h4>Union Syntax</h4>
+                    <div class="code-block">// Basic union - combine multiple tables
 union SigninLogs, AADNonInteractiveUserSignInLogs
 | where TimeGenerated > ago(1h)
-| summarize count() by UserPrincipalName
+| where ResultType != 0
+| summarize FailedLogins = count() by UserPrincipalName
 
-# Union with source tracking
-union withsource=SourceTable SigninLogs, OfficeActivity, AzureActivity
+// Union with source tracking
+union withsource=SourceTable
+    SigninLogs,
+    AADNonInteractiveUserSignInLogs,
+    AADServicePrincipalSignInLogs
 | where TimeGenerated > ago(1h)
 | summarize count() by SourceTable
 
-# Search across all tables
-union *
+// Union with different schemas (isfuzzy)
+union isfuzzy=true
+    (SigninLogs | project TimeGenerated, User = UserPrincipalName, Action = "SignIn"),
+    (SecurityEvent | where EventID == 4624 | project TimeGenerated, User = TargetUserName, Action = "Logon")
 | where TimeGenerated > ago(1h)
-| where * contains "admin@company.com"
-| summarize count() by Type</div>
+
+// Union for cross-table search
+union withsource=TableName *
+| where TimeGenerated > ago(24h)
+| where * contains "mimikatz"
+| project TimeGenerated, TableName, *</div>
+
+                    <h4>Security Union Patterns</h4>
+                    <div class="code-block">// All authentication failures across sources
+union withsource=Source
+    (SigninLogs | where ResultType != 0 | project TimeGenerated, User = UserPrincipalName, IP = IPAddress, Result = ResultType),
+    (SecurityEvent | where EventID == 4625 | project TimeGenerated, User = TargetUserName, IP = IpAddress, Result = FailureReason),
+    (Syslog | where Facility == "auth" and SyslogMessage contains "Failed" | project TimeGenerated, User = extract("user=([^\\s]+)", 1, SyslogMessage), IP = HostIP, Result = "Failed")
+| where TimeGenerated > ago(24h)
+| summarize FailedAttempts = count() by User, IP, Source
+| where FailedAttempts > 5
+
+// Search for IOC across all tables
+let IOCs = dynamic(["malicious.com", "evil.exe", "192.168.100.1"]);
+union withsource=TableName *
+| where TimeGenerated > ago(7d)
+| where * has_any (IOCs)
+| project TimeGenerated, TableName, *
+| take 1000</div>
+                </div>
+
+                <!-- String Functions -->
+                <h2><i class="fas fa-font"></i> String Functions</h2>
+                <div class="config-section">
+                    <h4>String Extraction</h4>
+                    <div class="code-block">// Extract with regex - capture groups
+SecurityEvent
+| where EventID == 4688
+| extend ProcessName = extract(@"\\([^\\]+)$", 1, NewProcessName)
+| extend FileExtension = extract(@"\.([^.]+)$", 1, NewProcessName)
+
+// Extract multiple values
+SecurityEvent
+| where EventID == 4624
+| extend Domain = extract(@"^([^\\]+)\\", 1, TargetUserName)
+| extend Username = extract(@"\\(.+)$", 1, TargetUserName)
+
+// Parse key-value pairs
+AzureActivity
+| extend ParsedClaims = parse_json(Claims)
+| extend ClientIP = tostring(ParsedClaims.ipaddr)
+| extend AppId = tostring(ParsedClaims.appid)
+
+// Parse URL components
+SigninLogs
+| extend UrlParts = parse_url(ResourceDisplayName)
+| extend Host = tostring(UrlParts.Host)
+| extend Path = tostring(UrlParts.Path)
+
+// Split and access array elements
+CommonSecurityLog
+| extend PathParts = split(DeviceCustomString1, "/")
+| extend FileName = PathParts[-1]
+| extend ParentFolder = PathParts[-2]</div>
+
+                    <h4>String Matching</h4>
+                    <div class="code-block">// Contains vs Has
+// contains: substring match (slower, any position)
+// has: whole term match (faster, word boundaries)
+
+// contains example - finds "note" in "notepad.exe"
+| where ProcessName contains "note"
+
+// has example - finds "notepad" as whole word, NOT "notepad.exe"
+| where ProcessName has "notepad"
+
+// has_any - multiple whole terms
+| where CommandLine has_any ("mimikatz", "psexec", "procdump")
+
+// has_all - must have all terms
+| where CommandLine has_all ("powershell", "-enc", "invoke")
+
+// startswith, endswith
+| where FilePath startswith "C:\\Windows\\Temp"
+| where FileName endswith ".exe"
+
+// Regex matching
+| where CommandLine matches regex @"-enc[odedcommand]*\s+[A-Za-z0-9+/=]{20,}"
+| where Email matches regex @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+
+// Case sensitivity
+| where ProcessName =~ "POWERSHELL.EXE"  // Case-insensitive
+| where ProcessName == "powershell.exe"   // Case-sensitive</div>
+
+                    <h4>String Manipulation</h4>
+                    <div class="code-block">// Concatenation
+| extend FullPath = strcat(FolderPath, "\\", FileName)
+| extend Message = strcat_delim(" - ", Severity, AlertName, Description)
+
+// Substring
+| extend First10Chars = substring(CommandLine, 0, 10)
+| extend AfterPosition = substring(Email, indexof(Email, "@") + 1)
+
+// Replace
+| extend CleanPath = replace_string(FilePath, "\\\\", "/")
+| extend NoWhitespace = replace_regex(CommandLine, @"\s+", " ")
+
+// Trim
+| extend CleanUser = trim(" ", UserName)
+| extend NoQuotes = trim("\"", FilePath)
+
+// Case conversion
+| extend LowerUser = tolower(UserPrincipalName)
+| extend UpperHost = toupper(Computer)
+
+// String length
+| extend CmdLength = strlen(CommandLine)
+| where CmdLength > 1000  // Suspiciously long command</div>
+                </div>
+
+                <!-- Time Operations -->
+                <h2><i class="fas fa-clock"></i> Time Operations</h2>
+                <div class="config-section">
+                    <h4>Time Filtering</h4>
+                    <div class="code-block">// Relative time
+| where TimeGenerated > ago(24h)
+| where TimeGenerated > ago(7d) and TimeGenerated < ago(1d)
+
+// Absolute time
+| where TimeGenerated > datetime(2024-01-01)
+| where TimeGenerated between (datetime(2024-01-01) .. datetime(2024-01-31))
+
+// Dynamic time windows
+let StartTime = ago(24h);
+let EndTime = now();
+SigninLogs
+| where TimeGenerated between (StartTime .. EndTime)
+
+// Business hours filter (UTC)
+| extend HourOfDay = datetime_part("hour", TimeGenerated)
+| extend DayOfWeek = dayofweek(TimeGenerated)
+| where HourOfDay < 8 or HourOfDay > 18  // Outside 8am-6pm
+| where DayOfWeek in (0d, 6d)  // Weekend (Sunday=0, Saturday=6)
+
+// Time zone conversion
+| extend LocalTime = TimeGenerated + 5h  // EST offset
+| extend LocalTime = datetime_utc_to_local(TimeGenerated, "America/New_York")</div>
+
+                    <h4>Time Calculations</h4>
+                    <div class="code-block">// Time differences
+SigninLogs
+| summarize 
+    FirstLogin = min(TimeGenerated),
+    LastLogin = max(TimeGenerated)
+  by UserPrincipalName
+| extend DaysSinceLastLogin = datetime_diff('day', now(), LastLogin)
+| extend HoursBetweenLogins = datetime_diff('hour', LastLogin, FirstLogin)
+
+// Session duration
+SecurityEvent
+| where EventID in (4624, 4634)
+| summarize 
+    LoginTime = minif(TimeGenerated, EventID == 4624),
+    LogoutTime = maxif(TimeGenerated, EventID == 4634)
+  by TargetUserName, Computer, LogonId
+| extend SessionDuration = LogoutTime - LoginTime
+| extend SessionMinutes = toint(SessionDuration / 1m)
+
+// Time since event
+| extend HoursSinceEvent = datetime_diff('hour', now(), TimeGenerated)
+| extend MinutesSinceEvent = (now() - TimeGenerated) / 1m
+
+// Format timestamp
+| extend FormattedTime = format_datetime(TimeGenerated, "yyyy-MM-dd HH:mm:ss")
+| extend DateOnly = format_datetime(TimeGenerated, "yyyy-MM-dd")
+| extend TimeOnly = format_datetime(TimeGenerated, "HH:mm:ss")</div>
+
+                    <h4>Time Binning</h4>
+                    <div class="code-block">// Bin for aggregation
+SigninLogs
+| where TimeGenerated > ago(24h)
+| summarize count() by bin(TimeGenerated, 1h)
+
+// Multiple bin sizes
+| summarize 
+    Hourly = count() by bin(TimeGenerated, 1h),
+    Daily = count() by bin(TimeGenerated, 1d)
+
+// Start of period
+| extend StartOfHour = bin(TimeGenerated, 1h)
+| extend StartOfDay = startofday(TimeGenerated)
+| extend StartOfWeek = startofweek(TimeGenerated)
+| extend StartOfMonth = startofmonth(TimeGenerated)
+
+// Time chart
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType != 0
+| summarize FailedLogins = count() by bin(TimeGenerated, 1h)
+| render timechart</div>
+                </div>
+
+                <!-- Advanced Aggregations -->
+                <h2><i class="fas fa-calculator"></i> Advanced Aggregations</h2>
+                <div class="config-section">
+                    <h4>Statistical Functions</h4>
+                    <div class="code-block">// Basic statistics
+SigninLogs
+| summarize 
+    TotalLogins = count(),
+    UniqueUsers = dcount(UserPrincipalName),
+    UniqueIPs = dcount(IPAddress),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+  by Location
+
+// Percentiles
+DeviceNetworkEvents
+| summarize 
+    P50_Bytes = percentile(BytesSent, 50),
+    P90_Bytes = percentile(BytesSent, 90),
+    P99_Bytes = percentile(BytesSent, 99),
+    Avg_Bytes = avg(BytesSent)
+  by DeviceName
+
+// Standard deviation for anomaly detection
+SecurityEvent
+| where EventID == 4625
+| summarize FailedLogins = count() by Computer, bin(TimeGenerated, 1h)
+| summarize 
+    AvgFailures = avg(FailedLogins),
+    StdevFailures = stdev(FailedLogins)
+  by Computer
+| join kind=inner (
+    SecurityEvent
+    | where EventID == 4625
+    | where TimeGenerated > ago(1h)
+    | summarize CurrentFailures = count() by Computer
+) on Computer
+| extend ZScore = (CurrentFailures - AvgFailures) / StdevFailures
+| where ZScore > 3</div>
+
+                    <h4>Collection Functions</h4>
+                    <div class="code-block">// make_set - unique values as array
+SigninLogs
+| where TimeGenerated > ago(24h)
+| summarize 
+    IPAddresses = make_set(IPAddress, 100),
+    Locations = make_set(Location, 10)
+  by UserPrincipalName
+
+// make_list - all values (including duplicates)
+| summarize 
+    AllIPs = make_list(IPAddress, 1000),
+    AllApps = make_list(AppDisplayName, 100)
+  by UserPrincipalName
+
+// make_bag - key-value pairs
+| summarize Properties = make_bag(pack("IP", IPAddress, "App", AppDisplayName))
+  by UserPrincipalName
+
+// arg_max/arg_min - row with max/min value
+IdentityInfo
+| summarize arg_max(TimeGenerated, *) by AccountUPN  // Latest record per user
+
+// Conditional aggregation
+SigninLogs
+| summarize 
+    TotalLogins = count(),
+    SuccessfulLogins = countif(ResultType == 0),
+    FailedLogins = countif(ResultType != 0),
+    MFALogins = countif(AuthenticationRequirement == "multiFactorAuthentication")
+  by UserPrincipalName
+| extend SuccessRate = round(100.0 * SuccessfulLogins / TotalLogins, 2)</div>
+
+                    <h4>Windowing Functions</h4>
+                    <div class="code-block">// Running totals and averages
+SigninLogs
+| where TimeGenerated > ago(7d)
+| summarize DailyLogins = count() by bin(TimeGenerated, 1d)
+| order by TimeGenerated asc
+| extend RunningTotal = row_cumsum(DailyLogins)
+| extend MovingAvg = avg_rolling(DailyLogins, 3)
+
+// Prev/Next values
+| serialize
+| extend PrevLogins = prev(DailyLogins, 1)
+| extend NextLogins = next(DailyLogins, 1)
+| extend ChangeFromPrev = DailyLogins - PrevLogins
+
+// Row number
+| serialize RowNum = row_number()
+
+// Ranking
+SecurityAlert
+| summarize AlertCount = count() by AlertSeverity
+| order by AlertCount desc
+| extend Rank = row_number()</div>
                 </div>
 
                 <!-- Let Statements -->
-                <h2><i class="fas fa-bookmark"></i> Variables with let</h2>
-                <div class="cmd-card">
-                    <span class="cmd-name">let</span> - Define variables and subqueries
-                    <div class="code-block"># Simple variables
-let timeRange = 24h;
-let threshold = 10;
-SigninLogs
-| where TimeGenerated > ago(timeRange)
-| summarize FailedCount = countif(ResultType != 0) by UserPrincipalName
-| where FailedCount > threshold
-
-# List variable
-let SuspiciousIPs = dynamic(["1.2.3.4", "5.6.7.8", "9.10.11.12"]);
-SigninLogs
-| where IPAddress in (SuspiciousIPs)
-
-# Subquery as variable
-let FailedUsers = 
-    SigninLogs
-    | where TimeGenerated > ago(1h)
-    | where ResultType != 0
-    | distinct UserPrincipalName;
-SigninLogs
-| where TimeGenerated > ago(1h)
-| where UserPrincipalName in (FailedUsers)
-| where ResultType == 0  // Successful logins by users who also failed
-
-# Scalar value
-let avgLogins = toscalar(
-    SigninLogs
-    | where TimeGenerated > ago(7d)
-    | summarize avg(count()) by bin(TimeGenerated, 1h)
-);
-SigninLogs
-| where TimeGenerated > ago(1h)
-| summarize LoginCount = count()
-| where LoginCount > avgLogins * 2</div>
-                </div>
-
-                <!-- Time Series -->
-                <h2><i class="fas fa-chart-line"></i> Time Series Analysis</h2>
-                <div class="cmd-card">
-                    <span class="cmd-name">make-series</span> - Create time series for analysis
-                    <div class="code-block"># Create time series
-SigninLogs
-| where TimeGenerated > ago(7d)
-| make-series LoginCount = count() on TimeGenerated step 1h
-| render timechart
-
-# Time series with defaults (fill gaps)
-SigninLogs
-| where TimeGenerated > ago(7d)
-| make-series LoginCount = count() default=0 on TimeGenerated step 1h
-
-# Anomaly detection
-SigninLogs
-| where TimeGenerated > ago(30d)
-| make-series LoginCount = count() on TimeGenerated step 1h
-| extend anomalies = series_decompose_anomalies(LoginCount)
-| mv-expand TimeGenerated, LoginCount, anomalies
-| where anomalies > 0</div>
-                </div>
-
-                <div class="cmd-card">
-                    <span class="cmd-name">series_*</span> - Time series functions
-                    <div class="code-block"># Decompose into trend, seasonal, residual
-| make-series y = count() on TimeGenerated step 1h
-| extend (baseline, seasonal, trend, residual) = series_decompose(y)
-
-# Detect anomalies
-| extend anomalies = series_decompose_anomalies(y)
-
-# Statistics
-| extend stats = series_stats(y)  // min, max, avg, stdev
-
-# Forecasting
-| extend forecast = series_decompose_forecast(y, 24)  // Forecast next 24 points</div>
-                </div>
-
-                <!-- mv-expand -->
-                <h2><i class="fas fa-expand-arrows-alt"></i> Working with Arrays</h2>
-                <div class="cmd-card">
-                    <span class="cmd-name">mv-expand</span> - Expand multi-value columns
-                    <div class="code-block"># Expand array to rows
-AuditLogs
-| where OperationName == "Add member to role"
-| mv-expand TargetResources
-| extend RoleName = TargetResources.displayName
-
-# Expand multiple columns together
-SecurityAlert
-| mv-expand Entities
-| extend 
-    EntityType = Entities.Type,
-    EntityName = Entities.Name
-
-# With array functions
-| mv-expand IP = parse_json(IPAddresses)
-| where IP != ""</div>
-                </div>
-
-                <div class="cmd-card">
-                    <span class="cmd-name">mv-apply</span> - Apply operations to each array element
-                    <div class="code-block"># Filter array elements
-SecurityAlert
-| mv-apply Entity = Entities on (
-    where Entity.Type == "account"
-    | project AccountName = Entity.Name
-)
-
-# Aggregate over array
-| mv-apply IP = IPAddresses on (
-    summarize UniqueIPs = dcount(IP)
-)</div>
-                </div>
-
-                <!-- Correlation Patterns -->
-                <h2><i class="fas fa-project-diagram"></i> Security Correlation Patterns</h2>
+                <h2><i class="fas fa-equals"></i> Let Statements</h2>
                 <div class="config-section">
-                    <h4>Pattern 1: Failed then Success Login</h4>
-                    <div class="code-block">let FailedLogins = 
-    SigninLogs
-    | where TimeGenerated > ago(1h)
-    | where ResultType != 0
-    | project FailTime = TimeGenerated, UserPrincipalName, IPAddress;
-let SuccessLogins = 
-    SigninLogs
-    | where TimeGenerated > ago(1h)
-    | where ResultType == 0
-    | project SuccessTime = TimeGenerated, UserPrincipalName, IPAddress;
-FailedLogins
-| join kind=inner SuccessLogins on UserPrincipalName
-| where SuccessTime > FailTime
-| where SuccessTime - FailTime < 5m
-| summarize 
-    FailedAttempts = count(),
-    FirstFail = min(FailTime),
-    SuccessTime = max(SuccessTime)
-    by UserPrincipalName, IPAddress</div>
+                    <h4>Variables and Subqueries</h4>
+                    <div class="code-block">// Scalar variables
+let LookbackPeriod = 24h;
+let FailureThreshold = 10;
+let SuspiciousApps = dynamic(["PowerShell", "cmd.exe", "wscript.exe"]);
 
-                    <h4>Pattern 2: Cross-Table Correlation</h4>
-                    <div class="code-block">// Alert followed by suspicious activity
-let AlertUsers = 
+SigninLogs
+| where TimeGenerated > ago(LookbackPeriod)
+| where ResultType != 0
+| summarize FailedAttempts = count() by UserPrincipalName
+| where FailedAttempts > FailureThreshold
+
+// Tabular subqueries
+let HighRiskUsers = 
+    AADRiskyUsers
+    | where RiskLevel == "high"
+    | distinct UserPrincipalName;
+
+let RecentAlerts =
     SecurityAlert
     | where TimeGenerated > ago(24h)
-    | where AlertSeverity == "High"
-    | mv-expand Entities
-    | where Entities.Type == "account"
-    | project AlertTime = TimeGenerated, User = tolower(Entities.Name);
-OfficeActivity
-| where TimeGenerated > ago(24h)
-| where Operation in ("FileDownloaded", "FileAccessed")
-| project ActivityTime = TimeGenerated, User = tolower(UserId), Operation, FileName = SourceFileName
-| join kind=inner AlertUsers on User
-| where ActivityTime > AlertTime
-| where ActivityTime - AlertTime < 4h</div>
+    | distinct CompromisedEntity;
 
-                    <h4>Pattern 3: Baseline Comparison</h4>
-                    <div class="code-block">// Compare current hour to 7-day baseline
-let Baseline = 
-    SigninLogs
-    | where TimeGenerated between (ago(7d) .. ago(1d))
-    | summarize AvgLogins = avg(count()) by bin(TimeGenerated, 1h), UserPrincipalName
-    | summarize NormalAvg = avg(AvgLogins) by UserPrincipalName;
 SigninLogs
 | where TimeGenerated > ago(1h)
-| summarize CurrentLogins = count() by UserPrincipalName
-| join kind=inner Baseline on UserPrincipalName
-| where CurrentLogins > NormalAvg * 3
-| project UserPrincipalName, CurrentLogins, NormalAvg, Deviation = CurrentLogins / NormalAvg</div>
+| where UserPrincipalName in (HighRiskUsers) or UserPrincipalName in (RecentAlerts)
+
+// Function-like let
+let GetUserActivity = (user: string, hours: int) {
+    SigninLogs
+    | where TimeGenerated > ago(hours * 1h)
+    | where UserPrincipalName == user
+    | summarize count() by IPAddress, Location
+};
+GetUserActivity("user@domain.com", 24)</div>
+
+                    <h4>Complex Query Patterns</h4>
+                    <div class="code-block">// Baseline comparison pattern
+let BaselinePeriod = 30d;
+let CurrentPeriod = 1d;
+
+let Baseline = SigninLogs
+    | where TimeGenerated between (ago(BaselinePeriod) .. ago(CurrentPeriod))
+    | where ResultType == 0
+    | summarize 
+        BaselineLogins = count(),
+        BaselineIPs = dcount(IPAddress),
+        BaselineLocations = dcount(Location)
+      by UserPrincipalName;
+
+let Current = SigninLogs
+    | where TimeGenerated > ago(CurrentPeriod)
+    | where ResultType == 0
+    | summarize 
+        CurrentLogins = count(),
+        CurrentIPs = dcount(IPAddress),
+        CurrentLocations = dcount(Location)
+      by UserPrincipalName;
+
+Current
+| join kind=leftouter Baseline on UserPrincipalName
+| extend 
+    LoginDeviation = CurrentLogins - BaselineLogins,
+    IPDeviation = CurrentIPs - BaselineIPs,
+    LocationDeviation = CurrentLocations - BaselineLocations
+| where LoginDeviation > 2 * BaselineLogins or IPDeviation > 3 or LocationDeviation > 2</div>
                 </div>
 
-                <!-- Functions -->
-                <h2><i class="fas fa-code"></i> Saved Functions</h2>
+                <!-- Security Query Patterns -->
+                <h2><i class="fas fa-shield-alt"></i> Security Query Patterns</h2>
                 <div class="config-section">
-                    <p>Create reusable query functions:</p>
-                    <div class="code-block">// Create function (in Log Analytics)
-// Name: GetFailedLogins
-// Parameters: lookback:timespan
+                    <h4>User Behavior Analysis</h4>
+                    <div class="code-block">// Impossible travel detection
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| project TimeGenerated, UserPrincipalName, IPAddress, Location
+| order by UserPrincipalName, TimeGenerated asc
+| serialize
+| extend PrevTime = prev(TimeGenerated, 1)
+| extend PrevLocation = prev(Location, 1)
+| extend PrevUser = prev(UserPrincipalName, 1)
+| where UserPrincipalName == PrevUser
+| extend TimeDiffMinutes = datetime_diff('minute', TimeGenerated, PrevTime)
+| where Location != PrevLocation and TimeDiffMinutes < 60
+| project TimeGenerated, UserPrincipalName, FromLocation = PrevLocation, ToLocation = Location, TimeDiffMinutes
+
+// First-time activity detection
+let KnownActivity = SigninLogs
+    | where TimeGenerated between (ago(30d) .. ago(1d))
+    | where ResultType == 0
+    | distinct UserPrincipalName, IPAddress, Location, AppDisplayName;
 
 SigninLogs
-| where TimeGenerated > ago(lookback)
+| where TimeGenerated > ago(1d)
+| where ResultType == 0
+| join kind=leftanti KnownActivity on UserPrincipalName, IPAddress
+| summarize 
+    NewIPs = dcount(IPAddress),
+    NewLocations = dcount(Location)
+  by UserPrincipalName
+| where NewIPs > 0 or NewLocations > 0
+
+// Dormant account activity
+let ActiveUsers = SigninLogs
+    | where TimeGenerated between (ago(90d) .. ago(30d))
+    | where ResultType == 0
+    | distinct UserPrincipalName;
+
+let InactiveUsers = IdentityInfo
+    | distinct AccountUPN
+    | join kind=leftanti ActiveUsers on $left.AccountUPN == $right.UserPrincipalName;
+
+SigninLogs
+| where TimeGenerated > ago(1d)
+| where ResultType == 0
+| join kind=inner InactiveUsers on $left.UserPrincipalName == $right.AccountUPN
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, AppDisplayName</div>
+
+                    <h4>Attack Detection Patterns</h4>
+                    <div class="code-block">// Password spray detection
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType in (50126, 50053, 50055)  // Invalid password codes
+| summarize 
+    FailedAttempts = count(),
+    UniqueUsers = dcount(UserPrincipalName),
+    TargetedUsers = make_set(UserPrincipalName, 20)
+  by IPAddress, bin(TimeGenerated, 10m)
+| where UniqueUsers > 10 and FailedAttempts > 20
+
+// Brute force detection
+SigninLogs
+| where TimeGenerated > ago(1h)
 | where ResultType != 0
 | summarize 
-    FailedCount = count(),
-    DistinctIPs = dcount(IPAddress)
-    by UserPrincipalName, AppDisplayName
+    FailedAttempts = count(),
+    UniqueIPs = dcount(IPAddress),
+    SourceIPs = make_set(IPAddress, 10)
+  by UserPrincipalName, bin(TimeGenerated, 15m)
+| where FailedAttempts > 20
 
-// Usage:
-GetFailedLogins(1h)
-| where FailedCount > 5</div>
+// Credential stuffing (successful logins from spray IPs)
+let SprayIPs = SigninLogs
+    | where TimeGenerated > ago(1h)
+    | where ResultType != 0
+    | summarize FailedUsers = dcount(UserPrincipalName) by IPAddress
+    | where FailedUsers > 10
+    | project IPAddress;
+
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == 0
+| where IPAddress in (SprayIPs)
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, AppDisplayName</div>
                 </div>
 
-                <!-- Interview Q&A -->
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you correlate events across multiple tables in KQL?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: When would you use leftanti vs inner join?</button>
                         <div class="qa-answer">
                             <ul>
-                                <li><strong>join:</strong> Match rows between tables on common columns (inner, leftouter, anti)</li>
-                                <li><strong>union:</strong> Combine tables vertically (stack results)</li>
-                                <li><strong>let:</strong> Define subqueries as variables, then join or filter</li>
+                                <li><strong>inner:</strong> Get records that exist in BOTH tables (enrichment with required match)</li>
+                                <li><strong>leftanti:</strong> Get records that DON'T exist in right table (finding new, unique, missing items)</li>
                             </ul>
-                            <p><strong>Pattern:</strong> Use <code>let</code> to define suspicious entities from one table, then <code>join</code> to find related activity in another table within a time window.</p>
+                            <p><strong>Example:</strong> Find new users (leftanti against historical), enrich with department (inner with IdentityInfo)</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect anomalies in KQL?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between has and contains?</button>
                         <div class="qa-answer">
-                            <ol>
-                                <li><strong>make-series:</strong> Create time series data</li>
-                                <li><strong>series_decompose_anomalies:</strong> Detect statistical anomalies</li>
-                                <li><strong>Baseline comparison:</strong> Compare current to historical average</li>
-                            </ol>
-                            <p><strong>Example:</strong> <code>make-series count() on TimeGenerated step 1h | extend anomalies = series_decompose_anomalies(count_)</code></p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Extended Interview Questions -->
-                <h2><i class="fas fa-question-circle"></i> Additional Interview Questions</h2>
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach troubleshooting in this area?</button>
-                        <div class="qa-answer">
-                            <p><strong>Systematic troubleshooting approach:</strong></p>
-                            <ol>
-                                <li><strong>Identify the symptom:</strong> What exactly is not working as expected?</li>
-                                <li><strong>Check connectivity:</strong> Verify network paths and authentication</li>
-                                <li><strong>Review logs:</strong> Check internal/audit logs for errors</li>
-                                <li><strong>Validate configuration:</strong> Compare against documented standards</li>
-                                <li><strong>Test incrementally:</strong> Isolate the problem component</li>
-                                <li><strong>Document findings:</strong> Record what worked and what didn't</li>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What metrics would you track for this area?</button>
-                        <div class="qa-answer">
-                            <p><strong>Key performance indicators:</strong></p>
                             <ul>
-                                <li><strong>Availability:</strong> Uptime percentage, service availability</li>
-                                <li><strong>Performance:</strong> Query response time, processing latency</li>
-                                <li><strong>Volume:</strong> Events per second, data ingestion rate</li>
-                                <li><strong>Quality:</strong> Parse success rate, enrichment coverage</li>
-                                <li><strong>Efficiency:</strong> Resource utilization, cost per GB</li>
+                                <li><strong>has:</strong> Matches whole terms (word boundaries), faster, case-insensitive</li>
+                                <li><strong>contains:</strong> Matches any substring, slower, case-insensitive</li>
                             </ul>
+                            <p><strong>Example:</strong> "notepad.exe" has "notepad" = TRUE, but "notepad.exe" has "note" = FALSE</p>
+                            <p>Use <code>has</code> for performance, <code>contains</code> for partial matches.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure high availability?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect impossible travel in KQL?</button>
                         <div class="qa-answer">
-                            <p><strong>High availability strategies:</strong></p>
+                            <div class="code-block">SigninLogs
+| where ResultType == 0
+| order by UserPrincipalName, TimeGenerated
+| serialize
+| extend PrevTime = prev(TimeGenerated)
+| extend PrevLocation = prev(Location)
+| extend PrevUser = prev(UserPrincipalName)
+| where UserPrincipalName == PrevUser
+| extend TimeDiffMin = datetime_diff('minute', TimeGenerated, PrevTime)
+| where Location != PrevLocation and TimeDiffMin < 60</div>
+                            <p>Compare consecutive logins for same user, flag if different locations within impossible timeframe.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you find statistical anomalies in KQL?</button>
+                        <div class="qa-answer">
+                            <p>Use z-score calculation:</p>
+                            <div class="code-block">// Calculate baseline
+| summarize Avg = avg(count), Stdev = stdev(count) by Entity
+// Compare current to baseline
+| extend ZScore = (Current - Avg) / Stdev
+| where ZScore > 3  // More than 3 standard deviations</div>
+                            <p>Z-score > 3 indicates anomaly (99.7% confidence).</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain the let statement in KQL.</button>
+                        <div class="qa-answer">
+                            <p><code>let</code> creates reusable variables and subqueries:</p>
                             <ul>
-                                <li><strong>Redundancy:</strong> Multiple instances of critical components</li>
-                                <li><strong>Load balancing:</strong> Distribute traffic across instances</li>
-                                <li><strong>Failover:</strong> Automatic switchover on failure</li>
-                                <li><strong>Monitoring:</strong> Health checks and alerting</li>
-                                <li><strong>DR Planning:</strong> Documented recovery procedures</li>
+                                <li><strong>Scalar:</strong> <code>let threshold = 10;</code></li>
+                                <li><strong>Dynamic:</strong> <code>let apps = dynamic(["app1", "app2"]);</code></li>
+                                <li><strong>Tabular:</strong> <code>let riskyUsers = Table | where ...;</code></li>
+                                <li><strong>Function:</strong> <code>let fn = (x:int) { x * 2 };</code></li>
                             </ul>
+                            <p>Benefits: Code reuse, readability, performance (subquery evaluated once).</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Best Practices -->
-                <h2><i class="fas fa-star"></i> Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation:</strong> Maintain runbooks for all procedures</li>
-                        <li><strong>Change Management:</strong> Test changes in non-production first</li>
-                        <li><strong>Monitoring:</strong> Set up proactive alerting for issues</li>
-                        <li><strong>Regular Reviews:</strong> Periodic audits of configuration and performance</li>
-                        <li><strong>Training:</strong> Keep team skills current with platform updates</li>
-                    </ul>
-
-                    <h4>Security Considerations</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Least Privilege:</strong> Grant minimum necessary permissions</li>
-                        <li><strong>Audit Logging:</strong> Enable comprehensive audit trails</li>
-                        <li><strong>Encryption:</strong> Encrypt data in transit and at rest</li>
-                        <li><strong>Access Reviews:</strong> Regular review of user access</li>
-                        <li><strong>Secrets Management:</strong> Secure storage of credentials</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Efficiency:</strong> Optimize queries for speed</li>
-                        <li><strong>Resource Planning:</strong> Right-size infrastructure</li>
-                        <li><strong>Caching:</strong> Use caching where appropriate</li>
-                        <li><strong>Indexing:</strong> Ensure proper indexing for search</li>
-                        <li><strong>Cleanup:</strong> Regular maintenance and data hygiene</li>
-                    </ul>
-                </div>
-
-                <!-- Troubleshooting Guide -->
-                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
-                <div class="config-section">
-                    <h4>Common Issues and Solutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Issue</th><th>Possible Cause</th><th>Solution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Data not appearing</td>
-                                <td>Collection or parsing issue</td>
-                                <td>Check collector status, verify parser configuration</td>
-                            </tr>
-                            <tr>
-                                <td>Slow performance</td>
-                                <td>Resource constraints or inefficient queries</td>
-                                <td>Review resource utilization, optimize queries</td>
-                            </tr>
-                            <tr>
-                                <td>Authentication failures</td>
-                                <td>Credential or permission issues</td>
-                                <td>Verify credentials, check RBAC configuration</td>
-                            </tr>
-                            <tr>
-                                <td>Missing fields</td>
-                                <td>Parser not extracting fields</td>
-                                <td>Review parsing rules, update field extraction</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Multiple collection paths</td>
-                                <td>Audit data sources, implement deduplication</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Steps</h4>
-                    <ol style="color: #8b949e;">
-                        <li><strong>Check Status:</strong> Verify component health in console</li>
-                        <li><strong>Review Logs:</strong> Examine internal logs for errors</li>
-                        <li><strong>Test Connectivity:</strong> Verify network paths and authentication</li>
-                        <li><strong>Validate Config:</strong> Compare configuration against documentation</li>
-                        <li><strong>Isolate Issue:</strong> Narrow down to specific component</li>
-                        <li><strong>Escalate:</strong> Contact support if needed with diagnostics</li>
-                    </ol>
-                </div>
-
-                <!-- Use Cases -->
-                <h2><i class="fas fa-briefcase"></i> Real-World Use Cases</h2>
-                <div class="config-section">
-                    <h4>Use Case 1: Enterprise SOC</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Large enterprise with 20,000 endpoints, multiple cloud environments</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Centralized collection from all security data sources</li>
-                            <li>Custom detection rules aligned to threat model</li>
-                            <li>Automated response playbooks for common scenarios</li>
-                            <li>Integration with ticketing and CMDB systems</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> 60% reduction in MTTR, improved threat visibility</p>
-                    </div>
-
-                    <h4>Use Case 2: MSSP Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Managed security provider serving 50 customers</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Standardized detection content across customers</li>
-                            <li>Centralized analyst workflow and reporting</li>
-                            <li>SLA-driven prioritization and escalation</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> Efficient operations at scale, consistent service delivery</p>
-                    </div>
-
-                    <h4>Use Case 3: Compliance-Focused</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Healthcare organization with HIPAA requirements</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive audit logging for PHI access</li>
-                            <li>Long-term retention for compliance evidence</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                            <li>Automated compliance violation detection</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> Audit-ready documentation, reduced compliance risk</p>
-                    </div>
-                </div>
-
-                <!-- Quick Reference -->
-                <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
-                <div class="config-section">
-                    <h4>Common Commands/Queries</h4>
-                    <div class="code-block"># Basic health check query
-# Adjust syntax for your platform (XQL/SPL/KQL)
-
-# Check data ingestion rate
-| stats count by _time span=1h
-
-# Find recent errors
-| filter severity = "error" 
-| sort _time desc 
-| limit 100
-
-# Top sources by volume
-| stats sum(bytes) as total_bytes by source
-| sort total_bytes desc
-| limit 10
-
-# Detection rule effectiveness
-| filter alert_type = "detection"
-| stats count by rule_name, disposition
-| sort count desc</div>
-
-                    <h4>Key Configuration Files/Paths</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Purpose</th><th>Location/Path</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Main Configuration</td><td>Settings → Configuration</td></tr>
-                            <tr><td>Data Sources</td><td>Settings → Data Sources</td></tr>
-                            <tr><td>Detection Rules</td><td>Detection → Rules</td></tr>
-                            <tr><td>User Management</td><td>Settings → Access Management</td></tr>
-                            <tr><td>Audit Logs</td><td>Settings → Audit Trail</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Important Thresholds</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Warning</th><th>Critical</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Query Response Time</td><td>> 30 seconds</td><td>> 120 seconds</td></tr>
-                            <tr><td>Ingestion Latency</td><td>> 5 minutes</td><td>> 15 minutes</td></tr>
-                            <tr><td>Storage Utilization</td><td>> 70%</td><td>> 85%</td></tr>
-                            <tr><td>Error Rate</td><td>> 1%</td><td>> 5%</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Related Topics -->
-                <h2><i class="fas fa-link"></i> Related Topics</h2>
-                <div class="config-section">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-book" style="color: #58a6ff;"></i> Documentation</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>Official vendor documentation</li>
-                                <li>API reference guides</li>
-                                <li>Release notes</li>
-                            </ul>
-                        </div>
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-users" style="color: #58a6ff;"></i> Community</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>User forums</li>
-                                <li>Community Slack/Discord</li>
-                                <li>Blog posts and articles</li>
-                            </ul>
-                        </div>
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-graduation-cap" style="color: #58a6ff;"></i> Training</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>Vendor certifications</li>
-                                <li>Online courses</li>
-                                <li>Hands-on labs</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-
-
-                <!-- Comprehensive Troubleshooting -->
-                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
-                <div class="config-section">
-                    <h4>Systematic Troubleshooting Methodology</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <ol style="color: #8b949e;">
-                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
-                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
-                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
-                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
-                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
-                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
-                        </ol>
-                    </div>
-
-                    <h4>Common Issues and Resolutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="2"><strong>Connectivity</strong></td>
-                                <td>Agent not reporting</td>
-                                <td>Check agent service status, network connectivity, firewall rules</td>
-                                <td>Restart service, verify network path, update firewall rules</td>
-                            </tr>
-                            <tr>
-                                <td>API timeouts</td>
-                                <td>Test API endpoint, check rate limits, verify credentials</td>
-                                <td>Retry with backoff, request limit increase, refresh credentials</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Data Quality</strong></td>
-                                <td>Missing fields</td>
-                                <td>Review parsing rules, check source format, validate schema</td>
-                                <td>Update parser, fix source configuration, adjust schema mapping</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Audit data sources, check collection paths, review timestamps</td>
-                                <td>Consolidate sources, implement deduplication, fix time sync</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Performance</strong></td>
-                                <td>Slow queries</td>
-                                <td>Analyze query execution plan, check resource utilization</td>
-                                <td>Optimize query, add indexes, scale resources</td>
-                            </tr>
-                            <tr>
-                                <td>High latency</td>
-                                <td>Monitor queue depths, check processing bottlenecks</td>
-                                <td>Scale processing capacity, optimize data flow</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Authentication</strong></td>
-                                <td>Login failures</td>
-                                <td>Verify credentials, check account status, review permissions</td>
-                                <td>Reset password, unlock account, grant required permissions</td>
-                            </tr>
-                            <tr>
-                                <td>Token expiration</td>
-                                <td>Check token validity, review refresh mechanism</td>
-                                <td>Refresh token, update token management configuration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
-
-# Check system health status
-| filter log_type = "system_health"
-| sort _time desc
-| limit 50
-
-# Monitor error rates over time
-| filter severity in ("error", "critical")
-| timechart count by component span=1h
-
-# Identify slow operations
-| filter operation_time > 30000
-| stats avg(operation_time), max(operation_time), count by operation_name
-| sort avg(operation_time) desc
-
-# Check connectivity status
-| filter event_type = "connectivity"
-| stats latest(status), latest(_time) by source_name
-| where status != "connected"
-
-# Review authentication failures
-| filter event_type = "authentication" and result = "failure"
-| stats count by user, source_ip, failure_reason
-| sort count desc</div>
-                </div>
-
-
-                <!-- Real-World Use Cases -->
-                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
-                <div class="config-section">
-                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
-                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>High volume of security events (500+ million events/day)</li>
-                            <li>Multiple security tools with siloed data</li>
-                            <li>Alert fatigue from excessive false positives</li>
-                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Phased rollout starting with critical data sources</li>
-                            <li>Custom detection rules based on threat model</li>
-                            <li>Automated playbooks for common scenarios</li>
-                            <li>Integration with ITSM and CMDB systems</li>
-                        </ul>
-                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
-                    </div>
-
-                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
-                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Need for strict data isolation between customers</li>
-                            <li>Scalable operations with limited staff</li>
-                            <li>Standardized service delivery across customers</li>
-                            <li>Flexible SLA-based prioritization</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Shared detection content library with customization</li>
-                            <li>Centralized analyst console with customer context</li>
-                            <li>Automated reporting and SLA tracking</li>
-                        </ul>
-                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
-                    </div>
-
-                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
-                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>HIPAA compliance requirements for PHI protection</li>
-                            <li>Legacy medical devices with limited security logging</li>
-                            <li>Need for 6-year log retention</li>
-                            <li>Limited IT security staff</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive EHR and clinical application monitoring</li>
-                            <li>PHI access detection rules</li>
-                            <li>Long-term archival storage configuration</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                        </ul>
-                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
-                    </div>
-                </div>
-
-
 
             </main>
         </div>

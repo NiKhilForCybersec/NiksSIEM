@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Deployment | Cortex XDR | Nik's SIEM Compendium</title>
+    <title>Agent Deployment | Cortex XDR</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="app-container">
-                                                                                                                        <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -19,23 +19,29 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">Cortex XDR</div>
+                    <div class="nav-section-title">Cortex XDR Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
                     <a href="agent-deployment.html" class="nav-link active"><i class="fas fa-download"></i> Agent Deployment</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection</div>
-                    <a href="bioc-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> BIOC Rules</a>
-                    <a href="analytics.html" class="nav-link"><i class="fas fa-brain"></i> Analytics (ML)</a>
-                    <a href="causality.html" class="nav-link"><i class="fas fa-sitemap"></i> Causality Analysis</a>
+                    <a href="analytics.html" class="nav-link"><i class="fas fa-chart-line"></i> Analytics Engine</a>
+                    <a href="bioc-rules.html" class="nav-link"><i class="fas fa-code"></i> BIOC Rules</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Hunting & Response</div>
-                    <a href="xql-hunting.html" class="nav-link"><i class="fas fa-search"></i> XQL Hunting</a>
-                    <a href="xql-reference.html" class="nav-link"><i class="fas fa-book"></i> XQL Reference</a>
-                    <a href="response-actions.html" class="nav-link"><i class="fas fa-hand-paper"></i> Response Actions</a>
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="xql-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> XQL Hunting</a>
+                    <a href="xql-reference.html" class="nav-link"><i class="fas fa-book-open"></i> XQL Reference</a>
+                    <a href="incident-management.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                    <a href="causality.html" class="nav-link"><i class="fas fa-project-diagram"></i> Causality Analysis</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                 </div>
             </nav>
         </aside>
@@ -48,767 +54,370 @@
                 </div>
             </header>
             <main class="main-content">
-<div class="content-header">
-            <h1>🟠 Cortex XDR Agent Deployment</h1>
-            <p>Complete guide to deploying and managing Cortex XDR agents across enterprise environments</p>
-        </div>
-        <section class="content-section">
-            <h2>Deployment Architecture</h2>
-            <div class="diagram-box"><div class="diagram-content">
-                <pre>
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        CORTEX XDR DEPLOYMENT ARCHITECTURE                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │   Windows    │    │    macOS     │    │    Linux     │    │   Android    │  │
-│  │   Agent      │    │    Agent     │    │    Agent     │    │    Agent     │  │
-│  │  (Traps)     │    │  (Traps)     │    │  (Traps)     │    │   (Mobile)   │  │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘  │
-│         │                   │                   │                   │          │
-│         └───────────────────┴─────────┬─────────┴───────────────────┘          │
-│                                       │                                         │
-│                                       ▼                                         │
-│                         ┌─────────────────────────┐                             │
-│                         │   Broker VM (Optional)   │                            │
-│                         │  - Content Updates       │                            │
-│                         │  - Log Forwarding        │                            │
-│                         │  - Proxy Support         │                            │
-│                         └───────────┬─────────────┘                             │
-│                                     │                                           │
-│                                     ▼                                           │
-│                    ┌─────────────────────────────────┐                          │
-│                    │     Cortex Data Lake (Cloud)     │                         │
-│                    │  - Event Collection              │                         │
-│                    │  - Analytics Engine              │                         │
-│                    │  - Threat Intelligence           │                         │
-│                    └─────────────────────────────────┘                          │
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                </pre>
-            </div>
-        </section>
-        <section class="content-section">
-            <h2>System Requirements</h2>
-            <h3>Windows Requirements</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Component</th>
-                        <th>Minimum</th>
-                        <th>Recommended</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>OS Version</td>
-                        <td>Windows 7 SP1 / Server 2008 R2</td>
-                        <td>Windows 10/11 / Server 2016+</td>
-                    </tr>
-                    <tr>
-                        <td>CPU</td>
-                        <td>1 GHz single core</td>
-                        <td>2 GHz dual core</td>
-                    </tr>
-                    <tr>
-                        <td>RAM</td>
-                        <td>512 MB</td>
-                        <td>2 GB</td>
-                    </tr>
-                    <tr>
-                        <td>Disk Space</td>
-                        <td>300 MB</td>
-                        <td>1 GB</td>
-                    </tr>
-                    <tr>
-                        <td>.NET Framework</td>
-                        <td>4.5.2</td>
-                        <td>4.7.2+</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h3>macOS Requirements</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Component</th>
-                        <th>Minimum</th>
-                        <th>Recommended</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>OS Version</td>
-                        <td>macOS 10.15 Catalina</td>
-                        <td>macOS 12 Monterey+</td>
-                    </tr>
-                    <tr>
-                        <td>CPU</td>
-                        <td>Intel 64-bit</td>
-                        <td>Apple Silicon / Intel</td>
-                    </tr>
-                    <tr>
-                        <td>RAM</td>
-                        <td>2 GB</td>
-                        <td>4 GB</td>
-                    </tr>
-                    <tr>
-                        <td>Disk Space</td>
-                        <td>500 MB</td>
-                        <td>1 GB</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h3>Linux Requirements</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Distribution</th>
-                        <th>Supported Versions</th>
-                        <th>Kernel Requirements</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>RHEL / CentOS</td>
-                        <td>7.x, 8.x, 9.x</td>
-                        <td>3.10+</td>
-                    </tr>
-                    <tr>
-                        <td>Ubuntu</td>
-                        <td>18.04, 20.04, 22.04</td>
-                        <td>4.15+</td>
-                    </tr>
-                    <tr>
-                        <td>SUSE</td>
-                        <td>12 SP3+, 15</td>
-                        <td>4.4+</td>
-                    </tr>
-                    <tr>
-                        <td>Oracle Linux</td>
-                        <td>7.x, 8.x</td>
-                        <td>3.10+</td>
-                    </tr>
-                    <tr>
-                        <td>Debian</td>
-                        <td>9, 10, 11</td>
-                        <td>4.9+</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        <section class="content-section">
-            <h2>Network Requirements</h2>
-            <div class="info-box">
-                <h4>Required Connectivity</h4>
-                <p>Cortex XDR agents require outbound HTTPS (443) connectivity to the following domains:</p>
-            </div>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Domain Pattern</th>
-                        <th>Purpose</th>
-                        <th>Required</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>*.xdr.&lt;region&gt;.paloaltonetworks.com</code></td>
-                        <td>XDR Cloud Communication</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <td><code>*.traps.paloaltonetworks.com</code></td>
-                        <td>Agent Management</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <td><code>*.panw-xdr.com</code></td>
-                        <td>Content Updates</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <td><code>*.paloaltonetworks.com</code></td>
-                        <td>Global Services</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <td><code>*.wldap.com</code></td>
-                        <td>WildFire Analysis</td>
-                        <td>Recommended</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        <section class="content-section">
-            <h2>Installation Methods</h2>
-            <h3>Windows - Interactive Installation</h3>
-            <div class="code-block">
-                <pre><code># Download installer from Cortex XDR console
-# Run with administrative privileges
-# Silent installation with default settings
-msiexec /i TrapsAgent.msi /qn
-# Silent installation with logging
-msiexec /i TrapsAgent.msi /qn /l*v C:\Logs\traps_install.log
-# Installation with custom parameters
-msiexec /i TrapsAgent.msi /qn INSTALLDIR="C:\Program Files\Palo Alto Networks" TRAY_ICON=1</code></pre>
-            </div>
-            <h3>Windows - SCCM/Intune Deployment</h3>
-            <div class="code-block">
-                <pre><code># SCCM Application Detection Method (PowerShell)
-$AgentPath = "C:\Program Files\Palo Alto Networks\Traps\cyserver.exe"
-if (Test-Path $AgentPath) {
-    $Version = (Get-Item $AgentPath).VersionInfo.FileVersion
-    if ([version]$Version -ge [version]"8.0.0") {
-        Write-Host "Installed"
-        exit 0
-    }
-}
-exit 1
-# SCCM Installation Command
-msiexec /i TrapsAgent.msi /qn REBOOT=ReallySuppress
-# Intune Win32 App Install Command
-msiexec /i TrapsAgent.msi /qn /l*v %TEMP%\traps_install.log
-# Intune Detection Rule (Registry)
-# Path: HKLM\SOFTWARE\Palo Alto Networks\Traps
-# Value: Version
-# Comparison: Greater than or equal to 8.0.0</code></pre>
-            </div>
-            <h3>macOS Installation</h3>
-            <div class="code-block">
-                <pre><code># Download PKG from Cortex XDR console
-# Interactive installation
-sudo installer -pkg TrapsAgent.pkg -target /
-# Silent installation via MDM (Jamf Pro)
-# Upload PKG to Jamf and deploy via policy
-# Post-installation: Grant required permissions
-# System Preferences → Security & Privacy → Privacy:
-# - Full Disk Access: Palo Alto Networks Traps
-# - Network Filtering: Palo Alto Networks Traps
+                <h1><i class="fas fa-download"></i> Cortex XDR Agent Deployment</h1>
+                <p class="lead">Deploy Cortex XDR agents across your enterprise. Learn installation packages, deployment methods, and agent configuration options.</p>
+
+                <!-- Agent Overview -->
+                <h2><i class="fas fa-info-circle"></i> Agent Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Endpoints → Agent Installation → Agent Installers</span></p>
+
+                    <h4>Agent Types</h4>
+                    <div class="code-block">Cortex XDR Agent Types:
+
+STANDARD AGENT (Traps):
+├── Endpoint protection (EPP)
+├── Exploit prevention
+├── Malware prevention
+├── Device control
+└── Host firewall
+
+XDR AGENT:
+├── All Standard features +
+├── Extended detection (XDR)
+├── Full telemetry collection
+├── Behavioral analytics
+├── Network traffic analysis
+└── Cloud analysis integration
+
+AGENT COMPONENTS:
+├── cyserver.exe       - Core service
+├── cytray.exe         - System tray
+├── CyveraService      - Main protection service
+├── cyupdate.exe       - Content updates
+└── cytool.exe         - Command line utility</div>
+
+                    <h4>Supported Platforms</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Platform</th><th>Versions</th><th>Architecture</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Windows</strong></td><td>7 SP1+, 10, 11, Server 2008 R2-2022</td><td>x64, x86</td></tr>
+                            <tr><td><strong>macOS</strong></td><td>10.15+ (Catalina and later)</td><td>Intel, Apple Silicon</td></tr>
+                            <tr><td><strong>Linux</strong></td><td>RHEL 6+, Ubuntu 16.04+, CentOS, SUSE</td><td>x64</td></tr>
+                            <tr><td><strong>Android</strong></td><td>8.0+</td><td>ARM</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Installation Packages -->
+                <h2><i class="fas fa-box"></i> Installation Packages</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Endpoints → Agent Installation → Agent Installers</span></p>
+
+                    <div class="code-block">Package Types:
+
+STANDALONE INSTALLER:
+├── Full offline package
+├── Contains all components
+├── For manual/script deployment
+└── Larger file size (~150 MB)
+
+DEPLOYMENT PACKAGE (MSI):
+├── Smaller initial download
+├── Downloads components during install
+├── For enterprise deployment tools
+└── Requires internet during install
+
+VDI PACKAGE:
+├── Optimized for virtual desktops
+├── Non-persistent support
+├── Golden image compatible
+└── Reduced resource usage
+
+Package Configuration:
+├── Distribution ID (required)
+├── Content version
+├── Agent version
+└── Hash verification</div>
+                </div>
+
+                <!-- Windows Deployment -->
+                <h2><i class="fab fa-windows"></i> Windows Deployment</h2>
+                <div class="config-section">
+                    <h4>Command Line Installation</h4>
+                    <div class="code-block"># Basic silent install
+msiexec /i "cortex.msi" /qn DISTRIBUTION_ID=<DIST_ID>
+
+# With logging
+msiexec /i "cortex.msi" /qn /l*v "C:\install.log" DISTRIBUTION_ID=<DIST_ID>
+
+# With proxy
+msiexec /i "cortex.msi" /qn DISTRIBUTION_ID=<DIST_ID> PROXY_HOST=proxy.domain.com PROXY_PORT=8080
+
+# Standalone package
+cortex_installer.exe --distID <DIST_ID> --quiet
+
+# Custom install directory
+msiexec /i "cortex.msi" /qn DISTRIBUTION_ID=<DIST_ID> INSTALLDIR="D:\CortexXDR"
+
+# Uninstall
+msiexec /x "cortex.msi" /qn PASSWORD=<UNINSTALL_PASSWORD>
+
+# Or with cytool
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" uninstall --password <PASSWORD></div>
+
+                    <h4>SCCM/MECM Deployment</h4>
+                    <div class="code-block">SCCM Deployment:
+
+1. CREATE APPLICATION
+   Software Library → Applications → Create Application
+   ├── Type: MSI
+   ├── Content: \\server\share\CortexXDR\cortex.msi
+   └── Install: msiexec /i "cortex.msi" /qn DISTRIBUTION_ID=<ID>
+
+2. DETECTION METHOD
+   Registry: HKLM\SOFTWARE\Palo Alto Networks\Traps
+   └── Value: ProductVersion exists
+
+3. REQUIREMENTS
+   ├── OS: Windows 10 or later
+   ├── Disk space: 500 MB
+   └── Memory: 2 GB
+
+4. DEPLOYMENT
+   ├── Action: Install
+   ├── Purpose: Required
+   └── Schedule: As soon as possible
+
+5. SUPERSEDENCE (Optional)
+   Supersede older Traps versions</div>
+
+                    <h4>Group Policy Deployment</h4>
+                    <div class="code-block"># Create deployment share
+\\dc\NETLOGON\CortexXDR\cortex.msi
+
+# GPO Software Installation
+Computer Configuration → Policies → 
+Software Settings → Software Installation → 
+New Package → Select MSI
+
+# Transform file for DISTRIBUTION_ID
+Create MST file with Orca or similar:
+Property: DISTRIBUTION_ID = <YOUR_DIST_ID>
+
+# Startup Script Method
+powershell.exe -ExecutionPolicy Bypass -File \\dc\NETLOGON\deploy-cortex.ps1
+
+# deploy-cortex.ps1
+$msiPath = "\\dc\NETLOGON\CortexXDR\cortex.msi"
+$distID = "YOUR_DIST_ID"
+$logPath = "C:\Windows\Temp\cortex_install.log"
+
+if (!(Get-Service -Name CyveraService -ErrorAction SilentlyContinue)) {
+    Start-Process msiexec -ArgumentList "/i `"$msiPath`" /qn /l*v `"$logPath`" DISTRIBUTION_ID=$distID" -Wait
+}</div>
+                </div>
+
+                <!-- Linux Deployment -->
+                <h2><i class="fab fa-linux"></i> Linux Deployment</h2>
+                <div class="config-section">
+                    <div class="code-block"># RHEL/CentOS Installation
+sudo rpm -ivh cortex-xdr-<version>.rpm
+sudo /opt/traps/bin/cytool register --distro-id <DIST_ID>
+
+# Ubuntu/Debian Installation
+sudo dpkg -i cortex-xdr_<version>_amd64.deb
+sudo /opt/traps/bin/cytool register --distro-id <DIST_ID>
+
+# With proxy
+sudo /opt/traps/bin/cytool register --distro-id <DIST_ID> \
+    --proxy-host proxy.domain.com --proxy-port 8080
+
 # Verify installation
-/Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool runtime status</code></pre>
-            </div>
-            <h3>Linux Installation</h3>
-            <div class="code-block">
-                <pre><code># RHEL/CentOS - RPM Installation
-sudo rpm -ivh traps_agent.rpm
-# Ubuntu/Debian - DEB Installation
-sudo dpkg -i traps_agent.deb
-sudo apt-get install -f  # Fix dependencies if needed
-# Verify installation
-sudo /opt/traps/bin/cytool runtime status
-# Check agent connectivity
-sudo /opt/traps/bin/cytool connect status
-# View agent logs
-sudo journalctl -u traps -f
-tail -f /var/log/traps/traps.log</code></pre>
-            </div>
-        </section>
-        <section class="content-section">
-            <h2>Agent Profiles</h2>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Profile Type</th>
-                        <th>Protection Level</th>
-                        <th>Performance Impact</th>
-                        <th>Use Case</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Full Protection</strong></td>
-                        <td>Maximum</td>
-                        <td>Medium</td>
-                        <td>Standard endpoints, workstations</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Detection Only</strong></td>
-                        <td>Detection</td>
-                        <td>Low</td>
-                        <td>Initial rollout, testing</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Server Profile</strong></td>
-                        <td>Optimized</td>
-                        <td>Low</td>
-                        <td>Production servers, databases</td>
-                    </tr>
-                    <tr>
-                        <td><strong>VDI Profile</strong></td>
-                        <td>Optimized</td>
-                        <td>Minimal</td>
-                        <td>Virtual desktops, non-persistent</td>
-                    </tr>
-                    <tr>
-                        <td><strong>POS/Kiosk</strong></td>
-                        <td>Tailored</td>
-                        <td>Minimal</td>
-                        <td>Point of sale, embedded systems</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h3>Profile Configuration Settings</h3>
-            <div class="code-block">
-                <pre><code># Full Protection Profile Settings
-{
-    "profile_name": "Full Protection",
-    "malware_protection": {
-        "enabled": true,
-        "action": "block",
-        "behavioral_threat_protection": true,
-        "ransomware_protection": true
-    },
-    "exploit_protection": {
-        "enabled": true,
-        "action": "block",
-        "protected_processes": ["browsers", "office", "pdf_readers"]
-    },
-    "restriction_settings": {
-        "child_process_protection": true,
-        "script_protection": true,
-        "macro_protection": true
-    },
-    "data_collection": {
-        "enhanced_data": true,
-        "network_events": true,
-        "file_events": true,
-        "registry_events": true
-    }
-}
-# Server Profile Settings
-{
-    "profile_name": "Server Profile",
-    "malware_protection": {
-        "enabled": true,
-        "action": "block",
-        "scan_on_write": true,
-        "scan_on_read": false  # Reduce I/O impact
-    },
-    "performance_optimization": {
-        "cpu_limit": 30,
-        "scan_priority": "low",
-        "exclude_paths": [
-            "/var/log/*",
-            "/var/lib/mysql/*",
-            "/var/lib/postgresql/*"
-        ]
-    }
-}</code></pre>
-            </div>
-        </section>
-        <section class="content-section">
-            <h2>Mass Deployment Scripts</h2>
-            <h3>PowerShell - Domain-Joined Deployment</h3>
-            <div class="code-block">
-                <pre><code># Deploy to multiple computers from AD
-$Computers = Get-ADComputer -Filter * -SearchBase "OU=Workstations,DC=corp,DC=local" | 
-             Select-Object -ExpandProperty Name
-$InstallerPath = "\\fileserver\software\Traps\TrapsAgent.msi"
-$LogPath = "\\fileserver\logs\traps"
-foreach ($Computer in $Computers) {
-    $Session = New-PSSession -ComputerName $Computer -ErrorAction SilentlyContinue
-    if ($Session) {
-        Invoke-Command -Session $Session -ScriptBlock {
-            param($Installer, $LogDir, $CompName)
-            $LogFile = Join-Path $LogDir "$CompName-install.log"
-            $Arguments = "/i `"$Installer`" /qn /l*v `"$LogFile`""
-            Start-Process msiexec.exe -ArgumentList $Arguments -Wait -NoNewWindow
-        } -ArgumentList $InstallerPath, $LogPath, $Computer
-        Remove-PSSession $Session
-        Write-Host "Deployed to $Computer" -ForegroundColor Green
-    } else {
-        Write-Host "Failed to connect to $Computer" -ForegroundColor Red
-    }
-}</code></pre>
-            </div>
-            <h3>Ansible Playbook - Linux Deployment</h3>
-            <div class="code-block">
-                <pre><code>---
-# cortex_xdr_deploy.yml
-- name: Deploy Cortex XDR Agent to Linux Servers
+sudo /opt/traps/bin/cytool info
+
+# Check service status
+sudo systemctl status traps_pmd
+
+# Uninstall
+# RHEL: sudo rpm -e cortex-xdr
+# Ubuntu: sudo dpkg -r cortex-xdr</div>
+
+                    <h4>Ansible Deployment</h4>
+                    <div class="code-block"># cortex-deploy.yml
+---
+- name: Deploy Cortex XDR Agent
   hosts: linux_servers
   become: yes
   vars:
-    agent_package: "traps_agent_8.0.rpm"
-    agent_source: "https://internal-repo.corp.local/cortex/"
+    dist_id: "YOUR_DIST_ID"
+    package_path: "files/cortex-xdr.rpm"
+    
   tasks:
-    - name: Download Cortex XDR agent package
-      get_url:
-        url: "{{ agent_source }}{{ agent_package }}"
-        dest: "/tmp/{{ agent_package }}"
-        mode: '0644'
-    - name: Install Cortex XDR agent (RHEL/CentOS)
+    - name: Copy Cortex package
+      copy:
+        src: "{{ package_path }}"
+        dest: /tmp/cortex-xdr.rpm
+        
+    - name: Install Cortex XDR
       yum:
-        name: "/tmp/{{ agent_package }}"
+        name: /tmp/cortex-xdr.rpm
         state: present
-        disable_gpg_check: yes
       when: ansible_os_family == "RedHat"
-    - name: Install Cortex XDR agent (Debian/Ubuntu)
-      apt:
-        deb: "/tmp/{{ agent_package | replace('.rpm', '.deb') }}"
-        state: present
-      when: ansible_os_family == "Debian"
-    - name: Start Cortex XDR service
-      service:
-        name: traps
-        state: started
-        enabled: yes
-    - name: Verify agent connectivity
-      command: /opt/traps/bin/cytool connect status
-      register: connect_status
-    - name: Display connection status
-      debug:
-        var: connect_status.stdout_lines</code></pre>
-            </div>
-        </section>
-        <section class="content-section">
-            <h2>Agent Management Commands</h2>
-            <h3>Windows - cytool Commands</h3>
-            <div class="code-block">
-                <pre><code># Check agent status
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" runtime status
-# Check connectivity
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connect status
-# Force content update
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" content update
-# View agent version
+        
+    - name: Register agent
+      command: /opt/traps/bin/cytool register --distro-id {{ dist_id }}
+      args:
+        creates: /opt/traps/config/registered
+        
+    - name: Verify agent
+      command: /opt/traps/bin/cytool info
+      register: agent_status
+      
+    - debug:
+        var: agent_status.stdout_lines</div>
+                </div>
+
+                <!-- macOS Deployment -->
+                <h2><i class="fab fa-apple"></i> macOS Deployment</h2>
+                <div class="config-section">
+                    <div class="code-block"># Manual Installation
+# Download PKG from console
+
+# Install package
+sudo installer -pkg CortexXDR.pkg -target /
+
+# Register with distribution ID
+sudo /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool register --distro-id <DIST_ID>
+
+# Verify
+sudo /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info
+
+# Required Approvals:
+System Preferences → Security & Privacy → Privacy
+├── Full Disk Access: Cortex XDR
+├── System Extensions: Palo Alto Networks
+└── Network Extensions: Palo Alto Networks
+
+# Jamf Deployment
+1. Upload PKG to Jamf
+2. Create policy with PKG
+3. Add post-install script for registration
+4. Deploy MDM profile for approvals</div>
+                </div>
+
+                <!-- Agent Configuration -->
+                <h2><i class="fas fa-cog"></i> Agent Configuration</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Endpoints → Policy Management → Agent Settings</span></p>
+
+                    <div class="code-block">Agent Settings Profiles:
+
+PROTECTION SETTINGS:
+├── Malware Protection: Enable/Disable
+├── Exploit Protection: Enable/Disable
+├── Behavioral Threat Protection: Enable/Disable
+├── Device Control: Enable/Disable
+└── Host Firewall: Enable/Disable
+
+COLLECTION SETTINGS:
+├── XDR Data Collection: Full/Minimal
+├── Network Traffic Analysis: Enable/Disable
+├── Hash Calculation: All files/On-demand
+└── File Acquisition: Allow/Deny
+
+OPERATIONAL SETTINGS:
+├── Content Update Frequency
+├── Agent Auto-Update
+├── Proxy Configuration
+├── Bandwidth Throttling
+└── Diagnostic Logging Level
+
+ENDPOINT GROUPS:
+├── Assign profiles by group
+├── Dynamic group rules
+├── Priority ordering
+└── Policy inheritance</div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+                <div class="config-section">
+                    <div class="code-block"># Windows - Check agent status
 "C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
-# Check protection status
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" protect status
-# Isolate endpoint (requires admin token)
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate enable
-# Remove isolation
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" isolate disable
-# Generate support file
-"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" support generate</code></pre>
-            </div>
-            <h3>Linux - cytool Commands</h3>
-            <div class="code-block">
-                <pre><code># Check agent status
-sudo /opt/traps/bin/cytool runtime status
-# Check all modules
-sudo /opt/traps/bin/cytool runtime modules
-# View protection policy
-sudo /opt/traps/bin/cytool protect policy
-# Check file exclusions
-sudo /opt/traps/bin/cytool protect exclusions
-# Force sync with management
-sudo /opt/traps/bin/cytool sync
-# Check hash verdict
-sudo /opt/traps/bin/cytool hash query <sha256>
-# Collect diagnostic bundle
-sudo /opt/traps/bin/cytool support generate --output /tmp/traps_diag.tar.gz</code></pre>
-            </div>
-        </section>
-        <section class="content-section">
-            <h2>Troubleshooting</h2>
-            <h3>Common Issues and Solutions</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Issue</th>
-                        <th>Symptoms</th>
-                        <th>Resolution</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Agent Not Connecting</strong></td>
-                        <td>Disconnected status, no heartbeat</td>
-                        <td>Check firewall rules, verify proxy settings, test connectivity to *.paloaltonetworks.com</td>
-                    </tr>
-                    <tr>
-                        <td><strong>High CPU Usage</strong></td>
-                        <td>cyserver.exe consuming >30% CPU</td>
-                        <td>Add exclusions for high-I/O applications, switch to Server profile, check for malware scans</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Content Update Failures</strong></td>
-                        <td>Outdated signatures, update errors</td>
-                        <td>Check Broker VM connectivity, verify internet access, force update via cytool</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Installation Fails</strong></td>
-                        <td>MSI error codes, incomplete install</td>
-                        <td>Check prerequisites (.NET, disk space), run with verbose logging, verify admin rights</td>
-                    </tr>
-                    <tr>
-                        <td><strong>macOS Permissions</strong></td>
-                        <td>Limited visibility, missing events</td>
-                        <td>Grant Full Disk Access, approve system extensions, check MDM profiles</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h3>Diagnostic Commands</h3>
-            <div class="code-block">
-                <pre><code># Windows - Check service status
-Get-Service -Name "cyserver" | Select-Object Status, StartType
-# Windows - View recent logs
-Get-EventLog -LogName Application -Source "Traps*" -Newest 50
-# Windows - Check network connectivity
-Test-NetConnection -ComputerName "*.xdr.us.paloaltonetworks.com" -Port 443
-# Linux - Check service status
-systemctl status traps
-# Linux - View logs
-journalctl -u traps --since "1 hour ago"
-# macOS - Check extensions
-systemextensionsctl list | grep paloalto
-# macOS - View logs
-log show --predicate 'subsystem == "com.paloaltonetworks.traps"' --last 1h</code></pre>
-            </div>
-        </section>
-        <section class="interview-section">
-            <h2>💼 Interview Questions</h2>
-            <div class="interview-qa">
-                <h4>Q: How would you deploy Cortex XDR agents to 5,000 endpoints in a large enterprise?</h4>
-                <p><strong>A:</strong> I would approach this in phases. First, I would work with the infrastructure team to deploy using existing tools like SCCM or Intune for Windows, Jamf for macOS, and Ansible or Puppet for Linux. I would start with a pilot group of 100-200 machines across different departments to identify any compatibility issues. I would use Detection-Only mode initially to avoid disrupting operations, then gradually enable blocking after validating false positive rates. For network requirements, I would work with the firewall team to allow connectivity to Palo Alto's cloud domains. I would also deploy a Broker VM in each major site for environments with restricted internet access to handle content updates and log forwarding.</p>
-            </div>
-            <div class="interview-qa">
-                <h4>Q: What's the difference between Cortex XDR agent profiles and when would you use each?</h4>
-                <p><strong>A:</strong> Cortex XDR offers several profiles optimized for different environments. Full Protection provides maximum security with all prevention modules enabled, ideal for standard workstations. Server Profile reduces I/O impact by optimizing scan operations and is designed for production servers where performance is critical. VDI Profile handles non-persistent desktops efficiently by minimizing local storage and optimizing for golden image scenarios. Detection-Only mode captures all telemetry without blocking, which I use during initial deployments or when troubleshooting false positives. The key is matching the profile to the endpoint's role and adjusting exclusions based on legitimate applications running on each system type.</p>
-            </div>
-        </section>
-        <div class="navigation-links">
-            <a href="index.html">← Back to Cortex XDR</a>
-            <a href="xql-reference.html">XQL Reference →</a>
-        </div>
-            
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
 
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
+# Windows - Service check
+sc query CyveraService
 
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
+# Windows - Connectivity test
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connectivity
+
+# Windows - Logs
+C:\ProgramData\Cyvera\Logs\
+
+# Linux - Check status
+sudo /opt/traps/bin/cytool info
+sudo systemctl status traps_pmd
+
+# macOS - Check status
+sudo /Library/Application\ Support/PaloAltoNetworks/Traps/bin/cytool info
+
+Common Issues:
+
+1. AGENT NOT CONNECTING
+   □ Verify Distribution ID
+   □ Check network connectivity to cortex.paloaltonetworks.com
+   □ Verify proxy settings
+   □ Check firewall rules (port 443)
+
+2. INSTALLATION FAILS
+   □ Check system requirements
+   □ Verify admin rights
+   □ Check for conflicting AV
+   □ Review install logs
+
+3. AGENT NOT REPORTING
+   □ Check agent service running
+   □ Verify agent version current
+   □ Run connectivity test
+   □ Review cortex console for errors</div>
                 </div>
 
-
-                <!-- Comprehensive Troubleshooting -->
-                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
-                <div class="config-section">
-                    <h4>Systematic Troubleshooting Methodology</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <ol style="color: #8b949e;">
-                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
-                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
-                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
-                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
-                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
-                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
-                        </ol>
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is a Distribution ID and why is it important?</button>
+                        <div class="qa-answer">
+                            <p>The <strong>Distribution ID</strong> uniquely identifies your Cortex XDR tenant:</p>
+                            <ul>
+                                <li>Links agents to your management console</li>
+                                <li>Required for agent registration</li>
+                                <li>Found in Agent Installation settings</li>
+                                <li>Without it, agent won't connect to your instance</li>
+                            </ul>
+                        </div>
                     </div>
-
-                    <h4>Common Issues and Resolutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="2"><strong>Connectivity</strong></td>
-                                <td>Agent not reporting</td>
-                                <td>Check agent service status, network connectivity, firewall rules</td>
-                                <td>Restart service, verify network path, update firewall rules</td>
-                            </tr>
-                            <tr>
-                                <td>API timeouts</td>
-                                <td>Test API endpoint, check rate limits, verify credentials</td>
-                                <td>Retry with backoff, request limit increase, refresh credentials</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Data Quality</strong></td>
-                                <td>Missing fields</td>
-                                <td>Review parsing rules, check source format, validate schema</td>
-                                <td>Update parser, fix source configuration, adjust schema mapping</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Audit data sources, check collection paths, review timestamps</td>
-                                <td>Consolidate sources, implement deduplication, fix time sync</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Performance</strong></td>
-                                <td>Slow queries</td>
-                                <td>Analyze query execution plan, check resource utilization</td>
-                                <td>Optimize query, add indexes, scale resources</td>
-                            </tr>
-                            <tr>
-                                <td>High latency</td>
-                                <td>Monitor queue depths, check processing bottlenecks</td>
-                                <td>Scale processing capacity, optimize data flow</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Authentication</strong></td>
-                                <td>Login failures</td>
-                                <td>Verify credentials, check account status, review permissions</td>
-                                <td>Reset password, unlock account, grant required permissions</td>
-                            </tr>
-                            <tr>
-                                <td>Token expiration</td>
-                                <td>Check token validity, review refresh mechanism</td>
-                                <td>Refresh token, update token management configuration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
-
-# Check system health status
-| filter log_type = "system_health"
-| sort _time desc
-| limit 50
-
-# Monitor error rates over time
-| filter severity in ("error", "critical")
-| timechart count by component span=1h
-
-# Identify slow operations
-| filter operation_time > 30000
-| stats avg(operation_time), max(operation_time), count by operation_name
-| sort avg(operation_time) desc
-
-# Check connectivity status
-| filter event_type = "connectivity"
-| stats latest(status), latest(_time) by source_name
-| where status != "connected"
-
-# Review authentication failures
-| filter event_type = "authentication" and result = "failure"
-| stats count by user, source_ip, failure_reason
-| sort count desc</div>
-                </div>
-
-
-                <!-- Real-World Use Cases -->
-                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
-                <div class="config-section">
-                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
-                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>High volume of security events (500+ million events/day)</li>
-                            <li>Multiple security tools with siloed data</li>
-                            <li>Alert fatigue from excessive false positives</li>
-                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Phased rollout starting with critical data sources</li>
-                            <li>Custom detection rules based on threat model</li>
-                            <li>Automated playbooks for common scenarios</li>
-                            <li>Integration with ITSM and CMDB systems</li>
-                        </ul>
-                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you deploy Cortex XDR agents at scale?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>SCCM/MECM:</strong> Application deployment with MSI</li>
+                                <li><strong>Intune:</strong> Win32 app or line-of-business app</li>
+                                <li><strong>GPO:</strong> Software installation or startup script</li>
+                                <li><strong>Ansible/Puppet:</strong> Configuration management for Linux</li>
+                                <li><strong>Jamf:</strong> PKG deployment with MDM profile for macOS</li>
+                            </ul>
+                            <p>Key: Include Distribution ID in deployment package.</p>
+                        </div>
                     </div>
-
-                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
-                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Need for strict data isolation between customers</li>
-                            <li>Scalable operations with limited staff</li>
-                            <li>Standardized service delivery across customers</li>
-                            <li>Flexible SLA-based prioritization</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Shared detection content library with customization</li>
-                            <li>Centralized analyst console with customer context</li>
-                            <li>Automated reporting and SLA tracking</li>
-                        </ul>
-                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
-                    </div>
-
-                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
-                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>HIPAA compliance requirements for PHI protection</li>
-                            <li>Legacy medical devices with limited security logging</li>
-                            <li>Need for 6-year log retention</li>
-                            <li>Limited IT security staff</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive EHR and clinical application monitoring</li>
-                            <li>PHI access detection rules</li>
-                            <li>Long-term archival storage configuration</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                        </ul>
-                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you verify agent is working correctly?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Run <code>cytool info</code> - shows agent status, version, registration</li>
+                                <li>Run <code>cytool connectivity</code> - tests cloud connection</li>
+                                <li>Check services are running (CyveraService)</li>
+                                <li>Verify agent appears in Cortex console</li>
+                                <li>Check protection policies applied</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-</main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
+            </main>
         </div>
     </div>
     <script>
@@ -818,10 +427,7 @@ log show --predicate 'subsystem == "com.paloaltonetworks.traps"' --last 1h</code
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

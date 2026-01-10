@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architecture | Sentinel | Nik's SIEM Compendium</title>
+    <title>Architecture | Microsoft Sentinel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="app-container">
-                                                                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -19,38 +19,40 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Sentinel Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
                     <a href="architecture.html" class="nav-link active"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Data Tiers & Costs</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
-                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-cogs"></i> DCR & DCE Guide</a>
-                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Ingestion Patterns</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-route"></i> DCR/DCE Pipeline</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
                     <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
-                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Transform</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & ASIM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">KQL Query Language</div>
                     <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
-                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> KQL Intermediate</a>
-                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-code"></i> KQL Advanced</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-code"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> KQL Advanced</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
                     <a href="analytics-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation (Playbooks)</a>
-                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Tools & Content</div>
                     <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
-                    <a href="soc-operations.html" class="nav-link"><i class="fas fa-users"></i> SOC Operations</a>
-                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
                 </div>
             </nav>
         </aside>
@@ -64,753 +66,516 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-sitemap"></i> Microsoft Sentinel Architecture</h1>
-                <p class="lead">Microsoft Sentinel is a cloud-native SIEM and SOAR solution built on Azure. Understanding its architecture helps with deployment planning, cost optimization, and integration design.</p>
+                <p class="lead">Deep dive into Microsoft Sentinel's cloud-native SIEM architecture. Understand workspace design, data flow, ingestion pipelines, and multi-tenant configurations for enterprise deployments.</p>
 
-                <!-- CORE COMPONENTS -->
-                <h2><i class="fas fa-cubes"></i> Core Components</h2>
-                
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1c3a5e; color: #58a6ff;"><i class="fas fa-database"></i></div>
-                            <div class="comparison-item-title">Log Analytics Workspace</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Data storage layer</li>
-                            <li><i class="fas fa-check"></i> KQL query engine</li>
-                            <li><i class="fas fa-check"></i> Tables for each data type</li>
-                            <li><i class="fas fa-check"></i> Retention configuration</li>
-                            <li><i class="fas fa-info-circle"></i> Foundation for Sentinel</li>
-                        </ul>
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-info-circle"></i> Architecture Overview</h2>
+                <div class="config-section">
+                    <h4>High-Level Architecture</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        MICROSOFT SENTINEL ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   DATA SOURCES                    INGESTION                   LOG ANALYTICS     │
+│   ────────────                    ─────────                   ─────────────     │
+│                                                                                 │
+│   ┌──────────┐                  ┌─────────────┐             ┌───────────────┐  │
+│   │ Azure    │─────────────────▶│  Service-   │────────────▶│               │  │
+│   │ Services │                  │  to-Service │             │  LOG ANALYTICS│  │
+│   └──────────┘                  │  Connectors │             │   WORKSPACE   │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              │  ┌─────────┐  │  │
+│   │ Microsoft│                  ┌─────────────┐             │  │  Tables │  │  │
+│   │   365    │─────────────────▶│  Diagnostic │────────────▶│  │ (Data) │  │  │
+│   └──────────┘                  │  Settings   │             │  └─────────┘  │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              │  ┌─────────┐  │  │
+│   │ On-Prem  │                  ┌─────────────┐             │  │  Index  │  │  │
+│   │ Servers  │─────────────────▶│     AMA     │────────────▶│  │         │  │  │
+│   └──────────┘                  │   Agent     │             │  └─────────┘  │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              └───────────────┘  │
+│   │  Syslog  │                  ┌─────────────┐                    │           │
+│   │ Sources  │─────────────────▶│ Log Forward │────────────────────┘           │
+│   └──────────┘                  │     VM      │                                │
+│                                 └─────────────┘                                │
+│   ┌──────────┐                                                                 │
+│   │ External │                  ┌─────────────┐                                │
+│   │  APIs    │─────────────────▶│  Data Coll. │────────────────────────────────┘
+│   └──────────┘                  │  Endpoints  │                                │
+│                                 └─────────────┘                                │
+│                                                                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│                              SENTINEL LAYER                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │Analytics │  │ Hunting  │  │Notebooks │  │Workbooks │  │Automation│  │   │
+│  │  │  Rules   │  │ Queries  │  │(Jupyter) │  │(Dashbd)  │  │(Playbook)│  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │Incidents │  │ Entities │  │  Threat  │  │  UEBA    │  │  SOAR    │  │   │
+│  │  │  Queue   │  │(Behavior)│  │  Intel   │  │          │  │          │  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
                     </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-plug"></i></div>
-                            <div class="comparison-item-title">Data Connectors</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Ingest data from sources</li>
-                            <li><i class="fas fa-check"></i> Native Microsoft connectors</li>
-                            <li><i class="fas fa-check"></i> AMA for syslog/CEF</li>
-                            <li><i class="fas fa-check"></i> APIs for custom sources</li>
-                            <li><i class="fas fa-info-circle"></i> Content Hub solutions</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-bell"></i></div>
-                            <div class="comparison-item-title">Analytics Rules</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Scheduled KQL queries</li>
-                            <li><i class="fas fa-check"></i> NRT (near real-time) rules</li>
-                            <li><i class="fas fa-check"></i> ML behavior analytics</li>
-                            <li><i class="fas fa-check"></i> Fusion correlation</li>
-                            <li><i class="fas fa-info-circle"></i> Create incidents</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-robot"></i></div>
-                            <div class="comparison-item-title">Automation</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Playbooks (Logic Apps)</li>
-                            <li><i class="fas fa-check"></i> Automation rules</li>
-                            <li><i class="fas fa-check"></i> Auto-enrichment</li>
-                            <li><i class="fas fa-check"></i> Response actions</li>
-                            <li><i class="fas fa-info-circle"></i> 200+ connectors</li>
-                        </ul>
-                    </div>
-                </div>
 
-                <!-- HIGH-LEVEL ARCHITECTURE -->
-                <h2><i class="fas fa-project-diagram"></i> High-Level Architecture</h2>
-                
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-cloud"></i> Sentinel Data Flow</div>
-                    
-                    <!-- Data Sources -->
-                    <div style="text-align: center; margin-bottom: 16px;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Data Sources</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box"><div class="flow-box-title">Microsoft 365</div><div class="flow-box-subtitle">Azure AD, Defender</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Azure</div><div class="flow-box-subtitle">Activity, Resources</div></div>
-                        <div class="flow-box"><div class="flow-box-title">On-Premises</div><div class="flow-box-subtitle">Servers, Network</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Third Party</div><div class="flow-box-subtitle">AWS, Okta, etc.</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓ ↓ ↓ ↓</div>
-                    
-                    <!-- Ingestion Layer -->
-                    <div style="text-align: center; margin: 16px 0;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Ingestion Layer</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box success"><div class="flow-box-title">Native Connectors</div><div class="flow-box-subtitle">Service-to-Service</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">AMA + DCR</div><div class="flow-box-subtitle">Syslog/CEF</div></div>
-                        <div class="flow-box success"><div class="flow-box-title">Logs Ingestion API</div><div class="flow-box-subtitle">Custom Sources</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <!-- Storage Layer -->
-                    <div class="flow-row centered">
-                        <div class="flow-box primary" style="min-width: 400px;">
-                            <div class="flow-box-title">Log Analytics Workspace</div>
-                            <div class="flow-box-subtitle">Tables: SecurityEvent, Syslog, SigninLogs, Custom_CL</div>
-                        </div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <!-- Analysis Layer -->
-                    <div style="text-align: center; margin: 16px 0;">
-                        <span style="color: #8b949e; font-size: 0.85rem; text-transform: uppercase;">Microsoft Sentinel</span>
-                    </div>
-                    <div class="flow-row centered">
-                        <div class="flow-box warning"><div class="flow-box-title">Analytics Rules</div><div class="flow-box-subtitle">Detection</div></div>
-                        <div class="flow-box purple"><div class="flow-box-title">Incidents</div><div class="flow-box-subtitle">Investigation</div></div>
-                        <div class="flow-box danger"><div class="flow-box-title">Playbooks</div><div class="flow-box-subtitle">Response</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Workbooks</div><div class="flow-box-subtitle">Dashboards</div></div>
-                    </div>
-                </div>
-
-                <!-- WORKSPACE DESIGN -->
-                <h2><i class="fas fa-drafting-compass"></i> Workspace Design Patterns</h2>
-                
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">How many Log Analytics Workspaces do you need?</div>
-                    </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">Single Workspace (Recommended)</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Most organizations</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Simpler management, unified detection, better correlation. Use RBAC for access control.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">Multiple Workspaces</div>
-                            <div class="decision-path-content">
-                                <p style="color: #d29922; font-weight: 600;">→ Special requirements only</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Data residency, strict isolation, separate billing, MSPs.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="styled-table">
-                    <table>
+                    <h4>Core Components</h4>
+                    <table class="styled-table">
                         <thead>
-                            <tr>
-                                <th>Pattern</th>
-                                <th>When to Use</th>
-                                <th>Considerations</th>
-                            </tr>
+                            <tr><th>Component</th><th>Description</th><th>Azure Service</th></tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><strong>Single Workspace</strong></td>
-                                <td>Most enterprises, single region</td>
-                                <td>Best correlation, simplest management</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Regional Workspaces</strong></td>
-                                <td>Data residency requirements (GDPR)</td>
-                                <td>Cross-workspace queries needed, complex</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Tenant per Customer (MSSP)</strong></td>
-                                <td>Managed security service providers</td>
-                                <td>Azure Lighthouse for central management</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Dev/Test + Production</strong></td>
-                                <td>Rule testing, cost separation</td>
-                                <td>Minimal data in dev, full in prod</td>
-                            </tr>
+                            <tr><td><strong>Log Analytics Workspace</strong></td><td>Data storage and query engine</td><td>Azure Monitor</td></tr>
+                            <tr><td><strong>Sentinel Solution</strong></td><td>SIEM capabilities layer</td><td>Microsoft Sentinel</td></tr>
+                            <tr><td><strong>Data Connectors</strong></td><td>Ingestion from various sources</td><td>Built-in & Custom</td></tr>
+                            <tr><td><strong>Analytics Engine</strong></td><td>Rule evaluation, alert generation</td><td>Sentinel Analytics</td></tr>
+                            <tr><td><strong>Automation</strong></td><td>Playbooks and response actions</td><td>Logic Apps</td></tr>
+                            <tr><td><strong>Content Hub</strong></td><td>Solutions, rules, playbooks</td><td>Sentinel Content</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- DATA TIERS -->
-                <h2><i class="fas fa-layer-group"></i> Data Retention Tiers</h2>
-                
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-clock"></i> Log Analytics Data Lifecycle</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box success" style="min-width: 180px;">
-                            <div class="flow-box-title">Analytics Logs</div>
-                            <div class="flow-box-subtitle">Full KQL, 30-730 days</div>
-                        </div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box warning" style="min-width: 180px;">
-                            <div class="flow-box-title">Basic Logs</div>
-                            <div class="flow-box-subtitle">Limited KQL, 8 days</div>
-                        </div>
-                        <span class="flow-arrow">→</span>
-                        <div class="flow-box purple" style="min-width: 180px;">
-                            <div class="flow-box-title">Archive Tier</div>
-                            <div class="flow-box-subtitle">Search jobs, 7 years</div>
-                        </div>
-                    </div>
+                <!-- Log Analytics Workspace -->
+                <h2><i class="fas fa-database"></i> Log Analytics Workspace</h2>
+                <div class="config-section">
+                    <h4>Workspace Fundamentals</h4>
+                    <div class="code-block">Log Analytics Workspace:
+
+WHAT IT IS:
+├── Central repository for all log data
+├── Scalable, cloud-native data store
+├── KQL query engine
+├── Retention and archival management
+└── Foundation for Sentinel
+
+KEY PROPERTIES:
+├── Workspace ID: Unique identifier (GUID)
+├── Primary Key: Agent authentication
+├── Region: Data residency location
+├── Pricing Tier: Commitment tier or Pay-as-you-go
+└── Retention: 30-730 days (interactive)
+
+DATA STRUCTURE:
+├── Tables: Schema-defined containers
+│   ├── Built-in tables (SecurityEvent, Syslog, etc.)
+│   ├── Custom tables (Custom_CL)
+│   └── Basic logs tables (_Basic)
+├── Columns: Typed fields within tables
+└── Records: Individual log entries
+
+WORKSPACE LIMITS:
+├── Ingestion: No hard limit (throttling at extreme scale)
+├── Query: 500,000 results per query
+├── Retention: 730 days interactive, 7 years archive
+├── Tables: 500 custom tables per workspace
+└── Concurrent queries: 200 per workspace</div>
+
+                    <h4>Workspace Design Patterns</h4>
+                    <div class="code-block">Workspace Design Patterns:
+
+1. SINGLE WORKSPACE (Recommended for most)
+   ┌─────────────────────────────────────┐
+   │         CENTRAL WORKSPACE           │
+   │  ┌─────────┐  ┌─────────┐          │
+   │  │ Azure   │  │ On-Prem │          │
+   │  │ Data    │  │  Data   │          │
+   │  └─────────┘  └─────────┘          │
+   └─────────────────────────────────────┘
+   
+   Pros: Simple, unified view, efficient
+   Cons: Single region, shared permissions
+   Use when: Single org, one region, unified SOC
+
+2. REGIONAL WORKSPACES
+   ┌──────────────┐  ┌──────────────┐
+   │  US EAST     │  │  EU WEST     │
+   │  Workspace   │  │  Workspace   │
+   └──────────────┘  └──────────────┘
+   
+   Pros: Data residency compliance, reduced latency
+   Cons: Fragmented view, higher cost
+   Use when: GDPR, data sovereignty requirements
+
+3. HYBRID (Production + Security)
+   ┌──────────────┐  ┌──────────────┐
+   │  Operations  │  │   Security   │
+   │  Workspace   │  │  Workspace   │
+   │  (IT Ops)    │  │  (Sentinel)  │
+   └──────────────┘  └──────────────┘
+   
+   Pros: Separation of concerns, different retention
+   Cons: Potential duplication, cross-workspace queries
+   Use when: Separate IT and Security teams
+
+4. MULTI-TENANT (MSSP)
+   ┌─────────────────────────────────┐
+   │         MSSP WORKSPACE          │
+   │  ┌────────┐ ┌────────┐         │
+   │  │Client A│ │Client B│         │
+   │  └────────┘ └────────┘         │
+   └─────────────────────────────────┘
+   
+   Via Azure Lighthouse delegation
+   Pros: Centralized management
+   Cons: Complex RBAC, resource limits</div>
                 </div>
 
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-bolt"></i></div>
-                            <div class="comparison-item-title">Analytics Logs</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Full KQL query capabilities</li>
-                            <li><i class="fas fa-check"></i> Real-time analytics rules</li>
-                            <li><i class="fas fa-check"></i> Interactive investigations</li>
-                            <li><i class="fas fa-dollar-sign"></i> Highest cost tier</li>
-                            <li><i class="fas fa-clock"></i> 30-730 day retention</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-coins"></i></div>
-                            <div class="comparison-item-title">Basic Logs</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> 8x cheaper than Analytics</li>
-                            <li><i class="fas fa-times"></i> Limited KQL (no joins)</li>
-                            <li><i class="fas fa-times"></i> No analytics rules</li>
-                            <li><i class="fas fa-check"></i> Search for known data</li>
-                            <li><i class="fas fa-clock"></i> 8-day interactive + archive</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #3d2a5e; color: #a371f7;"><i class="fas fa-archive"></i></div>
-                            <div class="comparison-item-title">Archive Tier</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Cheapest storage</li>
-                            <li><i class="fas fa-times"></i> No direct queries</li>
-                            <li><i class="fas fa-check"></i> Search jobs (async)</li>
-                            <li><i class="fas fa-check"></i> Restore to Analytics</li>
-                            <li><i class="fas fa-clock"></i> Up to 7 years</li>
-                        </ul>
-                    </div>
+                <!-- Data Ingestion Pipeline -->
+                <h2><i class="fas fa-stream"></i> Data Ingestion Pipeline</h2>
+                <div class="config-section">
+                    <h4>Ingestion Methods</h4>
+                    <div class="code-block">Data Ingestion Methods:
+
+1. SERVICE-TO-SERVICE CONNECTORS
+   ├── Direct API integration
+   ├── No agent required
+   ├── Examples: Azure AD, M365, Azure Activity
+   └── Configuration: Enable in Data Connectors blade
+
+2. DIAGNOSTIC SETTINGS
+   ├── Azure resource logs
+   ├── Platform metrics (optional)
+   ├── Destination: Log Analytics Workspace
+   └── Per-resource configuration
+
+3. AZURE MONITOR AGENT (AMA)
+   ├── Modern agent (replaces MMA/OMS)
+   ├── Windows/Linux support
+   ├── Data Collection Rules (DCR)
+   ├── Azure Arc for hybrid/multi-cloud
+   └── Recommended for new deployments
+
+4. DATA COLLECTION ENDPOINTS (DCE)
+   ├── Custom log ingestion
+   ├── REST API endpoint
+   ├── Supports transformation
+   └── For custom applications
+
+5. SYSLOG/CEF COLLECTION
+   ├── Linux VM as forwarder
+   ├── rsyslog/syslog-ng configuration
+   ├── AMA with Syslog DCR
+   └── For network devices, appliances
+
+6. LOGSTASH PLUGIN
+   ├── Output plugin for Log Analytics
+   ├── Existing Logstash pipelines
+   ├── Transformation capabilities
+   └── For complex parsing needs</div>
+
+                    <h4>Data Collection Rules (DCR)</h4>
+                    <div class="code-block">Data Collection Rules (DCR):
+
+WHAT IS A DCR:
+├── Defines what data to collect
+├── Specifies transformations
+├── Routes to destinations
+└── Replaces agent-based config
+
+DCR COMPONENTS:
+┌─────────────────────────────────────────────────┐
+│                    DCR                          │
+│                                                 │
+│  ┌───────────┐   ┌───────────┐   ┌───────────┐│
+│  │  Data     │──▶│ Transform │──▶│  Destina- ││
+│  │  Sources  │   │ (KQL)     │   │   tions   ││
+│  └───────────┘   └───────────┘   └───────────┘│
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+DATA SOURCES:
+├── Windows Event Logs
+├── Linux Syslog
+├── Performance Counters
+├── Custom Text Logs
+├── IIS Logs
+└── Custom API (via DCE)
+
+TRANSFORMATIONS (Ingest-time KQL):
+├── Filter unwanted records
+├── Parse/extract fields
+├── Enrich data
+├── Modify schema
+└── Reduce ingestion volume
+
+EXAMPLE DCR TRANSFORM:
+source
+| where EventID != 4688 or CommandLine !has "legitimate_process"
+| extend ParsedData = parse_json(EventData)
+| project-away EventData</div>
                 </div>
 
-                <!-- DCR/DCE ARCHITECTURE -->
-                <h2><i class="fas fa-stream"></i> Data Collection Architecture</h2>
-                
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> DCR/DCE Data Flow</div>
-                    
-                    <div class="flow-row">
-                        <div class="flow-box"><div class="flow-box-title">Syslog Source</div><div class="flow-box-subtitle">Firewall</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Custom App</div><div class="flow-box-subtitle">REST API</div></div>
-                        <div class="flow-box"><div class="flow-box-title">Azure VM</div><div class="flow-box-subtitle">Windows/Linux</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box success"><div class="flow-box-title">Azure Monitor Agent</div><div class="flow-box-subtitle">On VMs</div></div>
-                        <div class="flow-box warning"><div class="flow-box-title">Logs Ingestion API</div><div class="flow-box-subtitle">HTTP POST</div></div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box purple" style="min-width: 300px;">
-                            <div class="flow-box-title">Data Collection Endpoint (DCE)</div>
-                            <div class="flow-box-subtitle">Regional ingestion endpoint</div>
-                        </div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box danger" style="min-width: 300px;">
-                            <div class="flow-box-title">Data Collection Rule (DCR)</div>
-                            <div class="flow-box-subtitle">Transform (KQL) → Route → Destination</div>
-                        </div>
-                    </div>
-                    
-                    <div class="flow-arrow down">↓</div>
-                    
-                    <div class="flow-row centered">
-                        <div class="flow-box primary" style="min-width: 300px;">
-                            <div class="flow-box-title">Log Analytics Workspace</div>
-                            <div class="flow-box-subtitle">Target Table(s)</div>
-                        </div>
-                    </div>
+                <!-- Data Storage & Retention -->
+                <h2><i class="fas fa-archive"></i> Data Storage & Retention</h2>
+                <div class="config-section">
+                    <h4>Storage Tiers</h4>
+                    <div class="code-block">Log Analytics Storage Tiers:
+
+ANALYTICS LOGS (Default):
+├── Full query capability
+├── 30-730 days retention
+├── Higher cost per GB
+├── All KQL functions available
+└── Real-time ingestion
+
+BASIC LOGS:
+├── Reduced query capability
+├── 8 days retention (then archive)
+├── 50% lower ingestion cost
+├── Limited KQL (no joins, limited functions)
+├── Pay-per-query for search
+└── Good for: High-volume, low-query tables
+
+ARCHIVED LOGS:
+├── Long-term storage (up to 7 years)
+├── Requires restore to query
+├── Lowest storage cost
+├── Restore takes minutes to hours
+├── Good for: Compliance, historical analysis
+
+AUXILIARY LOGS:
+├── High-volume, low-value data
+├── 30 days retention
+├── Lowest cost tier
+├── Limited query capability
+└── Good for: Verbose debug logs
+
+TIER SELECTION MATRIX:
+┌────────────────────┬──────────────┬──────────────┬────────────┐
+│ Use Case           │ Query Freq   │ Retention    │ Tier       │
+├────────────────────┼──────────────┼──────────────┼────────────┤
+│ Security Events    │ High         │ 90-365 days  │ Analytics  │
+│ NetFlow/Traffic    │ Low          │ 30-90 days   │ Basic      │
+│ Compliance Archive │ Rare         │ 1-7 years    │ Archive    │
+│ Debug/Verbose      │ Very Low     │ 30 days      │ Auxiliary  │
+└────────────────────┴──────────────┴──────────────┴────────────┘</div>
+
+                    <h4>Retention Configuration</h4>
+                    <div class="code-block"># Set workspace default retention (days)
+az monitor log-analytics workspace update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --retention-time 90
+
+# Set table-specific retention
+az monitor log-analytics workspace table update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --name SecurityEvent \
+  --retention-time 365 \
+  --total-retention-time 730
+
+# Enable archiving for table
+az monitor log-analytics workspace table update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --name SecurityEvent \
+  --total-retention-time 2555  # 7 years
+
+RETENTION HIERARCHY:
+├── Workspace default: Applies to all tables
+├── Table override: Per-table retention
+├── Archive extension: Beyond interactive retention
+└── Sentinel free retention: 90 days for security tables</div>
                 </div>
 
-                <!-- ENTERPRISE EXAMPLE -->
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-building"></i>
-                        <div class="enterprise-example-title">Enterprise Example: Healthcare Organization (HIPAA)</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> Healthcare system with 5,000 employees, Azure-heavy infrastructure, HIPAA compliance, 24/7 SOC.
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #3fb950; margin-top: 0;">Workspace Design</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Pattern:</strong> Single workspace<br>
-                                <strong>Region:</strong> East US 2 (primary)<br>
-                                <strong>Retention:</strong> 2 years (HIPAA)<br>
-                                <strong>Access:</strong> RBAC by team
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #58a6ff; margin-top: 0;">Data Sources</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Microsoft:</strong> Azure AD, M365, MDE<br>
-                                <strong>Network:</strong> Palo Alto via AMA<br>
-                                <strong>Apps:</strong> Epic EMR via API<br>
-                                <strong>Volume:</strong> ~150GB/day
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #d29922; margin-top: 0;">Cost Optimization</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Commitment:</strong> 200GB/day tier<br>
-                                <strong>Basic Logs:</strong> Network flow data<br>
-                                <strong>Free tier:</strong> Azure Activity<br>
-                                <strong>Archive:</strong> After 90 days
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 16px; padding: 12px; background: #161b22; border-radius: 8px;">
-                        <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">
-                            <strong style="color: #3fb950;">Architecture Decisions:</strong><br>
-                            • <strong>Single workspace:</strong> Better correlation, simpler HIPAA audit, RBAC sufficient for access control<br>
-                            • <strong>2-year retention:</strong> HIPAA requires 6 years for some data - using archive tier for cost savings<br>
-                            • <strong>Basic Logs for flow data:</strong> High volume, rarely queried except for specific investigations<br>
-                            • <strong>Native Microsoft connectors:</strong> Azure AD, MDE alerts free, bi-directional sync
-                        </p>
-                    </div>
+                <!-- Multi-Tenant Architecture -->
+                <h2><i class="fas fa-building"></i> Multi-Tenant Architecture</h2>
+                <div class="config-section">
+                    <h4>Azure Lighthouse</h4>
+                    <div class="code-block">Azure Lighthouse for Multi-Tenant:
+
+WHAT IS AZURE LIGHTHOUSE:
+├── Cross-tenant management
+├── Delegated resource access
+├── MSSP/enterprise scenarios
+├── Centralized SOC operations
+└── Maintain customer ownership
+
+ARCHITECTURE:
+┌────────────────────────────────────────────────────────┐
+│                   MANAGING TENANT                      │
+│                   (MSSP / Central SOC)                 │
+│  ┌────────────────────────────────────────────────┐   │
+│  │              Azure Lighthouse                   │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐     │   │
+│  │  │ Sentinel │  │ Sentinel │  │ Sentinel │     │   │
+│  │  │ View     │  │ View     │  │ View     │     │   │
+│  │  │ Tenant A │  │ Tenant B │  │ Tenant C │     │   │
+│  │  └──────────┘  └──────────┘  └──────────┘     │   │
+│  └────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   TENANT A   │  │   TENANT B   │  │   TENANT C   │
+│  (Customer)  │  │  (Customer)  │  │  (Customer)  │
+│  ┌────────┐  │  │  ┌────────┐  │  │  ┌────────┐  │
+│  │Sentinel│  │  │  │Sentinel│  │  │  │Sentinel│  │
+│  │Workspace│ │  │  │Workspace│ │  │  │Workspace│ │
+│  └────────┘  │  │  └────────┘  │  │  └────────┘  │
+└──────────────┘  └──────────────┘  └──────────────┘
+
+DELEGATION PROCESS:
+1. Customer creates ARM template for delegation
+2. Template specifies:
+   ├── Managing tenant ID
+   ├── Principal IDs (users/groups)
+   ├── Role assignments
+   └── Scope (subscription/resource group)
+3. Customer deploys template
+4. MSSP gains delegated access</div>
+
+                    <h4>Workspace Manager</h4>
+                    <div class="code-block">Sentinel Workspace Manager:
+
+PURPOSE:
+├── Centrally manage multiple Sentinel workspaces
+├── Publish content across workspaces
+├── Maintain consistency
+└── Enterprise/MSSP scenarios
+
+CAPABILITIES:
+├── Create member workspace groups
+├── Publish analytics rules
+├── Publish automation rules
+├── Publish hunting queries
+├── Monitor deployment status
+└── Manage at scale
+
+PATH: Sentinel → Configuration → Workspace manager
+
+CONTENT TYPES SUPPORTED:
+├── Analytics rules
+├── Automation rules
+├── Hunting queries
+├── Parsers
+└── Workbooks (coming)
+
+WORKFLOW:
+1. Create workspace group
+2. Add member workspaces
+3. Create content items
+4. Publish to members
+5. Monitor deployment
+6. Handle conflicts</div>
+                </div>
+
+                <!-- Cost Optimization -->
+                <h2><i class="fas fa-dollar-sign"></i> Cost Optimization</h2>
+                <div class="config-section">
+                    <div class="code-block">Sentinel Cost Optimization:
+
+COST COMPONENTS:
+├── Log Analytics ingestion ($/GB)
+├── Sentinel analysis ($/GB)
+├── Log Analytics retention ($/GB/month after 90 days)
+├── Playbook runs (Logic Apps pricing)
+└── Data export (if enabled)
+
+OPTIMIZATION STRATEGIES:
+
+1. COMMITMENT TIERS
+   ├── 100 GB/day: ~30% savings
+   ├── 200 GB/day: ~35% savings
+   ├── 500+ GB/day: ~40%+ savings
+   └── Evaluate: 31-day rolling average
+
+2. BASIC LOGS
+   ├── High-volume, low-query tables
+   ├── 50% ingestion savings
+   ├── Candidates: NetFlow, verbose logs
+   └── Trade-off: Limited query capability
+
+3. DATA COLLECTION RULES
+   ├── Filter at ingestion (before storage)
+   ├── Drop unnecessary events
+   ├── Parse and project only needed fields
+   └── Reduce volume by 30-50%
+
+4. TABLE RETENTION TUNING
+   ├── Reduce retention for high-volume tables
+   ├── Archive instead of delete
+   ├── 90 days free for security tables
+   └── Per-table optimization
+
+5. DATA FILTERING EXAMPLES:
+   // DCR Transform - filter noisy events
+   source
+   | where EventID !in (4688, 5156, 5158)
+   | where not (EventID == 4624 and LogonType == 3)
+
+COST MONITORING:
+├── Usage blade in workspace
+├── Azure Cost Management
+├── Custom workbook for Sentinel costs
+└── Set up budget alerts</div>
                 </div>
 
                 <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: What is the relationship between Log Analytics and Microsoft Sentinel?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain the relationship between Log Analytics and Sentinel.</button>
                         <div class="qa-answer">
-                            <p><strong>Log Analytics Workspace:</strong></p>
+                            <p><strong>Log Analytics Workspace</strong> is the foundation - it stores all log data and provides the KQL query engine.</p>
+                            <p><strong>Microsoft Sentinel</strong> is a solution layer on top that adds:</p>
                             <ul>
-                                <li>Azure Monitor service for log storage and queries</li>
-                                <li>Provides the data platform (tables, KQL engine)</li>
-                                <li>Can exist without Sentinel (for IT ops monitoring)</li>
+                                <li>Analytics rules and incident management</li>
+                                <li>SOAR/automation capabilities</li>
+                                <li>Threat intelligence integration</li>
+                                <li>Entity behavior analytics</li>
+                                <li>Content Hub for solutions</li>
                             </ul>
-                            <p><strong>Microsoft Sentinel:</strong></p>
-                            <ul>
-                                <li>Security layer built ON TOP of Log Analytics</li>
-                                <li>Adds: Analytics rules, incidents, SOAR, threat hunting</li>
-                                <li>Requires Log Analytics Workspace as foundation</li>
-                                <li>"Enable Sentinel" = add security features to existing workspace</li>
-                            </ul>
-                            <p><strong>Key point:</strong> You pay for Log Analytics (data storage) + Sentinel (security features) separately.</p>
+                            <p>You must have a Log Analytics Workspace to enable Sentinel.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: How do you reduce Sentinel costs?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are Data Collection Rules and why are they important?</button>
                         <div class="qa-answer">
-                            <p><strong>Cost optimization strategies:</strong></p>
+                            <p><strong>DCRs</strong> define what data to collect, how to transform it, and where to send it:</p>
                             <ul>
-                                <li><strong>Commitment tiers:</strong> 100GB/day+ gets 30-50% discount</li>
-                                <li><strong>Basic Logs:</strong> 8x cheaper for high-volume, low-query data</li>
-                                <li><strong>DCR filtering:</strong> Drop non-security events before ingestion</li>
-                                <li><strong>Free data sources:</strong> Azure Activity, M365 Defender alerts</li>
-                                <li><strong>Archive tier:</strong> Move old data to cheap storage</li>
-                                <li><strong>Right-size retention:</strong> Don't keep Analytics tier longer than needed</li>
+                                <li><strong>Sources:</strong> Windows events, Syslog, custom logs</li>
+                                <li><strong>Transforms:</strong> Filter, parse, enrich at ingest-time</li>
+                                <li><strong>Destinations:</strong> Which workspace/table</li>
                             </ul>
+                            <p><strong>Benefits:</strong> Reduce ingestion costs, centralized config, ingest-time transformations.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How would you design a multi-tenant Sentinel deployment?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Azure Lighthouse:</strong> Enable cross-tenant delegation</li>
+                                <li><strong>Workspace per tenant:</strong> Data isolation and sovereignty</li>
+                                <li><strong>Workspace Manager:</strong> Centrally publish content</li>
+                                <li><strong>RBAC:</strong> Granular permissions per tenant</li>
+                                <li><strong>Cross-workspace queries:</strong> Unified hunting when needed</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the different log tiers and when to use each?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Analytics:</strong> Full query, 30-730 days, security/hunting data</li>
+                                <li><strong>Basic:</strong> Limited query, 8 days, high-volume/low-value logs</li>
+                                <li><strong>Archive:</strong> Restore required, 7 years, compliance</li>
+                                <li><strong>Auxiliary:</strong> Minimal query, 30 days, debug logs</li>
+                            </ul>
+                            <p>Choose based on query frequency, retention needs, and cost optimization.</p>
                         </div>
                     </div>
                 </div>
 
-            
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-
-
-                <!-- Comprehensive Troubleshooting -->
-                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
-                <div class="config-section">
-                    <h4>Systematic Troubleshooting Methodology</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <ol style="color: #8b949e;">
-                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
-                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
-                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
-                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
-                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
-                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
-                        </ol>
-                    </div>
-
-                    <h4>Common Issues and Resolutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="2"><strong>Connectivity</strong></td>
-                                <td>Agent not reporting</td>
-                                <td>Check agent service status, network connectivity, firewall rules</td>
-                                <td>Restart service, verify network path, update firewall rules</td>
-                            </tr>
-                            <tr>
-                                <td>API timeouts</td>
-                                <td>Test API endpoint, check rate limits, verify credentials</td>
-                                <td>Retry with backoff, request limit increase, refresh credentials</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Data Quality</strong></td>
-                                <td>Missing fields</td>
-                                <td>Review parsing rules, check source format, validate schema</td>
-                                <td>Update parser, fix source configuration, adjust schema mapping</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Audit data sources, check collection paths, review timestamps</td>
-                                <td>Consolidate sources, implement deduplication, fix time sync</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Performance</strong></td>
-                                <td>Slow queries</td>
-                                <td>Analyze query execution plan, check resource utilization</td>
-                                <td>Optimize query, add indexes, scale resources</td>
-                            </tr>
-                            <tr>
-                                <td>High latency</td>
-                                <td>Monitor queue depths, check processing bottlenecks</td>
-                                <td>Scale processing capacity, optimize data flow</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Authentication</strong></td>
-                                <td>Login failures</td>
-                                <td>Verify credentials, check account status, review permissions</td>
-                                <td>Reset password, unlock account, grant required permissions</td>
-                            </tr>
-                            <tr>
-                                <td>Token expiration</td>
-                                <td>Check token validity, review refresh mechanism</td>
-                                <td>Refresh token, update token management configuration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
-
-# Check system health status
-| filter log_type = "system_health"
-| sort _time desc
-| limit 50
-
-# Monitor error rates over time
-| filter severity in ("error", "critical")
-| timechart count by component span=1h
-
-# Identify slow operations
-| filter operation_time > 30000
-| stats avg(operation_time), max(operation_time), count by operation_name
-| sort avg(operation_time) desc
-
-# Check connectivity status
-| filter event_type = "connectivity"
-| stats latest(status), latest(_time) by source_name
-| where status != "connected"
-
-# Review authentication failures
-| filter event_type = "authentication" and result = "failure"
-| stats count by user, source_ip, failure_reason
-| sort count desc</div>
-                </div>
-
-
-                <!-- Real-World Use Cases -->
-                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
-                <div class="config-section">
-                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
-                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>High volume of security events (500+ million events/day)</li>
-                            <li>Multiple security tools with siloed data</li>
-                            <li>Alert fatigue from excessive false positives</li>
-                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Phased rollout starting with critical data sources</li>
-                            <li>Custom detection rules based on threat model</li>
-                            <li>Automated playbooks for common scenarios</li>
-                            <li>Integration with ITSM and CMDB systems</li>
-                        </ul>
-                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
-                    </div>
-
-                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
-                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Need for strict data isolation between customers</li>
-                            <li>Scalable operations with limited staff</li>
-                            <li>Standardized service delivery across customers</li>
-                            <li>Flexible SLA-based prioritization</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Shared detection content library with customization</li>
-                            <li>Centralized analyst console with customer context</li>
-                            <li>Automated reporting and SLA tracking</li>
-                        </ul>
-                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
-                    </div>
-
-                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
-                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>HIPAA compliance requirements for PHI protection</li>
-                            <li>Legacy medical devices with limited security logging</li>
-                            <li>Need for 6-year log retention</li>
-                            <li>Limited IT security staff</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive EHR and clinical application monitoring</li>
-                            <li>PHI access detection rules</li>
-                            <li>Long-term archival storage configuration</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                        </ul>
-                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
-                    </div>
-                </div>
-
-
-                <!-- Interview Preparation -->
-                <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
-                <div class="config-section">
-                    <h4>Common Interview Questions</h4>
-                    <div class="qa-section">
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach implementing a new security monitoring capability?</button>
-                            <div class="qa-answer">
-                                <p><strong>Structured approach:</strong></p>
-                                <ol>
-                                    <li><strong>Requirements Gathering:</strong> Understand use case, data sources, detection goals, and compliance needs</li>
-                                    <li><strong>Design:</strong> Plan data collection, parsing, storage, and detection logic</li>
-                                    <li><strong>Implementation:</strong> Configure data sources, build detection rules, set up dashboards</li>
-                                    <li><strong>Testing:</strong> Validate with test data, tune for false positives, verify performance</li>
-                                    <li><strong>Deployment:</strong> Roll out in phases, monitor for issues, gather feedback</li>
-                                    <li><strong>Optimization:</strong> Continuously tune based on operational experience</li>
-                                </ol>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle alert fatigue in a SOC environment?</button>
-                            <div class="qa-answer">
-                                <p><strong>Multi-pronged approach:</strong></p>
-                                <ul>
-                                    <li><strong>Tune Detection Rules:</strong> Adjust thresholds, add exclusions for known-good behavior</li>
-                                    <li><strong>Implement Alert Aggregation:</strong> Group related alerts into incidents</li>
-                                    <li><strong>Prioritization:</strong> Use risk scoring to surface high-priority alerts</li>
-                                    <li><strong>Automation:</strong> Auto-close or auto-enrich low-severity alerts</li>
-                                    <li><strong>Regular Review:</strong> Weekly review of noisy rules for tuning</li>
-                                    <li><strong>Metrics Tracking:</strong> Monitor false positive rates by rule</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe your experience with security data analysis and threat hunting.</button>
-                            <div class="qa-answer">
-                                <p><strong>Key competencies to highlight:</strong></p>
-                                <ul>
-                                    <li><strong>Query Languages:</strong> Proficiency in SPL, KQL, XQL, or similar</li>
-                                    <li><strong>Hypothesis-Driven Hunting:</strong> Developing and testing threat hypotheses</li>
-                                    <li><strong>IOC Analysis:</strong> Working with threat intelligence to hunt for indicators</li>
-                                    <li><strong>Behavioral Analysis:</strong> Identifying anomalous patterns in user and system behavior</li>
-                                    <li><strong>Tool Proficiency:</strong> Experience with SIEM, EDR, and analysis tools</li>
-                                    <li><strong>Documentation:</strong> Recording findings and developing new detection rules</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="qa-item">
-                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you stay current with security threats and platform updates?</button>
-                            <div class="qa-answer">
-                                <p><strong>Continuous learning approach:</strong></p>
-                                <ul>
-                                    <li><strong>Threat Intelligence:</strong> Follow threat reports, security blogs, and advisories</li>
-                                    <li><strong>Vendor Resources:</strong> Review release notes, attend webinars, complete training</li>
-                                    <li><strong>Community Engagement:</strong> Participate in forums, conferences, and user groups</li>
-                                    <li><strong>Hands-On Practice:</strong> Lab environments for testing new features</li>
-                                    <li><strong>Certifications:</strong> Pursue relevant certifications and continuing education</li>
-                                    <li><strong>Knowledge Sharing:</strong> Present learnings to team, write documentation</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4>Technical Scenarios to Prepare</h4>
-                    <ul style="color: #8b949e;">
-                        <li>Walk through investigating a phishing incident from alert to resolution</li>
-                        <li>Explain how you would detect lateral movement in your environment</li>
-                        <li>Describe your approach to onboarding a new log source</li>
-                        <li>Discuss how you would build a detection rule for a specific attack technique</li>
-                        <li>Explain capacity planning for a growing environment</li>
-                    </ul>
-                </div>
-
-
-                <!-- Quick Reference Card -->
-                <h2><i class="fas fa-bookmark"></i> Quick Reference Card</h2>
-                <div class="config-section">
-                    <h4>Essential Queries</h4>
-                    <div class="code-block"># Data volume by source (last 24h)
-| filter _time > now() - 24h
-| stats sum(bytes) as total_bytes by log_source
-| sort total_bytes desc
-| eval GB = round(total_bytes / 1073741824, 2)
-
-# Top alerting rules
-| filter event_type = "alert"
-| stats count by rule_name
-| sort count desc
-| limit 10
-
-# User activity summary
-| filter event_type = "authentication"
-| stats 
-    count as total_events,
-    countif(result="success") as successes,
-    countif(result="failure") as failures
-    by user
-| eval failure_rate = round(failures * 100 / total_events, 1)
-
-# System health overview
-| filter log_type = "health_check"
-| stats latest(status), latest(response_time) by component
-| sort component</div>
-
-                    <h4>Key Metrics to Monitor</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Target</th><th>Alert Threshold</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Ingestion Latency</td><td>&lt; 1 minute</td><td>&gt; 5 minutes</td></tr>
-                            <tr><td>Query Response Time</td><td>&lt; 10 seconds</td><td>&gt; 60 seconds</td></tr>
-                            <tr><td>Parse Success Rate</td><td>&gt; 99%</td><td>&lt; 95%</td></tr>
-                            <tr><td>Alert Volume</td><td>Baseline</td><td>3x baseline</td></tr>
-                            <tr><td>Storage Utilization</td><td>&lt; 70%</td><td>&gt; 85%</td></tr>
-                            <tr><td>Agent Connectivity</td><td>100%</td><td>&lt; 98%</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Important Paths and Locations</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Function</th><th>Location</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Data Source Configuration</td><td>Settings → Data Sources</td></tr>
-                            <tr><td>Detection Rules</td><td>Detection → Rules / Analytics</td></tr>
-                            <tr><td>Incident Management</td><td>Incidents / Cases</td></tr>
-                            <tr><td>Query Interface</td><td>Investigation / Hunting / Search</td></tr>
-                            <tr><td>Dashboards</td><td>Dashboards / Workbooks</td></tr>
-                            <tr><td>User Management</td><td>Settings → Users / Access</td></tr>
-                            <tr><td>System Health</td><td>Settings → Health / Status</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-</main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
+            </main>
         </div>
     </div>
     <script>
@@ -820,10 +585,7 @@
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

@@ -6,20 +6,10 @@
     <title>Correlation Rules | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .rule-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #f97316; }
-        .mitre-tag { background: #1f6feb; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
-        .severity-high { color: #f85149; }
-        .severity-medium { color: #d29922; }
-        .severity-low { color: #3fb950; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -29,6 +19,7 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">XSIAM Platform</div>
@@ -52,17 +43,19 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
                     <a href="correlation-rules.html" class="nav-link active"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="alert-management.html" class="nav-link"><i class="fas fa-bell"></i> Alert Management</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-crosshairs"></i> XDR Capabilities</a>
-                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> ASM / Xpanse</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Automation & SOAR</div>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
-                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
-                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Advanced Features</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> XDR Capabilities</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Storage Tiers</a>
                 </div>
             </nav>
         </aside>
@@ -629,329 +622,6 @@ dataset = xdr_data
                         </div>
                     </div>
                 </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
-            });
-        });
-    </script>
-</body>
-</html>
-
-                <!-- Additional Rule Examples by Category -->
-                <h2><i class="fas fa-folder-open"></i> Rule Examples by Attack Category</h2>
-
-                <!-- Initial Access Rules -->
-                <div class="config-section">
-                    <h3><span class="mitre-tag">TA0001</span> Initial Access Detection</h3>
-                    
-                    <h4>Phishing Link Clicked</h4>
-                    <div class="code-block">dataset = panw_ngfw_url_raw
-| filter url_category in ("phishing", "malware", "newly-registered-domain")
-| filter action = "allowed"  // User actually reached the site
-| alter 
-    xdm.alert.name = concat("Phishing URL Accessed: ", url_domain),
-    xdm.alert.description = concat(
-        "User from ", src_host, " accessed suspicious URL: ", url,
-        " (Category: ", url_category, ")"
-    ),
-    xdm.alert.severity = "high",
-    xdm.source.host.hostname = src_host,
-    xdm.source.user.username = src_user</div>
-
-                    <h4>External RDP Exposure</h4>
-                    <div class="code-block">dataset = panw_ngfw_traffic_raw
-| filter dst_port = 3389
-| filter src_ip_public = true  // External source
-| filter action = "allowed"
-| comp 
-    connection_count = count(),
-    unique_sources = count_distinct(src_ip)
-    by dst_ip, dst_host
-    over 1h
-| filter connection_count >= 10 or unique_sources >= 5
-| alter 
-    xdm.alert.name = concat("External RDP to ", dst_host),
-    xdm.alert.description = concat(
-        "Internal host ", dst_host, " received ", 
-        to_string(connection_count), " RDP connections from ",
-        to_string(unique_sources), " external IPs"
-    ),
-    xdm.alert.severity = "high"</div>
-                </div>
-
-                <!-- Execution Rules -->
-                <div class="config-section">
-                    <h3><span class="mitre-tag">TA0002</span> Execution Detection</h3>
-                    
-                    <h4>PowerShell Download Cradle</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_name in ("powershell.exe", "pwsh.exe")
-| filter process_command_line ~= "(IEX|Invoke-Expression|Net\.WebClient|DownloadString|DownloadFile|Invoke-WebRequest|iwr|curl)"
-| alter 
-    xdm.alert.name = "PowerShell Download Cradle Detected",
-    xdm.alert.description = concat(
-        "Host ", host_name, " executed PowerShell with download pattern: ",
-        process_command_line
-    ),
-    xdm.alert.severity = "high",
-    xdm.source.host.hostname = host_name,
-    xdm.source.user.username = user_name</div>
-
-                    <h4>Suspicious Script Interpreter</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_name in ("wscript.exe", "cscript.exe", "mshta.exe")
-| filter parent_process_name not in ("explorer.exe", "cmd.exe")  // Unusual parent
-| alter 
-    xdm.alert.name = concat("Suspicious Script Execution via ", process_name),
-    xdm.alert.description = concat(
-        "Script interpreter ", process_name, " spawned by unusual parent ",
-        parent_process_name, " on ", host_name
-    ),
-    xdm.alert.severity = "medium"</div>
-                </div>
-
-                <!-- Persistence Rules -->
-                <div class="config-section">
-                    <h3><span class="mitre-tag">TA0003</span> Persistence Detection</h3>
-                    
-                    <h4>Scheduled Task Created via CLI</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_name = "schtasks.exe"
-| filter process_command_line contains "/create"
-| filter process_command_line ~= "(cmd|powershell|wscript|cscript|mshta)"
-| alter 
-    xdm.alert.name = "Suspicious Scheduled Task Created",
-    xdm.alert.description = concat(
-        "Scheduled task created on ", host_name, " with command: ",
-        process_command_line
-    ),
-    xdm.alert.severity = "medium",
-    xdm.source.host.hostname = host_name</div>
-
-                    <h4>Registry Run Key Modification</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "registry_modification"
-| filter registry_key ~= "\\CurrentVersion\\Run"
-| filter registry_value_data ~= "(\.exe|\.dll|\.bat|\.ps1|\.vbs)"
-| alter 
-    xdm.alert.name = "Registry Persistence Detected",
-    xdm.alert.description = concat(
-        "Run key modified on ", host_name, ": ",
-        registry_key, " = ", registry_value_data
-    ),
-    xdm.alert.severity = "medium"</div>
-                </div>
-
-                <!-- Defense Evasion Rules -->
-                <div class="config-section">
-                    <h3><span class="mitre-tag">TA0005</span> Defense Evasion Detection</h3>
-                    
-                    <h4>Security Tool Disabled</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_command_line ~= "(Set-MpPreference|DisableRealtimeMonitoring|Stop-Service.*Defender|sc stop|net stop)"
-| filter process_command_line ~= "(WinDefend|MsMpEng|Defender|SecurityHealth)"
-| alter 
-    xdm.alert.name = "Security Tool Tampering Detected",
-    xdm.alert.description = concat(
-        "Attempt to disable security tools on ", host_name, ": ",
-        process_command_line
-    ),
-    xdm.alert.severity = "high"</div>
-
-                    <h4>Log Clearing Detected</h4>
-                    <div class="code-block">dataset = msft_security_events_raw
-| filter event_id in (1102, 104)  // Security/System log cleared
-| alter 
-    xdm.alert.name = "Event Log Cleared",
-    xdm.alert.description = concat(
-        "Event log cleared on ", host_name, " by ", actor_user
-    ),
-    xdm.alert.severity = "high"</div>
-                </div>
-
-                <!-- Credential Access Rules -->
-                <div class="config-section">
-                    <h3><span class="mitre-tag">TA0006</span> Credential Access Detection</h3>
-                    
-                    <h4>LSASS Memory Access</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_access"
-| filter target_process_name = "lsass.exe"
-| filter source_process_name not in (
-    "csrss.exe", "services.exe", "svchost.exe", "wininit.exe"
-)  // Not normal system processes
-| alter 
-    xdm.alert.name = "LSASS Memory Access Detected",
-    xdm.alert.description = concat(
-        "Process ", source_process_name, " accessed LSASS memory on ", host_name
-    ),
-    xdm.alert.severity = "high"</div>
-
-                    <h4>Kerberoasting Activity</h4>
-                    <div class="code-block">dataset = msft_security_events_raw
-| filter event_id = 4769  // Kerberos Service Ticket Request
-| filter ticket_encryption_type = "0x17"  // RC4 (weak, used in Kerberoasting)
-| filter service_name != "krbtgt"
-| comp count() as ticket_requests by source_ip, target_user over 10m
-| filter ticket_requests >= 10  // Multiple service tickets requested
-| alter 
-    xdm.alert.name = "Potential Kerberoasting Activity",
-    xdm.alert.description = concat(
-        "User ", target_user, " requested ", 
-        to_string(ticket_requests), " RC4 service tickets from ", source_ip
-    ),
-    xdm.alert.severity = "medium"</div>
-                </div>
-
-                <!-- Multi-Stage Attack Detection -->
-                <h2><i class="fas fa-project-diagram"></i> Multi-Stage Attack Detection</h2>
-                <div class="config-section">
-                    <p>Correlate multiple indicators to detect complex attack chains:</p>
-                    
-                    <h4>Ransomware Precursor Activity</h4>
-                    <div class="code-block">// Detect combination of: reconnaissance + credential access + lateral movement
-dataset = xdr_data
-| filter event_type in ("process_execution", "network_connection")
-| alter indicator = case(
-    // Reconnaissance
-    process_name in ("net.exe", "nltest.exe", "dsquery.exe") and 
-    process_command_line ~= "(domain|trust|admin|computer)", "recon",
-    // Credential tools
-    process_name in ("mimikatz.exe", "procdump.exe") or
-    process_command_line contains "sekurlsa", "cred_access",
-    // Lateral movement tools
-    process_name in ("psexec.exe", "wmic.exe") and
-    process_command_line contains "\\\\", "lateral",
-    null
-)
-| filter indicator is not null
-| comp 
-    indicators = arraydistinct(arrayconcat(indicator)),
-    hosts_affected = count_distinct(host_name),
-    indicator_count = count()
-    by src_user
-    over 2h
-| filter array_length(indicators) >= 2  // Multiple attack phases
-| alter 
-    xdm.alert.name = "Multi-Stage Attack Detected",
-    xdm.alert.description = concat(
-        "User ", src_user, " exhibited multiple attack indicators: ",
-        arraystring(indicators, ", "), " across ", 
-        to_string(hosts_affected), " hosts"
-    ),
-    xdm.alert.severity = "critical"</div>
-                </div>
-
-                <!-- Rule Import/Export -->
-                <h2><i class="fas fa-file-export"></i> Rule Import/Export</h2>
-                <div class="config-section">
-                    <h4>Exporting Rules</h4>
-                    <p><span class="console-path">Detection Rules → Select Rule → Actions → Export</span></p>
-                    <p style="color: #8b949e;">Rules export as YAML format for version control and sharing.</p>
-
-                    <h4>Rule YAML Structure</h4>
-                    <div class="code-block">name: "Brute Force Authentication Attack"
-description: "Detects multiple failed logins followed by success"
-severity: HIGH
-mitre_attack:
-  - technique_id: T1110.001
-    tactic: Credential Access
-schedule:
-  interval: 5m
-  time_window: 15m
-xql_query: |
-  dataset = xdr_identity_data
-  | filter event_type = "authentication"
-  ...
-entity_mapping:
-  - field: src_ip
-    type: IP
-  - field: target_user
-    type: User
-enabled: true
-tags:
-  - brute_force
-  - authentication</div>
-
-                    <h4>Importing Rules</h4>
-                    <p><span class="console-path">Detection Rules → Import → Upload YAML</span></p>
-                    <ul style="color: #8b949e;">
-                        <li>Validate query syntax before import</li>
-                        <li>Review schedule and thresholds for your environment</li>
-                        <li>Test in test mode before enabling</li>
-                    </ul>
-                </div>
-
-                <!-- Metrics and Monitoring -->
-                <h2><i class="fas fa-chart-bar"></i> Rule Effectiveness Metrics</h2>
-                <div class="config-section">
-                    <h4>Key Metrics to Track</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Target</th><th>How to Calculate</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>True Positive Rate</td>
-                                <td>> 80%</td>
-                                <td>Confirmed incidents / Total alerts</td>
-                            </tr>
-                            <tr>
-                                <td>False Positive Rate</td>
-                                <td>< 20%</td>
-                                <td>FP alerts / Total alerts</td>
-                            </tr>
-                            <tr>
-                                <td>Alert Volume</td>
-                                <td>Manageable for team</td>
-                                <td>Alerts per day per rule</td>
-                            </tr>
-                            <tr>
-                                <td>Detection Latency</td>
-                                <td>< Schedule + Window</td>
-                                <td>Alert time - Event time</td>
-                            </tr>
-                            <tr>
-                                <td>Rule Coverage</td>
-                                <td>Key MITRE techniques</td>
-                                <td>Techniques with rules / Priority techniques</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Query to Analyze Rule Effectiveness</h4>
-                    <div class="code-block">dataset = xdr_alerts
-| filter alert_source = "correlation_rule"
-| comp 
-    total_alerts = count(),
-    true_positives = countif(verdict = "true_positive"),
-    false_positives = countif(verdict = "false_positive")
-    by rule_name
-    over 30d
-| alter 
-    tp_rate = round(true_positives * 100 / total_alerts, 1),
-    fp_rate = round(false_positives * 100 / total_alerts, 1)
-| sort fp_rate desc</div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
 
             </main>
         </div>

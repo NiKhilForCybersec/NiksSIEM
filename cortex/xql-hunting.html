@@ -6,17 +6,10 @@
     <title>XQL Threat Hunting | Cortex XDR</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
-        .mitre-tag { background: #1f6feb; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
-        .hunt-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #f97316; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -26,23 +19,29 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">Cortex XDR</div>
+                    <div class="nav-section-title">Cortex XDR Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
                     <a href="agent-deployment.html" class="nav-link"><i class="fas fa-download"></i> Agent Deployment</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection</div>
-                    <a href="bioc-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> BIOC Rules</a>
-                    <a href="analytics.html" class="nav-link"><i class="fas fa-brain"></i> Analytics (ML)</a>
-                    <a href="causality.html" class="nav-link"><i class="fas fa-sitemap"></i> Causality Analysis</a>
+                    <a href="analytics.html" class="nav-link"><i class="fas fa-chart-line"></i> Analytics Engine</a>
+                    <a href="bioc-rules.html" class="nav-link"><i class="fas fa-code"></i> BIOC Rules</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Hunting & Response</div>
-                    <a href="xql-hunting.html" class="nav-link active"><i class="fas fa-search"></i> XQL Hunting</a>
-                    <a href="xql-reference.html" class="nav-link"><i class="fas fa-book"></i> XQL Reference</a>
-                    <a href="response-actions.html" class="nav-link"><i class="fas fa-hand-paper"></i> Response Actions</a>
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="xql-hunting.html" class="nav-link active"><i class="fas fa-crosshairs"></i> XQL Hunting</a>
+                    <a href="xql-reference.html" class="nav-link"><i class="fas fa-book-open"></i> XQL Reference</a>
+                    <a href="incident-management.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                    <a href="causality.html" class="nav-link"><i class="fas fa-project-diagram"></i> Causality Analysis</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                 </div>
             </nav>
         </aside>
@@ -488,345 +487,6 @@ dataset = xdr_data
                             <p>For hunting, primarily use <code>xdr_data</code>. Use <code>xdr_alerts</code> for alert investigation and metrics.</p>
                         </div>
                     </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
-            });
-        });
-    </script>
-</body>
-</html>
-
-                <!-- File-Based Hunting -->
-                <h2><i class="fas fa-file"></i> File-Based Hunting</h2>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1105</span> Suspicious File Drops</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "file_event"
-| filter file_action = "create"
-| filter file_path ~= "(?i)(\\\\temp\\\\|\\\\appdata\\\\|\\\\programdata\\\\|\\\\users\\\\public)"
-| filter file_name ~= "(?i)\\.(exe|dll|ps1|bat|vbs|js|hta)$"
-| fields _time, host_name, file_path, file_name, file_sha256, process_name
-| sort desc _time</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1027</span> Double Extension Files</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "file_event"
-| filter file_action = "create"
-| filter file_name ~= "\\.\\w{2,4}\\.(exe|dll|scr|bat|cmd|ps1|vbs|js)$"
-| fields _time, host_name, file_path, file_name, process_name
-| sort desc _time</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1486</span> Mass File Modifications (Ransomware)</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "file_event"
-| filter file_action in ("modify", "rename")
-| comp 
-    count() as modified_count,
-    count_distinct(file_name) as unique_files
-    by host_name, process_name
-    over 5m
-| filter modified_count > 100
-| sort desc modified_count</div>
-                </div>
-
-                <!-- Module/DLL Hunting -->
-                <h2><i class="fas fa-puzzle-piece"></i> Module/DLL Hunting</h2>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1574.001</span> DLL Search Order Hijacking</h3>
-                    <div class="code-block">// Known hijackable DLLs from unusual locations
-dataset = xdr_data
-| filter event_type = "module_load"
-| filter module_name in ("version.dll", "cryptsp.dll", "cryptbase.dll", "wldp.dll", "dwmapi.dll")
-| filter module_path not contains "C:\\Windows\\System32"
-| filter module_path not contains "C:\\Windows\\SysWOW64"
-| fields _time, host_name, module_name, module_path, process_name, module_sha256
-| sort desc _time</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1055</span> Unsigned DLLs in System Processes</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "module_load"
-| filter process_name in ("svchost.exe", "services.exe", "lsass.exe")
-| filter module_is_signed = false
-| fields _time, host_name, process_name, module_name, module_path, module_sha256
-| sort desc _time</div>
-                </div>
-
-                <!-- Authentication Hunting -->
-                <h2><i class="fas fa-user-shield"></i> Authentication Hunting</h2>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1110</span> Brute Force Detection</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "authentication"
-| filter auth_result = "failure"
-| comp 
-    count() as failed_attempts,
-    count_distinct(target_user) as unique_users
-    by src_ip, host_name
-    over 10m
-| filter failed_attempts > 10 or unique_users > 5
-| sort desc failed_attempts</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1078</span> Successful Login After Failures</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "authentication"
-| comp 
-    countif(auth_result = "failure") as failures,
-    countif(auth_result = "success") as successes
-    by src_ip, target_user
-    over 30m
-| filter failures > 5 and successes > 0
-| sort desc failures</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1078</span> Off-Hours Authentication</h3>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "authentication"
-| filter auth_result = "success"
-| alter hour = timestamp_extract(_time, "HOUR")
-| alter day = timestamp_extract(_time, "DAYOFWEEK")
-| filter hour < 6 or hour > 22 or day in (0, 6)  // Outside 6AM-10PM or weekends
-| fields _time, host_name, target_user, src_ip, auth_type
-| sort desc _time</div>
-                </div>
-
-                <!-- Advanced XQL Techniques -->
-                <h2><i class="fas fa-magic"></i> Advanced XQL Techniques</h2>
-                <div class="config-section">
-                    <h4>Using alter for Calculated Fields</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "network_connection"
-| alter 
-    mb_sent = round(bytes_sent / 1048576, 2),
-    mb_received = round(bytes_received / 1048576, 2),
-    is_internal = if(dst_ip_is_private = true, "Internal", "External")
-| fields _time, host_name, dst_ip, is_internal, mb_sent, mb_received</div>
-
-                    <h4>Using arrayconcat for Collecting Values</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| comp 
-    arrayconcat(process_command_line) as all_commands,
-    count() as execution_count
-    by host_name, user_name
-    over 1h
-| filter execution_count > 10</div>
-
-                    <h4>Using join for Correlation</h4>
-                    <div class="code-block">// Join process events with network events
-dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_name = "powershell.exe"
-| join type=inner (
-    dataset = xdr_data
-    | filter event_type = "network_connection"
-    | filter dst_ip_is_private = false
-) as network on host_name = network.host_name and process_pid = network.process_pid
-| fields _time, host_name, process_command_line, network.dst_ip, network.dst_port</div>
-
-                    <h4>Using union for Multiple Datasets</h4>
-                    <div class="code-block">// Combine alerts and raw events
-dataset = xdr_alerts
-| filter severity in ("high", "critical")
-| fields _time, alert_name, host_name, severity
-| union (
-    dataset = xdr_data
-    | filter event_type = "process_execution"
-    | filter process_name = "mimikatz.exe"
-    | fields _time, host_name
-    | alter alert_name = "Custom: Mimikatz Detected", severity = "critical"
-)
-| sort desc _time</div>
-                </div>
-
-                <!-- BIOC Rule Development -->
-                <h2><i class="fas fa-shield-alt"></i> From Hunt to BIOC Rule</h2>
-                <div class="config-section">
-                    <p>Convert successful hunts into BIOC (Behavioral Indicator of Compromise) rules:</p>
-                    
-                    <h4>Hunt Query</h4>
-                    <div class="code-block">dataset = xdr_data
-| filter event_type = "process_execution"
-| filter process_name in ("powershell.exe", "pwsh.exe")
-| filter process_command_line ~= "(?i)-e(nc|ncodedcommand)"
-| filter parent_process_name not in ("explorer.exe", "sccm.exe")</div>
-
-                    <h4>Equivalent BIOC Rule (YAML)</h4>
-                    <div class="code-block">name: PowerShell Encoded Command - Suspicious Parent
-description: Detects PowerShell with encoded command from suspicious parent
-os: windows
-rule_type: process
-severity: high
-mitre:
-  - T1059.001
-
-process:
-  name:
-    - powershell.exe
-    - pwsh.exe
-  command_line:
-    pattern: "-e(nc|ncodedcommand)"
-    case_sensitive: false
-
-parent_process:
-  name:
-    exclude:
-      - explorer.exe
-      - sccm.exe
-      - services.exe
-
-action: alert</div>
-                </div>
-
-                <!-- Hunting Methodology -->
-                <h2><i class="fas fa-map"></i> Hunting Methodology</h2>
-                <div class="config-section">
-                    <h4>Hypothesis-Driven Approach</h4>
-                    <ol style="color: #8b949e;">
-                        <li><strong>Form Hypothesis:</strong> Based on threat intel, MITRE ATT&CK, or incidents</li>
-                        <li><strong>Identify Data:</strong> Which event types contain relevant telemetry?</li>
-                        <li><strong>Build Query:</strong> Start broad, then narrow based on results</li>
-                        <li><strong>Execute & Analyze:</strong> Review results, investigate anomalies</li>
-                        <li><strong>Document:</strong> Record findings, create detection rules</li>
-                    </ol>
-
-                    <h4>Recommended Hunt Schedule</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Hunt Category</th><th>Frequency</th><th>Priority</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Credential access indicators</td><td>Daily</td><td>Critical</td></tr>
-                            <tr><td>PowerShell suspicious activity</td><td>Daily</td><td>High</td></tr>
-                            <tr><td>Persistence mechanisms</td><td>Daily</td><td>High</td></tr>
-                            <tr><td>Lateral movement patterns</td><td>Daily</td><td>High</td></tr>
-                            <tr><td>Data exfiltration indicators</td><td>Daily</td><td>High</td></tr>
-                            <tr><td>LOLBin abuse</td><td>Weekly</td><td>Medium</td></tr>
-                            <tr><td>Rare process execution</td><td>Weekly</td><td>Medium</td></tr>
-                            <tr><td>DLL hijacking</td><td>Weekly</td><td>Medium</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Additional Interview Questions -->
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through investigating a suspicious PowerShell alert in Cortex XDR.</button>
-                        <div class="qa-answer">
-                            <ol>
-                                <li><strong>Review alert details:</strong> Check alert name, severity, host, user, and MITRE mapping</li>
-                                <li><strong>Examine causality chain:</strong> In Cortex UI, view the causality chain to see parent process and subsequent actions</li>
-                                <li><strong>Query for context:</strong>
-                                    <div class="code-block">dataset = xdr_data
-| filter host_name = "AFFECTED-HOST"
-| filter _time between (alert_time - 30m) and (alert_time + 30m)
-| sort asc _time</div>
-                                </li>
-                                <li><strong>Check network activity:</strong> Did PowerShell make any outbound connections?</li>
-                                <li><strong>Check file activity:</strong> Did it drop or modify files?</li>
-                                <li><strong>Scope the incident:</strong> Search for same IOCs across all endpoints</li>
-                                <li><strong>Respond:</strong> If confirmed malicious, isolate host, collect evidence</li>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you identify beaconing behavior in Cortex XDR?</button>
-                        <div class="qa-answer">
-                            <p>Beaconing is characterized by regular, periodic connections to external hosts:</p>
-                            <div class="code-block">dataset = xdr_data
-| filter event_type = "network_connection"
-| filter dst_ip_is_private = false
-| comp 
-    count() as connection_count,
-    arrayconcat(_time) as timestamps
-    by host_name, dst_ip, process_name
-    over 24h
-| filter connection_count > 20
-// Look for regular intervals in timestamps
-| sort desc connection_count</div>
-                            <p style="margin-top: 12px;">Key indicators:</p>
-                            <ul>
-                                <li>Regular connection intervals (every 60s, 5m, etc.)</li>
-                                <li>Consistent packet sizes</li>
-                                <li>Connections to rare external IPs</li>
-                                <li>Non-browser process making web connections</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between Analytics BIOC and Standard BIOC rules?</button>
-                        <div class="qa-answer">
-                            <p><strong>Standard BIOC:</strong></p>
-                            <ul>
-                                <li>Single-event detection (one process, one file, etc.)</li>
-                                <li>Pattern matching on specific fields</li>
-                                <li>Real-time detection</li>
-                                <li>Good for: known-bad indicators, specific attack patterns</li>
-                            </ul>
-                            <p><strong>Analytics BIOC:</strong></p>
-                            <ul>
-                                <li>Multi-event correlation over time</li>
-                                <li>Sequence detection (A then B then C)</li>
-                                <li>Threshold-based detection</li>
-                                <li>Good for: behavioral patterns, attack chains</li>
-                            </ul>
-                            <p>Example: Standard BIOC detects "mimikatz.exe execution". Analytics BIOC detects "5+ failed logins followed by successful login followed by sensitive file access".</p>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-
-            </main>
-        </div>
-    </div>
-    <script>
-
-                <!-- Quick Reference -->
-                <h2><i class="fas fa-bookmark"></i> XQL Quick Reference</h2>
-                <div class="config-section">
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Operation</th><th>XQL Syntax</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Select dataset</td><td><code>dataset = xdr_data</code></td></tr>
-                            <tr><td>Filter rows</td><td><code>| filter field = "value"</code></td></tr>
-                            <tr><td>Select fields</td><td><code>| fields field1, field2</code></td></tr>
-                            <tr><td>Aggregate</td><td><code>| comp count() by field</code></td></tr>
-                            <tr><td>Sort results</td><td><code>| sort desc field</code></td></tr>
-                            <tr><td>Limit results</td><td><code>| limit 100</code></td></tr>
-                            <tr><td>Regex match</td><td><code>| filter field ~= "pattern"</code></td></tr>
-                            <tr><td>Time filter</td><td><code>| filter _time > ago("24h")</code></td></tr>
-                            <tr><td>Contains</td><td><code>| filter field contains "text"</code></td></tr>
-                            <tr><td>In list</td><td><code>| filter field in ("a", "b")</code></td></tr>
-                        </tbody>
-                    </table>
                 </div>
 
             </main>

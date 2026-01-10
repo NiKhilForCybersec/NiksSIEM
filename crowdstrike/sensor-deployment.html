@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sensor Deployment | Nik's SIEM Compendium</title>
+    <title>Sensor Deployment | CrowdStrike Falcon</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="app-container">
-                                                                                                                        <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -19,20 +19,29 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">CrowdStrike Falcon</div>
+                    <div class="nav-section-title">CrowdStrike Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
                     <a href="sensor-deployment.html" class="nav-link active"><i class="fas fa-download"></i> Sensor Deployment</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection</div>
-                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> IOA Custom Rules</a>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cog"></i> Detection Engineering</a>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-code"></i> IOA Rules</a>
                     <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="falcon-intelligence.html" class="nav-link"><i class="fas fa-brain"></i> Falcon Intelligence</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Hunting & Response</div>
-                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-search"></i> Threat Hunting</a>
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="incident-management.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                     <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
                 </div>
             </nav>
@@ -41,778 +50,364 @@
             <header class="top-bar">
                 <div class="breadcrumb">
                     <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">CrowdStrike</a><span class="separator">/</span>
                     <span class="current">Sensor Deployment</span>
                 </div>
             </header>
             <main class="main-content">
-<header class="content-header">
-                <div class="header-title">
-                    <h1><i class="fas fa-download" style="color: #e74c3c;"></i> Sensor Deployment</h1>
-                    <p class="subtitle">CrowdStrike Falcon Sensor Installation & Configuration</p>
-                </div>
-                <div class="header-meta">
-                    <span class="last-updated"><i class="fas fa-calendar-alt"></i> Updated: January 2026</span>
-                    <span class="platform-badge" >
-                        <i class="fas fa-crow"></i> CrowdStrike Falcon
-                    </span>
-                </div>
-            </header>
-            <div class="content-body">
-                <!-- Overview -->
-                <section class="content-section">
-                    <h2><i class="fas fa-info-circle"></i> Deployment Overview</h2>
-                    <p>The CrowdStrike Falcon sensor is a lightweight agent that provides endpoint protection, detection, and response capabilities. Proper deployment ensures comprehensive coverage and optimal performance across your endpoint fleet.</p>
-                    <!-- Deployment Architecture Diagram -->
-                    <div class="diagram-box">
-<pre>
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              FALCON SENSOR DEPLOYMENT ARCHITECTURE                               │
-├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                  │
-│   DEPLOYMENT METHODS                                                                             │
-│   ──────────────────                                                                             │
-│                                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐     │
-│   │   MANUAL        │    │   GPO/SCCM      │    │   MDM (Intune/  │    │   ANSIBLE/      │     │
-│   │   (Small scale) │    │   (Enterprise)  │    │   Jamf/Kandji)  │    │   PUPPET/CHEF   │     │
-│   │                 │    │                 │    │                 │    │   (DevOps)      │     │
-│   │  • EXE/MSI run  │    │  • Package      │    │  • Profile      │    │  • Playbook     │     │
-│   │  • CID param    │    │  • Software     │    │  • Policy       │    │  • Module       │     │
-│   │  • Admin rights │    │    push         │    │  • Silent       │    │  • Recipe       │     │
-│   └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘     │
-│            │                      │                      │                      │              │
-│            └──────────────────────┼──────────────────────┼──────────────────────┘              │
-│                                   │                      │                                      │
-│                                   ▼                      ▼                                      │
-│                         ┌───────────────────────────────────────────┐                          │
-│                         │           SENSOR INSTALLATION             │                          │
-│                         │                                           │                          │
-│                         │  1. Verify prerequisites                  │                          │
-│                         │  2. Extract and install files             │                          │
-│                         │  3. Register kernel driver                │                          │
-│                         │  4. Connect to Falcon Cloud (CID)         │                          │
-│                         │  5. Download latest policy & IOC updates  │                          │
-│                         │  6. Begin monitoring                      │                          │
-│                         └───────────────────┬───────────────────────┘                          │
-│                                             │                                                   │
-│                                             ▼                                                   │
-│   ┌──────────────────────────────────────────────────────────────────────────────────────────┐ │
-│   │                              FALCON CLOUD (SaaS)                                         │ │
-│   │                                                                                          │ │
-│   │   ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐       │ │
-│   │   │ Host Registry  │  │   Policies     │  │  IOC/IOA       │  │  Sensor        │       │ │
-│   │   │                │  │   Management   │  │  Updates       │  │  Updates       │       │ │
-│   │   │ • Host ID      │  │  • Prevention  │  │  • Daily IOCs  │  │  • Monthly     │       │ │
-│   │   │ • First seen   │  │  • Detection   │  │  • IOA rules   │  │  • Auto/Manual │       │ │
-│   │   │ • Platform     │  │  • Response    │  │  • ML models   │  │  • Staged      │       │ │
-│   │   │ • Hostname     │  │  • Groups      │  │  • Exclusions  │  │    rollout     │       │ │
-│   │   └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘       │ │
-│   └──────────────────────────────────────────────────────────────────────────────────────────┘ │
-│                                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-</pre>
-                    </div>
-                    <!-- Enterprise Deployment Flow -->
-                    <div class="diagram-box">
-<pre>
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              ENTERPRISE DEPLOYMENT WORKFLOW                                      │
-├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                  │
-│   PHASE 1: PLANNING          PHASE 2: PILOT           PHASE 3: ROLLOUT        PHASE 4: VERIFY  │
-│   ─────────────────          ─────────────────        ────────────────        ───────────────  │
-│                                                                                                  │
-│   ┌───────────────┐         ┌───────────────┐        ┌───────────────┐       ┌───────────────┐ │
-│   │ • Define scope│         │ • 5-10% hosts │        │ • Phase 1:    │       │ • Coverage    │ │
-│   │ • Get CID     │         │ • Test group  │        │   25% (Week 1)│       │   report      │ │
-│   │ • Test network│ ───────▶│ • Validate:   │───────▶│ • Phase 2:    │──────▶│ • Health      │ │
-│   │   connectivity│         │   - Install   │        │   50% (Week 2)│       │   dashboard   │ │
-│   │ • Exclusions  │         │   - Detection │        │ • Phase 3:    │       │ • Offline     │ │
-│   │ • Approval    │         │   - Perf test │        │   100% (Week 3)│      │   endpoints   │ │
-│   └───────────────┘         └───────────────┘        └───────────────┘       └───────────────┘ │
-│                                                                                                  │
-│        │                           │                        │                      │            │
-│        ▼                           ▼                        ▼                      ▼            │
-│   ┌─────────────────────────────────────────────────────────────────────────────────────────┐  │
-│   │                           SUCCESS CRITERIA AT EACH PHASE                                │  │
-│   ├─────────────────────────────────────────────────────────────────────────────────────────┤  │
-│   │                                                                                         │  │
-│   │   ✓ Network: Outbound 443 allowed    ✓ Coverage: >95% target hosts online              │  │
-│   │   ✓ Policy: Prevention mode enabled   ✓ Health: <2% sensors offline >24hrs             │  │
-│   │   ✓ Exclusions: App conflicts resolved ✓ Performance: No user complaints               │  │
-│   │   ✓ Groups: Host groups configured    ✓ Detection: Test alerts firing correctly        │  │
-│   │                                                                                         │  │
-│   └─────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                                  │
-│   HOST GROUPS STRATEGY:                                                                         │
-│   ─────────────────────                                                                         │
-│                                                                                                  │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
-│   │   PILOT     │    │    DEV      │    │   STANDARD  │    │  SERVERS    │    │  CRITICAL   │ │
-│   │   GROUP     │    │    GROUP    │    │    GROUP    │    │   GROUP     │    │   ASSETS    │ │
-│   │             │    │             │    │             │    │             │    │             │ │
-│   │  Detect     │    │  Detect     │    │  Prevent    │    │ Prevent +   │    │ Prevent +   │ │
-│   │  Only       │───▶│  + Limited  │───▶│  Standard   │───▶│ Server      │───▶│ Enhanced    │ │
-│   │             │    │  Prevention │    │  Policy     │    │ Specific    │    │ Monitoring  │ │
-│   │  5-10%      │    │  10-20%     │    │  60-70%     │    │  15-20%     │    │   5%        │ │
-│   └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
-│                                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-</pre>
-                    </div>
-                    <div class="platform-cards">
-                        <div class="platform-card windows">
-                            <h3><i class="fab fa-windows"></i> Windows</h3>
-                            <p><strong>Supported:</strong> Windows 7 SP1+ / Server 2008 R2+</p>
-                            <p><strong>Architecture:</strong> x64, x86 (limited)</p>
-                            <p><strong>Methods:</strong> MSI, EXE, GPO, SCCM, Intune</p>
-                            <p><strong>Size:</strong> ~50 MB installed</p>
-                        </div>
-                        <div class="platform-card linux">
-                            <h3><i class="fab fa-linux"></i> Linux</h3>
-                            <p><strong>Supported:</strong> RHEL, Ubuntu, Debian, SUSE, Amazon Linux</p>
-                            <p><strong>Architecture:</strong> x64, ARM64</p>
-                            <p><strong>Methods:</strong> RPM, DEB, Package managers</p>
-                            <p><strong>Size:</strong> ~100 MB installed</p>
-                        </div>
-                        <div class="platform-card macos">
-                            <h3><i class="fab fa-apple"></i> macOS</h3>
-                            <p><strong>Supported:</strong> macOS 10.15+ (Catalina+)</p>
-                            <p><strong>Architecture:</strong> Intel, Apple Silicon</p>
-                            <p><strong>Methods:</strong> PKG, Jamf, Kandji, MDM</p>
-                            <p><strong>Size:</strong> ~60 MB installed</p>
-                        </div>
-                    </div>
-                </section>
-                <!-- Prerequisites -->
-                <section class="content-section">
-                    <h2><i class="fas fa-clipboard-check"></i> Prerequisites</h2>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-key"></i> Customer ID (CID)</h3>
-                        <p>The Customer ID uniquely identifies your Falcon tenant and is required for all sensor installations.</p>
-                        <div class="info-box">
-                            <div class="info-title"><i class="fas fa-info-circle"></i> Finding Your CID</div>
-                            <p><strong>Falcon Console:</strong> Host setup and management → Sensor downloads → Copy CID</p>
-                            <p><strong>Format:</strong> <code class="cid-highlight">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XX</code></p>
-                        </div>
-                        <div class="warning-box">
-                            <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> CID Security</div>
-                            <p>Treat the CID as sensitive information. While it's required for installation, exposure could allow unauthorized agents to report to your tenant (though Falcon has additional controls to prevent this).</p>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-globe"></i> Network Requirements</h3>
-                        <table class="prereq-table">
-                            <thead>
-                                <tr><th>Destination</th><th>Port</th><th>Protocol</th><th>Purpose</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>ts01-b.cloudsink.net</code></td>
-                                    <td>443</td>
-                                    <td>HTTPS</td>
-                                    <td>Sensor telemetry (primary)</td>
-                                </tr>
-                                <tr>
-                                    <td><code>lfodown01-b.cloudsink.net</code></td>
-                                    <td>443</td>
-                                    <td>HTTPS</td>
-                                    <td>Sensor updates</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falcon.crowdstrike.com</code></td>
-                                    <td>443</td>
-                                    <td>HTTPS</td>
-                                    <td>Cloud management</td>
-                                </tr>
-                                <tr>
-                                    <td><code>*.crowdstrike.com</code></td>
-                                    <td>443</td>
-                                    <td>HTTPS</td>
-                                    <td>All CrowdStrike services</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="tip-box">
-                            <div class="tip-title"><i class="fas fa-lightbulb"></i> Proxy Support</div>
-                            <p>Falcon sensor supports proxy configuration. For Windows, it can use system proxy settings or be configured explicitly during installation. For Linux/macOS, proxy settings are specified in the sensor configuration file.</p>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-server"></i> System Requirements</h3>
-                        <table class="prereq-table">
-                            <thead>
-                                <tr><th>Resource</th><th>Windows</th><th>Linux</th><th>macOS</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>CPU</td>
-                                    <td>Minimal impact (&lt;1%)</td>
-                                    <td>Minimal impact (&lt;1%)</td>
-                                    <td>Minimal impact (&lt;1%)</td>
-                                </tr>
-                                <tr>
-                                    <td>Memory</td>
-                                    <td>50-100 MB typical</td>
-                                    <td>100-200 MB typical</td>
-                                    <td>75-150 MB typical</td>
-                                </tr>
-                                <tr>
-                                    <td>Disk Space</td>
-                                    <td>~500 MB (with cache)</td>
-                                    <td>~500 MB</td>
-                                    <td>~400 MB</td>
-                                </tr>
-                                <tr>
-                                    <td>Privileges</td>
-                                    <td>Administrator/SYSTEM</td>
-                                    <td>root</td>
-                                    <td>root + MDM approvals</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <!-- Windows Installation -->
-                <section class="content-section">
-                    <h2><i class="fab fa-windows"></i> Windows Installation</h2>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-terminal"></i> Command Line Installation</h3>
-                        <h4>Standard Installation</h4>
-                        <div class="command-block">
-<span class="comment"># Download sensor from Falcon console: Host setup → Sensor downloads</span>
-<span class="comment"># Run as Administrator</span>
-<span class="comment"># Basic installation with CID</span>
-<span class="prompt">></span> WindowsSensor.exe <span class="param">/install</span> <span class="param">/quiet</span> <span class="param">/norestart</span> <span class="param">CID=</span><span class="value">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XX</span>
-<span class="comment"># Installation with provisioning token (for restricted enrollment)</span>
-<span class="prompt">></span> WindowsSensor.exe <span class="param">/install</span> <span class="param">/quiet</span> <span class="param">/norestart</span> <span class="param">CID=</span><span class="value">[CID]</span> <span class="param">ProvToken=</span><span class="value">[TOKEN]</span>
-<span class="comment"># Installation with specific installation token (anti-tampering)</span>
-<span class="prompt">></span> WindowsSensor.exe <span class="param">/install</span> <span class="param">/quiet</span> <span class="param">/norestart</span> <span class="param">CID=</span><span class="value">[CID]</span> <span class="param">ProvWaitTime=</span><span class="value">1200000</span>
-                        </div>
-                        <h4>MSI Installation (GPO/SCCM)</h4>
-                        <div class="command-block">
-<span class="comment"># Extract MSI from EXE installer</span>
-<span class="prompt">></span> WindowsSensor.exe <span class="param">/extract</span> <span class="param">/target:</span><span class="value">C:\Temp\FalconMSI</span>
-<span class="comment"># Install using msiexec</span>
-<span class="prompt">></span> msiexec <span class="param">/i</span> <span class="value">WindowsSensor.msi</span> <span class="param">/quiet</span> <span class="param">/norestart</span> <span class="param">CID=</span><span class="value">[CID]</span>
-<span class="comment"># SCCM/ConfigMgr application deployment</span>
-<span class="comment"># Detection Method: File exists - C:\Program Files\CrowdStrike\CSFalconService.exe</span>
-<span class="comment"># Or Registry: HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default\AG</span>
-                        </div>
-                        <h4>Common Installation Parameters</h4>
-                        <table class="prereq-table">
-                            <thead>
-                                <tr><th>Parameter</th><th>Description</th><th>Example</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>CID=</code></td>
-                                    <td>Customer ID (required)</td>
-                                    <td><code>CID=ABC123...-XX</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>ProvToken=</code></td>
-                                    <td>Provisioning token for restricted enrollment</td>
-                                    <td><code>ProvToken=TOKEN123</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>ProvWaitTime=</code></td>
-                                    <td>Timeout for provisioning (ms)</td>
-                                    <td><code>ProvWaitTime=1200000</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>PROXYDISABLE=</code></td>
-                                    <td>Disable proxy auto-detection</td>
-                                    <td><code>PROXYDISABLE=1</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>APP_PROXYNAME=</code></td>
-                                    <td>Explicit proxy server</td>
-                                    <td><code>APP_PROXYNAME=proxy.corp.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>APP_PROXYPORT=</code></td>
-                                    <td>Proxy port</td>
-                                    <td><code>APP_PROXYPORT=8080</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>/quiet</code></td>
-                                    <td>Silent installation</td>
-                                    <td>No UI displayed</td>
-                                </tr>
-                                <tr>
-                                    <td><code>/norestart</code></td>
-                                    <td>Suppress automatic restart</td>
-                                    <td>Requires manual restart</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-cogs"></i> GPO Deployment</h3>
-                        <div class="step-container">
-                            <div class="step-item">
-                                <div class="step-num">1</div>
-                                <div class="step-content">
-                                    <h4>Prepare Network Share</h4>
-                                    <p>Copy sensor installer to a network share accessible by target computers (e.g., <code>\\fileserver\software\CrowdStrike\</code>)</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">2</div>
-                                <div class="step-content">
-                                    <h4>Create GPO</h4>
-                                    <p>Computer Configuration → Policies → Software Settings → Software Installation → New Package</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">3</div>
-                                <div class="step-content">
-                                    <h4>Configure Installation</h4>
-                                    <p>For MSI: Select package and choose "Assigned" deployment. Add CID via transform or registry preference.</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">4</div>
-                                <div class="step-content">
-                                    <h4>Set CID via Registry</h4>
-                                    <div class="command-block">
-<span class="comment"># GPO: Computer Configuration → Preferences → Windows Settings → Registry</span>
-<span class="comment"># Create new registry item:</span>
-<span class="param">Hive:</span> HKEY_LOCAL_MACHINE
-<span class="param">Key Path:</span> SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default
-<span class="param">Value name:</span> CU
-<span class="param">Value type:</span> REG_BINARY
-<span class="param">Value data:</span> [Your CID in hex format]
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-cloud"></i> Intune Deployment</h3>
-                        <div class="step-container">
-                            <div class="step-item">
-                                <div class="step-num">1</div>
-                                <div class="step-content">
-                                    <h4>Package Preparation</h4>
-                                    <p>Convert EXE to .intunewin using Microsoft Win32 Content Prep Tool:</p>
-                                    <div class="command-block">
-<span class="prompt">></span> IntuneWinAppUtil.exe <span class="param">-c</span> <span class="value">C:\Source</span> <span class="param">-s</span> <span class="value">WindowsSensor.exe</span> <span class="param">-o</span> <span class="value">C:\Output</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">2</div>
-                                <div class="step-content">
-                                    <h4>Create Win32 App</h4>
-                                    <p>Intune → Apps → Windows → Add → Windows app (Win32)</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">3</div>
-                                <div class="step-content">
-                                    <h4>Configure Install Commands</h4>
-                                    <div class="command-block">
-<span class="comment"># Install command:</span>
-WindowsSensor.exe /install /quiet /norestart CID=<span class="value">[YOUR-CID]</span>
-<span class="comment"># Uninstall command:</span>
-WindowsSensor.exe /uninstall /quiet
-<span class="comment"># Detection rule (File):</span>
-Path: C:\Program Files\CrowdStrike
-File: CSFalconService.exe
-Detection method: File or folder exists
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <!-- Linux Installation -->
-                <section class="content-section">
-                    <h2><i class="fab fa-linux"></i> Linux Installation</h2>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-terminal"></i> Package Installation</h3>
-                        <h4>RHEL/CentOS/Fedora (RPM)</h4>
-                        <div class="command-block">
-<span class="comment"># Download appropriate package from Falcon console</span>
-<span class="comment"># Install sensor package</span>
-<span class="prompt">$</span> sudo rpm -ivh falcon-sensor-<span class="value">[version]</span>.rpm
-<span class="comment"># Or using yum/dnf</span>
-<span class="prompt">$</span> sudo yum install ./falcon-sensor-<span class="value">[version]</span>.rpm
-<span class="prompt">$</span> sudo dnf install ./falcon-sensor-<span class="value">[version]</span>.rpm
-<span class="comment"># Configure CID</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -s --cid=<span class="value">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XX</span>
-<span class="comment"># Start sensor</span>
-<span class="prompt">$</span> sudo systemctl start falcon-sensor
-<span class="prompt">$</span> sudo systemctl enable falcon-sensor
-<span class="comment"># Verify sensor status</span>
-<span class="prompt">$</span> sudo systemctl status falcon-sensor
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -g --aid
-                        </div>
-                        <h4>Ubuntu/Debian (DEB)</h4>
-                        <div class="command-block">
-<span class="comment"># Install sensor package</span>
-<span class="prompt">$</span> sudo dpkg -i falcon-sensor_<span class="value">[version]</span>_amd64.deb
-<span class="comment"># Or using apt</span>
-<span class="prompt">$</span> sudo apt install ./falcon-sensor_<span class="value">[version]</span>_amd64.deb
-<span class="comment"># Configure CID</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -s --cid=<span class="value">[YOUR-CID]</span>
-<span class="comment"># Start and enable sensor</span>
-<span class="prompt">$</span> sudo systemctl start falcon-sensor
-<span class="prompt">$</span> sudo systemctl enable falcon-sensor
-                        </div>
-                        <h4>Installation with Provisioning Token</h4>
-                        <div class="command-block">
-<span class="comment"># Set CID and provisioning token together</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -s --cid=<span class="value">[CID]</span> --provisioning-token=<span class="value">[TOKEN]</span>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-cog"></i> Falconctl Commands</h3>
-                        <table class="prereq-table">
-                            <thead>
-                                <tr><th>Command</th><th>Description</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>falconctl -s --cid=[CID]</code></td>
-                                    <td>Set Customer ID</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -g --cid</code></td>
-                                    <td>Get configured CID</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -g --aid</code></td>
-                                    <td>Get Agent ID (assigned after registration)</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -g --version</code></td>
-                                    <td>Get sensor version</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -g --rfm-state</code></td>
-                                    <td>Check Reduced Functionality Mode</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -s --apd=false</code></td>
-                                    <td>Disable proxy auto-detect</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -s --aph=[host]</code></td>
-                                    <td>Set proxy host</td>
-                                </tr>
-                                <tr>
-                                    <td><code>falconctl -s --app=[port]</code></td>
-                                    <td>Set proxy port</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-robot"></i> Ansible Deployment</h3>
-                        <div class="command-block">
-<span class="comment"># ansible/roles/crowdstrike/tasks/main.yml</span>
----
-- name: Copy Falcon sensor package
-  copy:
-    src: "falcon-sensor-{{ falcon_version }}.{{ ansible_pkg_mgr_extension }}"
-    dest: "/tmp/falcon-sensor.{{ ansible_pkg_mgr_extension }}"
-- name: Install Falcon sensor (RHEL/CentOS)
-  yum:
-    name: "/tmp/falcon-sensor.{{ ansible_pkg_mgr_extension }}"
-    state: present
-  when: ansible_os_family == "RedHat"
-- name: Install Falcon sensor (Debian/Ubuntu)
-  apt:
-    deb: "/tmp/falcon-sensor.{{ ansible_pkg_mgr_extension }}"
-    state: present
-  when: ansible_os_family == "Debian"
-- name: Configure Falcon sensor CID
-  command: /opt/CrowdStrike/falconctl -s --cid={{ falcon_cid }}
-  register: falconctl_result
-  changed_when: "'Set' in falconctl_result.stdout"
-- name: Start and enable Falcon sensor
-  systemd:
-    name: falcon-sensor
-    state: started
-    enabled: yes
-- name: Verify sensor registration
-  command: /opt/CrowdStrike/falconctl -g --aid
-  register: aid_result
-  failed_when: aid_result.rc != 0
-  changed_when: false
-                        </div>
-                    </div>
-                </section>
-                <!-- macOS Installation -->
-                <section class="content-section">
-                    <h2><i class="fab fa-apple"></i> macOS Installation</h2>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-shield-alt"></i> MDM Requirements</h3>
-                        <p>macOS sensor deployment requires MDM-delivered approvals due to Apple's security requirements:</p>
-                        <table class="prereq-table">
-                            <thead>
-                                <tr><th>Approval</th><th>Purpose</th><th>MDM Profile Type</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>System Extension</td>
-                                    <td>Kernel-level visibility</td>
-                                    <td>System Extension Policy</td>
-                                </tr>
-                                <tr>
-                                    <td>Network Extension</td>
-                                    <td>Network filtering</td>
-                                    <td>Content Filter</td>
-                                </tr>
-                                <tr>
-                                    <td>Full Disk Access</td>
-                                    <td>File system monitoring</td>
-                                    <td>Privacy Preferences Policy Control (PPPC)</td>
-                                </tr>
-                                <tr>
-                                    <td>Notifications</td>
-                                    <td>User alerts</td>
-                                    <td>Notification Settings</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="warning-box">
-                            <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> MDM Required</div>
-                            <p>Without MDM-delivered approvals, macOS users will receive multiple system prompts, and some features may not work until manually approved. Deploy MDM profiles BEFORE sensor installation for seamless deployment.</p>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-terminal"></i> Command Line Installation</h3>
-                        <div class="command-block">
-<span class="comment"># Mount DMG and install PKG</span>
-<span class="prompt">$</span> sudo hdiutil attach FalconSensorMacOS.dmg
-<span class="prompt">$</span> sudo installer -pkg /Volumes/Falcon/FalconSensorMacOS.pkg -target /
-<span class="comment"># Configure CID</span>
-<span class="prompt">$</span> sudo /Applications/Falcon.app/Contents/Resources/falconctl license <span class="value">[CID]</span>
-<span class="comment"># Verify installation</span>
-<span class="prompt">$</span> sudo /Applications/Falcon.app/Contents/Resources/falconctl stats agent_info
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-cloud"></i> Jamf Pro Deployment</h3>
-                        <div class="step-container">
-                            <div class="step-item">
-                                <div class="step-num">1</div>
-                                <div class="step-content">
-                                    <h4>Upload Configuration Profiles</h4>
-                                    <p>Deploy CrowdStrike-provided profiles for System Extension, PPPC, and Network Extension approvals.</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">2</div>
-                                <div class="step-content">
-                                    <h4>Upload PKG to Jamf</h4>
-                                    <p>Settings → Computer Management → Packages → Upload Falcon PKG</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">3</div>
-                                <div class="step-content">
-                                    <h4>Create Policy</h4>
-                                    <p>Computers → Policies → New → Add Falcon package → Configure scope and triggers</p>
-                                </div>
-                            </div>
-                            <div class="step-item">
-                                <div class="step-num">4</div>
-                                <div class="step-content">
-                                    <h4>Add Post-Install Script</h4>
-                                    <div class="command-block">
-<span class="comment">#!/bin/bash</span>
-<span class="comment"># Post-install script to configure CID</span>
-CID="<span class="value">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XX</span>"
-<span class="comment"># Wait for installation to complete</span>
-sleep 5
-<span class="comment"># License the sensor</span>
-/Applications/Falcon.app/Contents/Resources/falconctl license "$CID"
-<span class="comment"># Verify</span>
-/Applications/Falcon.app/Contents/Resources/falconctl stats agent_info
-exit 0
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <!-- Verification -->
-                <section class="content-section">
-                    <h2><i class="fas fa-check-circle"></i> Deployment Verification</h2>
-                    <div class="deployment-section">
-                        <h3><i class="fab fa-windows"></i> Windows Verification</h3>
-                        <div class="command-block">
-<span class="comment"># Check service status</span>
-<span class="prompt">></span> sc query csagent
-<span class="output">SERVICE_NAME: csagent
-STATE: 4  RUNNING</span>
-<span class="comment"># Check sensor version</span>
-<span class="prompt">></span> reg query "HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default" /v Version
-<span class="comment"># Check Agent ID (indicates successful registration)</span>
-<span class="prompt">></span> reg query "HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default" /v AG
-<span class="comment"># Using PowerShell</span>
-<span class="prompt">></span> Get-Service csagent | Select-Object Name, Status, StartType
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fab fa-linux"></i> Linux Verification</h3>
-                        <div class="command-block">
-<span class="comment"># Check service status</span>
-<span class="prompt">$</span> sudo systemctl status falcon-sensor
-<span class="output">● falcon-sensor.service - CrowdStrike Falcon Sensor
-   Loaded: loaded
-   Active: active (running)</span>
-<span class="comment"># Check sensor version</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -g --version
-<span class="comment"># Check Agent ID</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -g --aid
-<span class="output">aid="abc123..."</span>
-<span class="comment"># Check RFM (Reduced Functionality Mode) - should be "false"</span>
-<span class="prompt">$</span> sudo /opt/CrowdStrike/falconctl -g --rfm-state
-<span class="output">rfm-state=false</span>
-                        </div>
-                    </div>
-                    <div class="deployment-section">
-                        <h3><i class="fas fa-cloud"></i> Falcon Console Verification</h3>
-                        <p>After successful deployment, hosts should appear in the Falcon console within 5-15 minutes:</p>
-                        <ul>
-                            <li><strong>Hosts → Host Management:</strong> Search for hostname or AID</li>
-                            <li><strong>Status:</strong> Should show "Online" with green indicator</li>
-                            <li><strong>Last Seen:</strong> Recent timestamp</li>
-                            <li><strong>Sensor Version:</strong> Should match deployed version</li>
-                            <li><strong>Prevention Policy:</strong> Assigned policy should be listed</li>
-                        </ul>
-                    </div>
-                </section>
-                <!-- Troubleshooting -->
-                <section class="content-section">
-                    <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
-                    <div class="troubleshoot-item">
-                        <h4><i class="fas fa-exclamation-circle"></i> Sensor Not Connecting</h4>
-                        <p><strong>Symptoms:</strong> Host not appearing in console, AID not generated</p>
-                        <p><strong>Common Causes:</strong></p>
-                        <ul>
-                            <li>Firewall blocking outbound 443 to CrowdStrike domains</li>
-                            <li>Proxy not configured correctly</li>
-                            <li>Incorrect CID</li>
-                            <li>DNS resolution issues</li>
-                        </ul>
-                        <div class="command-block">
-<span class="comment"># Test connectivity (Windows)</span>
-<span class="prompt">></span> Test-NetConnection ts01-b.cloudsink.net -Port 443
-<span class="comment"># Test connectivity (Linux)</span>
-<span class="prompt">$</span> curl -v https://ts01-b.cloudsink.net:443
-<span class="comment"># Check Windows Event Log</span>
-<span class="prompt">></span> Get-EventLog -LogName Application -Source CSAgent -Newest 20
-                        </div>
-                    </div>
-                    <div class="troubleshoot-item">
-                        <h4><i class="fas fa-exclamation-circle"></i> Reduced Functionality Mode (Linux)</h4>
-                        <p><strong>Symptoms:</strong> <code>rfm-state=true</code>, limited detection capability</p>
-                        <p><strong>Common Causes:</strong></p>
-                        <ul>
-                            <li>Kernel version not supported</li>
-                            <li>Missing kernel headers</li>
-                            <li>SELinux blocking sensor</li>
-                        </ul>
-                        <div class="command-block">
-<span class="comment"># Check kernel version</span>
-<span class="prompt">$</span> uname -r
-<span class="comment"># Install kernel headers</span>
-<span class="prompt">$</span> sudo yum install kernel-devel-$(uname -r)  <span class="comment"># RHEL/CentOS</span>
-<span class="prompt">$</span> sudo apt install linux-headers-$(uname -r)  <span class="comment"># Ubuntu</span>
-<span class="comment"># Restart sensor after installing headers</span>
-<span class="prompt">$</span> sudo systemctl restart falcon-sensor
-                        </div>
-                    </div>
-                    <div class="troubleshoot-item">
-                        <h4><i class="fas fa-exclamation-circle"></i> macOS System Extension Not Loading</h4>
-                        <p><strong>Symptoms:</strong> Limited functionality, user prompts for approval</p>
-                        <p><strong>Resolution:</strong></p>
-                        <ul>
-                            <li>Ensure MDM profiles are deployed and scoped correctly</li>
-                            <li>Check System Preferences → Security & Privacy for pending approvals</li>
-                            <li>Verify Team ID in MDM profile matches CrowdStrike's Team ID</li>
-                            <li>May require device restart after MDM profile deployment</li>
-                        </ul>
-                    </div>
-                    <div class="troubleshoot-item">
-                        <h4><i class="fas fa-exclamation-circle"></i> Installation Fails Silently</h4>
-                        <p><strong>Check installation logs:</strong></p>
-                        <div class="command-block">
-<span class="comment"># Windows - installer log</span>
-<span class="prompt">></span> WindowsSensor.exe /install /quiet /norestart /log C:\Temp\falcon_install.log
-<span class="comment"># Check for common error codes:</span>
-<span class="comment"># 1603 - Fatal error during installation</span>
-<span class="comment"># 1618 - Another installation in progress</span>
-<span class="comment"># 1619 - Package could not be opened</span>
-                        </div>
-                    </div>
-                </section>
-                <!-- Interview Q&A -->
-                <section class="content-section">
-                    <div class="interview-qa">
-                        <h3><i class="fas fa-user-tie"></i> Interview Q&A</h3>
-                        <div class="qa-item">
-                            <div class="question">Q: Describe your approach to deploying CrowdStrike Falcon across a large enterprise.</div>
-                            <div class="answer">A: I'd approach it in phases: First, pilot deployment to a small group of IT endpoints to validate the process and identify any compatibility issues. Then expand to broader IT and low-risk endpoints. Next, tackle servers with careful change control. Finally, deploy to sensitive systems like domain controllers with extra caution. Throughout, I'd use automation - GPO for domain-joined Windows, SCCM/Intune for managed endpoints, Ansible for Linux servers, and Jamf for Macs. Key considerations include ensuring network connectivity (firewall rules for CrowdStrike domains), MDM profiles for macOS before sensor deployment, and coordinating with application teams to whitelist any performance-sensitive applications if needed.</div>
-                        </div>
-                        <div class="qa-item">
-                            <div class="question">Q: How would you verify a successful deployment across 5,000 endpoints?</div>
-                            <div class="answer">A: I'd use a multi-layer verification approach. First, check deployment tool success rates (SCCM reports, GPO gpresult, Intune compliance). Second, use Falcon's Host Management to filter for recently deployed sensors and compare against expected count. Third, create a custom Falcon dashboard showing sensor versions, last seen times, and policy assignment status. For gaps, I'd export the asset inventory from our CMDB, compare against Falcon's host list, and investigate any discrepancies. I'd also check for sensors in Reduced Functionality Mode on Linux and ensure macOS systems have all required approvals. Regular reporting to stakeholders on coverage percentage is essential.</div>
-                        </div>
-                        <div class="qa-item">
-                            <div class="question">Q: What are common deployment challenges you've encountered?</div>
-                            <div class="answer">A: Several challenges are common: Network issues where corporate firewalls block CrowdStrike cloud connectivity - I ensure the security team whitelists the required domains before deployment. On Linux, kernel compatibility and RFM is a frequent issue - I verify kernel headers are installed and check supported kernel versions in CrowdStrike documentation. For macOS, the biggest challenge is MDM approval timing - profiles need to be deployed before the sensor for seamless installation. Conflicting security software can also cause issues; I coordinate removal or exclusion configuration with existing AV teams. Finally, VDI and non-persistent environments require special consideration using provisioning tokens and master image configuration.</div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-            
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <h1><i class="fas fa-download"></i> Sensor Deployment</h1>
+                <p class="lead">Deploy CrowdStrike Falcon sensors across your enterprise. Learn installation methods, group policies, and deployment best practices.</p>
+
+                <!-- Sensor Overview -->
+                <h2><i class="fas fa-info-circle"></i> Sensor Overview</h2>
                 <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
+                    <p><span class="console-path">Host setup and management → Sensor downloads</span></p>
 
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
+                    <h4>Sensor Capabilities</h4>
+                    <div class="code-block">Falcon Sensor Features:
 
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
+DETECTION:
+├── Real-time process monitoring
+├── Network connection tracking
+├── File system monitoring
+├── Registry monitoring (Windows)
+├── Kernel-level visibility
+└── ML-based malware detection
+
+PREVENTION:
+├── Malware blocking
+├── Exploit prevention
+├── Script control
+├── Behavioral blocking
+└── Ransomware protection
+
+VISIBILITY:
+├── Process trees
+├── Network connections
+├── File modifications
+├── User context
+├── Threat intelligence correlation
+└── MITRE ATT&CK mapping</div>
+
+                    <h4>Supported Platforms</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Platform</th><th>Versions</th><th>Architecture</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Windows</strong></td><td>7 SP1+, Server 2008 R2+, 10, 11, Server 2016-2022</td><td>x64</td></tr>
+                            <tr><td><strong>macOS</strong></td><td>10.15+ (Catalina and later)</td><td>Intel, Apple Silicon</td></tr>
+                            <tr><td><strong>Linux</strong></td><td>RHEL 6+, Ubuntu 16.04+, Amazon Linux, SUSE</td><td>x64, ARM64</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-</main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium - Security Operations Reference</p>
+
+                <!-- Windows Deployment -->
+                <h2><i class="fab fa-windows"></i> Windows Deployment</h2>
+                <div class="config-section">
+                    <h4>Manual Installation</h4>
+                    <div class="code-block"># Download sensor from Falcon console
+# Host setup and management → Sensor downloads
+
+# Silent install with CID
+WindowsSensor.exe /install /quiet /norestart CID=<YOUR_CID>
+
+# With proxy
+WindowsSensor.exe /install /quiet /norestart CID=<YOUR_CID> APP_PROXYNAME=proxy.domain.com APP_PROXYPORT=8080
+
+# With provisioning token (for new CIDs)
+WindowsSensor.exe /install /quiet /norestart CID=<YOUR_CID> ProvToken=<TOKEN>
+
+# Uninstall
+WindowsSensor.exe /uninstall /quiet
+
+# Uninstall with maintenance token (if required)
+WindowsSensor.exe /uninstall /quiet MAINTENANCE_TOKEN=<TOKEN></div>
+
+                    <h4>SCCM/MECM Deployment</h4>
+                    <div class="code-block">SCCM Deployment Steps:
+
+1. CREATE APPLICATION
+   Software Library → Applications → Create Application
+   ├── Type: Windows Installer (MSI or script)
+   ├── Content location: \\server\share\CrowdStrike\
+   └── Install command: WindowsSensor.exe /install /quiet /norestart CID=<CID>
+
+2. DETECTION METHOD
+   ├── File system: C:\Windows\System32\drivers\CrowdStrike\csagent.sys
+   └── Or Registry: HKLM\SYSTEM\CrowdStrike\{9b03c1d9-...}\AgentID
+
+3. DEPLOYMENT
+   ├── Collection: Target device collection
+   ├── Purpose: Required
+   ├── Schedule: As soon as possible
+   └── Maintenance window: Respect or override
+
+4. MONITORING
+   Monitoring → Deployments → Filter by application</div>
+
+                    <h4>Group Policy Deployment</h4>
+                    <div class="code-block">GPO Startup Script Method:
+
+1. Create network share for installer
+   \\dc\NETLOGON\CrowdStrike\WindowsSensor.exe
+
+2. Create PowerShell deployment script:
+
+# deploy-falcon.ps1
+$installerPath = "\\dc\NETLOGON\CrowdStrike\WindowsSensor.exe"
+$cid = "YOUR_CID_HERE"
+$logPath = "C:\Windows\Temp\falcon_install.log"
+
+# Check if already installed
+$service = Get-Service -Name "CSFalconService" -ErrorAction SilentlyContinue
+if ($service) {
+    Write-Output "Falcon already installed" | Out-File $logPath
+    exit 0
+}
+
+# Install
+Start-Process -FilePath $installerPath -ArgumentList "/install /quiet /norestart CID=$cid" -Wait
+
+3. GPO Configuration:
+   Computer Configuration → Policies → Windows Settings → 
+   Scripts → Startup → Add PowerShell script</div>
                 </div>
-            </footer>
+
+                <!-- Linux Deployment -->
+                <h2><i class="fab fa-linux"></i> Linux Deployment</h2>
+                <div class="config-section">
+                    <div class="code-block"># RHEL/CentOS Installation
+sudo yum install falcon-sensor-<version>.rpm
+sudo /opt/CrowdStrike/falconctl -s --cid=<YOUR_CID>
+sudo systemctl start falcon-sensor
+sudo systemctl enable falcon-sensor
+
+# Ubuntu/Debian Installation  
+sudo dpkg -i falcon-sensor_<version>_amd64.deb
+sudo /opt/CrowdStrike/falconctl -s --cid=<YOUR_CID>
+sudo systemctl start falcon-sensor
+sudo systemctl enable falcon-sensor
+
+# With proxy
+sudo /opt/CrowdStrike/falconctl -s --cid=<YOUR_CID> --apd=proxy.domain.com --aph=8080
+
+# Verify installation
+sudo /opt/CrowdStrike/falconctl -g --cid
+sudo systemctl status falcon-sensor
+
+# Uninstall
+# RHEL: sudo yum remove falcon-sensor
+# Ubuntu: sudo dpkg -r falcon-sensor</div>
+
+                    <h4>Ansible Deployment</h4>
+                    <div class="code-block"># falcon-deploy.yml
+---
+- name: Deploy CrowdStrike Falcon Sensor
+  hosts: all
+  become: yes
+  vars:
+    falcon_cid: "YOUR_CID_HERE"
+    falcon_package: "falcon-sensor-6.x.x.rpm"
+    
+  tasks:
+    - name: Copy Falcon sensor package
+      copy:
+        src: "files/{{ falcon_package }}"
+        dest: "/tmp/{{ falcon_package }}"
+        
+    - name: Install Falcon sensor (RHEL)
+      yum:
+        name: "/tmp/{{ falcon_package }}"
+        state: present
+      when: ansible_os_family == "RedHat"
+      
+    - name: Configure CID
+      command: /opt/CrowdStrike/falconctl -s --cid={{ falcon_cid }}
+      
+    - name: Start and enable Falcon service
+      systemd:
+        name: falcon-sensor
+        state: started
+        enabled: yes
+        
+    - name: Verify Falcon is running
+      command: /opt/CrowdStrike/falconctl -g --cid
+      register: falcon_status
+      
+    - debug:
+        var: falcon_status.stdout</div>
+                </div>
+
+                <!-- macOS Deployment -->
+                <h2><i class="fab fa-apple"></i> macOS Deployment</h2>
+                <div class="config-section">
+                    <div class="code-block"># Manual Installation
+# Download FalconSensorMacOS.pkg from console
+
+# Install with CID
+sudo installer -pkg FalconSensorMacOS.pkg -target /
+sudo /Applications/Falcon.app/Contents/Resources/falconctl license <YOUR_CID>
+
+# With provisioning token
+sudo /Applications/Falcon.app/Contents/Resources/falconctl license <YOUR_CID> <PROV_TOKEN>
+
+# Verify
+sudo /Applications/Falcon.app/Contents/Resources/falconctl stats
+
+# Required: Approve System Extensions
+System Preferences → Security & Privacy → Allow CrowdStrike
+
+# Required: Grant Full Disk Access
+System Preferences → Security & Privacy → Privacy → Full Disk Access
+Add: /Applications/Falcon.app</div>
+
+                    <h4>Jamf Deployment</h4>
+                    <div class="code-block">Jamf Pro Deployment:
+
+1. UPLOAD PACKAGE
+   Settings → Packages → New
+   Upload FalconSensorMacOS.pkg
+
+2. CREATE POLICY
+   Policies → New
+   ├── General: Name "Deploy CrowdStrike"
+   ├── Packages: Add FalconSensorMacOS.pkg
+   ├── Files and Processes: Run script (post-install)
+   └── Scope: Target computers/groups
+
+3. POST-INSTALL SCRIPT
+#!/bin/bash
+CID="YOUR_CID_HERE"
+/Applications/Falcon.app/Contents/Resources/falconctl license $CID
+
+4. MDM PROFILE FOR APPROVALS
+   Create configuration profile for:
+   ├── System Extension approval
+   ├── Full Disk Access
+   ├── Network Filter
+   └── Notifications</div>
+                </div>
+
+                <!-- Host Groups -->
+                <h2><i class="fas fa-layer-group"></i> Host Groups</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Host setup and management → Host groups</span></p>
+
+                    <div class="code-block">Host Groups:
+
+PURPOSE:
+├── Apply different policies per group
+├── Organize by function, location, risk
+├── Control sensor settings
+└── Staged rollouts
+
+GROUP TYPES:
+├── Static: Manual assignment
+└── Dynamic: Automatic based on rules
+
+DYNAMIC ASSIGNMENT RULES:
+├── Hostname contains "WKS" → Workstations group
+├── OS contains "Windows Server" → Servers group
+├── OU contains "Finance" → High-Risk group
+├── Platform equals "Mac" → macOS group
+└── Site equals "NYC" → NYC Office group
+
+POLICY ASSIGNMENT:
+├── Prevention policies per group
+├── Response policies per group
+├── Sensor update policies per group
+└── USB device control per group</div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+                <div class="config-section">
+                    <div class="code-block"># Windows - Check sensor status
+sc query csagent
+Get-Service CSFalconService
+
+# Windows - Check connectivity
+Test-NetConnection ts01-b.cloudsink.net -Port 443
+
+# Windows - Logs
+C:\Windows\System32\drivers\CrowdStrike\hbfw.log
+
+# Linux - Check status
+sudo systemctl status falcon-sensor
+sudo /opt/CrowdStrike/falconctl -g --cid
+sudo /opt/CrowdStrike/falconctl -g --aid
+
+# Linux - Logs  
+sudo journalctl -u falcon-sensor
+
+# macOS - Check status
+sudo /Applications/Falcon.app/Contents/Resources/falconctl stats
+
+COMMON ISSUES:
+
+1. SENSOR NOT APPEARING IN CONSOLE
+   □ Check CID is correct
+   □ Verify network connectivity to CrowdStrike cloud
+   □ Check proxy settings
+   □ Wait 10-15 minutes for registration
+
+2. SENSOR NOT STARTING
+   □ Check system requirements
+   □ Verify kernel compatibility (Linux)
+   □ Check for conflicting security software
+   □ Review installation logs
+
+3. PREVENTION NOT WORKING
+   □ Check prevention policy assignment
+   □ Verify sensor in correct host group
+   □ Check policy is enabled
+   □ Review sensor version (update if old)</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you deploy CrowdStrike at scale?</button>
+                        <div class="qa-answer">
+                            <p>Enterprise deployment methods:</p>
+                            <ul>
+                                <li><strong>Windows:</strong> SCCM/MECM, Intune, GPO startup scripts</li>
+                                <li><strong>Linux:</strong> Ansible, Puppet, Chef, package managers</li>
+                                <li><strong>macOS:</strong> Jamf Pro, Kandji, Mosyle with MDM profiles</li>
+                            </ul>
+                            <p>Key considerations: silent install flags, CID configuration, staged rollout via host groups.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are host groups and why use them?</button>
+                        <div class="qa-answer">
+                            <p>Host groups organize endpoints for policy management:</p>
+                            <ul>
+                                <li>Apply different prevention policies (servers vs workstations)</li>
+                                <li>Staged sensor updates (pilot → production)</li>
+                                <li>Different response policies by risk level</li>
+                                <li>Dynamic groups auto-assign based on hostname, OS, OU</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Sensor installed but not appearing in console - troubleshooting?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Verify CID is correct (check falconctl output)</li>
+                                <li>Test connectivity to CrowdStrike cloud (ts01-b.cloudsink.net:443)</li>
+                                <li>Check if proxy is needed and configured</li>
+                                <li>Review sensor logs for errors</li>
+                                <li>Wait 10-15 minutes for initial check-in</li>
+                                <li>Verify no firewall blocking outbound HTTPS</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
         </div>
     </div>
     <script>
@@ -822,10 +417,7 @@ STATE: 4  RUNNING</span>
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

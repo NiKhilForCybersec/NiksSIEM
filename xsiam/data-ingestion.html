@@ -6,15 +6,10 @@
     <title>Data Ingestion | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f97316; margin: 8px 0; display: inline-block; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -24,6 +19,7 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">XSIAM Platform</div>
@@ -47,17 +43,19 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Detection & Response</div>
                     <a href="correlation-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Rules</a>
+                    <a href="alert-management.html" class="nav-link"><i class="fas fa-bell"></i> Alert Management</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
-                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-crosshairs"></i> XDR Capabilities</a>
-                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> ASM / Xpanse</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Automation & SOAR</div>
+                    <a href="xsoar-automation.html" class="nav-link"><i class="fas fa-robot"></i> XSOAR Automation</a>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
-                    <a href="marketplace.html" class="nav-link"><i class="fas fa-store"></i> Marketplace</a>
-                    <a href="enterprise-soc.html" class="nav-link"><i class="fas fa-building"></i> Enterprise SOC</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Advanced Features</div>
+                    <a href="xdr-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> XDR Capabilities</a>
+                    <a href="recon-asm.html" class="nav-link"><i class="fas fa-globe"></i> Recon & ASM</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Storage Tiers</a>
                 </div>
             </nav>
         </aside>
@@ -520,243 +518,6 @@ Missing Fields:
                         </div>
                     </div>
                 </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
-            });
-        });
-    </script>
-</body>
-</html>
-
-                <!-- Datasets Reference -->
-                <h2><i class="fas fa-table"></i> Common Datasets</h2>
-                <div class="config-section">
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Dataset</th><th>Description</th><th>Key Fields</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>xdr_data</strong></td>
-                                <td>Cortex XDR endpoint telemetry</td>
-                                <td>agent_hostname, event_type, actor_*</td>
-                            </tr>
-                            <tr>
-                                <td><strong>xdr_alerts</strong></td>
-                                <td>XDR alert data</td>
-                                <td>alert_name, severity, agent_hostname</td>
-                            </tr>
-                            <tr>
-                                <td><strong>panw_ngfw</strong></td>
-                                <td>Palo Alto firewall</td>
-                                <td>src_ip, dst_ip, action, app</td>
-                            </tr>
-                            <tr>
-                                <td><strong>azure_ad_signin</strong></td>
-                                <td>Azure AD sign-ins</td>
-                                <td>user, ip, result, app</td>
-                            </tr>
-                            <tr>
-                                <td><strong>aws_cloudtrail</strong></td>
-                                <td>AWS CloudTrail</td>
-                                <td>event_name, user, source_ip</td>
-                            </tr>
-                            <tr>
-                                <td><strong>okta_logs</strong></td>
-                                <td>Okta authentication</td>
-                                <td>user, action, outcome, client_ip</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Querying Multiple Datasets</h4>
-                    <div class="code-block">// Query single dataset
-dataset = xdr_data
-| filter event_type = PROCESS
-| limit 100
-
-// Query multiple datasets
-dataset in (xdr_data, panw_ngfw)
-| filter xdm.source.ipv4 = "10.0.1.50"
-| fields _dataset, xdm.source.ipv4, xdm.target.ipv4
-
-// All datasets
-dataset = *
-| filter xdm.source.user.username = "john.doe"
-| comp count() by _dataset</div>
-                </div>
-
-                <!-- Broker VM -->
-                <h2><i class="fas fa-server"></i> Broker VM Management</h2>
-                <div class="config-section">
-                    <p><span class="console-path">Settings → Data Sources → Broker VMs</span></p>
-
-                    <h4>Broker VM Functions</h4>
-                    <div class="code-block">Broker VM Capabilities:
-
-Syslog Collection:
-- Receive TCP/UDP syslog
-- Parse and forward to cloud
-- Buffer during network issues
-
-HTTP Collection:
-- Receive HTTP/HTTPS logs
-- Webhook endpoint
-- Custom log formats
-
-Windows Event Collection:
-- WEF (Windows Event Forwarding)
-- Collect from servers
-- Forward to XSIAM
-
-Database Collection:
-- JDBC connections
-- Query database tables
-- Scheduled pulls</div>
-
-                    <h4>Broker Deployment</h4>
-                    <div class="code-block">Deployment Steps:
-
-1. Download OVA/ISO
-   Settings → Data Sources → Broker VMs → Download
-
-2. Deploy to Hypervisor
-   - VMware, Hyper-V, or KVM
-   - 4 vCPU, 8GB RAM minimum
-   - Network accessible by log sources
-
-3. Initial Configuration
-   - Network settings
-   - Register with XSIAM tenant
-   - Configure collectors
-
-4. Monitoring
-   - Check broker status
-   - Monitor resource usage
-   - Review error logs</div>
-                </div>
-
-                <!-- Data Quality -->
-                <h2><i class="fas fa-check-circle"></i> Data Quality Best Practices</h2>
-                <div class="config-section">
-                    <h4>Ensuring Data Quality</h4>
-                    <div class="code-block">Data Quality Checklist:
-
-COMPLETENESS:
-☐ All expected sources sending data
-☐ No unexpected gaps in timeline
-☐ All fields populated correctly
-
-ACCURACY:
-☐ Timestamps correct (timezone)
-☐ Field values make sense
-☐ No parsing errors
-
-TIMELINESS:
-☐ Data arriving in near real-time
-☐ No significant latency
-☐ Alerts triggering promptly
-
-CONSISTENCY:
-☐ Same events parse consistently
-☐ Field names normalized
-☐ XDM mapping complete</div>
-
-                    <h4>Data Validation Queries</h4>
-                    <div class="code-block">// Check for data gaps
-dataset = xdr_data
-| comp count() by bin(_time, 1h)
-| where count < 1000
-| sort asc _time
-
-// Check parsing success
-dataset = _raw_log
-| filter parsing_status != "success"
-| comp count() by parsing_status, vendor, product
-
-// Verify field population
-dataset = panw_ngfw
-| comp 
-    count() as total,
-    count(src_ip != null) as has_src,
-    count(dst_ip != null) as has_dst
-| alter src_pct = round(has_src * 100.0 / total, 2)
-
-// Check latency
-dataset = xdr_data
-| alter latency_mins = timestamp_diff(_insert_time, _time, "MINUTE")
-| where latency_mins > 5
-| comp avg(latency_mins) by agent_hostname</div>
-                </div>
-
-                <!-- Licensing -->
-                <h2><i class="fas fa-file-contract"></i> Data Licensing</h2>
-                <div class="config-section">
-                    <h4>XSIAM Licensing Model</h4>
-                    <div class="code-block">Licensing Considerations:
-
-Pro per Endpoint:
-- Priced per endpoint
-- XDR agent data included
-- Limited third-party data
-
-Pro per TB:
-- Priced per data volume
-- All data types supported
-- Third-party integrations
-- More flexible
-
-Data Counting:
-- Compressed data size
-- After normalization
-- Excludes XDR agent data (in per-endpoint)
-
-Optimization:
-- Filter unnecessary logs at source
-- Use appropriate retention
-- Monitor usage dashboards</div>
-                </div>
-
-                <!-- More Interview Questions -->
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSIAM handle high-volume data ingestion?</button>
-                        <div class="qa-answer">
-                            <ul>
-                                <li><strong>Cloud-native architecture:</strong> Auto-scales to handle load</li>
-                                <li><strong>Broker VMs:</strong> Buffer and forward logs</li>
-                                <li><strong>Distributed processing:</strong> Parallel parsing and normalization</li>
-                                <li><strong>Compression:</strong> Efficient storage of normalized data</li>
-                                <li><strong>Hot/cold tiering:</strong> Optimize based on data age</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between hot and cold storage in XSIAM?</button>
-                        <div class="qa-answer">
-                            <ul>
-                                <li><strong>Hot storage:</strong> Recent data, fast queries, full functionality, higher cost</li>
-                                <li><strong>Cold storage:</strong> Archived data, slower access, requires rehydration, lower cost</li>
-                            </ul>
-                            <p style="margin-top: 12px;"><strong>Strategy:</strong> Keep frequently queried data in hot storage, archive older data to cold for compliance.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
 
             </main>
         </div>

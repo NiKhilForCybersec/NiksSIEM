@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Models | Splunk | Nik's SIEM Compendium</title>
+    <title>Data Models | Splunk Enterprise Security</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="app-container">
-                                                                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -19,6 +19,7 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Splunk Platform</div>
@@ -30,30 +31,30 @@
                     <div class="nav-section-title">Data Collection</div>
                     <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
                     <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
-                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Indexing</a>
-                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & TAs</a>
-                    <a href="data-models.html" class="nav-link active"><i class="fas fa-cubes"></i> Data Models (CIM)</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Fields</a>
+                    <a href="data-models.html" class="nav-link active"><i class="fas fa-cubes"></i> Data Models & CIM</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">SPL Query Language</div>
                     <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
-                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-layer-group"></i> SPL Intermediate</a>
-                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-code"></i> SPL Advanced</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-code"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> SPL Advanced</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">ES Detection</div>
+                    <div class="nav-section-title">Security Operations</div>
                     <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
                     <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
                     <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                    <a href="threat-hunting.html" class="nav-link"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
                     <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
-                    <a href="soar.html" class="nav-link"><i class="fas fa-robot"></i> SOAR Integration</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-section-title">Administration</div>
+                    <a href="administration.html" class="nav-link"><i class="fas fa-cog"></i> Administration</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & Add-ons</a>
                     <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
-                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Retention & Storage</a>
-                    <a href="troubleshooting.html" class="nav-link"><i class="fas fa-wrench"></i> Troubleshooting</a>
-                    <a href="enterprise-scenarios.html" class="nav-link"><i class="fas fa-building"></i> Enterprise Scenarios</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Storage Tiers</a>
                 </div>
             </nav>
         </aside>
@@ -67,735 +68,534 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-cubes"></i> Splunk Data Models & CIM</h1>
-                <p class="lead">Data Models and the Common Information Model (CIM) are fundamental to Splunk Enterprise Security. They provide a normalized schema for vendor-agnostic detection and enable high-performance searches via tstats.</p>
+                <p class="lead">Master Splunk data models and the Common Information Model (CIM). Learn data normalization, tstats for fast searches, acceleration, and how ES leverages data models for security operations.</p>
 
-                <!-- WHAT ARE DATA MODELS -->
-                <h2><i class="fas fa-question-circle"></i> What Are Data Models?</h2>
-                
-                <div class="info-box">
-                    <h4><i class="fas fa-lightbulb"></i> Data Model Fundamentals</h4>
-                    <p>A Data Model is a hierarchical schema that organizes data into objects, attributes, and relationships. Key benefits:</p>
-                    <ul>
-                        <li><strong>Normalization:</strong> Consistent field names across vendors</li>
-                        <li><strong>Acceleration:</strong> Pre-computed summaries for fast queries</li>
-                        <li><strong>Abstraction:</strong> Write queries without knowing source format</li>
-                        <li><strong>ES Foundation:</strong> Correlation searches rely on data models</li>
-                    </ul>
+                <!-- Data Models Overview -->
+                <h2><i class="fas fa-info-circle"></i> Data Models Overview</h2>
+                <div class="config-section">
+                    <h4>What are Data Models?</h4>
+                    <div class="code-block">Data Models Definition:
+
+Hierarchical, structured representations of your data 
+that enable fast, normalized searches across multiple 
+source types.
+
+KEY CONCEPTS:
+├── Data Model: Container for related objects
+├── Object: Represents events (root or child)
+├── Field: Normalized attribute (CIM-compliant)
+├── Constraint: Defines which events match
+└── Acceleration: Pre-computed summaries
+
+WHY USE DATA MODELS:
+├── Normalization: Consistent field names
+├── Speed: tstats searches are 10-100x faster
+├── Abstraction: Query without knowing sourcetypes
+├── ES Requirement: Enterprise Security needs them
+└── Reporting: Pivot interface for analysts
+
+DATA MODEL HIERARCHY:
+┌─────────────────────────────────────┐
+│         DATA MODEL                  │
+│  ┌───────────────────────────────┐ │
+│  │    ROOT OBJECT (Events)       │ │
+│  │    ┌───────────────────────┐  │ │
+│  │    │   CHILD OBJECT        │  │ │
+│  │    │   ┌───────────────┐   │  │ │
+│  │    │   │  GRANDCHILD   │   │  │ │
+│  │    │   └───────────────┘   │  │ │
+│  │    └───────────────────────┘  │ │
+│  └───────────────────────────────┘ │
+└─────────────────────────────────────┘</div>
+
+                    <h4>Common Information Model (CIM)</h4>
+                    <div class="code-block">Common Information Model (CIM):
+
+WHAT IS CIM:
+├── Standard field naming convention
+├── Enables cross-source correlation
+├── Required for Enterprise Security
+├── Maintained by Splunk
+└── Technology Add-ons (TAs) implement CIM
+
+CIM DATA MODELS:
+┌────────────────────────────────────────────────────────────┐
+│ Model Name           │ Use Case                           │
+├────────────────────────────────────────────────────────────┤
+│ Authentication       │ Logon/logoff events                │
+│ Change              │ Configuration changes               │
+│ Endpoint            │ Process, service, file events       │
+│ Intrusion Detection │ IDS/IPS alerts                      │
+│ Malware             │ AV detections                       │
+│ Network Traffic     │ Firewall, flow data                 │
+│ Network Sessions    │ VPN, proxy sessions                 │
+│ Web                 │ HTTP/HTTPS traffic                  │
+│ Email               │ Email gateway events                │
+│ Data Access         │ Database queries                    │
+│ Databases          │ Database operations                  │
+│ Vulnerabilities     │ Vulnerability scan results          │
+│ Alerts              │ Security alerts                     │
+│ Updates             │ Patch/update status                 │
+└────────────────────────────────────────────────────────────┘</div>
                 </div>
 
-                <div class="flow-diagram">
-                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> Data Model Structure</div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 16px;">
-                        <div style="background: #0d1117; border: 2px solid #58a6ff; border-radius: 12px; padding: 20px; text-align: center;">
-                            <h4 style="color: #58a6ff; margin-top: 0;"><i class="fas fa-cube"></i> Root Object</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">Top-level container</p>
-                            <p style="color: #f0f6fc; font-size: 0.9rem;"><strong>Example:</strong> Authentication</p>
-                        </div>
-                        <div style="background: #0d1117; border: 2px solid #3fb950; border-radius: 12px; padding: 20px; text-align: center;">
-                            <h4 style="color: #3fb950; margin-top: 0;"><i class="fas fa-cubes"></i> Child Objects</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">Specific categories</p>
-                            <p style="color: #f0f6fc; font-size: 0.9rem;"><strong>Examples:</strong> Default_Authentication, Privileged_Authentication</p>
-                        </div>
-                        <div style="background: #0d1117; border: 2px solid #d29922; border-radius: 12px; padding: 20px; text-align: center;">
-                            <h4 style="color: #d29922; margin-top: 0;"><i class="fas fa-tags"></i> Fields/Attributes</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">Normalized properties</p>
-                            <p style="color: #f0f6fc; font-size: 0.9rem;"><strong>Examples:</strong> user, action, src, dest</p>
-                        </div>
-                    </div>
+                <!-- Key Data Models -->
+                <h2><i class="fas fa-database"></i> Key Security Data Models</h2>
+                <div class="config-section">
+                    <h4>Authentication Data Model</h4>
+                    <div class="code-block">Authentication Data Model:
+
+ROOT OBJECT: Authentication
+├── Base search: tag=authentication
+└── Key fields:
+    ├── action (success, failure)
+    ├── app (application name)
+    ├── dest (destination host)
+    ├── src (source host)
+    ├── user (username)
+    ├── src_user (source username)
+    ├── authentication_method
+    └── signature (event type)
+
+CHILD OBJECTS:
+├── Default_Authentication
+│   └── constraint: action=success
+├── Failed_Authentication  
+│   └── constraint: action=failure
+└── Privileged_Authentication
+    └── constraint: tag=privileged
+
+COMMON SOURCETYPES:
+├── WinEventLog:Security (4624, 4625)
+├── linux_secure
+├── cisco:asa
+├── pan:traffic
+└── okta:log
+
+TSTATS EXAMPLE:
+| tstats count from datamodel=Authentication 
+  where Authentication.action=failure 
+  by Authentication.user, Authentication.src
+| rename Authentication.* as *
+| where count > 10</div>
+
+                    <h4>Endpoint Data Model</h4>
+                    <div class="code-block">Endpoint Data Model:
+
+ROOT OBJECTS:
+├── Processes
+│   ├── Base: tag=process tag=report
+│   ├── Fields: process, process_name, process_id,
+│   │           parent_process, parent_process_id,
+│   │           user, dest, command_line
+│   └── Child: Filesystem (process + filesystem events)
+│
+├── Services
+│   ├── Base: tag=service tag=report
+│   ├── Fields: service_name, service_path, 
+│   │           start_mode, status
+│   └── Actions: started, stopped, modified
+│
+├── Filesystem
+│   ├── Base: tag=endpoint tag=filesystem
+│   ├── Fields: file_path, file_name, file_hash,
+│   │           action (created, modified, deleted)
+│   └── Used for: File integrity monitoring
+│
+└── Registry
+    ├── Base: tag=endpoint tag=registry
+    ├── Fields: registry_path, registry_key,
+    │           registry_value_data, action
+    └── Windows only
+
+TSTATS EXAMPLES:
+// Process execution
+| tstats count from datamodel=Endpoint.Processes 
+  by Processes.dest, Processes.user, Processes.process_name
+| rename Processes.* as *
+
+// Registry modifications
+| tstats count from datamodel=Endpoint.Registry 
+  where Registry.action=modified 
+  by Registry.dest, Registry.registry_path</div>
+
+                    <h4>Network Traffic Data Model</h4>
+                    <div class="code-block">Network Traffic Data Model:
+
+ROOT OBJECT: All_Traffic
+├── Base: tag=network tag=communicate
+└── Key fields:
+    ├── src_ip, src_port
+    ├── dest_ip, dest_port
+    ├── protocol
+    ├── bytes_in, bytes_out, bytes
+    ├── packets_in, packets_out
+    ├── action (allowed, blocked)
+    ├── app (application name)
+    └── transport (tcp, udp)
+
+COMMON SOURCETYPES:
+├── pan:traffic (Palo Alto)
+├── cisco:asa
+├── cisco:ftd
+├── checkpoint:firewall
+├── fortigate:traffic
+└── aws:cloudtrail
+
+TSTATS EXAMPLES:
+// Top destinations by bytes
+| tstats sum(All_Traffic.bytes) as total_bytes 
+  from datamodel=Network_Traffic 
+  by All_Traffic.dest_ip, All_Traffic.dest_port
+| sort -total_bytes
+
+// Blocked connections
+| tstats count from datamodel=Network_Traffic 
+  where All_Traffic.action=blocked 
+  by All_Traffic.src_ip, All_Traffic.dest_ip
+| sort -count</div>
+
+                    <h4>Web Data Model</h4>
+                    <div class="code-block">Web Data Model:
+
+ROOT OBJECT: Web
+├── Base: tag=web
+└── Key fields:
+    ├── url (full URL)
+    ├── uri_path
+    ├── uri_query
+    ├── http_method (GET, POST, etc.)
+    ├── status (HTTP response code)
+    ├── bytes_in, bytes_out
+    ├── http_user_agent
+    ├── http_referrer
+    ├── src_ip
+    ├── dest_ip
+    └── action (allowed, blocked)
+
+CHILD OBJECTS:
+├── Proxy: tag=proxy
+└── Web_Server: sourcetype with web data
+
+COMMON SOURCETYPES:
+├── bluecoat:proxysg:access
+├── cisco:wsa
+├── zscaler:nss
+├── iis
+└── apache:access
+
+TSTATS EXAMPLES:
+// Top user agents
+| tstats count from datamodel=Web 
+  by Web.http_user_agent
+| sort -count
+
+// Blocked URLs
+| tstats count from datamodel=Web 
+  where Web.action=blocked 
+  by Web.src_ip, Web.url</div>
                 </div>
 
-                <!-- CIM OVERVIEW -->
-                <h2><i class="fas fa-link"></i> Common Information Model (CIM)</h2>
+                <!-- tstats Usage -->
+                <h2><i class="fas fa-bolt"></i> tstats for Fast Searches</h2>
+                <div class="config-section">
+                    <h4>tstats Syntax</h4>
+                    <div class="code-block">tstats Command:
 
-                <div class="info-box" style="border-color: #3fb950;">
-                    <h4><i class="fas fa-globe"></i> CIM = Splunk's Universal Translator</h4>
-                    <p>The CIM is a set of pre-built data models with standardized field names. Think of it like a Rosetta Stone that translates different vendor formats into a common language.</p>
-                    <ul>
-                        <li><strong>Example:</strong> Windows calls it "SourceIP", Palo Alto calls it "src", Cisco calls it "sourceAddress" → CIM normalizes all to <code>src</code></li>
-                        <li><strong>Benefit:</strong> Write one correlation search that works with any vendor's firewall</li>
-                    </ul>
+BASIC SYNTAX:
+| tstats [stats-functions] from datamodel=ModelName 
+  [where conditions] 
+  [by fields]
+  [span=timespan]
+
+STATS FUNCTIONS:
+├── count: Count events
+├── dc(field): Distinct count
+├── sum(field): Sum values
+├── avg(field): Average
+├── min(field), max(field)
+├── values(field): Unique values
+├── latest(field), earliest(field)
+└── prestats: For multi-level stats
+
+PERFORMANCE:
+├── 10-100x faster than regular search
+├── Uses pre-computed TSIDX files
+├── Requires data model acceleration
+└── Limited to indexed-time fields
+
+EXAMPLES:
+// Count by time
+| tstats count from datamodel=Authentication 
+  where Authentication.action=failure 
+  by _time span=1h
+
+// Multiple aggregations
+| tstats count, dc(Authentication.user) as unique_users 
+  from datamodel=Authentication 
+  by Authentication.src
+
+// Summariesonly for accelerated
+| tstats summariesonly=true count 
+  from datamodel=Network_Traffic</div>
+
+                    <h4>Advanced tstats Patterns</h4>
+                    <div class="code-block">// Combining tstats with regular SPL
+| tstats count from datamodel=Authentication 
+  where Authentication.action=failure 
+  by Authentication.user, Authentication.src
+| rename Authentication.* as *
+| where count > 5
+| lookup user_info user OUTPUT department
+| table user, src, count, department
+
+// Time-based analysis
+| tstats count from datamodel=Network_Traffic 
+  by All_Traffic.src_ip, _time span=1h
+| rename All_Traffic.* as *
+| timechart span=1h sum(count) by src_ip limit=10
+
+// Using prestats for complex aggregations
+| tstats prestats=true count from datamodel=Web 
+  by Web.http_user_agent, _time span=1d
+| timechart span=1d count by http_user_agent
+
+// Join with asset data
+| tstats count from datamodel=Endpoint.Processes 
+  where Processes.process_name="powershell.exe" 
+  by Processes.dest
+| rename Processes.* as *
+| lookup assets.csv ip as dest OUTPUT asset_type, criticality</div>
                 </div>
 
-                <!-- CIM DATA MODELS TABLE -->
-                <h2><i class="fas fa-table"></i> Key CIM Data Models for Security</h2>
-                
-                <div class="styled-table">
-                    <table>
-                        <thead>
-                            <tr><th>Data Model</th><th>Purpose</th><th>Key Fields</th><th>Example Sources</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Authentication</strong></td>
-                                <td>Login events</td>
-                                <td>user, action, src, dest, app, signature</td>
-                                <td>Windows 4624/4625, Okta, Azure AD</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Network_Traffic</strong></td>
-                                <td>Network connections</td>
-                                <td>src, dest, src_port, dest_port, bytes, action</td>
-                                <td>Firewalls, NetFlow, Zeek</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Endpoint</strong></td>
-                                <td>Endpoint activity</td>
-                                <td>dest, user, process_name, process_path, action</td>
-                                <td>Sysmon, CrowdStrike, Carbon Black</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Malware</strong></td>
-                                <td>Malware detections</td>
-                                <td>signature, file_name, file_hash, action, category</td>
-                                <td>AV products, EDR, sandboxes</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Web</strong></td>
-                                <td>HTTP activity</td>
-                                <td>url, http_method, status, src, dest, user_agent</td>
-                                <td>Proxy logs, web servers, WAF</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Intrusion_Detection</strong></td>
-                                <td>IDS/IPS alerts</td>
-                                <td>signature, severity, src, dest, category</td>
-                                <td>Snort, Suricata, Palo Alto</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Change</strong></td>
-                                <td>Configuration changes</td>
-                                <td>object, action, user, result, object_category</td>
-                                <td>AD changes, file integrity, config mgmt</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Email</strong></td>
-                                <td>Email activity</td>
-                                <td>src_user, recipient, subject, action, file_name</td>
-                                <td>Exchange, O365, Proofpoint</td>
-                            </tr>
-                            <tr>
-                                <td><strong>DLP</strong></td>
-                                <td>Data loss prevention</td>
-                                <td>src, user, action, file_name, dlp_type</td>
-                                <td>Symantec DLP, Microsoft Purview</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Vulnerability</strong></td>
-                                <td>Vulnerability scans</td>
-                                <td>dest, signature, severity, cvss, cve</td>
-                                <td>Qualys, Tenable, Rapid7</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Data Model Acceleration -->
+                <h2><i class="fas fa-rocket"></i> Data Model Acceleration</h2>
+                <div class="config-section">
+                    <h4>Acceleration Configuration</h4>
+                    <div class="code-block">Data Model Acceleration:
+
+PATH: Settings → Data Models → [Model] → Edit Acceleration
+
+ACCELERATION SETTINGS:
+├── Accelerate: Enable/Disable
+├── Summary Range: Time period to accelerate
+│   ├── 1 Day, 7 Days, 1 Month, 3 Months, 1 Year, All Time
+│   └── More time = more storage
+├── Acceleration Status: 
+│   ├── % Complete
+│   ├── Size on disk
+│   └── Last updated
+
+HOW IT WORKS:
+1. Splunk runs background searches
+2. Creates TSIDX summary files
+3. Stores pre-computed aggregations
+4. tstats reads summaries (fast)
+5. Regular search scans raw data (slow)
+
+STORAGE IMPACT:
+├── ~10-15% of raw data size typically
+├── Depends on cardinality of fields
+├── More fields = more storage
+└── Monitor with:
+    | rest /services/admin/summarization
+
+BEST PRACTICES:
+├── Accelerate only needed models
+├── Start with shorter time range
+├── Monitor storage growth
+├── Use summariesonly=true for speed
+└── Re-accelerate after field changes</div>
+
+                    <h4>Monitoring Acceleration</h4>
+                    <div class="code-block">// Check acceleration status
+| rest /services/admin/summarization 
+| search eai:acl.app=*ES* 
+| table title, summary.is_inprogress, summary.complete, 
+        summary.size, summary.access_count
+
+// Acceleration job details
+| rest /services/data/models 
+| search acceleration.enabled=1 
+| table title, acceleration.enabled, acceleration.earliest_time
+
+// Storage usage by data model
+| dbinspect index=_summariesindex 
+| stats sum(sizeOnDiskMB) as size_mb by splunk_server
+| sort -size_mb
+
+// Troubleshooting slow acceleration
+index=_internal sourcetype=scheduler status=*
+  (app=SA-* OR app=Splunk_SA_*)
+| stats count by status, app
+| sort -count</div>
                 </div>
 
-                <!-- AUTHENTICATION DATA MODEL DEEP DIVE -->
-                <h2><i class="fas fa-user-shield"></i> Authentication Data Model Deep Dive</h2>
+                <!-- CIM Compliance -->
+                <h2><i class="fas fa-check-circle"></i> CIM Compliance</h2>
+                <div class="config-section">
+                    <h4>Making Data CIM-Compliant</h4>
+                    <div class="code-block">CIM Compliance Methods:
 
-                <div class="pipeline">
-                    <div class="pipeline-stage" data-step="1">
-                        <div class="pipeline-stage-title">Authentication</div>
-                        <div class="pipeline-stage-desc">Root object</div>
-                        <div class="pipeline-stage-details">
-                            <p>All authentication events</p>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="2">
-                        <div class="pipeline-stage-title">Default_Authentication</div>
-                        <div class="pipeline-stage-desc">Child: Standard logins</div>
-                        <div class="pipeline-stage-details">
-                            <p>Normal user authentication</p>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="3">
-                        <div class="pipeline-stage-title">Privileged_Authentication</div>
-                        <div class="pipeline-stage-desc">Child: Admin logins</div>
-                        <div class="pipeline-stage-details">
-                            <p>Elevated privilege auth</p>
-                        </div>
-                    </div>
+1. TECHNOLOGY ADD-ONS (TAs)
+   ├── Pre-built field extractions
+   ├── Install from Splunkbase
+   ├── Auto-map to CIM fields
+   └── Example: TA for Palo Alto Networks
+
+2. FIELD ALIASES
+   props.conf:
+   [mysourcetype]
+   FIELDALIAS-user = username AS user
+   FIELDALIAS-src = source_ip AS src
+
+3. CALCULATED FIELDS
+   props.conf:
+   [mysourcetype]
+   EVAL-action = if(status="blocked", "blocked", "allowed")
+
+4. LOOKUPS
+   props.conf:
+   [mysourcetype]
+   LOOKUP-vendor_action = vendor_action_lookup vendor_code 
+     OUTPUT action
+
+5. FIELD EXTRACTIONS
+   props.conf:
+   [mysourcetype]
+   EXTRACT-dest = dest_host=(?<dest>\S+)
+
+6. TAGS
+   tags.conf:
+   [sourcetype=mysourcetype]
+   authentication = enabled
+   
+   [eventtype=mylogon_success]
+   authentication = enabled
+   success = enabled</div>
+
+                    <h4>CIM Validation</h4>
+                    <div class="code-block">// Check if data maps to CIM
+| datamodel Authentication search 
+| head 100
+| table _raw, user, src, dest, action
+
+// Validate field population
+| tstats count from datamodel=Authentication 
+  by Authentication.user, Authentication.action
+| rename Authentication.* as *
+| stats count by user, action
+
+// Find unmapped data
+index=* tag=authentication 
+| stats count by sourcetype
+| join type=left sourcetype 
+  [| tstats count from datamodel=Authentication 
+     by source
+   | rename source as sourcetype]
+
+// CIM compliance check per sourcetype
+| tstats count from datamodel=* by source
+| stats values(*) as * by source
+| rename source as sourcetype</div>
                 </div>
 
-                <h3>Authentication CIM Fields</h3>
-                <div class="styled-table">
-                    <table>
-                        <thead>
-                            <tr><th>CIM Field</th><th>Description</th><th>Windows 4624</th><th>Okta</th><th>Azure AD</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><code>user</code></td><td>Username</td><td>Account_Name</td><td>actor.displayName</td><td>UserPrincipalName</td></tr>
-                            <tr><td><code>action</code></td><td>success/failure</td><td>Keywords (Success/Failure)</td><td>outcome.result</td><td>ResultType (0=success)</td></tr>
-                            <tr><td><code>src</code></td><td>Source IP</td><td>Source_Network_Address</td><td>client.ipAddress</td><td>IPAddress</td></tr>
-                            <tr><td><code>dest</code></td><td>Destination host</td><td>Computer</td><td>N/A</td><td>ResourceDisplayName</td></tr>
-                            <tr><td><code>app</code></td><td>Application</td><td>Process_Name</td><td>target.displayName</td><td>AppDisplayName</td></tr>
-                            <tr><td><code>signature</code></td><td>Event type</td><td>EventCode</td><td>eventType</td><td>OperationName</td></tr>
-                        </tbody>
-                    </table>
+                <!-- ES Required Data Models -->
+                <h2><i class="fas fa-shield-alt"></i> ES Required Data Models</h2>
+                <div class="config-section">
+                    <div class="code-block">Enterprise Security Data Model Requirements:
+
+CORE DATA MODELS (Must have):
+├── Authentication
+│   └── For: Access Center, user tracking
+├── Network_Traffic
+│   └── For: Network intrusion, traffic analysis
+├── Endpoint (Processes, Filesystem)
+│   └── For: Endpoint investigation
+├── Intrusion_Detection
+│   └── For: IDS/IPS correlation
+└── Malware
+    └── For: Malware tracking
+
+RECOMMENDED DATA MODELS:
+├── Change
+│   └── For: Change analysis, compliance
+├── Web
+│   └── For: Web security monitoring
+├── Email
+│   └── For: Phishing, email security
+├── Network_Sessions
+│   └── For: VPN, session tracking
+├── Vulnerabilities
+│   └── For: Vulnerability management
+└── Data_Access
+    └── For: Database monitoring
+
+ACCELERATION REQUIREMENTS:
+├── All core models should be accelerated
+├── 90 days minimum for historical correlation
+├── Risk-based alerting needs Endpoint.Processes
+└── Asset/Identity correlation needs all models</div>
                 </div>
 
-                <!-- DATA MODEL ACCELERATION -->
-                <h2><i class="fas fa-bolt"></i> Data Model Acceleration</h2>
-
-                <div class="decision-tree">
-                    <div class="decision-node">
-                        <div class="decision-node-question">Should you accelerate this data model?</div>
-                    </div>
-                    <div class="decision-paths">
-                        <div class="decision-path">
-                            <div class="decision-path-label yes">Yes - Accelerate</div>
-                            <div class="decision-path-content">
-                                <p style="color: #3fb950; font-weight: 600;">→ Enable Acceleration</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Data model is used in dashboards, correlation searches, or frequent queries. Performance gain worth the storage cost.</p>
-                            </div>
-                        </div>
-                        <div class="decision-path">
-                            <div class="decision-path-label no">No - Don't Accelerate</div>
-                            <div class="decision-path-content">
-                                <p style="color: #d29922; font-weight: 600;">→ Leave Raw</p>
-                                <p style="color: #8b949e; font-size: 0.85rem;">Low query volume, small data set, or storage constraints. Ad-hoc queries can use datamodel command.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <h4><i class="fas fa-tachometer-alt"></i> Acceleration Benefits</h4>
-                    <ul>
-                        <li><strong>Speed:</strong> tstats queries run 10-100x faster than raw search</li>
-                        <li><strong>Scale:</strong> Query billions of events in seconds</li>
-                        <li><strong>ES Requirement:</strong> Most ES dashboards require accelerated models</li>
-                    </ul>
-                    <p><strong>Trade-off:</strong> Acceleration uses ~5-10% additional storage. Summary range determines how far back tstats can query.</p>
-                </div>
-
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Checking Acceleration Status</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;">| rest /services/datamodel/acceleration</span>
-| <span style="color: #f97583;">table</span> title, acceleration, acceleration.earliest_time, 
-       "acceleration.cron_schedule", "eai:acl.app"
-| <span style="color: #f97583;">sort</span> title
-</pre>
-                </div>
-
-                <!-- TSTATS QUERIES -->
-                <h2><i class="fas fa-terminal"></i> Using tstats with Data Models</h2>
-
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> tstats Query Examples</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;">// Basic tstats - count failed logins</span>
-| <span style="color: #f97583;">tstats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">from</span> datamodel=Authentication
-  <span style="color: #f97583;">where</span> Authentication.action=failure
-  <span style="color: #f97583;">by</span> Authentication.user, Authentication.src
-
-<span style="color: #8b949e;">// tstats with time binning for charts</span>
-| <span style="color: #f97583;">tstats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">from</span> datamodel=Authentication
-  <span style="color: #f97583;">where</span> Authentication.action=failure
-  <span style="color: #f97583;">by</span> _time, Authentication.user
-  span=1h
-| <span style="color: #f97583;">timechart</span> span=1h <span style="color: #79c0ff;">sum</span>(count) <span style="color: #f97583;">by</span> Authentication.user
-
-<span style="color: #8b949e;">// Network Traffic - top talkers</span>
-| <span style="color: #f97583;">tstats</span> <span style="color: #79c0ff;">sum</span>(All_Traffic.bytes) <span style="color: #f97583;">as</span> total_bytes
-  <span style="color: #f97583;">from</span> datamodel=Network_Traffic.All_Traffic
-  <span style="color: #f97583;">by</span> All_Traffic.src
-| <span style="color: #f97583;">sort</span> - total_bytes
-| <span style="color: #f97583;">head</span> 10
-
-<span style="color: #8b949e;">// Endpoint - suspicious processes</span>
-| <span style="color: #f97583;">tstats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">from</span> datamodel=Endpoint.Processes
-  <span style="color: #f97583;">where</span> Processes.process_name=powershell.exe
-  <span style="color: #f97583;">by</span> Processes.dest, Processes.user, Processes.parent_process_name
-| <span style="color: #f97583;">rename</span> Processes.* <span style="color: #f97583;">as</span> *
-
-<span style="color: #8b949e;">// Malware - detection summary</span>
-| <span style="color: #f97583;">tstats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">from</span> datamodel=Malware
-  <span style="color: #f97583;">where</span> Malware.action=allowed
-  <span style="color: #f97583;">by</span> Malware.dest, Malware.signature
-| <span style="color: #f97583;">sort</span> - count
-</pre>
-                </div>
-
-                <h3>tstats vs datamodel Command</h3>
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #1a4d2e; color: #3fb950;"><i class="fas fa-bolt"></i></div>
-                            <div class="comparison-item-title">tstats (Accelerated)</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> 10-100x faster</li>
-                            <li><i class="fas fa-check"></i> Uses pre-computed summaries</li>
-                            <li><i class="fas fa-check"></i> Great for dashboards</li>
-                            <li><i class="fas fa-times"></i> Requires acceleration enabled</li>
-                            <li><i class="fas fa-times"></i> Limited to accelerated time range</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-item-header">
-                            <div class="comparison-item-icon" style="background: #4d3a0d; color: #d29922;"><i class="fas fa-search"></i></div>
-                            <div class="comparison-item-title">datamodel Command</div>
-                        </div>
-                        <ul class="comparison-item-list">
-                            <li><i class="fas fa-check"></i> Works without acceleration</li>
-                            <li><i class="fas fa-check"></i> Access all raw events</li>
-                            <li><i class="fas fa-check"></i> Good for ad-hoc queries</li>
-                            <li><i class="fas fa-times"></i> Slower performance</li>
-                            <li><i class="fas fa-times"></i> Scans raw data</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- MAPPING DATA TO CIM -->
-                <h2><i class="fas fa-map"></i> Mapping Data to CIM</h2>
-
-                <div class="pipeline">
-                    <div class="pipeline-stage" data-step="1">
-                        <div class="pipeline-stage-title">Install TA</div>
-                        <div class="pipeline-stage-desc">Technology Add-on</div>
-                        <div class="pipeline-stage-details">
-                            <p>TAs provide CIM-compliant field extractions</p>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="2">
-                        <div class="pipeline-stage-title">Verify Mapping</div>
-                        <div class="pipeline-stage-desc">Check field alignment</div>
-                        <div class="pipeline-stage-details">
-                            <p>Ensure fields match CIM standards</p>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="3">
-                        <div class="pipeline-stage-title">Tag Events</div>
-                        <div class="pipeline-stage-desc">Apply event tags</div>
-                        <div class="pipeline-stage-details">
-                            <p>Tags like "authentication" enable data model matching</p>
-                        </div>
-                    </div>
-                    
-                    <div class="pipeline-stage" data-step="4">
-                        <div class="pipeline-stage-title">Validate</div>
-                        <div class="pipeline-stage-desc">Test with tstats</div>
-                        <div class="pipeline-stage-details">
-                            <p>Confirm events appear in data model</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-code"></i> Example: Mapping Custom Logs to Authentication</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;"># In props.conf - field extractions and aliases</span>
-[my_custom_auth_logs]
-FIELDALIAS-user = username AS user
-FIELDALIAS-src = source_ip AS src
-FIELDALIAS-dest = target_server AS dest
-EVAL-action = if(status="success", "success", "failure")
-EVAL-app = "custom_auth_system"
-
-<span style="color: #8b949e;"># In tags.conf - tag for data model matching</span>
-[eventtype=my_custom_auth_success]
-authentication = enabled
-default = enabled
-
-[eventtype=my_custom_auth_failure]
-authentication = enabled
-default = enabled
-
-<span style="color: #8b949e;"># In eventtypes.conf - define the event types</span>
-[my_custom_auth_success]
-search = sourcetype=my_custom_auth_logs status=success
-
-[my_custom_auth_failure]
-search = sourcetype=my_custom_auth_logs status=failure
-</pre>
-                </div>
-
-                <!-- TROUBLESHOOTING -->
-                <h2><i class="fas fa-tools"></i> Data Model Troubleshooting</h2>
-
-                <div class="code-block">
-                    <div class="code-header"><i class="fas fa-bug"></i> Troubleshooting Queries</div>
-<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
-<span style="color: #8b949e;">// Check if events are mapping to Authentication model</span>
-| <span style="color: #f97583;">datamodel</span> Authentication <span style="color: #f97583;">search</span>
-| <span style="color: #f97583;">stats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">by</span> sourcetype, source
-
-<span style="color: #8b949e;">// Verify tags are applied correctly</span>
-<span style="color: #79c0ff;">index</span>=* <span style="color: #79c0ff;">sourcetype</span>=my_custom_auth_logs
-| <span style="color: #f97583;">tags</span>
-| <span style="color: #f97583;">stats</span> <span style="color: #79c0ff;">count</span> <span style="color: #f97583;">by</span> tag
-
-<span style="color: #8b949e;">// Check CIM field mapping</span>
-<span style="color: #79c0ff;">index</span>=* <span style="color: #79c0ff;">sourcetype</span>=my_custom_auth_logs
-| <span style="color: #f97583;">table</span> _time, user, action, src, dest, app
-| <span style="color: #f97583;">head</span> 10
-
-<span style="color: #8b949e;">// View acceleration build status</span>
-| <span style="color: #f97583;">rest</span> /services/admin/summarization <span style="color: #f97583;">splunk_server</span>=local
-| <span style="color: #f97583;">search</span> title="DM_*"
-| <span style="color: #f97583;">table</span> title, complete, access_count, last_accessed
-
-<span style="color: #8b949e;">// Force rebuild acceleration (use carefully)</span>
-| <span style="color: #f97583;">rest</span> /services/admin/summarization/tstats:DM_Authentication_Authentication/rebuild_pending
-</pre>
-                </div>
-
-                <!-- ENTERPRISE EXAMPLE -->
-                <div class="enterprise-example">
-                    <div class="enterprise-example-header">
-                        <i class="fas fa-building"></i>
-                        <div class="enterprise-example-title">Enterprise Example: Data Model Strategy</div>
-                    </div>
-                    <div class="enterprise-example-scenario">
-                        <strong>Scenario:</strong> Healthcare organization with 500GB/day ingestion implementing Splunk ES with proper CIM compliance.
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #3fb950; margin-top: 0;">CIM-Compliant Sources</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Authentication:</strong> AD, Epic (EHR), Citrix<br>
-                                <strong>Network:</strong> Palo Alto, Cisco ASA<br>
-                                <strong>Endpoint:</strong> CrowdStrike, Sysmon<br>
-                                <strong>Email:</strong> Exchange, Proofpoint<br>
-                                <strong>DLP:</strong> Symantec
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #58a6ff; margin-top: 0;">Acceleration Config</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>Authentication:</strong> 90 days (HIPAA)<br>
-                                <strong>Network_Traffic:</strong> 30 days<br>
-                                <strong>Endpoint:</strong> 90 days<br>
-                                <strong>Malware:</strong> 1 year<br>
-                                <strong>Storage Impact:</strong> +8% (40GB/day)
-                            </p>
-                        </div>
-                        <div style="background: #0d1117; border-radius: 8px; padding: 16px;">
-                            <h4 style="color: #d29922; margin-top: 0;">Results</h4>
-                            <p style="color: #8b949e; font-size: 0.85rem;">
-                                <strong>ES Dashboard Load:</strong> 2-5 seconds<br>
-                                <strong>Correlation Search:</strong> 80 rules active<br>
-                                <strong>CIM Compliance:</strong> 95% of sources<br>
-                                <strong>Notable Quality:</strong> Low FP rate
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- INTERVIEW QUESTIONS -->
+                <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question">Q: What is the CIM and why is it important for ES?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is CIM and why is it important?</button>
                         <div class="qa-answer">
-                            <p>"CIM (Common Information Model) is Splunk's normalized schema that standardizes field names across different vendors and data sources.</p>
-                            <p><strong>Why it's important for ES:</strong></p>
+                            <p><strong>CIM (Common Information Model)</strong> is Splunk's standard for field naming:</p>
                             <ul>
-                                <li><strong>Correlation searches work:</strong> ES's OOTB rules rely on CIM fields like <code>user</code>, <code>src</code>, <code>dest</code></li>
-                                <li><strong>Dashboards populate:</strong> ES dashboards query data models, not raw data</li>
-                                <li><strong>Vendor agnostic:</strong> One rule detects brute force from Windows, Okta, and Azure AD</li>
+                                <li>Normalizes fields across different data sources</li>
+                                <li>Enables cross-source correlation (firewall + auth logs)</li>
+                                <li>Required for Enterprise Security to function</li>
+                                <li>Implemented via Technology Add-ons (TAs)</li>
                             </ul>
-                            <p>Without proper CIM mapping, ES doesn't see the data and detections fail silently."</p>
+                            <p>Example: "user" field works the same for Windows, Linux, and Okta logs.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: What's the difference between tstats and the datamodel command?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is tstats and why is it faster?</button>
                         <div class="qa-answer">
-                            <p><strong>tstats (accelerated):</strong></p>
+                            <p><strong>tstats</strong> searches pre-computed summaries (TSIDX files) instead of raw data:</p>
                             <ul>
-                                <li>Queries pre-computed TSIDX summaries</li>
-                                <li>10-100x faster than raw search</li>
-                                <li>Requires acceleration enabled</li>
-                                <li>Limited to accelerated time range</li>
-                                <li>Best for: Dashboards, scheduled searches</li>
+                                <li>10-100x faster than regular search</li>
+                                <li>Requires data model acceleration</li>
+                                <li>Limited to indexed-time fields and stats functions</li>
+                                <li>Use for dashboards and correlation searches</li>
                             </ul>
-                            <p><strong>datamodel command:</strong></p>
-                            <ul>
-                                <li>Searches raw events using data model constraints</li>
-                                <li>Works without acceleration</li>
-                                <li>Slower but more flexible</li>
-                                <li>Best for: Ad-hoc investigation, testing mappings</li>
-                            </ul>
+                            <p>Trade-off: Uses additional storage for acceleration files.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: How do you troubleshoot data not appearing in a data model?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you make data CIM-compliant?</button>
                         <div class="qa-answer">
-                            <p><strong>Troubleshooting steps:</strong></p>
                             <ol>
-                                <li><strong>Check field extraction:</strong> Are CIM fields (user, src, dest) being extracted?</li>
-                                <li><strong>Verify tags:</strong> Run <code>| tags</code> - are "authentication" tags present?</li>
-                                <li><strong>Check TA installation:</strong> Is the Technology Add-on installed on search heads?</li>
-                                <li><strong>Test with datamodel command:</strong> <code>| datamodel Authentication search</code></li>
-                                <li><strong>Check acceleration:</strong> Is it enabled? Is it building successfully?</li>
-                                <li><strong>Time range:</strong> Is the data within the acceleration summary range?</li>
+                                <li><strong>Install TA:</strong> Technology Add-on for your data source</li>
+                                <li><strong>Field aliases:</strong> Map source fields to CIM fields</li>
+                                <li><strong>Calculated fields:</strong> EVAL for transformations</li>
+                                <li><strong>Tags:</strong> Add appropriate tags (authentication, network, etc.)</li>
+                                <li><strong>Lookups:</strong> Enrich with additional context</li>
                             </ol>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question">Q: Which data models should be accelerated for ES?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Which data models are required for Enterprise Security?</button>
                         <div class="qa-answer">
-                            <p><strong>Must accelerate (ES depends on these):</strong></p>
+                            <p><strong>Core (Must have):</strong></p>
                             <ul>
-                                <li>Authentication - Login detection</li>
-                                <li>Network_Traffic - Network detection</li>
-                                <li>Endpoint - Endpoint detection</li>
-                                <li>Malware - AV/EDR detection</li>
-                                <li>Web - Proxy/web detection</li>
+                                <li>Authentication - user tracking, access</li>
+                                <li>Network_Traffic - firewall, flow data</li>
+                                <li>Endpoint - process execution, files</li>
+                                <li>Intrusion_Detection - IDS/IPS</li>
+                                <li>Malware - AV detections</li>
                             </ul>
-                            <p><strong>Acceleration recommendations:</strong></p>
-                            <ul>
-                                <li>30-90 days for most models</li>
-                                <li>Match to your compliance retention</li>
-                                <li>Budget ~5-10% additional storage</li>
-                            </ul>
+                            <p>All should be accelerated for at least 90 days.</p>
                         </div>
                     </div>
                 </div>
 
-            
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-
-
-                <!-- Comprehensive Troubleshooting -->
-                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
-                <div class="config-section">
-                    <h4>Systematic Troubleshooting Methodology</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <ol style="color: #8b949e;">
-                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
-                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
-                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
-                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
-                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
-                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
-                        </ol>
-                    </div>
-
-                    <h4>Common Issues and Resolutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="2"><strong>Connectivity</strong></td>
-                                <td>Agent not reporting</td>
-                                <td>Check agent service status, network connectivity, firewall rules</td>
-                                <td>Restart service, verify network path, update firewall rules</td>
-                            </tr>
-                            <tr>
-                                <td>API timeouts</td>
-                                <td>Test API endpoint, check rate limits, verify credentials</td>
-                                <td>Retry with backoff, request limit increase, refresh credentials</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Data Quality</strong></td>
-                                <td>Missing fields</td>
-                                <td>Review parsing rules, check source format, validate schema</td>
-                                <td>Update parser, fix source configuration, adjust schema mapping</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Audit data sources, check collection paths, review timestamps</td>
-                                <td>Consolidate sources, implement deduplication, fix time sync</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Performance</strong></td>
-                                <td>Slow queries</td>
-                                <td>Analyze query execution plan, check resource utilization</td>
-                                <td>Optimize query, add indexes, scale resources</td>
-                            </tr>
-                            <tr>
-                                <td>High latency</td>
-                                <td>Monitor queue depths, check processing bottlenecks</td>
-                                <td>Scale processing capacity, optimize data flow</td>
-                            </tr>
-                            <tr>
-                                <td rowspan="2"><strong>Authentication</strong></td>
-                                <td>Login failures</td>
-                                <td>Verify credentials, check account status, review permissions</td>
-                                <td>Reset password, unlock account, grant required permissions</td>
-                            </tr>
-                            <tr>
-                                <td>Token expiration</td>
-                                <td>Check token validity, review refresh mechanism</td>
-                                <td>Refresh token, update token management configuration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
-
-# Check system health status
-| filter log_type = "system_health"
-| sort _time desc
-| limit 50
-
-# Monitor error rates over time
-| filter severity in ("error", "critical")
-| timechart count by component span=1h
-
-# Identify slow operations
-| filter operation_time > 30000
-| stats avg(operation_time), max(operation_time), count by operation_name
-| sort avg(operation_time) desc
-
-# Check connectivity status
-| filter event_type = "connectivity"
-| stats latest(status), latest(_time) by source_name
-| where status != "connected"
-
-# Review authentication failures
-| filter event_type = "authentication" and result = "failure"
-| stats count by user, source_ip, failure_reason
-| sort count desc</div>
-                </div>
-
-
-                <!-- Real-World Use Cases -->
-                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
-                <div class="config-section">
-                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
-                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>High volume of security events (500+ million events/day)</li>
-                            <li>Multiple security tools with siloed data</li>
-                            <li>Alert fatigue from excessive false positives</li>
-                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Phased rollout starting with critical data sources</li>
-                            <li>Custom detection rules based on threat model</li>
-                            <li>Automated playbooks for common scenarios</li>
-                            <li>Integration with ITSM and CMDB systems</li>
-                        </ul>
-                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
-                    </div>
-
-                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
-                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Need for strict data isolation between customers</li>
-                            <li>Scalable operations with limited staff</li>
-                            <li>Standardized service delivery across customers</li>
-                            <li>Flexible SLA-based prioritization</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Shared detection content library with customization</li>
-                            <li>Centralized analyst console with customer context</li>
-                            <li>Automated reporting and SLA tracking</li>
-                        </ul>
-                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
-                    </div>
-
-                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
-                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
-                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>HIPAA compliance requirements for PHI protection</li>
-                            <li>Legacy medical devices with limited security logging</li>
-                            <li>Need for 6-year log retention</li>
-                            <li>Limited IT security staff</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive EHR and clinical application monitoring</li>
-                            <li>PHI access detection rules</li>
-                            <li>Long-term archival storage configuration</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                        </ul>
-                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
-                    </div>
-                </div>
-
-                <!-- Extended Best Practices -->
-                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
-                <div class="config-section">
-                    <h4>Operational Excellence</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
-                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
-                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
-                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
-                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
-                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
-                    </ul>
-
-                    <h4>Security Hardening</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
-                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
-                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
-                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
-                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
-                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
-                    </ul>
-
-                    <h4>Performance Optimization</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
-                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
-                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
-                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
-                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
-                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
-                    </ul>
-                </div>
-</main>
-            <footer class="main-footer">
-                <div class="footer-content">
-                    <p>Nik's SIEM Compendium</p>
-                </div>
-            </footer>
+            </main>
         </div>
     </div>
     <script>
@@ -805,10 +605,7 @@ search = sourcetype=my_custom_auth_logs status=failure
                 const isOpen = answer.style.display === 'block';
                 document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) {
-                    answer.style.display = 'block';
-                    btn.classList.add('active');
-                }
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
             });
         });
     </script>

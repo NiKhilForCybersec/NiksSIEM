@@ -6,17 +6,10 @@
     <title>Threat Hunting | CrowdStrike Falcon</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
-    <style>
-        .config-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
-        .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre; }
-        .console-path { background: #0d1117; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #f85149; margin: 8px 0; display: inline-block; }
-        .mitre-tag { background: #1f6feb; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: white; margin-right: 4px; }
-        .hunt-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #f85149; }
-    </style>
 </head>
 <body>
     <div class="app-container">
-                                                                                <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="../index.html" class="sidebar-brand">
                     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
@@ -26,20 +19,29 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">CrowdStrike Falcon</div>
+                    <div class="nav-section-title">CrowdStrike Platform</div>
                     <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="fundamentals.html" class="nav-link"><i class="fas fa-book"></i> Fundamentals</a>
                     <a href="sensor-deployment.html" class="nav-link"><i class="fas fa-download"></i> Sensor Deployment</a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Detection</div>
-                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> IOA Custom Rules</a>
+                    <a href="detection-engineering.html" class="nav-link"><i class="fas fa-cog"></i> Detection Engineering</a>
+                    <a href="ioa-rules.html" class="nav-link"><i class="fas fa-code"></i> IOA Rules</a>
                     <a href="detection-tuning.html" class="nav-link"><i class="fas fa-sliders-h"></i> Detection Tuning</a>
+                    <a href="falcon-intelligence.html" class="nav-link"><i class="fas fa-brain"></i> Falcon Intelligence</a>
                 </div>
                 <div class="nav-section">
-                    <div class="nav-section-title">Hunting & Response</div>
-                    <a href="threat-hunting.html" class="nav-link active"><i class="fas fa-search"></i> Threat Hunting</a>
+                    <div class="nav-section-title">Investigation</div>
+                    <a href="threat-hunting.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="incident-management.html" class="nav-link"><i class="fas fa-clipboard-list"></i> Incident Management</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Response</div>
+                    <a href="response-actions.html" class="nav-link"><i class="fas fa-bolt"></i> Response Actions</a>
                     <a href="rtr.html" class="nav-link"><i class="fas fa-terminal"></i> Real Time Response</a>
                 </div>
             </nav>
@@ -547,342 +549,6 @@ event_simpleName=NetworkConnectIP4 RemotePort=445
                         </div>
                     </div>
                 </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
-                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
-            });
-        });
-    </script>
-</body>
-</html>
-
-                <!-- Additional Hunting Scenarios -->
-                <h2><i class="fas fa-binoculars"></i> Advanced Hunting Scenarios</h2>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1486</span> Ransomware Indicators</h3>
-                    <div class="code-block"># Mass file encryption indicators
-event_simpleName=FileWritten
-| stats count as file_count by ComputerName, ContextProcessName, bin(timestamp, 5m)
-| where file_count > 100
-| sort -file_count
-
-# Ransom note creation
-event_simpleName=FileWritten
-(FileName=*readme* OR FileName=*decrypt* OR FileName=*ransom* OR FileName=*recover*)
-(FileName=*.txt OR FileName=*.html OR FileName=*.hta)
-| table timestamp, ComputerName, FileName, FilePath, ContextProcessName
-
-# Volume shadow copy deletion
-event_simpleName=ProcessRollup2
-(CommandLine=*vssadmin*delete* OR CommandLine=*wmic*shadowcopy*delete* OR
- CommandLine=*bcdedit*/set*recoveryenabled*no*)
-| table timestamp, ComputerName, CommandLine</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1055</span> Process Injection Indicators</h3>
-                    <div class="code-block"># Common injection techniques
-event_simpleName=ProcessRollup2
-(CommandLine=*VirtualAlloc* OR CommandLine=*WriteProcessMemory* OR
- CommandLine=*CreateRemoteThread* OR CommandLine=*NtCreateThreadEx* OR
- CommandLine=*QueueUserAPC*)
-| table timestamp, ComputerName, FileName, CommandLine
-
-# Unusual DLL loads
-event_simpleName=ModuleLoad
-NOT FilePath=C:\\Windows\\*
-NOT FilePath=C:\\Program?Files*
-| stats count by ComputerName, FilePath, FileName
-| where count < 5
-| sort count</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1087</span> Account Discovery</h3>
-                    <div class="code-block">event_simpleName=ProcessRollup2
-(CommandLine=*net*user* OR CommandLine=*net*group* OR CommandLine=*net*localgroup* OR
- CommandLine=*whoami* OR CommandLine=*quser* OR CommandLine=*query*user*)
-| stats count, values(CommandLine) as commands by ComputerName, UserName, bin(timestamp, 1h)
-| where count > 3
-| sort -count</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1082</span> System Discovery</h3>
-                    <div class="code-block">event_simpleName=ProcessRollup2
-(FileName=systeminfo.exe OR FileName=hostname.exe OR 
- CommandLine=*ipconfig*/all* OR CommandLine=*netstat* OR
- CommandLine=*tasklist* OR CommandLine=*wmic*os*)
-| stats count, values(CommandLine) as commands by ComputerName, UserName, bin(timestamp, 1h)
-| where count > 5
-| sort -count</div>
-                </div>
-
-                <div class="hunt-card">
-                    <h3><span class="mitre-tag">T1018</span> Remote System Discovery</h3>
-                    <div class="code-block">event_simpleName=ProcessRollup2
-(FileName=net.exe CommandLine=*view* OR
- FileName=nltest.exe OR
- CommandLine=*dsquery*computer* OR
- FileName=arp.exe CommandLine=*-a* OR
- FileName=ping.exe)
-| stats count by ComputerName, UserName, bin(timestamp, 1h)
-| where count > 5
-| sort -count</div>
-                </div>
-
-                <!-- OverWatch Hunting Tips -->
-                <h2><i class="fas fa-eye"></i> OverWatch-Style Hunting Tips</h2>
-                <div class="config-section">
-                    <p>CrowdStrike's OverWatch team uses these techniques. Apply similar methodologies:</p>
-                    
-                    <h4>Hunt for Anomalies</h4>
-                    <div class="code-block"># Rare processes (first-time execution)
-event_simpleName=ProcessRollup2
-| stats earliest(timestamp) as first_seen, count by FileName
-| where count < 5
-| sort first_seen desc
-
-# Processes running from unusual paths
-event_simpleName=ProcessRollup2
-NOT FilePath=C:\\Windows\\*
-NOT FilePath=C:\\Program?Files*
-NOT FilePath=*\\AppData\\Local\\Microsoft\\*
-| stats count by FileName, FilePath
-| where count < 10
-| sort count</div>
-
-                    <h4>Hunt by Time Anomaly</h4>
-                    <div class="code-block"># Activity outside business hours
-event_simpleName=ProcessRollup2
-| eval hour=strftime(timestamp, "%H")
-| where hour < "06" OR hour > "22"
-| stats count by ComputerName, UserName, FileName
-| where count > 0
-| sort -count</div>
-
-                    <h4>Hunt by Parent-Child Relationship</h4>
-                    <div class="code-block"># Unusual parent-child relationships
-event_simpleName=ProcessRollup2
-| stats count by ParentBaseFileName, FileName
-| where count < 10
-| sort count
-
-# Specific suspicious relationships
-event_simpleName=ProcessRollup2
-ParentBaseFileName IN (services.exe, svchost.exe) 
-FileName IN (cmd.exe, powershell.exe, wscript.exe)
-| table timestamp, ComputerName, ParentBaseFileName, FileName, CommandLine</div>
-                </div>
-
-                <!-- Real-Time Response Integration -->
-                <h2><i class="fas fa-terminal"></i> Hunting with Real-Time Response (RTR)</h2>
-                <div class="config-section">
-                    <p>After identifying suspicious activity, use RTR for deeper investigation:</p>
-                    
-                    <h4>Common RTR Commands for Hunting</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Command</th><th>Purpose</th><th>Example</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>ps</code></td>
-                                <td>List running processes</td>
-                                <td><code>ps</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>netstat</code></td>
-                                <td>Show network connections</td>
-                                <td><code>netstat</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>ls / dir</code></td>
-                                <td>List directory contents</td>
-                                <td><code>ls C:\Users\Public</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>cat / type</code></td>
-                                <td>View file contents</td>
-                                <td><code>cat C:\temp\suspicious.txt</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>reg query</code></td>
-                                <td>Query registry</td>
-                                <td><code>reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>get</code></td>
-                                <td>Download file for analysis</td>
-                                <td><code>get C:\temp\malware.exe</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>memdump</code></td>
-                                <td>Memory dump process</td>
-                                <td><code>memdump 1234</code></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Custom IOA Rules -->
-                <h2><i class="fas fa-shield-alt"></i> Creating Custom IOA Rules</h2>
-                <div class="config-section">
-                    <p><span class="console-path">Falcon Console → Configuration → Custom IOAs</span></p>
-                    
-                    <h4>IOA Rule Types</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Type</th><th>Monitors</th><th>Use Case</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Process Creation</td><td>New processes</td><td>Suspicious command execution</td></tr>
-                            <tr><td>Network Connection</td><td>Outbound connections</td><td>C2 communication</td></tr>
-                            <tr><td>File Write</td><td>File creation/modification</td><td>Malware drops</td></tr>
-                            <tr><td>DNS Request</td><td>DNS queries</td><td>DGA domains</td></tr>
-                            <tr><td>Registry</td><td>Registry changes</td><td>Persistence</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Custom IOA: PowerShell Download Cradle</h4>
-                    <div class="code-block">Rule Name: PowerShell Download Cradle Detection
-Rule Type: Process Creation
-Severity: High
-Action: Detect
-
-Conditions:
-  Image File Name: 
-    - equals: powershell.exe
-    - equals: pwsh.exe
-  
-  Command Line (any):
-    - contains: DownloadString
-    - contains: DownloadFile
-    - contains: Invoke-WebRequest
-    - contains: Net.WebClient
-    - contains: Start-BitsTransfer
-  
-  AND Command Line:
-    - contains: http
-
-Exclusions:
-  User Name:
-    - equals: SYSTEM (if from known deployment tool)
-  Parent Image File Name:
-    - equals: sccm.exe</div>
-                </div>
-
-                <!-- Hunting Metrics -->
-                <h2><i class="fas fa-chart-bar"></i> Hunting Metrics and Reporting</h2>
-                <div class="config-section">
-                    <h4>Key Metrics to Track</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Description</th><th>Target</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Hunts Conducted</td><td>Number of hunting exercises</td><td>4-8 per week</td></tr>
-                            <tr><td>Findings Rate</td><td>Hunts resulting in actionable findings</td><td>> 20%</td></tr>
-                            <tr><td>True Positive Rate</td><td>Confirmed threats / Total findings</td><td>> 50%</td></tr>
-                            <tr><td>MITRE Coverage</td><td>Techniques covered by hunts</td><td>Priority techniques</td></tr>
-                            <tr><td>Dwell Time Reduction</td><td>Time threat present before detection</td><td>Decreasing trend</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Sample Hunting Report Structure</h4>
-                    <div class="code-block">Hunting Report: [Hunt Name]
-Date: [Date]
-Analyst: [Name]
-
-Hypothesis:
-[What threat behavior were you looking for?]
-
-Methodology:
-[Queries used, data sources examined]
-
-Findings:
-- [Finding 1 with evidence]
-- [Finding 2 with evidence]
-
-False Positives Identified:
-- [FP 1 - recommended tuning]
-
-Recommendations:
-- [Detection rule to create]
-- [Configuration change]
-
-MITRE Mapping:
-- Technique: [T-code]
-- Tactic: [Tactic name]</div>
-                </div>
-
-                <!-- Additional Interview Questions -->
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What data sources does CrowdStrike collect for threat hunting?</button>
-                        <div class="qa-answer">
-                            <p>CrowdStrike Falcon collects extensive endpoint telemetry:</p>
-                            <ul>
-                                <li><strong>Process events:</strong> Creation, termination, command lines, parent-child relationships</li>
-                                <li><strong>Network events:</strong> Connections, DNS queries, URLs accessed</li>
-                                <li><strong>File events:</strong> Creation, modification, deletion, hashes</li>
-                                <li><strong>Registry events:</strong> Key/value modifications</li>
-                                <li><strong>User events:</strong> Logons, authentication</li>
-                                <li><strong>Module loads:</strong> DLLs and other modules loaded</li>
-                                <li><strong>Script content:</strong> PowerShell, VBScript, etc.</li>
-                            </ul>
-                            <p>Data is retained for varying periods based on subscription tier (typically 7-90 days).</p>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do Custom IOAs differ from built-in detections?</button>
-                        <div class="qa-answer">
-                            <p><strong>Built-in Detections:</strong></p>
-                            <ul>
-                                <li>Created and maintained by CrowdStrike</li>
-                                <li>Based on threat intelligence and research</li>
-                                <li>Regularly updated automatically</li>
-                                <li>Optimized for broad detection</li>
-                            </ul>
-                            <p><strong>Custom IOAs:</strong></p>
-                            <ul>
-                                <li>Created by your security team</li>
-                                <li>Tailored to your environment</li>
-                                <li>Can detect organization-specific threats</li>
-                                <li>Useful for: policy violations, specific applications, hunting hypotheses</li>
-                                <li>Require ongoing maintenance</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe your approach to hypothesis-driven hunting in CrowdStrike.</button>
-                        <div class="qa-answer">
-                            <ol>
-                                <li><strong>Form hypothesis:</strong> Based on threat intel, MITRE ATT&CK, or incident reports. Example: "Attackers may be using encoded PowerShell to download second-stage payloads"</li>
-                                <li><strong>Identify data sources:</strong> Which event types contain relevant data (ProcessRollup2, ScriptContent)</li>
-                                <li><strong>Build query:</strong> Create search query targeting the specific behavior</li>
-                                <li><strong>Execute and analyze:</strong> Run query, review results, investigate anomalies</li>
-                                <li><strong>Refine and iterate:</strong> Adjust query based on findings, reduce false positives</li>
-                                <li><strong>Document findings:</strong> Report results, create detection rules for ongoing monitoring</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-    <script>
 
             </main>
         </div>

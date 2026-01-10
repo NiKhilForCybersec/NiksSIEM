@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Hunting | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Sentinel Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Data Tiers & Costs</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-connectors.html" class="nav-link"><i class="fas fa-plug"></i> Data Connectors</a>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="dcr-dce-guide.html" class="nav-link"><i class="fas fa-route"></i> DCR/DCE Pipeline</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="event-hub.html" class="nav-link"><i class="fas fa-broadcast-tower"></i> Event Hub</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & ASIM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">KQL Query Language</div>
+                    <a href="kql-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> KQL Fundamentals</a>
+                    <a href="kql-intermediate.html" class="nav-link"><i class="fas fa-code"></i> KQL Intermediate</a>
+                    <a href="kql-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> KQL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Detection & Response</div>
+                    <a href="analytics-rules.html" class="nav-link"><i class="fas fa-project-diagram"></i> Analytics Rules</a>
+                    <a href="threat-hunting.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                    <a href="automation.html" class="nav-link"><i class="fas fa-robot"></i> Automation</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools & Content</div>
+                    <a href="workbooks.html" class="nav-link"><i class="fas fa-chart-bar"></i> Workbooks</a>
+                    <a href="content-hub.html" class="nav-link"><i class="fas fa-store"></i> Content Hub</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Sentinel</a><span class="separator">/</span>
+                    <span class="current">Threat Hunting</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-crosshairs"></i> Threat Hunting in Sentinel</h1>
+                <p class="lead">Proactively hunt for threats using Microsoft Sentinel. Master KQL hunting queries, use built-in hunting features, and create custom hunts aligned to MITRE ATT&CK.</p>
+
+                <!-- Hunting Overview -->
+                <h2><i class="fas fa-compass"></i> Hunting Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Microsoft Sentinel → Threat management → Hunting</span></p>
+
+                    <h4>Sentinel Hunting Features</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Feature</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Hunting Queries</strong></td><td>Pre-built and custom KQL queries</td></tr>
+                            <tr><td><strong>Livestream</strong></td><td>Real-time query results</td></tr>
+                            <tr><td><strong>Bookmarks</strong></td><td>Save interesting findings</td></tr>
+                            <tr><td><strong>Notebooks</strong></td><td>Jupyter notebooks for analysis</td></tr>
+                            <tr><td><strong>MITRE Coverage</strong></td><td>Queries mapped to ATT&CK</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Hunting Process</h4>
+                    <div class="code-block">Sentinel Hunting Workflow:
+
+1. HYPOTHESIS
+   - Define what you're hunting for
+   - Map to MITRE ATT&CK technique
+   - Identify required data sources
+
+2. QUERY DEVELOPMENT
+   - Start with built-in queries
+   - Customize for your environment
+   - Test and refine
+
+3. EXECUTION
+   - Run queries across time ranges
+   - Use Livestream for real-time
+   - Review results
+
+4. INVESTIGATION
+   - Bookmark interesting findings
+   - Pivot to related data
+   - Build timeline
+
+5. OUTCOME
+   - Create incident if threat found
+   - Convert to analytics rule
+   - Document findings</div>
+                </div>
+
+                <!-- Process Hunting -->
+                <h2><i class="fas fa-microchip"></i> Process Hunting</h2>
+                <div class="config-section">
+                    <h4>Suspicious Process Execution</h4>
+                    <div class="code-block">// LOLBin execution
+DeviceProcessEvents
+| where FileName in~ ("certutil.exe", "mshta.exe", "regsvr32.exe", 
+                       "rundll32.exe", "wmic.exe", "cscript.exe", "wscript.exe")
+| where ProcessCommandLine has_any ("http", "ftp", "\\\\", "script:", "encode", "decode")
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, 
+          InitiatingProcessFileName, AccountName
+| order by Timestamp desc
+
+// Encoded PowerShell commands
+DeviceProcessEvents
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand", "-e ")
+| extend DecodedCommand = base64_decode_tostring(
+    extract(@"-e[ncodedcommand]*\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine))
+| project Timestamp, DeviceName, ProcessCommandLine, DecodedCommand, AccountName
+
+// Suspicious parent-child relationships
+DeviceProcessEvents
+| where InitiatingProcessFileName in~ ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe")
+| where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, 
+          ProcessCommandLine, AccountName
+
+// Process from suspicious paths
+DeviceProcessEvents
+| where FolderPath has_any ("\\Temp\\", "\\Downloads\\", "\\AppData\\Local\\Temp")
+| where FileName endswith ".exe"
+| summarize Count = count(), Hosts = dcount(DeviceName) by FileName, FolderPath
+| where Hosts == 1 and Count < 5
+| order by Count asc</div>
+                </div>
+
+                <!-- Network Hunting -->
+                <h2><i class="fas fa-network-wired"></i> Network Hunting</h2>
+                <div class="config-section">
+                    <div class="code-block">// Rare external connections
+DeviceNetworkEvents
+| where RemoteIPType == "Public"
+| summarize ConnectionCount = count(), 
+            Devices = make_set(DeviceName),
+            DeviceCount = dcount(DeviceName) by RemoteIP
+| where DeviceCount == 1
+| order by ConnectionCount desc
+
+// Connections on non-standard ports
+DeviceNetworkEvents
+| where RemoteIPType == "Public"
+| where RemotePort !in (80, 443, 53, 25, 110, 143, 993, 995, 587)
+| summarize count() by RemoteIP, RemotePort, InitiatingProcessFileName
+| order by count_ desc
+
+// Potential beaconing
+DeviceNetworkEvents
+| where RemoteIPType == "Public"
+| summarize 
+    ConnectionCount = count(),
+    AvgInterval = avg(datetime_diff('second', Timestamp, prev(Timestamp))) by DeviceName, RemoteIP
+| where ConnectionCount > 50
+| order by ConnectionCount desc
+
+// DNS queries to suspicious TLDs
+DnsEvents
+| where Name has_any (".xyz", ".top", ".work", ".click", ".loan", ".racing")
+| summarize QueryCount = count() by Computer, Name
+| order by QueryCount desc
+
+// High entropy domain queries (potential DGA)
+DnsEvents
+| extend DomainLength = strlen(tostring(split(Name, ".")[0]))
+| where DomainLength > 15
+| summarize count() by Computer, Name
+| order by count_ desc</div>
+                </div>
+
+                <!-- Identity Hunting -->
+                <h2><i class="fas fa-user-shield"></i> Identity Hunting</h2>
+                <div class="config-section">
+                    <div class="code-block">// Password spray detection
+SigninLogs
+| where ResultType != 0
+| summarize 
+    FailedAttempts = count(),
+    UniqueUsers = dcount(UserPrincipalName),
+    Users = make_set(UserPrincipalName) by IPAddress, bin(TimeGenerated, 5m)
+| where UniqueUsers > 10
+| order by FailedAttempts desc
+
+// Impossible travel
+SigninLogs
+| where ResultType == 0
+| summarize 
+    Locations = make_set(Location),
+    LocationCount = dcount(Location),
+    Times = make_list(TimeGenerated) by UserPrincipalName
+| where LocationCount > 1
+
+// Unusual sign-in locations
+SigninLogs
+| where ResultType == 0
+| extend Country = tostring(LocationDetails.countryOrRegion)
+| where Country !in ("United States", "Canada", "United Kingdom")
+| summarize count() by UserPrincipalName, Country, IPAddress
+| order by count_ desc
+
+// Lateral movement detection
+SecurityEvent
+| where EventID == 4624 and LogonType == 3
+| where AccountType == "User"
+| summarize 
+    HostsAccessed = dcount(Computer),
+    Hosts = make_set(Computer) by TargetUserName, bin(TimeGenerated, 1h)
+| where HostsAccessed > 5
+| order by HostsAccessed desc
+
+// Kerberoasting
+SecurityEvent
+| where EventID == 4769
+| where ServiceName !endswith "$"
+| where TicketEncryptionType == "0x17"
+| summarize count() by Account, ServiceName, IpAddress
+| where count_ > 1</div>
+                </div>
+
+                <!-- Persistence Hunting -->
+                <h2><i class="fas fa-anchor"></i> Persistence Hunting</h2>
+                <div class="config-section">
+                    <div class="code-block">// Registry Run key modifications
+DeviceRegistryEvents
+| where RegistryKey has @"\Run" or RegistryKey has @"\RunOnce"
+| where ActionType in ("RegistryValueSet", "RegistryKeyCreated")
+| project Timestamp, DeviceName, RegistryKey, RegistryValueName, 
+          RegistryValueData, InitiatingProcessFileName
+
+// Scheduled task creation
+DeviceProcessEvents
+| where FileName =~ "schtasks.exe"
+| where ProcessCommandLine has "/create"
+| project Timestamp, DeviceName, ProcessCommandLine, AccountName
+
+// Suspicious service installation
+SecurityEvent
+| where EventID == 7045
+| where ServiceName !has_any ("Windows", "Microsoft", "VMware", "Citrix")
+| project TimeGenerated, Computer, ServiceName, ImagePath, ServiceType
+
+// WMI persistence
+DeviceEvents
+| where ActionType == "WmiBindEventFilterToConsumer"
+| project Timestamp, DeviceName, AdditionalFields
+
+// Startup folder modifications
+DeviceFileEvents
+| where FolderPath has @"\Start Menu\Programs\Startup"
+| project Timestamp, DeviceName, FileName, FolderPath, 
+          InitiatingProcessFileName, InitiatingProcessAccountName</div>
+                </div>
+
+                <!-- Credential Access Hunting -->
+                <h2><i class="fas fa-key"></i> Credential Access Hunting</h2>
+                <div class="config-section">
+                    <div class="code-block">// LSASS access
+DeviceProcessEvents
+| where FileName =~ "lsass.exe"
+| where InitiatingProcessFileName !in~ ("csrss.exe", "services.exe", 
+                                         "svchost.exe", "wininit.exe", "MsMpEng.exe")
+| project Timestamp, DeviceName, InitiatingProcessFileName, 
+          InitiatingProcessCommandLine, AccountName
+
+// SAM database access
+DeviceFileEvents
+| where FileName in~ ("SAM", "SYSTEM", "SECURITY")
+| where FolderPath has @"\system32\config"
+| project Timestamp, DeviceName, FileName, InitiatingProcessFileName, AccountName
+
+// Credential dumping tools
+DeviceProcessEvents
+| where FileName in~ ("mimikatz.exe", "procdump.exe", "gsecdump.exe") or
+        ProcessCommandLine has_any ("sekurlsa", "lsadump", "-ma lsass")
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, AccountName
+
+// DCSync detection
+SecurityEvent
+| where EventID == 4662
+| where Properties has "Replicating Directory Changes"
+| where SubjectUserName !endswith "$"
+| project TimeGenerated, Computer, SubjectUserName, ObjectName</div>
+                </div>
+
+                <!-- Using Hunting Queries -->
+                <h2><i class="fas fa-play"></i> Hunting Query Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Hunting → Queries</span></p>
+
+                    <div class="code-block">Built-in Hunting Queries:
+
+BROWSE BY:
+- MITRE ATT&CK tactic
+- Data source
+- Technique type
+
+ACTIONS:
+- Run query
+- Add to favorites
+- Clone and customize
+- Create analytics rule
+
+CUSTOM QUERIES:
+1. Click "New Query"
+2. Enter KQL query
+3. Map to MITRE tactics
+4. Set required data sources
+5. Save to workspace
+
+Best Practices:
+- Start with built-in, customize
+- Document hypothesis in description
+- Map to specific MITRE technique
+- Test on known-good data first</div>
+                </div>
+
+                <!-- Bookmarks -->
+                <h2><i class="fas fa-bookmark"></i> Bookmarks</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Hunting → Bookmarks</span></p>
+
+                    <div class="code-block">Using Bookmarks:
+
+PURPOSE:
+- Save interesting findings
+- Build investigation timeline
+- Link related evidence
+- Create incidents from findings
+
+CREATE BOOKMARK:
+1. Run hunting query
+2. Select interesting row(s)
+3. Click "Add bookmark"
+4. Add notes and tags
+5. Map to MITRE technique
+
+BOOKMARK FIELDS:
+- Name: Descriptive title
+- Notes: Investigation notes
+- Tags: Categorization
+- Entity mapping: User, host, IP
+
+FROM BOOKMARKS TO INCIDENT:
+1. Select related bookmarks
+2. Click "Create incident"
+3. All evidence linked
+4. Continue investigation</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach threat hunting in Sentinel?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Hypothesis:</strong> Define what behavior indicates compromise</li>
+                                <li><strong>Data check:</strong> Verify required tables are populated</li>
+                                <li><strong>Query:</strong> Start with built-in queries, customize as needed</li>
+                                <li><strong>Analyze:</strong> Review results, filter false positives</li>
+                                <li><strong>Bookmark:</strong> Save interesting findings</li>
+                                <li><strong>Action:</strong> Create incident or analytics rule</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between hunting queries and analytics rules?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Hunting queries:</strong> Manual, ad-hoc, proactive searching</li>
+                                <li><strong>Analytics rules:</strong> Automated, scheduled, reactive alerting</li>
+                            </ul>
+                            <p style="margin-top: 12px;">Hunting queries explore hypotheses. Successful hunts become analytics rules for continuous detection.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect lateral movement with KQL?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Event 4624 Type 3:</strong> Network logons across hosts</li>
+                                <li><strong>Count hosts per user:</strong> Single user on many systems</li>
+                                <li><strong>Time window:</strong> Short time frame = suspicious</li>
+                                <li><strong>Admin shares:</strong> C$, ADMIN$ access patterns</li>
+                                <li><strong>PsExec patterns:</strong> Service creation remotely</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
