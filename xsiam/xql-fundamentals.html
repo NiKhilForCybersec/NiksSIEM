@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XQL Fundamentals | XSIAM Platform</title>
+    <title>XQL Fundamentals | Cortex XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -69,294 +69,395 @@
             </header>
             <main class="main-content">
                 <h1><i class="fas fa-terminal"></i> XQL Fundamentals</h1>
-                <p class="lead">Master the XQL query language for XSIAM. Learn syntax, operators, and essential techniques for searching and analyzing security data.</p>
+                <p class="lead">Master the fundamentals of XQL (XSIAM Query Language). Learn query structure, operators, functions, and build your first hunting queries step by step.</p>
 
                 <!-- XQL Overview -->
                 <h2><i class="fas fa-info-circle"></i> XQL Overview</h2>
                 <div class="config-section">
-                    <p><span class="console-path">Investigation → Query Center</span></p>
-
                     <h4>What is XQL?</h4>
-                    <div class="code-block">XQL (Extended Query Language):
+                    <div class="code-block">XQL (XSIAM Query Language):
 
-- Native query language for XSIAM/Cortex XDR
-- Pipe-based syntax (similar to SPL, KQL)
-- Queries data in Cortex Data Lake
-- Supports XDM normalized fields
-- Used for hunting, investigation, correlation rules
+PURPOSE:
+├── Query data across all XSIAM datasets
+├── Threat hunting and investigation
+├── Create custom alerts and dashboards
+├── Data exploration and analysis
+└── Automation and reporting
 
-Query Structure:
-dataset = [dataset_name]
-| filter [conditions]
-| compute [calculations]
-| fields [output_fields]
-| sort [order]
-| limit [count]</div>
+XQL vs OTHER QUERY LANGUAGES:
+┌────────────────────────────────────────────────────────────┐
+│  XQL          │  KQL (Microsoft)  │  SPL (Splunk)         │
+├───────────────┼───────────────────┼───────────────────────┤
+│  dataset =    │  TableName        │  index=               │
+│  | filter     │  | where          │  | search / where     │
+│  | fields     │  | project        │  | fields / table     │
+│  | comp       │  | summarize      │  | stats              │
+│  | sort       │  | order by       │  | sort               │
+│  | limit      │  | take           │  | head               │
+└───────────────┴───────────────────┴───────────────────────┘
 
-                    <h4>Key Datasets</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Dataset</th><th>Description</th><th>Key Fields</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><strong>xdr_data</strong></td><td>All endpoint telemetry</td><td>agent_hostname, action_*, actor_*</td></tr>
-                            <tr><td><strong>cloud_audit_logs</strong></td><td>Cloud provider logs</td><td>cloud_provider, event_type</td></tr>
-                            <tr><td><strong>panw_ngfw_traffic</strong></td><td>Firewall traffic logs</td><td>src_ip, dst_ip, action</td></tr>
-                            <tr><td><strong>panw_ngfw_threat</strong></td><td>Firewall threat logs</td><td>threat_name, severity</td></tr>
-                            <tr><td><strong>msft_azure_*</strong></td><td>Azure AD/O365 logs</td><td>user, operation, result</td></tr>
-                        </tbody>
-                    </table>
+QUERY INTERFACE:
+Path: Investigation → Query Center
+├── Query Editor
+├── Dataset Browser
+├── Saved Queries
+├── Query History
+└── Results Visualization</div>
+
+                    <h4>Basic Query Structure</h4>
+                    <div class="code-block">XQL QUERY ANATOMY:
+
+┌─────────────────────────────────────────────────────────────┐
+│                    XQL QUERY STRUCTURE                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  dataset = xdr_data                    ← DATA SOURCE        │
+│  | filter event_type = ENUM.PROCESS    ← FILTERING          │
+│  | filter action_process_image_name    ← FILTERING          │
+│        contains "powershell"                                │
+│  | fields timestamp, agent_hostname,   ← SELECT FIELDS      │
+│          action_process_image_name,                         │
+│          action_process_command_line                        │
+│  | sort desc timestamp                 ← ORDERING           │
+│  | limit 100                           ← ROW LIMIT          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+KEY COMPONENTS:
+├── dataset: Specifies data source (required)
+├── filter: Conditions to match (like WHERE)
+├── fields: Columns to return (like SELECT)
+├── comp: Aggregations (like GROUP BY)
+├── sort: Order results
+├── limit: Restrict row count
+└── Pipe (|): Chains operations together
+
+EXECUTION ORDER:
+1. dataset → Select data source
+2. filter → Apply conditions (can be multiple)
+3. fields → Select output columns
+4. comp → Perform aggregations
+5. sort → Order results
+6. limit → Restrict output</div>
                 </div>
 
-                <!-- Basic Syntax -->
-                <h2><i class="fas fa-code"></i> Basic Syntax</h2>
+                <!-- Datasets -->
+                <h2><i class="fas fa-database"></i> Datasets</h2>
                 <div class="config-section">
-                    <h4>Dataset Selection</h4>
-                    <div class="code-block">// Query all XDR endpoint data
+                    <h4>Core Datasets</h4>
+                    <div class="code-block">XSIAM DATASETS:
+
+ENDPOINT DATA:
+├── xdr_data: Primary endpoint telemetry
+│   ├── Process events
+│   ├── Network connections
+│   ├── File events
+│   ├── Registry events
+│   └── Module loads
+├── endpoints: Endpoint inventory
+└── endpoint_groups: Group membership
+
+ALERT AND INCIDENT DATA:
+├── alerts: All alerts
+├── incidents: Correlated incidents
+└── alert_raw_data: Raw alert details
+
+NETWORK AND CLOUD:
+├── cloud_audit_logs: Cloud provider logs
+├── network_logs: Firewall/network data
+└── identity_logs: Authentication events
+
+THIRD-PARTY:
+├── panw_ngfw_traffic: Palo Alto firewall
+├── panw_ngfw_threat: Firewall threats
+└── [custom datasets]: Your ingested data
+
+EXPLORING DATASETS:
+// List available fields in dataset
 dataset = xdr_data
+| fields *
+| limit 1
 
-// Query specific preset
-preset = xdr_process_event
-
-// Query multiple datasets
-dataset in (xdr_data, cloud_audit_logs)
-
-// Query with time range (GUI selection or explicit)
+// Check data freshness
 dataset = xdr_data
-| filter _time >= timestamp("2024-01-01T00:00:00Z")
-| filter _time <= timestamp("2024-01-02T00:00:00Z")</div>
+| comp latest_timestamp = max(timestamp)
 
-                    <h4>Filter Operator</h4>
-                    <div class="code-block">// Basic equality
+// Count records per event type
 dataset = xdr_data
-| filter agent_hostname = "WORKSTATION01"
+| comp count() by event_type</div>
 
-// Not equals
-| filter agent_hostname != "DC01"
+                    <h4>Common Fields in xdr_data</h4>
+                    <div class="code-block">XDR_DATA KEY FIELDS:
 
-// Multiple conditions (AND)
-| filter agent_hostname = "WORKSTATION01" and event_type = PROCESS
+EVENT IDENTIFICATION:
+├── event_id: Unique event identifier
+├── event_type: Type (PROCESS, FILE, NETWORK, etc.)
+├── event_sub_type: Sub-category
+└── timestamp: Event time (Unix epoch)
 
-// OR conditions
-| filter agent_hostname = "WORKSTATION01" or agent_hostname = "WORKSTATION02"
+ENDPOINT INFORMATION:
+├── agent_hostname: Device name
+├── agent_ip_addresses: Device IP(s)
+├── agent_os_type: Windows/Linux/macOS
+├── agent_os_sub_type: Version details
+└── agent_id: Unique agent identifier
 
-// IN list
-| filter agent_hostname in ("WORKSTATION01", "WORKSTATION02", "SERVER01")
+PROCESS FIELDS:
+├── action_process_image_name: Process filename
+├── action_process_image_path: Full path
+├── action_process_command_line: Command line
+├── action_process_image_sha256: File hash
+├── action_process_signature_status: Signed/Unsigned
+├── actor_process_image_name: Parent process
+├── actor_process_command_line: Parent command line
+└── causality_actor_process_image_name: Root process
 
-// NOT IN
-| filter agent_hostname not in ("DC01", "DC02")
+NETWORK FIELDS:
+├── action_remote_ip: Destination IP
+├── action_remote_port: Destination port
+├── action_local_ip: Source IP
+├── action_local_port: Source port
+└── action_external_hostname: DNS name
 
-// Contains (case-insensitive)
-| filter action_process_image_name contains "powershell"
+FILE FIELDS:
+├── action_file_name: Filename
+├── action_file_path: Full path
+├── action_file_sha256: File hash
+└── action_file_size: Size in bytes
 
-// Wildcard matching
-| filter action_process_image_path ~= ".*\\\\temp\\\\.*"
+USER FIELDS:
+├── actor_effective_username: User executing
+├── actor_primary_username: Primary user
+└── auth_domain: Domain name</div>
+                </div>
 
-// Null checks
-| filter action_remote_ip != null</div>
-
+                <!-- Filter Operations -->
+                <h2><i class="fas fa-filter"></i> Filter Operations</h2>
+                <div class="config-section">
                     <h4>Comparison Operators</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><strong>=</strong></td><td>Equals</td><td>status = "success"</td></tr>
-                            <tr><td><strong>!=</strong></td><td>Not equals</td><td>status != "failed"</td></tr>
-                            <tr><td><strong>></strong></td><td>Greater than</td><td>bytes > 1000000</td></tr>
-                            <tr><td><strong><</strong></td><td>Less than</td><td>count < 10</td></tr>
-                            <tr><td><strong>>=</strong></td><td>Greater or equal</td><td>severity >= 7</td></tr>
-                            <tr><td><strong><=</strong></td><td>Less or equal</td><td>attempts <= 3</td></tr>
-                            <tr><td><strong>~=</strong></td><td>Regex match</td><td>path ~= ".*\\.exe$"</td></tr>
-                            <tr><td><strong>contains</strong></td><td>Substring match</td><td>cmd contains "-enc"</td></tr>
-                            <tr><td><strong>in</strong></td><td>In list</td><td>port in (80, 443, 8080)</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="code-block">COMPARISON OPERATORS:
 
-                <!-- Fields and Output -->
-                <h2><i class="fas fa-columns"></i> Fields and Output</h2>
-                <div class="config-section">
-                    <h4>Selecting Fields</h4>
-                    <div class="code-block">// Select specific fields
+EQUALITY:
+= or ~=        Equal (case-insensitive with ~=)
+!= or ~!=      Not equal
+
+// Example
+| filter action_process_image_name = "powershell.exe"
+| filter actor_effective_username ~= "admin"  // case-insensitive
+
+NUMERIC COMPARISONS:
+< > <= >=      Less/greater than
+
+// Example
+| filter action_file_size > 1000000  // Files > 1MB
+| filter action_remote_port < 1024   // Privileged ports
+
+STRING MATCHING:
+contains       Contains substring (case-sensitive)
+~contains      Contains (case-insensitive)
+!contains      Does not contain
+
+// Example
+| filter action_process_command_line ~contains "download"
+| filter action_file_path contains "\\Temp\\"
+
+PATTERN MATCHING:
+~= "pattern"   Regex match
+
+// Example
+| filter action_process_image_name ~= "^cmd\.exe$"
+| filter action_remote_ip ~= "^10\\..*"
+
+NULL CHECKS:
+= null         Is null/empty
+!= null        Is not null
+
+// Example
+| filter action_process_command_line != null</div>
+
+                    <h4>Logical Operators</h4>
+                    <div class="code-block">LOGICAL OPERATORS:
+
+AND (implicit when chaining filters):
+| filter event_type = ENUM.PROCESS
+| filter action_process_image_name = "powershell.exe"
+// Both conditions must be true
+
+OR (explicit):
+| filter action_process_image_name = "powershell.exe" 
+    or action_process_image_name = "cmd.exe"
+
+// Alternative with in()
+| filter action_process_image_name in ("powershell.exe", "cmd.exe")
+
+NOT:
+| filter action_process_image_name not in ("explorer.exe", "svchost.exe")
+
+COMBINED EXAMPLE:
 dataset = xdr_data
-| filter event_type = PROCESS
-| fields _time, agent_hostname, action_process_image_name, 
-         action_process_image_command_line
+| filter event_type = ENUM.PROCESS
+| filter (action_process_image_name = "powershell.exe" 
+    or action_process_image_name = "cmd.exe")
+| filter action_process_command_line ~contains "download"
+| filter actor_effective_username not in ("SYSTEM", "LOCAL SERVICE")
 
-// Rename fields in output
-| fields _time as timestamp, 
-         agent_hostname as host,
-         action_process_image_name as process
-
-// All fields (default if not specified)
-| fields *</div>
-
-                    <h4>Sorting and Limiting</h4>
-                    <div class="code-block">// Sort ascending
-| sort asc _time
-
-// Sort descending
-| sort desc _time
-
-// Sort by multiple fields
-| sort desc count, asc agent_hostname
-
-// Limit results
-| limit 100
-
-// Complete example
-dataset = xdr_data
-| filter event_type = PROCESS
-| filter action_process_image_name contains "powershell"
-| fields _time, agent_hostname, action_process_image_command_line
-| sort desc _time
-| limit 50</div>
+ENUM VALUES:
+// Use ENUM for typed values
+| filter event_type = ENUM.PROCESS
+| filter event_type = ENUM.NETWORK
+| filter event_type = ENUM.FILE
+| filter event_type = ENUM.REGISTRY</div>
                 </div>
 
                 <!-- Aggregations -->
-                <h2><i class="fas fa-calculator"></i> Aggregations</h2>
+                <h2><i class="fas fa-chart-bar"></i> Aggregations with comp</h2>
                 <div class="config-section">
-                    <h4>Comp (Stats) Operator</h4>
-                    <div class="code-block">// Count events
+                    <h4>Basic Aggregations</h4>
+                    <div class="code-block">AGGREGATION FUNCTIONS:
+
+COUNT:
+count()        Count all rows
+count(field)   Count non-null values
+
+// Example
+| comp count() by action_process_image_name
+| comp total = count(), unique_hosts = count_distinct(agent_hostname)
+
+DISTINCT COUNT:
+count_distinct(field)   Unique values
+
+// Example
+| comp unique_ips = count_distinct(action_remote_ip)
+
+NUMERIC AGGREGATIONS:
+sum(field)     Sum values
+avg(field)     Average
+min(field)     Minimum
+max(field)     Maximum
+
+// Example
+| comp total_bytes = sum(action_file_size),
+       avg_bytes = avg(action_file_size)
+
+STRING AGGREGATIONS:
+values(field)       Collect unique values (array)
+first(field)        First value
+last(field)         Last value
+
+// Example
+| comp hostnames = values(agent_hostname),
+       first_seen = min(timestamp),
+       last_seen = max(timestamp)
+  by action_remote_ip</div>
+
+                    <h4>Grouping with comp</h4>
+                    <div class="code-block">GROUPING EXAMPLES:
+
+// Count by single field
 dataset = xdr_data
-| filter event_type = PROCESS
-| comp count() as event_count
+| filter event_type = ENUM.PROCESS
+| comp count() by action_process_image_name
+| sort desc count()
+| limit 20
 
-// Count by field
-| comp count() by agent_hostname
+// Count by multiple fields
+dataset = xdr_data
+| filter event_type = ENUM.NETWORK
+| comp count() by agent_hostname, action_remote_ip, action_remote_port
+| sort desc count()
 
-// Multiple aggregations
-| comp count() as total,
-       count_distinct(action_process_image_name) as unique_processes
-  by agent_hostname
+// Time-based grouping
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS
+| comp count() by bin(timestamp, 1h)
+| sort asc _bin_timestamp
 
-// Sum, avg, min, max
-| comp sum(bytes) as total_bytes,
-       avg(bytes) as avg_bytes,
-       min(bytes) as min_bytes,
-       max(bytes) as max_bytes
-  by agent_hostname</div>
-
-                    <h4>Common Aggregation Functions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Function</th><th>Description</th><th>Example</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><strong>count()</strong></td><td>Count events</td><td>count() as total</td></tr>
-                            <tr><td><strong>count_distinct()</strong></td><td>Unique values</td><td>count_distinct(user) as unique_users</td></tr>
-                            <tr><td><strong>sum()</strong></td><td>Sum values</td><td>sum(bytes) as total_bytes</td></tr>
-                            <tr><td><strong>avg()</strong></td><td>Average</td><td>avg(duration) as avg_time</td></tr>
-                            <tr><td><strong>min()</strong></td><td>Minimum</td><td>min(_time) as first_seen</td></tr>
-                            <tr><td><strong>max()</strong></td><td>Maximum</td><td>max(_time) as last_seen</td></tr>
-                            <tr><td><strong>values()</strong></td><td>List values</td><td>values(hostname) as hosts</td></tr>
-                        </tbody>
-                    </table>
+// Complex aggregation
+dataset = xdr_data
+| filter event_type = ENUM.NETWORK
+| filter action_remote_port = 443
+| comp 
+    connection_count = count(),
+    unique_hosts = count_distinct(agent_hostname),
+    first_seen = min(timestamp),
+    last_seen = max(timestamp)
+  by action_remote_ip
+| filter connection_count > 100
+| sort desc connection_count</div>
                 </div>
 
-                <!-- Common Queries -->
-                <h2><i class="fas fa-search"></i> Common Queries</h2>
+                <!-- Common Query Patterns -->
+                <h2><i class="fas fa-code"></i> Common Query Patterns</h2>
                 <div class="config-section">
-                    <h4>Process Queries</h4>
-                    <div class="code-block">// All PowerShell execution
+                    <h4>Process Hunting</h4>
+                    <div class="code-block">// Find PowerShell execution
 dataset = xdr_data
-| filter event_type = PROCESS
-| filter action_process_image_name contains "powershell"
-| fields _time, agent_hostname, actor_effective_username,
-         action_process_image_command_line
-| sort desc _time
+| filter event_type = ENUM.PROCESS
+| filter action_process_image_name ~contains "powershell"
+| fields timestamp, agent_hostname, actor_effective_username,
+        action_process_image_name, action_process_command_line
+| sort desc timestamp
+| limit 100
 
-// Suspicious command line patterns
+// Encoded command detection
 dataset = xdr_data
-| filter event_type = PROCESS
-| filter action_process_image_command_line contains "-enc" or
-         action_process_image_command_line contains "downloadstring" or
-         action_process_image_command_line contains "bypass"
-| fields _time, agent_hostname, action_process_image_name,
-         action_process_image_command_line
+| filter event_type = ENUM.PROCESS
+| filter action_process_image_name ~contains "powershell"
+| filter action_process_command_line ~contains "-enc"
+| fields timestamp, agent_hostname, action_process_command_line
+| sort desc timestamp
 
-// Process from temp folders
+// Process execution from temp folders
 dataset = xdr_data
-| filter event_type = PROCESS
-| filter action_process_image_path ~= "(?i)\\\\temp\\\\"
-| comp count() by action_process_image_name, agent_hostname
-| sort desc count</div>
+| filter event_type = ENUM.PROCESS
+| filter action_process_image_path ~contains "\\Temp\\"
+    or action_process_image_path ~contains "\\tmp\\"
+| comp count() by action_process_image_name, action_process_image_path
+| sort desc count()</div>
 
-                    <h4>Network Queries</h4>
-                    <div class="code-block">// Outbound connections to rare IPs
+                    <h4>Network Hunting</h4>
+                    <div class="code-block">// External connections
 dataset = xdr_data
-| filter event_type = NETWORK
+| filter event_type = ENUM.NETWORK
 | filter action_remote_ip != null
-| comp count() as connections,
-       count_distinct(agent_hostname) as unique_hosts
-  by action_remote_ip
-| filter unique_hosts = 1
-| sort desc connections
+| filter action_remote_ip not ~= "^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+| comp count() by agent_hostname, action_remote_ip, action_remote_port
+| sort desc count()
+| limit 100
 
 // Connections on non-standard ports
 dataset = xdr_data
-| filter event_type = NETWORK
-| filter action_remote_port not in (80, 443, 53, 22, 25)
-| filter action_remote_ip != null
-| fields _time, agent_hostname, action_process_image_name,
-         action_remote_ip, action_remote_port
-| sort desc _time</div>
+| filter event_type = ENUM.NETWORK
+| filter action_remote_port not in (80, 443, 53, 22, 25, 587, 993)
+| comp count() by action_remote_ip, action_remote_port
+| sort desc count()
 
-                    <h4>Authentication Queries</h4>
-                    <div class="code-block">// Failed logins by user
+// Process making network connections
 dataset = xdr_data
-| filter event_type = ENUM.EVENT_TYPE.LOGIN
-| filter action_login_result = FAILED
-| comp count() as failed_attempts by actor_effective_username
-| filter failed_attempts > 5
-| sort desc failed_attempts
+| filter event_type = ENUM.NETWORK
+| filter action_process_image_name = "powershell.exe"
+| comp unique_destinations = count_distinct(action_remote_ip),
+       total_connections = count()
+  by agent_hostname
+| filter unique_destinations > 5</div>
 
-// Logins from multiple IPs
+                    <h4>File Activity</h4>
+                    <div class="code-block">// Files created in suspicious locations
 dataset = xdr_data
-| filter event_type = ENUM.EVENT_TYPE.LOGIN
-| filter action_login_result = SUCCESS
-| comp count_distinct(action_remote_ip) as unique_ips,
-       values(action_remote_ip) as ips
-  by actor_effective_username
-| filter unique_ips > 3</div>
-                </div>
+| filter event_type = ENUM.FILE
+| filter event_sub_type = ENUM.FILE_CREATE_NEW
+| filter action_file_path ~contains "\\Users\\Public\\"
+    or action_file_path ~contains "\\Temp\\"
+| fields timestamp, agent_hostname, action_file_name, action_file_path
+| sort desc timestamp
 
-                <!-- XDM Fields Reference -->
-                <h2><i class="fas fa-book"></i> XDM Fields Reference</h2>
-                <div class="config-section">
-                    <h4>Common XDM Fields</h4>
-                    <div class="code-block">XDM (Cross-Data Model) Normalized Fields:
-
-ENDPOINT FIELDS:
-├── agent_hostname          - Endpoint hostname
-├── agent_id               - Agent unique ID
-├── agent_ip_addresses     - Endpoint IPs
-└── agent_os_type          - OS type (WINDOWS, LINUX, MAC)
-
-ACTOR FIELDS (who initiated):
-├── actor_process_image_name      - Parent process name
-├── actor_process_image_path      - Parent process path
-├── actor_process_command_line    - Parent command line
-├── actor_effective_username      - User context
-└── actor_primary_username        - Primary user
-
-ACTION FIELDS (what happened):
-├── action_process_image_name     - Executed process
-├── action_process_image_path     - Process path
-├── action_process_image_command_line  - Command line
-├── action_process_image_sha256   - Process hash
-├── action_file_name              - File involved
-├── action_file_path              - File path
-├── action_remote_ip              - Destination IP
-├── action_remote_port            - Destination port
-└── action_local_port             - Source port
-
-EVENT FIELDS:
-├── _time                  - Event timestamp
-├── event_type            - PROCESS, NETWORK, FILE, REGISTRY
-├── event_sub_type        - Specific event subtype
-└── event_id              - Unique event ID</div>
+// Executable file creation
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+| filter event_sub_type = ENUM.FILE_CREATE_NEW
+| filter action_file_name ~= "\\.(exe|dll|bat|ps1|vbs|js)$"
+| comp count() by agent_hostname, action_file_path
+| sort desc count()</div>
                 </div>
 
                 <!-- Interview Questions -->
@@ -365,54 +466,44 @@ EVENT FIELDS:
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the basic structure of an XQL query?</button>
                         <div class="qa-answer">
-                            <p>XQL queries follow a pipe-based structure:</p>
-                            <ol>
-                                <li><strong>Dataset:</strong> <code>dataset = xdr_data</code> - Select data source</li>
-                                <li><strong>Filter:</strong> <code>| filter conditions</code> - Narrow results</li>
-                                <li><strong>Compute:</strong> <code>| comp aggregations</code> - Calculate statistics</li>
-                                <li><strong>Fields:</strong> <code>| fields column1, column2</code> - Select output</li>
-                                <li><strong>Sort:</strong> <code>| sort desc field</code> - Order results</li>
-                                <li><strong>Limit:</strong> <code>| limit 100</code> - Cap output</li>
-                            </ol>
+                            <div class="code-block">dataset = xdr_data           // Data source
+| filter event_type = ENUM.X   // Conditions
+| fields field1, field2        // Select columns
+| comp count() by field1       // Aggregations
+| sort desc count()            // Ordering
+| limit 100                    // Row limit</div>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is XDM and why is it important?</button>
-                        <div class="qa-answer">
-                            <p><strong>XDM (Cross-Data Model)</strong> is XSIAM's schema normalization:</p>
-                            <ul>
-                                <li>Standardizes field names across all data sources</li>
-                                <li>Enables cross-source correlation with single queries</li>
-                                <li>Uses consistent naming: actor_* (who), action_* (what)</li>
-                                <li>Simplifies rule writing and hunting</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you find rare processes in XQL?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you filter for PowerShell with encoded commands?</button>
                         <div class="qa-answer">
                             <div class="code-block">dataset = xdr_data
-| filter event_type = PROCESS
-| comp count() as executions,
-       count_distinct(agent_hostname) as unique_hosts
-  by action_process_image_name
-| filter unique_hosts = 1 and executions < 5
-| sort asc executions</div>
-                            <p>This finds processes that ran on only one host with few executions - potential malware or unusual activity.</p>
+| filter event_type = ENUM.PROCESS
+| filter action_process_image_name ~contains "powershell"
+| filter action_process_command_line ~contains "-enc"
+| fields timestamp, agent_hostname, action_process_command_line</div>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between actor and action fields?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the key datasets in XSIAM?</button>
                         <div class="qa-answer">
                             <ul>
-                                <li><strong>Actor fields:</strong> The entity that initiated the event (parent process, user)</li>
-                                <li><strong>Action fields:</strong> What was done (child process, file, network connection)</li>
+                                <li><strong>xdr_data:</strong> Primary endpoint telemetry (process, network, file)</li>
+                                <li><strong>alerts:</strong> All security alerts</li>
+                                <li><strong>incidents:</strong> Correlated incidents</li>
+                                <li><strong>endpoints:</strong> Endpoint inventory</li>
+                                <li><strong>cloud_audit_logs:</strong> Cloud provider logs</li>
                             </ul>
-                            <p><strong>Example:</strong> If cmd.exe spawns powershell.exe:</p>
-                            <ul>
-                                <li>actor_process_image_name = "cmd.exe"</li>
-                                <li>action_process_image_name = "powershell.exe"</li>
-                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you aggregate data in XQL?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">// Use comp with aggregation functions
+| comp count() by field_name
+| comp sum(bytes), avg(bytes) by hostname
+| comp unique_values = count_distinct(ip) by user</div>
+                            <p>Functions: count(), count_distinct(), sum(), avg(), min(), max(), values()</p>
                         </div>
                     </div>
                 </div>
