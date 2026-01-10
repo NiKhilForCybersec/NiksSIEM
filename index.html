@@ -3,73 +3,635 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nik's SIEM - Security Operations Compendium</title>
+    <title>Nik's SIEM - Security Operations Reference</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        /* CSS Variables */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #1c2128;
+            --bg-card: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .header h1 i {
+            color: var(--accent-green);
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Main Content Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header i {
+            color: var(--accent-orange);
+            font-size: 1.25rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Platform Cards Grid */
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        /* Platform Card */
+        .platform-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--card-color);
+        }
+
+        .platform-card:hover {
+            border-color: var(--card-color);
+            transform: translateY(-2px);
+        }
+
+        .platform-card.xsiam { --card-color: #f97316; }
+        .platform-card.splunk { --card-color: #4ecdc4; }
+        .platform-card.sentinel { --card-color: #3b82f6; }
+        .platform-card.crowdstrike { --card-color: #ef4444; }
+        .platform-card.cortex { --card-color: #a855f7; }
+        .platform-card.mde { --card-color: #06b6d4; }
+        .platform-card.operations { --card-color: #22c55e; }
+
+        .platform-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            background: color-mix(in srgb, var(--card-color) 20%, transparent);
+            color: var(--card-color);
+        }
+
+        .platform-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .platform-card .desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .platform-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--card-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            transition: gap 0.2s;
+        }
+
+        .platform-link:hover {
+            gap: 0.6rem;
+        }
+
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .topic-item {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .topic-item i {
+            color: var(--accent-green);
+            font-size: 0.7rem;
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .sidebar-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .sidebar-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-card h3 i {
+            color: var(--accent-blue);
+        }
+
+        .sidebar-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* What's Included */
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .feature-content h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .feature-content p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Learning Paths */
+        .learning-path {
+            margin-bottom: 1.25rem;
+        }
+
+        .learning-path:last-child {
+            margin-bottom: 0;
+        }
+
+        .path-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .path-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .path-badge.beginner {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .path-badge.intermediate {
+            background: rgba(249, 115, 22, 0.2);
+            color: #f97316;
+        }
+
+        .path-badge.advanced {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .path-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .path-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .path-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .path-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .path-link:hover {
+            text-decoration: underline;
+        }
+
+        .path-link::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+        }
+
+        /* SOC Operations Section */
+        .soc-section {
+            margin-top: 2rem;
+        }
+
+        .soc-card {
+            grid-column: span 2;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .platforms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .soc-card {
+                grid-column: span 1;
+            }
+            
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="homepage-container">
-        <main class="homepage-content">
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 3rem;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">
-                    <i class="fas fa-shield-alt" style="color: var(--accent-blue);"></i>
-                    Nik's SIEM
-                </h1>
-                <p class="lead" style="max-width: 700px; margin: 0 auto;">
-                    A comprehensive security operations compendium covering XSIAM, Splunk, Microsoft Sentinel, 
-                    CrowdStrike, Cortex XDR, Microsoft Defender for Endpoint, and SOC Operations best practices.
-                </p>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-shield-alt"></i> Nik's SIEM</h1>
+            <p class="subtitle">Personal Security Operations Reference</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Left Side - Platforms -->
+            <div class="main-content">
+                <div class="section-header">
+                    <i class="fas fa-th-large"></i>
+                    <h2>Security Platforms</h2>
+                </div>
+
+                <div class="platforms-grid">
+                    <!-- XSIAM -->
+                    <div class="platform-card xsiam">
+                        <div class="platform-icon"><i class="fas fa-bolt"></i></div>
+                        <h3>Palo Alto XSIAM</h3>
+                        <p class="desc">Next-generation security operations platform combining SIEM, SOAR, ASM, and XDR in a cloud-native architecture with XQL query language.</p>
+                        <a href="xsiam/index.html" class="platform-link">Explore XSIAM <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> Architecture</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> XQL Query</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Custom Logs</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Correlation Rules</span>
+                        </div>
+                    </div>
+
+                    <!-- Splunk -->
+                    <div class="platform-card splunk">
+                        <div class="platform-icon"><i class="fas fa-chart-line"></i></div>
+                        <h3>Splunk Enterprise Security</h3>
+                        <p class="desc">Industry-leading SIEM platform with powerful SPL query language, Enterprise Security premium app, and extensive ecosystem of apps and add-ons.</p>
+                        <a href="splunk/index.html" class="platform-link">Explore Splunk <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> SPL Fundamentals</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Enterprise Security</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Correlation Searches</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Data Models</span>
+                        </div>
+                    </div>
+
+                    <!-- Sentinel -->
+                    <div class="platform-card sentinel">
+                        <div class="platform-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h3>Microsoft Sentinel</h3>
+                        <p class="desc">Cloud-native SIEM and SOAR with deep Microsoft 365 integration, KQL query language, and Logic Apps automation built on Azure.</p>
+                        <a href="sentinel/index.html" class="platform-link">Explore Sentinel <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> KQL Query Language</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Analytics Rules</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Automation</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Content Hub</span>
+                        </div>
+                    </div>
+
+                    <!-- CrowdStrike -->
+                    <div class="platform-card crowdstrike">
+                        <div class="platform-icon"><i class="fas fa-crow"></i></div>
+                        <h3>CrowdStrike Falcon</h3>
+                        <p class="desc">Leading cloud-native endpoint protection platform with advanced threat hunting, Real Time Response, and IOA-based detection.</p>
+                        <a href="crowdstrike/index.html" class="platform-link">Explore CrowdStrike <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> Sensor Deployment</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> IOA Rules</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Real Time Response</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Threat Hunting</span>
+                        </div>
+                    </div>
+
+                    <!-- Cortex XDR -->
+                    <div class="platform-card cortex">
+                        <div class="platform-icon"><i class="fas fa-crosshairs"></i></div>
+                        <h3>Cortex XDR</h3>
+                        <p class="desc">Palo Alto's XDR platform with behavioral analytics, causality chain visualization, and XQL hunting capabilities.</p>
+                        <a href="cortex/index.html" class="platform-link">Explore Cortex XDR <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> Agent Deployment</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> BIOC Rules</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Causality Chains</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> XQL Hunting</span>
+                        </div>
+                    </div>
+
+                    <!-- MDE -->
+                    <div class="platform-card mde">
+                        <div class="platform-icon"><i class="fas fa-shield-virus"></i></div>
+                        <h3>Microsoft Defender for Endpoint</h3>
+                        <p class="desc">Enterprise EDR with deep Windows integration, advanced hunting with KQL, and automated investigation capabilities.</p>
+                        <a href="mde/index.html" class="platform-link">Explore MDE <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> Onboarding</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> KQL Hunting</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Alert Tuning</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Response Actions</span>
+                        </div>
+                    </div>
+
+                    <!-- SOC Operations -->
+                    <div class="platform-card operations soc-card">
+                        <div class="platform-icon"><i class="fas fa-users-cog"></i></div>
+                        <h3>SOC Operations Hub</h3>
+                        <p class="desc">Complete guide to Security Operations Center fundamentals, incident response procedures, threat hunting methodologies, detection engineering, and career development paths.</p>
+                        <a href="operations/index.html" class="platform-link">Explore SOC Operations <i class="fas fa-arrow-right"></i></a>
+                        <div class="topic-grid">
+                            <span class="topic-item"><i class="fas fa-check"></i> SOC Fundamentals</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Incident Response</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Threat Hunting</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> MITRE ATT&CK</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Detection Engineering</span>
+                            <span class="topic-item"><i class="fas fa-check"></i> Career Path</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Platform Cards -->
-            <h2><i class="fas fa-th-large"></i> Security Platforms</h2>
-            <div class="nav-cards">
-                <a href="xsiam/index.html" class="nav-card">
-                    <h3><i class="fas fa-bolt" style="color: #ff6b6b;"></i> XSIAM</h3>
-                    <p>Palo Alto's autonomous SOC platform with XQL queries, correlation rules, and XSOAR automation.</p>
-                </a>
-                <a href="splunk/index.html" class="nav-card">
-                    <h3><i class="fas fa-chart-line" style="color: #4ecdc4;"></i> Splunk Enterprise Security</h3>
-                    <p>Industry-leading SIEM with SPL queries, correlation searches, and risk-based alerting.</p>
-                </a>
-                <a href="sentinel/index.html" class="nav-card">
-                    <h3><i class="fas fa-shield-alt" style="color: #45b7d1;"></i> Microsoft Sentinel</h3>
-                    <p>Cloud-native SIEM with KQL queries, analytics rules, and Azure integration.</p>
-                </a>
-                <a href="crowdstrike/index.html" class="nav-card">
-                    <h3><i class="fas fa-crow" style="color: #f7dc6f;"></i> CrowdStrike Falcon</h3>
-                    <p>Leading EDR platform with threat hunting, real-time response, and threat intelligence.</p>
-                </a>
-                <a href="cortex/index.html" class="nav-card">
-                    <h3><i class="fas fa-crosshairs" style="color: #bb8fce;"></i> Cortex XDR</h3>
-                    <p>Extended detection and response with causality analysis and automated investigation.</p>
-                </a>
-                <a href="mde/index.html" class="nav-card">
-                    <h3><i class="fas fa-shield-virus" style="color: #85c1e9;"></i> Defender for Endpoint</h3>
-                    <p>Microsoft's EDR solution with ASR rules, advanced hunting, and M365 integration.</p>
-                </a>
-            </div>
+            <!-- Right Sidebar -->
+            <aside class="sidebar">
+                <!-- Platform Comparison -->
+                <div class="sidebar-card">
+                    <h3><i class="fas fa-columns"></i> Platform Comparison</h3>
+                    <p>Side-by-side comparison of XSIAM, Splunk, and Sentinel</p>
+                    <a href="xsiam/comparison.html" class="btn-primary">
+                        <i class="fas fa-arrow-right"></i> View Full Comparison
+                    </a>
+                </div>
 
-            <!-- SOC Operations -->
-            <h2><i class="fas fa-users-cog"></i> SOC Operations</h2>
-            <div class="nav-cards">
-                <a href="operations/index.html" class="nav-card">
-                    <h3><i class="fas fa-building" style="color: #82e0aa;"></i> SOC Operations Hub</h3>
-                    <p>Complete guide to SOC operations including fundamentals, incident response, threat hunting, and career development.</p>
-                </a>
-            </div>
+                <!-- What's Included -->
+                <div class="sidebar-card">
+                    <h3><i class="fas fa-star"></i> What's Included</h3>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-terminal"></i></div>
+                            <div class="feature-content">
+                                <h4>Real Console Paths</h4>
+                                <p>Exact navigation in each platform's UI</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-code"></i></div>
+                            <div class="feature-content">
+                                <h4>Query Examples</h4>
+                                <p>SPL, KQL, and XQL queries ready to use</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-comments"></i></div>
+                            <div class="feature-content">
+                                <h4>Interview Q&A</h4>
+                                <p>Common questions with detailed answers</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-wrench"></i></div>
+                            <div class="feature-content">
+                                <h4>Troubleshooting</h4>
+                                <p>Common issues and resolutions</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="feature-content">
+                                <h4>Best Practices</h4>
+                                <p>Enterprise deployment patterns</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Quick Stats -->
-            <div class="config-section" style="margin-top: 3rem; text-align: center;">
-                <h3 style="margin-top: 0;"><i class="fas fa-info-circle"></i> About This Compendium</h3>
-                <p style="margin-bottom: 0;">
-                    This comprehensive resource covers 7 major security platforms with detailed technical documentation, 
-                    architecture diagrams, enterprise deployment examples, interview preparation, and hands-on guides.
-                    Built for security professionals preparing for interviews, certifications, or expanding their knowledge.
-                </p>
-            </div>
-        </main>
+                <!-- Learning Paths -->
+                <div class="sidebar-card">
+                    <h3><i class="fas fa-graduation-cap"></i> Learning Paths</h3>
+                    
+                    <div class="learning-path">
+                        <div class="path-header">
+                            <span class="path-badge beginner">Beginner</span>
+                            <span class="path-title">SOC Analyst Foundation</span>
+                        </div>
+                        <p class="path-desc">Start here if you're new to security operations.</p>
+                        <div class="path-links">
+                            <a href="operations/soc-fundamentals.html" class="path-link">SOC Operations Overview</a>
+                            <a href="operations/alert-triage.html" class="path-link">Triage Methodology</a>
+                            <a href="operations/incident-response.html" class="path-link">Incident Classification</a>
+                        </div>
+                    </div>
+
+                    <div class="learning-path">
+                        <div class="path-header">
+                            <span class="path-badge intermediate">Intermediate</span>
+                            <span class="path-title">Detection Engineer</span>
+                        </div>
+                        <p class="path-desc">Build detection rules and optimize alerting.</p>
+                        <div class="path-links">
+                            <a href="operations/detection-engineering.html" class="path-link">Detection Engineering</a>
+                            <a href="operations/mitre-attack.html" class="path-link">MITRE ATT&CK Mapping</a>
+                            <a href="splunk/correlation-searches.html" class="path-link">Correlation Rules</a>
+                        </div>
+                    </div>
+
+                    <div class="learning-path">
+                        <div class="path-header">
+                            <span class="path-badge advanced">Advanced</span>
+                            <span class="path-title">Threat Hunter</span>
+                        </div>
+                        <p class="path-desc">Proactive threat hunting techniques.</p>
+                        <div class="path-links">
+                            <a href="operations/threat-hunting.html" class="path-link">Threat Hunting</a>
+                            <a href="splunk/spl-advanced.html" class="path-link">Advanced SPL</a>
+                            <a href="sentinel/hunting.html" class="path-link">KQL Hunting</a>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
 </body>
 </html>
