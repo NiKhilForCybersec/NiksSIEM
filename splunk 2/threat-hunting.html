@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Hunting | Splunk Enterprise Security</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nik's SIEM</span>
+                        <span class="brand-subtitle">Security Operations</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Splunk Platform</div>
+                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Overview</a>
+                    <a href="architecture.html" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
+                    <a href="es-overview.html" class="nav-link"><i class="fas fa-shield-alt"></i> Enterprise Security</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Collection</div>
+                    <a href="data-ingestion.html" class="nav-link"><i class="fas fa-database"></i> Data Ingestion</a>
+                    <a href="forwarders.html" class="nav-link"><i class="fas fa-share"></i> Forwarders</a>
+                    <a href="custom-log-onboarding.html" class="nav-link"><i class="fas fa-file-import"></i> Custom Onboarding</a>
+                    <a href="parsing-flows.html" class="nav-link"><i class="fas fa-stream"></i> Parsing & Fields</a>
+                    <a href="data-models.html" class="nav-link"><i class="fas fa-cubes"></i> Data Models & CIM</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SPL Query Language</div>
+                    <a href="spl-fundamentals.html" class="nav-link"><i class="fas fa-terminal"></i> SPL Fundamentals</a>
+                    <a href="spl-intermediate.html" class="nav-link"><i class="fas fa-code"></i> SPL Intermediate</a>
+                    <a href="spl-advanced.html" class="nav-link"><i class="fas fa-rocket"></i> SPL Advanced</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Security Operations</div>
+                    <a href="correlation-searches.html" class="nav-link"><i class="fas fa-project-diagram"></i> Correlation Searches</a>
+                    <a href="notable-events.html" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Notable Events</a>
+                    <a href="risk-based-alerting.html" class="nav-link"><i class="fas fa-chart-line"></i> Risk-Based Alerting</a>
+                    <a href="threat-hunting.html" class="nav-link active"><i class="fas fa-crosshairs"></i> Threat Hunting</a>
+                    <a href="threat-intel.html" class="nav-link"><i class="fas fa-skull-crossbones"></i> Threat Intelligence</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="administration.html" class="nav-link"><i class="fas fa-cog"></i> Administration</a>
+                    <a href="apps-tas.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Apps & Add-ons</a>
+                    <a href="dashboards.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboards</a>
+                    <a href="retention-tiers.html" class="nav-link"><i class="fas fa-archive"></i> Storage Tiers</a>
+                </div>
+            </nav>
+        </aside>
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">Splunk</a><span class="separator">/</span>
+                    <span class="current">Threat Hunting</span>
+                </div>
+            </header>
+            <main class="main-content">
+                <h1><i class="fas fa-crosshairs"></i> Threat Hunting in Splunk</h1>
+                <p class="lead">Master proactive threat hunting in Splunk. Learn hunting methodologies, SPL techniques, MITRE ATT&CK-based hunts, and how to operationalize your findings into detections.</p>
+
+                <!-- Threat Hunting Overview -->
+                <h2><i class="fas fa-info-circle"></i> Threat Hunting Overview</h2>
+                <div class="config-section">
+                    <h4>What is Threat Hunting?</h4>
+                    <div class="code-block">Threat Hunting Definition:
+
+Proactive, iterative search through networks and datasets to detect 
+advanced threats that evade existing security solutions.
+
+KEY CHARACTERISTICS:
+├── Hypothesis-driven (not alert-driven)
+├── Assumes breach mentality
+├── Uses human intuition + machine data
+├── Iterative refinement process
+└── Produces actionable intelligence
+
+HUNTING VS DETECTION:
+┌────────────────────┬─────────────────────────┐
+│ Detection          │ Hunting                 │
+├────────────────────┼─────────────────────────┤
+│ Reactive           │ Proactive               │
+│ Rule-based         │ Hypothesis-based        │
+│ Known threats      │ Unknown threats         │
+│ Automated          │ Human-driven            │
+│ High volume        │ Targeted investigation  │
+└────────────────────┴─────────────────────────┘
+
+HUNTING OUTCOMES:
+├── New detections (operationalized hunts)
+├── Improved visibility (data gaps identified)
+├── Threat intelligence (IOCs, TTPs)
+├── Risk reduction (threats neutralized)
+└── Security posture improvement</div>
+
+                    <h4>Hunting Maturity Model</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Level</th><th>Description</th><th>Capabilities</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>HM0 - Initial</strong></td><td>Primarily reactive</td><td>Basic log collection, alert response only</td></tr>
+                            <tr><td><strong>HM1 - Minimal</strong></td><td>IOC searching</td><td>Can search for known indicators</td></tr>
+                            <tr><td><strong>HM2 - Procedural</strong></td><td>Following procedures</td><td>Uses documented hunt procedures</td></tr>
+                            <tr><td><strong>HM3 - Innovative</strong></td><td>Creates new hunts</td><td>Develops original hypotheses</td></tr>
+                            <tr><td><strong>HM4 - Leading</strong></td><td>Automates & shares</td><td>Operationalizes hunts, shares intel</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Hunting Methodology -->
+                <h2><i class="fas fa-route"></i> Hunting Methodology</h2>
+                <div class="config-section">
+                    <h4>The Hunting Loop</h4>
+                    <div class="code-block">SQRRL Hunting Loop (Industry Standard):
+
+    ┌─────────────────────────────────────────────┐
+    │                                             │
+    ▼                                             │
+┌───────────┐    ┌───────────┐    ┌───────────┐  │
+│ HYPOTHESIS│───▶│INVESTIGATE│───▶│ DISCOVER  │  │
+│           │    │           │    │           │  │
+└───────────┘    └───────────┘    └───────────┘  │
+                                       │          │
+                                       ▼          │
+                               ┌───────────┐      │
+                               │  INFORM   │──────┘
+                               │           │
+                               └───────────┘
+
+1. HYPOTHESIS
+   ├── Form testable assumption about adversary behavior
+   ├── Sources: threat intel, MITRE ATT&CK, incidents
+   └── Example: "Attackers may use PowerShell for C2"
+
+2. INVESTIGATE
+   ├── Search data to prove/disprove hypothesis
+   ├── Use SPL queries, visualizations
+   └── Pivot on findings
+
+3. DISCOVER
+   ├── Identify true positives, false positives
+   ├── Document findings
+   └── Determine scope of activity
+
+4. INFORM
+   ├── Create detections from successful hunts
+   ├── Update playbooks and procedures
+   └── Share intelligence with team</div>
+
+                    <h4>Hypothesis Sources</h4>
+                    <div class="code-block">Where to Get Hunt Ideas:
+
+THREAT INTELLIGENCE:
+├── APT reports (Mandiant, CrowdStrike, etc.)
+├── CISA advisories
+├── Industry ISACs
+├── Vendor threat blogs
+└── Twitter/security community
+
+MITRE ATT&CK:
+├── Techniques by tactic
+├── Procedure examples
+├── Detection suggestions
+└── Data source requirements
+
+INTERNAL SOURCES:
+├── Past incidents (what did we miss?)
+├── Red team findings
+├── Vulnerability assessments
+├── Architecture changes
+└── New assets/applications
+
+EXTERNAL EVENTS:
+├── Major breaches (SolarWinds, etc.)
+├── New malware families
+├── Emerging threat actors
+└── Zero-day disclosures</div>
+                </div>
+
+                <!-- Essential Data Sources -->
+                <h2><i class="fas fa-database"></i> Essential Data Sources</h2>
+                <div class="config-section">
+                    <h4>Data Source Priority</h4>
+                    <div class="code-block">Hunting Data Sources (Priority Order):
+
+TIER 1 - CRITICAL:
+├── Process Execution (Sysmon 1, Windows 4688)
+│   └── Command lines, parent-child, hashes
+├── Authentication (Windows 4624/4625, AD)
+│   └── Logon types, source IPs, failures
+├── Network Connections (Firewall, Proxy, DNS)
+│   └── Source/dest IPs, ports, protocols
+└── PowerShell Logging (4103, 4104)
+    └── Script blocks, commands
+
+TIER 2 - HIGH VALUE:
+├── File Creation/Modification (Sysmon 11)
+├── Registry Changes (Sysmon 12/13/14)
+├── Scheduled Tasks (Windows 4698)
+├── Service Installation (Windows 7045)
+├── WMI Activity (Sysmon 19/20/21)
+└── Named Pipes (Sysmon 17/18)
+
+TIER 3 - ENRICHMENT:
+├── DNS Query Logs
+├── DHCP Logs
+├── VPN Logs
+├── Email Gateway Logs
+├── Cloud Audit Logs (AWS, Azure, GCP)
+└── Application-specific logs
+
+SPLUNK SOURCETYPES:
+├── XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+├── WinEventLog:Security
+├── WinEventLog:Microsoft-Windows-PowerShell/Operational
+├── stream:dns, stream:http
+└── pan:traffic, cisco:asa</div>
+
+                    <h4>Data Model Usage</h4>
+                    <div class="code-block">// Using tstats for fast hunting (accelerated data)
+
+// Process execution hunt
+| tstats count from datamodel=Endpoint.Processes 
+  where Processes.process_name=* 
+  by Processes.dest, Processes.user, Processes.process_name, 
+     Processes.process, Processes.parent_process_name
+| rename Processes.* as *
+
+// Authentication hunt
+| tstats count from datamodel=Authentication 
+  where Authentication.action=* 
+  by Authentication.src, Authentication.dest, 
+     Authentication.user, Authentication.action
+| rename Authentication.* as *
+
+// Network traffic hunt
+| tstats sum(All_Traffic.bytes) as bytes 
+  from datamodel=Network_Traffic 
+  by All_Traffic.src_ip, All_Traffic.dest_ip, 
+     All_Traffic.dest_port
+| rename All_Traffic.* as *</div>
+                </div>
+
+                <!-- MITRE ATT&CK Hunts -->
+                <h2><i class="fas fa-shield-alt"></i> MITRE ATT&CK-Based Hunts</h2>
+                <div class="config-section">
+                    <h4>Initial Access (TA0001)</h4>
+                    <div class="code-block">// T1566.001 - Spearphishing Attachment
+// Hunt for Office spawning suspicious processes
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| where match(ParentImage, "(?i)(winword|excel|powerpnt|outlook)\.exe")
+| where match(Image, "(?i)(cmd|powershell|wscript|cscript|mshta|certutil)\.exe")
+| stats count by Computer, ParentImage, Image, CommandLine, User
+| sort -count
+
+// T1078 - Valid Accounts (Compromised Credentials)
+// Hunt for impossible travel
+index=windows sourcetype="WinEventLog:Security" EventCode=4624 LogonType=10
+| iplocation src_ip
+| stats earliest(_time) as first_login, latest(_time) as last_login,
+        values(City) as cities, dc(City) as city_count
+  by user
+| where city_count > 1
+| eval time_diff_hours = round((last_login - first_login)/3600, 2)
+| where time_diff_hours < 2
+| table user, cities, time_diff_hours, first_login, last_login</div>
+
+                    <h4>Execution (TA0002)</h4>
+                    <div class="code-block">// T1059.001 - PowerShell
+// Hunt for encoded PowerShell commands
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+  Image="*powershell.exe"
+| where match(CommandLine, "(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})")
+| stats count by Computer, User, CommandLine
+| sort -count
+
+// T1059.001 - PowerShell Download Cradles
+index=windows sourcetype="WinEventLog:Microsoft-Windows-PowerShell/Operational" EventCode=4104
+| where match(ScriptBlockText, "(?i)(downloadstring|downloadfile|invoke-webrequest|wget|curl|bitstransfer)")
+| stats count by Computer, ScriptBlockText
+| sort -count
+
+// T1047 - WMI Execution
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| where match(ParentImage, "(?i)wmiprvse\.exe")
+| where NOT match(Image, "(?i)(wmiadap|scrcons)\.exe")
+| stats count by Computer, Image, CommandLine
+| sort -count
+
+// T1053.005 - Scheduled Tasks
+index=windows sourcetype="WinEventLog:Security" EventCode=4698
+| rex field=TaskContent "<Command>(?<command>[^<]+)</Command>"
+| rex field=TaskContent "<Arguments>(?<arguments>[^<]+)</Arguments>"
+| where match(command, "(?i)(powershell|cmd|wscript|mshta)")
+| stats count by Computer, TaskName, command, arguments
+| sort -count</div>
+
+                    <h4>Persistence (TA0003)</h4>
+                    <div class="code-block">// T1547.001 - Registry Run Keys
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode IN (12,13,14)
+| where match(TargetObject, "(?i)(currentversion\\\\run|currentversion\\\\runonce)")
+| stats count by Computer, EventType, TargetObject, Details
+| sort -count
+
+// T1543.003 - Windows Service Creation
+index=windows sourcetype="WinEventLog:System" EventCode=7045
+| where NOT match(ServiceFileName, "(?i)(windows|program files|system32)")
+| stats count by Computer, ServiceName, ServiceFileName, ServiceType
+| sort -count
+
+// T1136.001 - Local Account Creation
+index=windows sourcetype="WinEventLog:Security" EventCode=4720
+| stats count by Computer, TargetUserName, SubjectUserName
+| sort -count
+
+// T1505.003 - Web Shells
+index=web sourcetype=iis OR sourcetype=apache
+| where match(uri_path, "(?i)\.(asp|aspx|php|jsp)$")
+| where match(uri_query, "(?i)(cmd|exec|shell|eval|base64)")
+| stats count by src_ip, uri_path, uri_query, status
+| sort -count</div>
+
+                    <h4>Defense Evasion (TA0005)</h4>
+                    <div class="code-block">// T1070.001 - Clear Windows Event Logs
+index=windows sourcetype="WinEventLog:Security" EventCode=1102
+| stats count by Computer, SubjectUserName
+| sort -count
+
+// T1036.005 - Masquerading (Filename Mismatch)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| rex field=Image "\\\\(?<filename>[^\\\\]+)$"
+| rex field=OriginalFileName "(?<orig_filename>[^\\\\]+)$"
+| where filename != orig_filename AND orig_filename != "-"
+| stats count by Computer, Image, OriginalFileName, filename
+| sort -count
+
+// T1055 - Process Injection (CreateRemoteThread)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=8
+| where SourceImage != TargetImage
+| stats count by Computer, SourceImage, TargetImage, SourceUser
+| sort -count
+
+// T1027 - Obfuscated Files (High Entropy)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| where len(CommandLine) > 500
+| eval entropy = len(CommandLine) - len(replace(CommandLine, "[A-Za-z0-9]", ""))
+| where entropy < 0.3 * len(CommandLine)
+| stats count by Computer, Image, CommandLine
+| sort -count</div>
+
+                    <h4>Credential Access (TA0006)</h4>
+                    <div class="code-block">// T1003.001 - LSASS Memory Dump (Mimikatz)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=10
+  TargetImage="*lsass.exe" GrantedAccess IN ("0x1010", "0x1410", "0x1438", "0x143a")
+| stats count by Computer, SourceImage, SourceUser, GrantedAccess
+| sort -count
+
+// T1003.002 - SAM Database Access
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| where match(CommandLine, "(?i)(reg save.*sam|reg save.*security|reg save.*system)")
+| stats count by Computer, User, CommandLine
+| sort -count
+
+// T1558.003 - Kerberoasting
+index=windows sourcetype="WinEventLog:Security" EventCode=4769 TicketEncryptionType=0x17
+| where ServiceName != "krbtgt" AND NOT match(ServiceName, "\\$$")
+| stats count by src_ip, ServiceName, TargetUserName
+| where count > 5
+| sort -count
+
+// T1110.003 - Password Spraying
+index=windows sourcetype="WinEventLog:Security" EventCode=4625
+| bucket _time span=5m
+| stats dc(TargetUserName) as unique_users, count as attempts 
+  by src_ip, _time
+| where unique_users > 10 AND attempts > 20
+| sort -count</div>
+
+                    <h4>Lateral Movement (TA0008)</h4>
+                    <div class="code-block">// T1021.002 - SMB/Windows Admin Shares
+index=windows sourcetype="WinEventLog:Security" EventCode=5140
+| where match(ShareName, "(?i)(ADMIN\\$|C\\$|IPC\\$)")
+| stats count by IpAddress, ShareName, SubjectUserName, Computer
+| sort -count
+
+// T1021.001 - Remote Desktop Protocol
+index=windows sourcetype="WinEventLog:Security" EventCode=4624 LogonType=10
+| stats count by src_ip, dest, user
+| where count > 5
+| sort -count
+
+// T1021.006 - WinRM
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+  Image="*wsmprovhost.exe"
+| stats count by Computer, ParentImage, CommandLine, User
+| sort -count
+
+// T1550.002 - Pass the Hash
+index=windows sourcetype="WinEventLog:Security" EventCode=4624 
+  LogonType=9 AuthenticationPackage=Negotiate
+| stats count by src_ip, user, dest
+| sort -count</div>
+
+                    <h4>Collection & Exfiltration (TA0009, TA0010)</h4>
+                    <div class="code-block">// T1560.001 - Archive Collection
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| where match(CommandLine, "(?i)(7z|rar|zip|tar|compress).*(-p|password)")
+| stats count by Computer, User, CommandLine
+| sort -count
+
+// T1048.003 - Exfiltration Over DNS
+index=dns sourcetype=stream:dns
+| eval query_len = len(query)
+| where query_len > 50
+| stats count, avg(query_len) as avg_len, values(query) as queries 
+  by src_ip, query_type
+| where avg_len > 60
+| sort -count
+
+// T1041 - Exfiltration Over C2 Channel
+index=proxy OR index=firewall
+| stats sum(bytes_out) as total_bytes by src_ip, dest_ip
+| where total_bytes > 100000000
+| sort -total_bytes
+
+// Large file transfers outside business hours
+index=proxy OR index=firewall
+| eval hour = strftime(_time, "%H")
+| where hour < 6 OR hour > 22
+| stats sum(bytes_out) as bytes by src_ip, dest_ip, dest_port
+| where bytes > 50000000
+| sort -bytes</div>
+                </div>
+
+                <!-- Hunting SPL Techniques -->
+                <h2><i class="fas fa-code"></i> Advanced Hunting SPL</h2>
+                <div class="config-section">
+                    <h4>Statistical Anomaly Detection</h4>
+                    <div class="code-block">// Find rare processes (executed on < 3 hosts)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| stats dc(Computer) as host_count, values(Computer) as hosts,
+        count as exec_count by Image
+| where host_count < 3 AND exec_count < 10
+| sort host_count
+
+// Baseline deviation (process execution frequency)
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| bucket _time span=1h
+| stats count by _time, Computer, Image
+| eventstats avg(count) as avg_count, stdev(count) as stdev_count 
+  by Computer, Image
+| eval zscore = (count - avg_count) / stdev_count
+| where zscore > 3
+| sort -zscore
+
+// First-time seen process per host
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| stats earliest(_time) as first_seen by Computer, Image
+| where first_seen > relative_time(now(), "-24h")
+| convert ctime(first_seen)
+| sort -first_seen
+
+// Process execution at unusual times
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| eval hour = strftime(_time, "%H")
+| eval is_business_hours = if(hour >= 8 AND hour <= 18, 1, 0)
+| stats count by Computer, Image, is_business_hours
+| where is_business_hours = 0
+| sort -count</div>
+
+                    <h4>Stack Counting & Long Tail Analysis</h4>
+                    <div class="code-block">// Stack counting - find outliers in command lines
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| rex field=CommandLine "^(?<cmd_base>[^\s]+)"
+| stats count by cmd_base
+| sort count
+| head 50
+
+// Long tail analysis - rare parent-child relationships
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| stats count by ParentImage, Image
+| sort count
+| where count < 5
+
+// Rare user-process combinations
+index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| stats count by User, Image
+| eventstats sum(count) as total_by_process by Image
+| eval pct = round(count/total_by_process*100, 2)
+| where pct < 1 AND count < 5
+| sort pct</div>
+
+                    <h4>Temporal Analysis</h4>
+                    <div class="code-block">// Beaconing detection (regular intervals)
+index=proxy OR index=firewall
+| bucket _time span=1m
+| stats count by _time, src_ip, dest_ip
+| sort src_ip, dest_ip, _time
+| streamstats current=f last(_time) as prev_time by src_ip, dest_ip
+| eval interval = _time - prev_time
+| stats avg(interval) as avg_interval, stdev(interval) as stdev_interval,
+        count as beacon_count by src_ip, dest_ip
+| where stdev_interval < 10 AND beacon_count > 50
+| sort -beacon_count
+
+// Activity timeline for specific host
+index=windows Computer="SUSPECT-HOST"
+| stats count by sourcetype, _time span=1h
+| timechart count by sourcetype
+
+// Event sequence analysis
+index=windows Computer="SUSPECT-HOST"
+| sort _time
+| streamstats count as event_num
+| table _time, event_num, sourcetype, EventCode, Message</div>
+
+                    <h4>Network Hunting Queries</h4>
+                    <div class="code-block">// DGA detection (high entropy domains)
+index=dns sourcetype=stream:dns
+| rex field=query "^(?<subdomain>[^.]+)\.(?<domain>[^.]+\.[^.]+)$"
+| eval subdomain_len = len(subdomain)
+| eval consonant_ratio = 1 - (len(replace(subdomain, "[aeiouAEIOU]", "")) / subdomain_len)
+| where subdomain_len > 15 AND consonant_ratio > 0.7
+| stats count by query, src_ip
+| sort -count
+
+// Connections to newly registered domains
+index=proxy OR index=dns
+| lookup domain_age_lookup domain as dest_domain OUTPUT registration_date
+| eval domain_age_days = (now() - strptime(registration_date, "%Y-%m-%d")) / 86400
+| where domain_age_days < 30
+| stats count by src_ip, dest_domain, domain_age_days
+| sort domain_age_days
+
+// Tor exit node connections
+index=firewall OR index=proxy
+| lookup tor_exit_nodes ip as dest_ip OUTPUT is_tor_exit
+| where is_tor_exit = 1
+| stats count by src_ip, dest_ip
+| sort -count
+
+// Non-standard ports for HTTP/HTTPS
+index=proxy
+| where NOT (dest_port IN (80, 443, 8080, 8443))
+| stats count by src_ip, dest_ip, dest_port
+| sort -count</div>
+                </div>
+
+                <!-- Operationalizing Hunts -->
+                <h2><i class="fas fa-cogs"></i> Operationalizing Hunts</h2>
+                <div class="config-section">
+                    <h4>From Hunt to Detection</h4>
+                    <div class="code-block">Hunt-to-Detection Workflow:
+
+1. DOCUMENT FINDINGS
+   ├── Hypothesis tested
+   ├── Data sources used
+   ├── Query logic
+   ├── True/false positive analysis
+   └── MITRE ATT&CK mapping
+
+2. REFINE QUERY
+   ├── Remove false positives
+   ├── Add exclusions for known-good
+   ├── Optimize for performance
+   └── Test over historical data
+
+3. CREATE CORRELATION SEARCH
+   ├── Schedule interval
+   ├── Alert actions
+   ├── Severity mapping
+   └── Notable event fields
+
+4. BUILD RESPONSE PLAYBOOK
+   ├── Investigation steps
+   ├── Containment actions
+   ├── Evidence collection
+   └── Escalation criteria
+
+5. MEASURE EFFECTIVENESS
+   ├── True positive rate
+   ├── False positive rate
+   ├── Time to detect
+   └── Coverage gaps</div>
+
+                    <h4>Correlation Search Example</h4>
+                    <div class="code-block">// Convert hunt to scheduled search
+// Original hunt: Encoded PowerShell detection
+
+[hunt_encoded_powershell]
+search = index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1 \
+  Image="*powershell.exe" \
+  | where match(CommandLine, "(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})") \
+  | stats count as execution_count by Computer, User, CommandLine \
+  | where execution_count > 0
+
+cron_schedule = */15 * * * *
+enableSched = 1
+dispatch.earliest_time = -20m
+dispatch.latest_time = now
+
+alert.severity = high
+alert.suppress = 1
+alert.suppress.fields = Computer, CommandLine
+alert.suppress.period = 24h
+
+action.notable = 1
+action.notable.param.rule_title = Encoded PowerShell Execution
+action.notable.param.rule_description = PowerShell executed with encoded command
+action.notable.param.security_domain = endpoint
+action.notable.param.severity = high
+action.notable.param.drilldown_search = index=windows Computer="$Computer$"</div>
+                </div>
+
+                <!-- Hunt Documentation -->
+                <h2><i class="fas fa-file-alt"></i> Hunt Documentation</h2>
+                <div class="config-section">
+                    <div class="code-block">Hunt Documentation Template:
+
+HUNT METADATA:
+├── Hunt ID: HUNT-2024-001
+├── Hunt Name: Encoded PowerShell Execution
+├── Author: [Your Name]
+├── Date: 2024-01-15
+├── Status: Completed → Operationalized
+└── MITRE ATT&CK: T1059.001, T1027
+
+HYPOTHESIS:
+"Adversaries may use Base64-encoded PowerShell commands to 
+evade detection and execute malicious code."
+
+DATA REQUIREMENTS:
+├── Sysmon Event ID 1 (Process Creation)
+├── PowerShell Script Block Logging (4104)
+├── Index: windows
+└── Retention: 90 days minimum
+
+HUNT QUERY:
+[Include optimized SPL query]
+
+FINDINGS:
+├── True Positives: 3 (legitimate admin scripts)
+├── False Positives: 12 (backup software)
+├── Suspicious: 2 (requires investigation)
+└── Malicious: 0
+
+EXCLUSIONS ADDED:
+├── User: DOMAIN\backup_svc
+├── Path: C:\BackupSoftware\*
+└── CommandLine: "*scheduled-task-backup*"
+
+DETECTION CREATED:
+├── Correlation Search: hunt_encoded_powershell
+├── Severity: High
+├── Schedule: Every 15 minutes
+└── Notable Event: Yes
+
+RECOMMENDATIONS:
+├── Monitor for new exclusion bypass attempts
+├── Extend to other script interpreters
+└── Review quarterly for false positive rate</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is threat hunting and how does it differ from detection?</button>
+                        <div class="qa-answer">
+                            <p><strong>Threat hunting</strong> is proactive, hypothesis-driven search for threats that evade existing detections:</p>
+                            <ul>
+                                <li><strong>Detection:</strong> Reactive, automated, rule-based, catches known patterns</li>
+                                <li><strong>Hunting:</strong> Proactive, human-driven, hypothesis-based, finds unknown threats</li>
+                            </ul>
+                            <p>Hunting assumes breach mentality and uses human intuition combined with machine data to find advanced threats.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your threat hunting methodology.</button>
+                        <div class="qa-answer">
+                            <p>I follow the SQRRL Hunting Loop:</p>
+                            <ol>
+                                <li><strong>Hypothesis:</strong> Form testable assumption (e.g., "Attackers using encoded PowerShell")</li>
+                                <li><strong>Investigate:</strong> Search data with SPL queries, pivot on findings</li>
+                                <li><strong>Discover:</strong> Identify true/false positives, document findings</li>
+                                <li><strong>Inform:</strong> Create detections, update playbooks, share intelligence</li>
+                            </ol>
+                            <p>Sources for hypotheses: threat intel, MITRE ATT&CK, past incidents, red team findings.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you find rare or anomalous processes in Splunk?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">// Rare processes across environment
+index=windows EventCode=1
+| stats dc(Computer) as host_count, count by Image
+| where host_count < 3
+| sort host_count
+
+// Statistical anomaly (z-score)
+| eventstats avg(count) as avg, stdev(count) as stdev by Computer
+| eval zscore = (count - avg) / stdev
+| where zscore > 3</div>
+                            <p>Look for processes on few hosts, first-time executions, and statistical outliers.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect beaconing behavior?</button>
+                        <div class="qa-answer">
+                            <p>Beaconing shows regular, periodic communication patterns:</p>
+                            <div class="code-block">index=proxy
+| bucket _time span=1m
+| stats count by _time, src_ip, dest_ip
+| streamstats last(_time) as prev_time by src_ip, dest_ip
+| eval interval = _time - prev_time
+| stats avg(interval) as avg_int, stdev(interval) as stdev_int
+  by src_ip, dest_ip
+| where stdev_int < 10  // Low variance = regular intervals</div>
+                            <p>Key indicators: consistent intervals, low standard deviation, high connection count.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What do you do after a successful hunt?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Document:</strong> Hypothesis, queries, findings, false positives</li>
+                                <li><strong>Refine:</strong> Optimize query, add exclusions for known-good</li>
+                                <li><strong>Operationalize:</strong> Create correlation search/scheduled alert</li>
+                                <li><strong>Playbook:</strong> Build response procedure for analysts</li>
+                                <li><strong>Share:</strong> Brief team, update threat intel</li>
+                                <li><strong>Measure:</strong> Track detection effectiveness over time</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What data sources are essential for threat hunting?</button>
+                        <div class="qa-answer">
+                            <p><strong>Tier 1 (Critical):</strong></p>
+                            <ul>
+                                <li>Process execution with command lines (Sysmon 1, Windows 4688)</li>
+                                <li>Authentication logs (Windows 4624/4625)</li>
+                                <li>Network connections (firewall, proxy, DNS)</li>
+                                <li>PowerShell logging (4103, 4104)</li>
+                            </ul>
+                            <p><strong>Tier 2 (High Value):</strong> File creation, registry changes, scheduled tasks, WMI</p>
+                            <p><strong>Tier 3 (Enrichment):</strong> DNS queries, DHCP, VPN, cloud audit logs</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.qa-question').forEach(b => b.classList.remove('active'));
+                if (!isOpen) { answer.style.display = 'block'; btn.classList.add('active'); }
+            });
+        });
+    </script>
+</body>
+</html>
