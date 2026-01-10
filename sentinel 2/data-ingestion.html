@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Ingestion Deep Dive | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">Data Ingestion Deep Dive</span>
+            </div>
+
+<h1><i class="fas fa-database" style="color: #0078d4;"></i> Sentinel Data Ingestion Deep Dive</h1>
+                <p class="lead">Complete technical guide to data ingestion: custom tables, DCRs, transformations, ASIM normalization, storage tiers, and cost optimization.</p>
+
+                <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong>⚠️ Critical Updates (January 2025)</strong>
+                    <ul style="margin: 0.5rem 0;">
+                        <li><strong>Azure AD → Microsoft Entra ID</strong> (renamed July 2023) - Tables retain "AAD" prefix</li>
+                        <li><strong>MMA Agent FULLY DEPRECATED</strong> (August 31, 2024) - Do NOT deploy new MMA agents. Use Azure Monitor Agent (AMA) only.</li>
+                        <li><strong>Pricing varies by region</strong> - Always verify current rates in Azure Calculator before estimating costs</li>
+                    </ul>
+                </div>
+
+                <div class="config-section"><div class="arch-diagram">
+DATA INGESTION PIPELINE - COMPLETE ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     DATA INGESTION FLOW                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+                          ┌─────────────────────┐
+                          │   LOG SOURCES       │
+                          │                     │
+                          │  • Windows Events   │
+                          │  • Linux Syslog     │
+                          │  • Network Devices  │
+                          │  • Cloud Services   │
+                          │  • Custom Apps      │
+                          │  • SaaS APIs        │
+                          └──────────┬──────────┘
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+              │                      │                      │
+              ▼                      ▼                      ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │  Azure Monitor  │   │  Log Forwarder  │   │  Logs Ingestion │
+     │  Agent (AMA)    │   │  (CEF/Syslog)   │   │  API (Custom)   │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   DATA COLLECTION RULE (DCR)    │
+                    │                                 │
+                    │  • Data Sources                 │
+                    │  • Transformations (KQL)        │
+                    │  • Destinations                 │
+                    │  • Filtering                    │
+                    └────────────────┬────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   INGESTION TRANSFORMATION      │
+                    │                                 │
+                    │  source                         │
+                    │  | where Severity != "Info"     │ ← Filter noise
+                    │  | extend Region = "US-East"    │ ← Add fields
+                    │  | project-away TempField       │ ← Remove fields
+                    │                                 │
+                    └────────────────┬────────────────┘
+                                     │
+                                     ▼
+              ┌──────────────────────┼──────────────────────┐
+              │                      │                      │
+              ▼                      ▼                      ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │  DEFAULT TABLE  │   │  CUSTOM TABLE   │   │  BASIC LOGS     │
+     │                 │   │                 │   │  TABLE          │
+     │  SecurityEvent  │   │  MyApp_CL       │   │  ContainerLogs  │
+     │  SigninLogs     │   │  CustomAPI_CL   │   │  (cost saving)  │
+     │  AzureActivity  │   │                 │   │                 │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────┐
+                    │   LOG ANALYTICS WORKSPACE       │
+                    │                                 │
+                    │  • Analytics Tier (hot)         │
+                    │  • Archive Tier (cold)          │
+                    │  • Retention policies           │
+                    └─────────────────────────────────┘
+                </div>
+
+                <!-- COMPREHENSIVE END-TO-END FLOWS SECTION -->
+                <h2 id="e2e-flows"><i class="fas fa-route"></i> End-to-End Flows (Interview-Ready)</h2>
+                
+                <p>This section provides <strong>complete, senior-level explanations</strong> of how data flows from source to Sentinel. Understanding these flows is critical for interviews and real-world troubleshooting.</p>
+
+                <div class="config-section"><div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 1: WINDOWS SERVERS TO SENTINEL
+                         (Azure Monitor Agent + DCR)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Windows Servers]                  [Azure Infrastructure]
+        │                                    │
+        ▼                                    │
+  ┌─────────────────┐                        │
+  │ Azure Monitor   │                        │
+  │ Agent (AMA)     │                        │
+  │                 │─────── HTTPS ──────────┼─────►┌──────────────────────┐
+  │ Collects:       │        443             │      │ Data Collection      │
+  │ • Windows Events│                        │      │ Endpoint (DCE)       │
+  │ • Performance   │                        │      └──────────┬───────────┘
+  │ • Custom logs   │                        │                 │
+  └─────────────────┘                        │                 ▼
+        │                                    │      ┌──────────────────────┐
+        │                                    │      │ Data Collection      │
+  Configured by:                             │      │ Rule (DCR)           │
+  Data Collection Rule (DCR)                 │      │                      │
+                                             │      │ • What to collect    │
+                                             │      │ • Transformations    │
+                                             │      │ • Destination table  │
+                                             │      └──────────┬───────────┘
+                                             │                 │
+                                             │                 ▼
+                                             │      ┌──────────────────────┐
+                                             │      │ Log Analytics        │
+                                             │      │ Workspace            │
+                                             │      │ (SecurityEvent,      │
+                                             │      │  Event, Syslog)      │
+                                             └──────┴──────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: UNDERSTAND THE KEY COMPONENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+AZURE MONITOR AGENT (AMA) - THE COLLECTOR:
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Agent installed on Windows/Linux VMs
+  • Collects logs and sends to Azure
+  • Replaced the deprecated MMA (Log Analytics Agent)
+
+WHY AMA (NOT MMA):
+  • MMA deprecated August 31, 2024 - DO NOT DEPLOY NEW MMA
+  • AMA supports Data Collection Rules (DCRs)
+  • AMA supports ingestion-time transformations
+  • Better security (managed identity, private endpoints)
+
+INSTALLATION OPTIONS:
+  • Azure VM Extension (recommended for Azure VMs)
+  • Arc-connected servers (for on-premises)
+  • Manual installer (for disconnected scenarios)
+
+DATA COLLECTION ENDPOINT (DCE):
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Regional endpoint that receives data from AMA
+  • Provides HTTPS endpoint for secure ingestion
+  • Required for custom logs and some scenarios
+
+WHEN YOU NEED DCE:
+  ✅ Custom table ingestion
+  ✅ Private link scenarios
+  ✅ Text log collection
+  ❌ NOT needed for standard Windows Events to built-in tables
+
+DATA COLLECTION RULE (DCR) - THE CONFIGURATION:
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Defines WHAT data to collect
+  • Defines WHICH VMs are in scope (via associations)
+  • Defines WHERE to send data (destination)
+  • Can include TRANSFORMATIONS (filter/enrich)
+
+KEY CONCEPT:
+  AMA does nothing without a DCR!
+  DCR tells AMA what to collect and where to send it.
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: INSTALL AZURE MONITOR AGENT
+═══════════════════════════════════════════════════════════════════════════════
+
+OPTION 1: Via Azure Portal (Manual - good for testing)
+─────────────────────────────────────────────────────────────────────────────
+1. VM → Settings → Extensions + applications
+2. Add → Azure Monitor Windows Agent
+3. Review + Create
+
+OPTION 2: Via Azure Policy (Recommended for production)
+─────────────────────────────────────────────────────────────────────────────
+Policy: "Configure Windows machines to run Azure Monitor Agent"
+
+Benefits:
+  • Automatically installs AMA on all matching VMs
+  • Ensures compliance
+  • New VMs get AMA automatically
+
+Assignment:
+  • Scope: Subscription or Resource Group
+  • Remediation: Create remediation task for existing VMs
+
+OPTION 3: Via Azure CLI
+─────────────────────────────────────────────────────────────────────────────
+# For Azure VM
+az vm extension set \
+  --name AzureMonitorWindowsAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --vm-name myVM \
+  --resource-group myRG
+
+# For Arc-connected server
+az connectedmachine extension create \
+  --machine-name myServer \
+  --resource-group myRG \
+  --name AzureMonitorWindowsAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --type AzureMonitorWindowsAgent
+
+VERIFICATION:
+─────────────────────────────────────────────────────────────────────────────
+# In Azure Portal:
+VM → Extensions → AzureMonitorWindowsAgent → Status: Provisioning succeeded
+
+# In Sentinel/Log Analytics:
+Heartbeat
+| where TimeGenerated > ago(15m)
+| where Category == "Azure Monitor Agent"
+| project Computer, TimeGenerated, Version
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: CREATE DATA COLLECTION RULE
+═══════════════════════════════════════════════════════════════════════════════
+
+VIA AZURE PORTAL:
+─────────────────────────────────────────────────────────────────────────────
+1. Monitor → Data Collection Rules → Create
+
+2. Basics:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Rule Name: DCR-Windows-Security                                     │
+   │ Subscription: [your subscription]                                   │
+   │ Resource Group: [your RG]                                           │
+   │ Region: [must match workspace region]                               │
+   │ Platform Type: Windows                                              │
+   └─────────────────────────────────────────────────────────────────────┘
+
+3. Resources (Associate VMs):
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Select VMs that should use this DCR:                                │
+   │ ☑ server-dc-01                                                     │
+   │ ☑ server-web-01                                                    │
+   │ ☑ server-sql-01                                                    │
+   │                                                                     │
+   │ Enable Data Collection Endpoint: ☐ (not needed for basic events)   │
+   └─────────────────────────────────────────────────────────────────────┘
+
+4. Collect and Deliver:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Data Source: Windows Event Logs                                     │
+   │                                                                     │
+   │ Log Types:                                                          │
+   │   ☑ Security - Critical, Error, Warning, Information               │
+   │   ☑ Application - Error, Warning                                   │
+   │   ☑ System - Critical, Error, Warning                              │
+   │                                                                     │
+   │ (For Security Events, you can also use XPath for granular control) │
+   │                                                                     │
+   │ Destination:                                                        │
+   │   Log Analytics workspace → [your Sentinel workspace]               │
+   └─────────────────────────────────────────────────────────────────────┘
+
+VIA ARM TEMPLATE (Infrastructure as Code):
+─────────────────────────────────────────────────────────────────────────────
+{
+  "type": "Microsoft.Insights/dataCollectionRules",
+  "apiVersion": "2022-06-01",
+  "name": "DCR-Windows-Security",
+  "location": "eastus",
+  "properties": {
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "streams": ["Microsoft-SecurityEvent"],
+          "xPathQueries": [
+            "Security!*[System[(EventID=4624 or EventID=4625 or 
+             EventID=4648 or EventID=4672 or EventID=4688)]]"
+          ],
+          "name": "SecurityEvents"
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/.../workspaces/sentinel",
+          "name": "sentinel-workspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-SecurityEvent"],
+        "destinations": ["sentinel-workspace"]
+      }
+    ]
+  }
+}
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: VERIFY DATA FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+CHECK DATA ARRIVING:
+─────────────────────────────────────────────────────────────────────────────
+// Check SecurityEvent table
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| summarize count() by Computer
+| order by count_ desc
+
+// Check specific security events
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID in (4624, 4625)  // Logon success/failure
+| project TimeGenerated, Computer, EventID, Account, LogonType, IpAddress
+| take 50
+
+CHECK AGENT HEALTH:
+─────────────────────────────────────────────────────────────────────────────
+// Heartbeat confirms agent is reporting
+Heartbeat
+| where TimeGenerated > ago(24h)
+| where Category == "Azure Monitor Agent"
+| summarize LastHeartbeat = max(TimeGenerated) by Computer
+| extend Status = iff(LastHeartbeat > ago(15m), "✅ Healthy", "❌ Not Reporting")
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS IS "EASIER" THAN SPLUNK (BUT DIFFERENT)
+═══════════════════════════════════════════════════════════════════════════════
+
+SENTINEL ADVANTAGES:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  1. NO FORWARDER INFRASTRUCTURE TO MANAGE                              │
+│     • AMA is a simple agent, not a full Splunk instance                │
+│     • No Heavy Forwarders to provision                                 │
+│     • Azure manages the ingestion infrastructure                       │
+│                                                                         │
+│  2. NATIVE CLOUD INTEGRATION                                           │
+│     • Microsoft services (Entra ID, M365) connect with ONE CLICK       │
+│     • No custom connectors needed for Azure services                   │
+│     • Diagnostic settings enable logging instantly                     │
+│                                                                         │
+│  3. PAY-PER-USE PRICING                                                │
+│     • No upfront infrastructure cost                                   │
+│     • Scale automatically                                              │
+│     • Cost tied directly to data volume                                │
+│                                                                         │
+│  This is why Sentinel is "cloud-native" and "infrastructure-light"    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS (SENIOR-LEVEL INTERVIEW POINTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: MMA IS DEPRECATED - DO NOT USE
+─────────────────────────────────────────────────────────────────────────────
+Common mistake: Using old documentation that references MMA
+
+REALITY:
+  • MMA (Log Analytics Agent / OMS Agent) deprecated August 31, 2024
+  • Microsoft will not provide support for new MMA deployments
+  • Existing MMA should be migrated to AMA
+  • Some features (legacy solutions) still require MMA temporarily
+
+INTERVIEW ANSWER:
+  "MMA was deprecated in August 2024. All new deployments should use AMA.
+   AMA provides better security with managed identities and supports DCRs
+   for transformation at ingestion time. If I encounter MMA in an 
+   environment, I'd plan a migration to AMA."
+
+CAVEAT 2: DCR IS MANDATORY FOR AMA
+─────────────────────────────────────────────────────────────────────────────
+Common mistake: Installing AMA without creating DCR
+
+REALITY:
+  • AMA installed but no data flowing → Check DCR association
+  • Each VM must be associated with at least one DCR
+  • DCR defines what to collect - without it, AMA collects nothing
+
+TROUBLESHOOTING:
+  // Check if VM has DCR association
+  resources
+  | where type == "microsoft.insights/datacollectionruleassociations"
+  | project VMName = split(id, "/")[8], DCRName = properties.dataCollectionRuleId
+
+CAVEAT 3: REGION MATTERS
+─────────────────────────────────────────────────────────────────────────────
+DCR and Workspace must be in same region (for most scenarios)
+
+REALITY:
+  • DCR → Must be in workspace region
+  • DCE → Must be in same region as VMs (for custom logs)
+  • Cross-region can work but adds latency and complexity
+
+BEST PRACTICE:
+  Deploy DCR and workspace in same Azure region
+
+CAVEAT 4: COST CAN SURPRISE YOU
+─────────────────────────────────────────────────────────────────────────────
+Windows Security Event Log can be MASSIVE if you collect everything
+
+REALITY:
+  • Collecting "All Events" from Security log = 10+ GB/day per DC
+  • Event ID 4688 (Process Creation) is extremely high volume
+  • Commitment Tiers provide discounts at scale
+
+RECOMMENDATION:
+  • Use XPath filters to collect only needed EventIDs
+  • Consider Basic Logs for high-volume, low-value data
+  • Use ingestion-time transformation to filter noise
+
+INTERVIEW ANSWER:
+  "Cost optimization is critical with Sentinel. I use XPath filters
+   in DCRs to collect only specific EventIDs like 4624, 4625, 4648.
+   For high-volume logs, I evaluate Basic Logs tier which costs
+   76% less. I also use ingestion-time transformations to filter
+   noise before it's indexed."
+                </div>
+
+                <div class="config-section"><div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 2: NETWORK DEVICES (SYSLOG/CEF)
+                         Firewalls → Log Forwarder → Sentinel
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Network Devices]                      [Azure]
+  ┌─────────────────┐                    
+  │  Palo Alto FW   │                    ┌─────────────────────┐
+  │  Cisco ASA      │── Syslog/CEF ─────►│  Linux VM with AMA  │
+  │  Fortinet       │   TCP/UDP 514      │  (Log Forwarder)    │
+  │  Check Point    │                    │                     │
+  └─────────────────┘                    │  rsyslog receives   │
+                                         │  logs, AMA forwards │
+                                         └─────────┬───────────┘
+                                                   │ HTTPS 443
+                                                   ▼
+                                         ┌─────────────────────┐
+                                         │  Log Analytics      │
+                                         │  Workspace          │
+                                         │  (CommonSecurityLog │
+                                         │   or Syslog)        │
+                                         └─────────────────────┘
+
+WHY A LINUX VM FORWARDER?
+─────────────────────────────────────────────────────────────────────────────
+• Network devices can't run Azure Monitor Agent
+• They only know how to send syslog
+• Linux VM receives syslog → AMA forwards to Azure
+• This is similar to Splunk Heavy Forwarder concept
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP-BY-STEP: PALO ALTO CEF → SENTINEL
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: DEPLOY LINUX VM AS LOG FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+Requirements:
+  • Ubuntu 20.04+ or RHEL 8+
+  • Network access FROM firewalls (TCP/UDP 514)
+  • Outbound HTTPS to Azure
+
+Sizing:
+  • 4 CPU, 16GB RAM for ~10,000 EPS
+  • Scale up for higher volumes
+  • Consider load balancing for HA
+
+STEP 2: INSTALL AMA ON LINUX FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+# For Azure VM
+az vm extension set \
+  --name AzureMonitorLinuxAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --vm-name log-forwarder-01 \
+  --resource-group myRG
+
+# Verify installation
+systemctl status azuremonitoragent
+
+STEP 3: DEPLOY CEF/SYSLOG SOLUTION FROM CONTENT HUB
+─────────────────────────────────────────────────────────────────────────────
+In Sentinel:
+1. Content Hub → Search "Common Event Format"
+2. Install "Common Event Format (CEF) via AMA"
+3. This creates the DCR template for CEF logs
+
+The solution includes:
+  • Data connector configuration
+  • DCR for CEF collection
+  • rsyslog configuration script
+
+STEP 4: CONFIGURE RSYSLOG TO RECEIVE SYSLOG
+─────────────────────────────────────────────────────────────────────────────
+# On the Linux forwarder VM, configure rsyslog
+
+# Edit /etc/rsyslog.conf to enable TCP/UDP listener
+cat >> /etc/rsyslog.conf << 'EOF'
+# Receive syslog on TCP 514
+module(load="imtcp")
+input(type="imtcp" port="514")
+
+# Receive syslog on UDP 514
+module(load="imudp")
+input(type="imudp" port="514")
+EOF
+
+# Restart rsyslog
+systemctl restart rsyslog
+
+STEP 5: CREATE DCR FOR CEF COLLECTION
+─────────────────────────────────────────────────────────────────────────────
+Via Azure Portal:
+1. Monitor → Data Collection Rules → Create
+2. Data Source: Syslog
+3. Facilities: local0-local7 (CEF typically uses local4)
+4. Minimum log level: Debug (to capture all)
+5. Destination: Log Analytics workspace
+6. Associate with Linux forwarder VM
+
+STEP 6: CONFIGURE PALO ALTO TO SEND LOGS
+─────────────────────────────────────────────────────────────────────────────
+In Palo Alto GUI:
+  Device → Server Profiles → Syslog
+  
+  Name: Sentinel_Forwarder
+  Server: [Linux forwarder IP]
+  Transport: TCP
+  Port: 514
+  Format: CEF (if available) or BSD
+  
+Create Log Forwarding Profile and apply to Security Rules
+
+STEP 7: VERIFY DATA IN SENTINEL
+─────────────────────────────────────────────────────────────────────────────
+// Check CommonSecurityLog table (CEF)
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| summarize count() by DeviceVendor, DeviceProduct
+| order by count_ desc
+
+// Check for Palo Alto specifically
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| project TimeGenerated, Activity, SourceIP, DestinationIP, 
+          DestinationPort, DeviceAction
+| take 50
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR SYSLOG/CEF INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: CEF VS PLAIN SYSLOG
+─────────────────────────────────────────────────────────────────────────────
+CEF (Common Event Format):
+  • Structured format with defined fields
+  • Goes to CommonSecurityLog table
+  • Fields automatically parsed (SourceIP, DestinationIP, etc.)
+  • PREFERRED for security devices
+
+Plain Syslog:
+  • Unstructured text
+  • Goes to Syslog table
+  • May need custom parsing
+  • Used when CEF not supported
+
+INTERVIEW POINT:
+  "CEF provides structured logging with predefined fields that map
+   to CommonSecurityLog. If a device only supports plain syslog,
+   I'd evaluate using ingestion-time transformations to parse
+   key fields, or accept that I'll need regex at query time."
+
+CAVEAT 2: SINGLE FORWARDER = SINGLE POINT OF FAILURE
+─────────────────────────────────────────────────────────────────────────────
+For production:
+  • Deploy multiple Linux forwarders
+  • Use Azure Load Balancer in front
+  • Configure firewalls to send to load balancer VIP
+  • Consider VM Scale Set for auto-scaling
+
+CAVEAT 3: SYSLOG CAN BE LOSSY
+─────────────────────────────────────────────────────────────────────────────
+UDP syslog drops packets under load
+
+RECOMMENDATION:
+  • Use TCP syslog (port 514) for security logs
+  • Monitor rsyslog queue metrics
+  • Size forwarder VM appropriately
+                </div>
+
+                <div class="config-section"><div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 3: MICROSOFT SERVICES (NATIVE CONNECTORS)
+                         Entra ID, M365, Defender → Sentinel
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE - THE "EASY" FLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Microsoft Services]                 [Sentinel]
+  ┌─────────────────┐                 ┌─────────────────────┐
+  │ Entra ID        │──── Native ────►│ SigninLogs          │
+  │ Microsoft 365   │    Connector    │ AuditLogs           │
+  │ Defender XDR    │   (API-based)   │ OfficeActivity      │
+  │ Azure Activity  │                 │ SecurityAlert       │
+  └─────────────────┘                 └─────────────────────┘
+
+  NO AGENTS. NO FORWARDERS. ONE-CLICK ENABLE.
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS IS SO EASY
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT HAPPENS BEHIND THE SCENES:
+─────────────────────────────────────────────────────────────────────────────
+1. You click "Enable" on the connector in Sentinel
+2. Azure creates a service-to-service API connection
+3. Microsoft backend pushes logs to your workspace
+4. Data appears in pre-defined tables with pre-defined schema
+5. Built-in analytics rules work immediately
+
+NO INFRASTRUCTURE REQUIRED:
+  ❌ No agents to install
+  ❌ No forwarders to manage
+  ❌ No parsing to configure
+  ❌ No custom tables to create
+
+THIS IS THE "CLOUD-NATIVE" ADVANTAGE OF SENTINEL
+
+STEP-BY-STEP: ENABLE ENTRA ID (AZURE AD) CONNECTOR
+─────────────────────────────────────────────────────────────────────────────
+1. Sentinel → Content Hub → Search "Microsoft Entra ID"
+2. Install the solution
+3. Data Connectors → Microsoft Entra ID → Open connector page
+4. Select log types to enable:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ☑ Sign-in logs (requires Entra P1/P2)                              │
+   │ ☑ Audit logs (free with any Entra license)                         │
+   │ ☑ Non-interactive sign-in logs                                      │
+   │ ☑ Service principal sign-in logs                                    │
+   │ ☑ Provisioning logs                                                 │
+   │ ☐ Risky users (requires Entra P2)                                   │
+   │ ☐ User risk events (requires Entra P2)                              │
+   └─────────────────────────────────────────────────────────────────────┘
+5. Click "Connect" for each log type
+
+STEP-BY-STEP: ENABLE DEFENDER XDR CONNECTOR
+─────────────────────────────────────────────────────────────────────────────
+1. Sentinel → Content Hub → Search "Microsoft Defender XDR"
+2. Install the solution  
+3. Data Connectors → Microsoft Defender XDR → Open connector page
+4. Connect incidents and alerts
+5. Select raw data tables:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ☑ DeviceProcessEvents                                               │
+   │ ☑ DeviceNetworkEvents                                               │
+   │ ☑ DeviceFileEvents                                                  │
+   │ ☑ DeviceLogonEvents                                                 │
+   │ ☑ EmailEvents                                                       │
+   │ ☑ EmailAttachmentInfo                                               │
+   │ ☑ IdentityLogonEvents                                               │
+   │ ☑ CloudAppEvents                                                    │
+   └─────────────────────────────────────────────────────────────────────┘
+
+VERIFY DATA FLOW:
+─────────────────────────────────────────────────────────────────────────────
+// Check Entra ID sign-ins
+SigninLogs
+| where TimeGenerated > ago(1h)
+| summarize count() by ResultType
+| order by count_ desc
+
+// Check Defender XDR data
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| summarize count() by DeviceName
+| order by count_ desc
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR NATIVE CONNECTORS
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: LICENSE REQUIREMENTS
+─────────────────────────────────────────────────────────────────────────────
+Not all logs are free with basic licenses:
+
+  ┌────────────────────────┬───────────────────────────────────────────────┐
+  │ Log Type               │ License Required                              │
+  ├────────────────────────┼───────────────────────────────────────────────┤
+  │ Audit Logs             │ Any Entra license (free)                     │
+  │ Sign-in Logs           │ Entra P1 or P2                               │
+  │ Risky Users/Events     │ Entra P2 only                                │
+  │ Risky Service Principals│ Workload Identity Premium                   │
+  ├────────────────────────┼───────────────────────────────────────────────┤
+  │ Defender XDR Data      │ Requires Defender licensing                  │
+  │ M365 Office Activity   │ Requires M365 licensing                      │
+  └────────────────────────┴───────────────────────────────────────────────┘
+
+CAVEAT 2: PERMISSIONS REQUIRED
+─────────────────────────────────────────────────────────────────────────────
+To enable connectors, you need:
+  • Security Administrator (or higher) in Entra ID
+  • Sentinel Contributor on the workspace
+  • Sometimes Global Administrator for initial consent
+
+INTERVIEW POINT:
+  "Enabling native connectors requires appropriate permissions in both
+   Entra ID and the Sentinel workspace. For Entra ID connector, I need
+   Security Administrator to enable diagnostic settings."
+
+CAVEAT 3: DATA LATENCY EXISTS
+─────────────────────────────────────────────────────────────────────────────
+Even native connectors have some latency:
+  • SigninLogs: ~5-10 minutes typical
+  • AuditLogs: ~15-30 minutes for some operations
+  • Defender: Near real-time for alerts, minutes for raw events
+
+DON'T PANIC if data isn't instant - check after 15-30 minutes
+
+CAVEAT 4: SOME TABLES ARE HIGH VOLUME
+─────────────────────────────────────────────────────────────────────────────
+Watch out for these high-volume tables:
+  • AADNonInteractiveUserSignInLogs - Very high (background auth)
+  • DeviceProcessEvents - Very high (all process creation)
+  • DeviceNetworkEvents - Very high (all network connections)
+
+COST CONSIDERATION:
+  Consider if you need ALL data from these tables
+  Some can be filtered using ingestion-time transformation
+  Or use Basic Logs tier for cost savings
+                </div>
+
+                <div class="config-section"><div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 4: CUSTOM/API-BASED SOURCES
+                         When There's No Native Connector
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO:
+─────────────────────────────────────────────────────────────────────────────
+You need to ingest logs from:
+  • Third-party SaaS (Okta, Salesforce, etc.)
+  • Custom applications
+  • On-premises systems without agent support
+  • Cloud providers (AWS, GCP)
+
+NO NATIVE CONNECTOR EXISTS. You have options:
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 1: LOGS INGESTION API + AZURE FUNCTION
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+─────────────────────────────────────────────────────────────────────────────
+
+  [External API]                    [Azure]
+       │                               
+       │ Polls API                  ┌─────────────────────┐
+       ▼                            │ Azure Function      │
+  ┌─────────────┐                   │ (Timer Triggered)   │
+  │ Third-party │◄─────────────────│                     │
+  │ SaaS API    │   Request logs    │ Python/PowerShell   │
+  └─────────────┘                   │ code polls API      │
+       │                            └─────────┬───────────┘
+       │ Returns JSON                         │
+       │                                      ▼
+       │                            ┌─────────────────────┐
+       └───────────────────────────►│ Logs Ingestion API  │
+                                    │ (DCE endpoint)      │
+                                    └─────────┬───────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │ Custom Table        │
+                                    │ (MyLogs_CL)         │
+                                    └─────────────────────┘
+
+STEPS TO IMPLEMENT:
+─────────────────────────────────────────────────────────────────────────────
+1. CREATE CUSTOM TABLE
+   // Define schema for your logs
+   
+2. CREATE DATA COLLECTION ENDPOINT (DCE)
+   // Regional endpoint for API ingestion
+   
+3. CREATE DATA COLLECTION RULE (DCR)
+   // Maps incoming data to table columns
+   
+4. CREATE AZURE FUNCTION
+   // Timer trigger (e.g., every 5 minutes)
+   // Call third-party API
+   // POST data to Logs Ingestion API
+   
+5. CONFIGURE AUTHENTICATION
+   // Azure Function uses Managed Identity
+   // Grant "Monitoring Metrics Publisher" role
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 2: LOGIC APPS (NO CODE)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐
+  │ Logic App           │
+  │ (Recurrence Trigger)│
+  │                     │
+  │ 1. HTTP action      │───────► [Third-party API]
+  │    (Get logs)       │
+  │                     │
+  │ 2. Parse JSON       │
+  │                     │
+  │ 3. Send to Log      │───────► [Log Analytics Workspace]
+  │    Analytics        │          Custom Table
+  │    (Data Collector) │
+  └─────────────────────┘
+
+WHEN TO USE LOGIC APPS:
+  ✅ Simple integrations
+  ✅ Low volume (&lt;10,000 events/hour)
+  ✅ No custom code required
+  ✅ Built-in connectors exist for source
+
+WHEN TO USE AZURE FUNCTION:
+  ✅ Complex transformations needed
+  ✅ High volume
+  ✅ Need full programming control
+  ✅ Cheaper at scale
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 3: CONTENT HUB SOLUTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Before building custom, check Content Hub!
+Many vendors provide ready-made solutions:
+
+  Content Hub → Search for vendor name
+
+EXAMPLES:
+  • Okta Single Sign-On (includes Function template)
+  • AWS CloudTrail
+  • Google Cloud Platform
+  • Salesforce
+  • Zoom
+  • Many more...
+
+THESE INCLUDE:
+  • Pre-built data connector (Function or Logic App)
+  • Custom table schemas
+  • Workbooks
+  • Analytics rules
+  • Hunting queries
+
+SAVES SIGNIFICANT TIME vs building from scratch
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW SUMMARY: WHEN TO USE WHAT
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌────────────────────────────────┬────────────────────────────────────────┐
+  │ Scenario                       │ Best Approach                          │
+  ├────────────────────────────────┼────────────────────────────────────────┤
+  │ Microsoft service              │ Native connector (one-click)           │
+  │                                │                                        │
+  │ Windows/Linux servers          │ Azure Monitor Agent + DCR              │
+  │                                │                                        │
+  │ Network devices (syslog)       │ Linux forwarder + AMA                  │
+  │                                │                                        │
+  │ Third-party SaaS               │ Check Content Hub first, then custom   │
+  │                                │                                        │
+  │ Custom application             │ Logs Ingestion API + Function          │
+  │                                │                                        │
+  │ AWS/GCP                        │ Content Hub solutions available        │
+  └────────────────────────────────┴────────────────────────────────────────┘
+
+SENIOR-LEVEL INTERVIEW ANSWER:
+  "For data ingestion in Sentinel, I first check if there's a native
+   connector - Microsoft services have one-click enablement. For 
+   Windows/Linux, I use AMA with DCRs. For network devices, I deploy
+   a Linux syslog forwarder with AMA. For third-party sources, I check
+   Content Hub for existing solutions before building custom integrations
+   using the Logs Ingestion API and Azure Functions."
+                </div>
+
+                <!-- COMPREHENSIVE STORAGE TIERS SECTION -->
+                <h2 id="storage-tiers"><i class="fas fa-layer-group"></i> Storage Tiers & Data Lifecycle (Interview-Ready)</h2>
+
+                <div class="config-section"><div class="arch-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+     SENTINEL / LOG ANALYTICS STORAGE TIERS (CRITICAL FOR INTERVIEWS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+UNDERSTANDING LOG ANALYTICS STORAGE TIERS:
+─────────────────────────────────────────────────────────────────────────────
+Microsoft Sentinel uses Log Analytics which has DIFFERENT log tiers with
+vastly different costs and query capabilities. Understanding this is
+CRITICAL for cost management and architecture decisions.
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     LOG TIERS COMPARISON                                 │
+  │                                                                          │
+  │   ANALYTICS LOGS ──► BASIC LOGS ──► AUXILIARY LOGS ──► ARCHIVE         │
+  │      (Full)          (Limited)       (Minimal)         (Offline)        │
+  │        │                │                │                │              │
+  │        ▼                ▼                ▼                ▼              │
+  │    $$$$$$$            $$                $               $               │
+  │    Full Query      Limited Query    Very Limited    Query = $$         │
+  │    30 day min      8 day min        30 day min      Restore needed     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY DO STORAGE TIERS COST DIFFERENTLY? (THE TECHNICAL TRUTH)
+═══════════════════════════════════════════════════════════════════════════════
+
+Understanding WHY costs differ helps you make better architecture decisions
+and answer interview questions with depth.
+
+WHAT MAKES "HOT" STORAGE EXPENSIVE?
+─────────────────────────────────────────────────────────────────────────────
+
+When data is ingested into Analytics Logs (hot), Microsoft does A LOT:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     ANALYTICS LOG INGESTION                              │
+  │                                                                          │
+  │   RAW LOG ──────────────────────────────────────────────────────────►   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 1. PARSING & SCHEMA VALIDATION                                  │   │
+  │   │    • Parse JSON/CEF/Syslog                                      │   │
+  │   │    • Validate against table schema                              │   │
+  │   │    • Extract and type all fields                                │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 2. FULL-TEXT INDEXING (THIS IS EXPENSIVE!)                      │   │
+  │   │    • Every field is indexed for fast search                     │   │
+  │   │    • Inverted indexes built (like a book index)                 │   │
+  │   │    • Enables: where FieldName contains "value"                  │   │
+  │   │    • Enables: search "keyword" across all fields                │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 3. COLUMNAR STORAGE OPTIMIZATION                                │   │
+  │   │    • Data stored in columns (not rows)                          │   │
+  │   │    • Enables fast aggregations (sum, count, avg)                │   │
+  │   │    • Compressed for each data type                              │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 4. HOT STORAGE (SSD / HIGH-IOPS)                                │   │
+  │   │    • Stored on fast SSD storage                                 │   │
+  │   │    • Multiple replicas for availability                         │   │
+  │   │    • Ready for instant queries                                  │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   RESULT: Fast, full-featured queries but EXPENSIVE                     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+COST BREAKDOWN (What you're paying for):
+  • Compute: Parsing, indexing, compression
+  • Storage: Fast SSD with replicas
+  • Query compute: Reserved capacity for instant queries
+  • Index storage: Inverted indexes can be 30-50% of raw data size!
+
+WHAT MAKES "BASIC LOGS" CHEAPER?
+─────────────────────────────────────────────────────────────────────────────
+
+Basic Logs skip the expensive parts:
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     BASIC LOG INGESTION                              │
+  │                                                                      │
+  │   RAW LOG ──────────────────────────────────────────────────────►   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 1. BASIC PARSING (same as Analytics)                        │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 2. ❌ NO FULL-TEXT INDEXING                                 │   │
+  │   │    • No inverted indexes built                              │   │
+  │   │    • Cannot use: contains, has, search                      │   │
+  │   │    • Only exact matches on indexed columns (TimeGenerated)  │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 3. CHEAPER STORAGE                                          │   │
+  │   │    • Less redundancy                                        │   │
+  │   │    • Optimized for write, not read                          │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   RESULT: 76% cheaper but LIMITED query capability                  │
+  │                                                                      │
+  │   WHY LIMITED?                                                       │
+  │   • No index = must SCAN entire table (slow, pay per GB scanned)   │
+  │   • Can't do joins (would require scanning multiple tables)        │
+  │   • Can't run Sentinel rules (rules need fast indexed queries)     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+WHAT MAKES "ARCHIVE" THE CHEAPEST?
+─────────────────────────────────────────────────────────────────────────────
+
+Archive is essentially cold blob storage:
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     ARCHIVE STORAGE                                  │
+  │                                                                      │
+  │   After Interactive Retention Period:                                │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ DATA MOVED TO COLD BLOB STORAGE                             │   │
+  │   │                                                             │   │
+  │   │ • ❌ Indexes REMOVED (saves storage)                        │   │
+  │   │ • ❌ NOT in query engine memory                             │   │
+  │   │ • ✅ Compressed and stored cheaply                          │   │
+  │   │ • ✅ Azure Blob Cool/Archive tier (~$0.01/GB/month)         │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   TO QUERY: Must RESTORE or use SEARCH JOB                          │
+  │                                                                      │
+  │   Think of it like:                                                  │
+  │   • Analytics = Books on your desk (instant access)                 │
+  │   • Basic = Books on your shelf (need to get up)                    │
+  │   • Archive = Books in warehouse (need to request delivery)         │
+  └─────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+HOW TO QUERY ARCHIVED DATA (CRITICAL FOR FORENSICS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+You CANNOT directly query archived data. You have TWO options:
+
+OPTION 1: SEARCH JOBS (Async Query - Recommended)
+─────────────────────────────────────────────────────────────────────────────
+
+Search Jobs let you query archived data WITHOUT restoring it first.
+Results are saved to a new table you can then query.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     SEARCH JOB FLOW                                  │
+  │                                                                      │
+  │   YOU ──► Create Search Job ──► Job runs async (minutes to hours)   │
+  │                                        │                             │
+  │                                        ▼                             │
+  │                              Scans archived data                     │
+  │                                        │                             │
+  │                                        ▼                             │
+  │                              Results saved to:                       │
+  │                              SearchJobName_SRCH table                │
+  │                                        │                             │
+  │                                        ▼                             │
+  │   YOU ◄── Query results table ◄── Results available for 7 days      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+HOW TO CREATE A SEARCH JOB:
+─────────────────────────────────────────────────────────────────────────────
+
+Azure Portal Method:
+  1. Log Analytics workspace → Logs
+  2. Write your KQL query
+  3. Set time range to include archived period
+  4. Click "Search job" button (not "Run")
+  5. Name your job (e.g., "Incident2024_Investigation")
+  6. Wait for completion (check Jobs tab)
+  7. Query results: SearchJobName_SRCH
+
+KQL Method (API):
+  // Create search job via API
+  POST https://api.loganalytics.io/v1/workspaces/{workspace}/search
+  
+  {
+    "query": "SecurityEvent | where EventID == 4625",
+    "timespan": "P90D",  // 90 days back (into archive)
+    "searchJobName": "FailedLogons_Investigation"
+  }
+
+QUERY THE RESULTS:
+  // After job completes, query the results table
+  FailedLogons_Investigation_SRCH
+  | where TimeGenerated > ago(90d)
+  | summarize count() by TargetUserName
+
+SEARCH JOB COSTS:
+  • $0.007 per GB scanned in archive
+  • Results table counts against retention costs
+  • Much cheaper than restoring!
+
+OPTION 2: RESTORE (Bring Back to Hot - Expensive)
+─────────────────────────────────────────────────────────────────────────────
+
+Restore physically moves data back to hot storage for a period.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     RESTORE FLOW                                     │
+  │                                                                      │
+  │   Archived Data ──► Restore Request ──► Data copied to hot storage  │
+  │                                                │                     │
+  │                                                ▼                     │
+  │                                    Available for direct query        │
+  │                                    (acts like Analytics tier)        │
+  │                                                │                     │
+  │                                                ▼                     │
+  │                                    After restore period expires:     │
+  │                                    Data returns to archive           │
+  └─────────────────────────────────────────────────────────────────────┘
+
+HOW TO RESTORE:
+  1. Log Analytics workspace → Tables
+  2. Find table with archived data
+  3. Click "..." → "Restore"
+  4. Select time range to restore
+  5. Set restore duration (how long to keep in hot)
+  6. Wait for restore (can take hours for large datasets)
+
+RESTORE COSTS:
+  • $0.12 per GB restored
+  • Plus Analytics tier costs while restored
+  • Use only when you need FULL query capability
+  • Prefer Search Jobs for most investigations!
+
+WHEN TO USE WHICH:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┬─────────────────────────────────────────────┐
+│ Scenario                    │ Use                                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Need specific events from   │ SEARCH JOB - cheaper, sufficient           │
+│ 6 months ago                │                                             │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Full forensic investigation │ RESTORE - need joins, aggregations,        │
+│ with complex queries        │ full KQL capability                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Legal discovery request     │ SEARCH JOB first, RESTORE if needed        │
+│ (need to export data)       │                                             │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Quick check if data exists  │ SEARCH JOB - fast, cheap                   │
+└─────────────────────────────┴─────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+AZURE EVENT HUB INTEGRATION (HIGH-VOLUME STREAMING)
+═══════════════════════════════════════════════════════════════════════════════
+
+Event Hub is Azure's high-throughput streaming platform. Use it when you
+need to ingest MASSIVE volumes or need real-time streaming.
+
+WHEN TO USE EVENT HUB VS DIRECT INGESTION:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┬─────────────────────────────────────────────┐
+│ Direct Ingestion (AMA, API) │ Event Hub Streaming                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ < 1 GB/hour                 │ > 1 GB/hour or millions of events          │
+│ Standard sources            │ Custom high-volume sources                  │
+│ Simple setup                │ Need buffering/replay capability           │
+│ Built-in connectors exist   │ Multiple consumers need same data          │
+│                             │ Real-time processing before SIEM           │
+└─────────────────────────────┴─────────────────────────────────────────────┘
+
+EVENT HUB ARCHITECTURE FOR SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     HIGH-VOLUME DATA SOURCES                            │
+  │                                                                         │
+  │   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐  │
+  │   │ Defender XDR │ │ Firewall     │ │ Custom App   │ │ IoT Devices  │  │
+  │   │ Raw Tables   │ │ Traffic Logs │ │ Telemetry    │ │ Millions/sec │  │
+  │   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘  │
+  │          │                │                │                │          │
+  │          └────────────────┴────────────────┴────────────────┘          │
+  │                                    │                                    │
+  │                                    ▼                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         AZURE EVENT HUB                                 │
+  │                                                                         │
+  │   ┌─────────────────────────────────────────────────────────────────┐  │
+  │   │ EVENT HUB NAMESPACE                                             │  │
+  │   │                                                                 │  │
+  │   │   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │  │
+  │   │   │ Partition 0 │ │ Partition 1 │ │ Partition 2 │  ...         │  │
+  │   │   │             │ │             │ │             │              │  │
+  │   │   │ [events]    │ │ [events]    │ │ [events]    │              │  │
+  │   │   └─────────────┘ └─────────────┘ └─────────────┘              │  │
+  │   │                                                                 │  │
+  │   │   CAPABILITIES:                                                 │  │
+  │   │   • Millions of events/second                                   │  │
+  │   │   • 24-hour to 7-day retention (buffer)                        │  │
+  │   │   • Multiple consumers can read same data                       │  │
+  │   │   • Replay capability if consumer fails                         │  │
+  │   └─────────────────────────────────────────────────────────────────┘  │
+  │                                    │                                    │
+  │          ┌─────────────────────────┼─────────────────────────┐         │
+  │          │                         │                         │         │
+  │          ▼                         ▼                         ▼         │
+  │   ┌─────────────┐          ┌─────────────┐          ┌─────────────┐   │
+  │   │ Consumer 1  │          │ Consumer 2  │          │ Consumer 3  │   │
+  │   │ Sentinel    │          │ Splunk      │          │ Real-time   │   │
+  │   │ Ingestion   │          │ HEC         │          │ Alerting    │   │
+  │   └─────────────┘          └─────────────┘          └─────────────┘   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+HOW TO SET UP EVENT HUB → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+STEP 1: CREATE EVENT HUB NAMESPACE
+  Azure Portal → Event Hubs → Create
+  
+  Settings:
+  • Pricing tier: Standard or Premium (based on volume)
+  • Throughput units: Start with 1, auto-inflate enabled
+  • Partitions: 4-32 based on expected throughput
+
+STEP 2: CREATE EVENT HUB (TOPIC)
+  Within namespace → + Event Hub
+  
+  Name: security-logs (or per-source: firewall-logs, defender-raw, etc.)
+  Partitions: 4+ for high volume
+  Retention: 1-7 days
+
+STEP 3: GET CONNECTION STRING
+  Event Hub → Shared access policies → Add policy
+  • Name: sentinel-consumer
+  • Claims: Listen (read-only for Sentinel)
+  Copy connection string
+
+STEP 4: CONFIGURE SENTINEL DATA CONNECTOR
+  Sentinel → Data connectors → Search "Event Hub"
+  
+  For custom logs: Use "Azure Event Hub" connector
+  
+  Configuration:
+  • Event Hub connection string
+  • Consumer group: $Default or create dedicated
+  • Target table: Custom table (MyLogs_CL) or existing
+
+STEP 5: SEND DATA TO EVENT HUB
+  From your source, send JSON events:
+  
+  // Example: Send via SDK (Python)
+  from azure.eventhub import EventHubProducerClient, EventData
+  
+  producer = EventHubProducerClient.from_connection_string(
+      conn_str="Endpoint=sb://...",
+      eventhub_name="security-logs"
+  )
+  
+  event_data = EventData(json.dumps({
+      "TimeGenerated": "2024-01-15T10:30:00Z",
+      "SourceIP": "192.168.1.100",
+      "Action": "blocked",
+      "Message": "Firewall deny"
+  }))
+  
+  producer.send_batch([event_data])
+
+DEFENDER XDR → EVENT HUB → SENTINEL (ADVANCED PATTERN):
+─────────────────────────────────────────────────────────────────────────────
+
+For Defender XDR raw tables at scale, stream via Event Hub:
+
+  ┌─────────────────────┐
+  │ Defender XDR Portal │
+  │                     │
+  │ Settings → Streaming│──────────────────────────────────────┐
+  │ API                 │                                      │
+  └─────────────────────┘                                      │
+                                                               ▼
+                                              ┌─────────────────────────────┐
+                                              │ Event Hub Namespace         │
+                                              │                             │
+                                              │ • defender-raw-events       │
+                                              │ • 32 partitions             │
+                                              │ • 7 day retention           │
+                                              └──────────────┬──────────────┘
+                                                             │
+                                    ┌────────────────────────┼────────────────┐
+                                    │                        │                │
+                                    ▼                        ▼                ▼
+                          ┌─────────────────┐    ┌─────────────────┐  ┌──────────────┐
+                          │ Azure Function  │    │ Sentinel        │  │ Splunk HEC   │
+                          │ (Transform/     │    │ Direct          │  │ (Parallel    │
+                          │  Filter)        │    │ Ingestion       │  │  SIEM)       │
+                          │                 │    │                 │  │              │
+                          │ • Drop noisy    │    │ • DeviceProcess │  │ • Same data  │
+                          │   events        │    │   Events_CL     │  │   to both    │
+                          │ • Enrich        │    │ • Basic Logs    │  │   SIEMs      │
+                          │ • Route to      │    │   tier          │  │              │
+                          │   correct tier  │    │                 │  │              │
+                          └────────┬────────┘    └─────────────────┘  └──────────────┘
+                                   │
+                                   ▼
+                          ┌─────────────────┐
+                          │ Sentinel        │
+                          │ Processed       │
+                          │ Events          │
+                          │                 │
+                          │ • Analytics tier│
+                          │ • Only high-    │
+                          │   value events  │
+                          └─────────────────┘
+
+WHY THIS PATTERN?
+  • Filter/transform BEFORE ingestion (reduce costs)
+  • Buffer capability (if Sentinel is slow/down)
+  • Send same data to multiple SIEMs
+  • Replay if something fails
+
+EVENT HUB COSTS:
+─────────────────────────────────────────────────────────────────────────────
+  • Ingress: Free (data coming in)
+  • Throughput Unit: ~$22/month per TU (1 MB/s in, 2 MB/s out)
+  • Capture to Blob: ~$0.10/hour + storage
+  • Premium tier: Higher cost, better isolation
+
+TOTAL COST EXAMPLE (100 GB/day):
+  • Event Hub: ~$50/month
+  • Plus Sentinel ingestion costs
+  • But SAVINGS from filtering/routing to Basic Logs can offset
+
+═══════════════════════════════════════════════════════════════════════════════
+RETENTION CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW RETENTION WORKS:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     DATA LIFECYCLE                                       │
+  │                                                                          │
+  │   INGEST ──► INTERACTIVE RETENTION ──► ARCHIVE RETENTION ──► DELETE    │
+  │               (queryable directly)     (search job/restore)             │
+  │                                                                          │
+  │   Example: 90 days interactive + 2 years archive                        │
+  │                                                                          │
+  │   Day 1-90:     Full Analytics queries, rules fire                      │
+  │   Day 91-730:   Archived, use search job or restore                     │
+  │   Day 731+:     Data deleted                                            │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+CONFIGURE RETENTION:
+  Log Analytics workspace → Tables → Select table → Manage table
+  
+  Settings:
+  • Interactive retention: 30-730 days (default 30)
+  • Total retention: Up to 12 years (default = interactive)
+  • Archive = Total - Interactive
+
+RETENTION BY TABLE (Override workspace default):
+  
+  // Set via Azure CLI
+  az monitor log-analytics workspace table update \
+    --resource-group MyRG \
+    --workspace-name MyWorkspace \
+    --name SecurityEvent \
+    --retention-time 90 \        # Interactive
+    --total-retention-time 730   # Total (archive = 730-90 = 640 days)
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS - STORAGE TIERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Why is Analytics tier so much more expensive than Basic Logs?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Analytics tier builds full-text indexes on every field during ingestion.
+    This indexing is compute-intensive and the indexes themselves take
+    storage space - sometimes 30-50% of the raw data size. The data is also
+    stored on fast SSD with replicas for high availability. All this enables
+    sub-second queries with complex operations like joins and aggregations.
+    Basic Logs skips the indexing step - data is just parsed and stored.
+    Without indexes, queries must scan the entire table, which is why you
+    pay per GB scanned and can't do complex operations. The 76% cost
+    difference reflects skipping that expensive indexing."
+
+Q: "How do you access archived data in Sentinel?"
+─────────────────────────────────────────────────────────────────────────────
+A: "There are two methods. First, Search Jobs - you submit an async query
+    that scans the archived data and saves results to a temporary table.
+    This takes minutes to hours but is cheap at about $0.007 per GB scanned.
+    Second, Restore - you physically move data back to hot storage for a
+    period, which costs $0.12 per GB plus Analytics tier costs while
+    restored. I use Search Jobs for most investigations since it's cheaper
+    and sufficient for finding specific events. I only use Restore when I
+    need full KQL capability with joins and complex aggregations."
+
+Q: "When would you use Event Hub instead of direct ingestion?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Event Hub makes sense for three scenarios. First, high volume - if I'm
+    ingesting millions of events per second, like IoT telemetry or Defender
+    XDR raw tables, Event Hub handles that scale better. Second, when I need
+    to filter or transform before ingestion - I put an Azure Function between
+    Event Hub and Sentinel to drop noisy events or route to different tiers,
+    reducing costs. Third, when multiple systems need the same data - Event
+    Hub lets Sentinel and Splunk both consume from the same stream. The
+    buffering capability is also valuable - if Sentinel has issues, events
+    wait in Event Hub instead of being lost."
+
+DETAILED TIER BREAKDOWN:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ANALYTICS LOGS (Default - Full Featured)                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$2.76/GB ingestion + retention (varies by region)            │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Full KQL query support                                                │
+│   ✅ Sentinel analytics rules can query                                    │
+│   ✅ Workbooks, dashboards, alerts                                         │
+│   ✅ All operators and functions                                           │
+│   ✅ Joins, aggregations, machine learning                                 │
+│   ✅ Interactive retention: 30 days - 2 years                              │
+│   ✅ Archive retention: up to 12 years                                     │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Security events requiring detection rules                              │
+│   • Alert-generating tables (SecurityEvent, SigninLogs)                   │
+│   • Investigation data (need full query)                                   │
+│   • Compliance data with audit requirements                                │
+│                                                                             │
+│ EXAMPLE TABLES:                                                             │
+│   SecurityEvent, SigninLogs, AuditLogs, DeviceProcessEvents               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BASIC LOGS (76% Cheaper - Limited Query)                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.65/GB ingestion (76% savings!)                            │
+│              + $0.007/GB scanned when querying                             │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Basic KQL queries (simple filters)                                    │
+│   ❌ NO Sentinel analytics rules                                           │
+│   ❌ NO joins across tables                                                │
+│   ❌ NO aggregations (summarize, count, etc.)                              │
+│   ❌ NO workbook visualizations (directly)                                 │
+│   ✅ Interactive retention: 8 days only                                    │
+│   ✅ Archive retention: up to 12 years                                     │
+│                                                                             │
+│ QUERY LIMITATIONS:                                                          │
+│   • Can only query single table                                            │
+│   • Time range limit (30 days)                                             │
+│   • Simple where, project, extend only                                     │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • High-volume, low-value logs                                            │
+│   • Troubleshooting/debugging logs                                         │
+│   • Verbose telemetry you rarely search                                    │
+│   • Logs kept for compliance but rarely queried                            │
+│                                                                             │
+│ EXAMPLE USE CASES:                                                          │
+│   ContainerLog, AppTraces, high-volume custom logs                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ AUXILIARY LOGS (Cheapest - Minimal Query) [Preview as of 2024]             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.11/GB ingestion (96% savings!)                            │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Very basic queries only                                               │
+│   ❌ Even more limited than Basic Logs                                     │
+│   ❌ NO analytics rules                                                    │
+│   ✅ Retention: 30 days - 12 years                                         │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Logs kept purely for compliance/legal                                  │
+│   • Rarely if ever queried                                                 │
+│   • Verbose diagnostic data                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVE TIER (Long-term Storage - Offline)                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.023/GB/month storage only                                 │
+│              + Search job: $0.007/GB scanned                               │
+│              + Restore: $0.12/GB restored                                  │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ❌ NOT directly queryable (no instant queries)                           │
+│   ✅ Search Jobs (async, results to temp table)                            │
+│   ✅ Restore (bring back to hot for full query)                            │
+│   ✅ Retention: up to 12 years                                             │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Long-term compliance retention                                         │
+│   • Legal hold                                                              │
+│   • Forensic investigation (search job when needed)                        │
+│   • Disaster recovery (restore critical data)                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+ENTERPRISE LOG PLACEMENT STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+WHICH LOGS GO TO WHICH TIER?
+─────────────────────────────────────────────────────────────────────────────
+
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                    RECOMMENDED TIER ASSIGNMENT                                  │
+├───────────────────────┬──────────────┬──────────────┬──────────────────────────┤
+│ LOG TYPE              │ TABLE        │ TIER         │ RATIONALE                │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Entra ID Sign-ins     │ SigninLogs   │ ANALYTICS    │ Detection rules need     │
+│                       │              │              │ full query capability    │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Windows Security      │ SecurityEvent│ ANALYTICS    │ Core security events,    │
+│ (filtered to key IDs) │              │              │ rules fire on these      │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Defender XDR Alerts   │ SecurityAlert│ ANALYTICS    │ HIGH VALUE - must have   │
+│                       │              │              │ full query + rules       │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ MDE Process Events    │ DeviceProcess│ Consider     │ HIGH VOLUME - evaluate   │
+│ (raw telemetry)       │ Events       │ BASIC or     │ if you actually need     │
+│                       │              │ Filter first │ every process event      │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ MDE Network Events    │ DeviceNetwork│ BASIC        │ VERY HIGH VOLUME         │
+│                       │ Events       │              │ Rarely need full query   │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Firewall Allow logs   │ CommonSecurity│ BASIC       │ High volume, rarely      │
+│                       │ Log (custom) │              │ need complex queries     │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Firewall Deny logs    │ CommonSecurity│ ANALYTICS   │ Lower volume, more       │
+│                       │ Log          │              │ valuable for detection   │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ DNS Queries           │ DnsEvents    │ BASIC or     │ EXTREMELY HIGH VOLUME    │
+│                       │              │ AUXILIARY    │ Keep for forensics only  │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Container/App Logs    │ ContainerLog │ BASIC        │ Troubleshooting only     │
+│                       │              │              │ No security rules        │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Compliance Archive    │ Any          │ ARCHIVE      │ Long-term storage only   │
+│ (after 90 days)       │              │ (after 90d)  │ Restore when needed      │
+└───────────────────────┴──────────────┴──────────────┴──────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+MICROSOFT DEFENDER XDR → SENTINEL DATA FLOW (CRITICAL!)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW DEFENDER XDR DATA GETS TO SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    MICROSOFT DEFENDER XDR SUITE                         │
+  │                                                                         │
+  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+  │  │ Defender    │ │ Defender    │ │ Defender    │ │ Defender    │      │
+  │  │ for         │ │ for         │ │ for         │ │ for Cloud   │      │
+  │  │ Endpoint    │ │ Office 365  │ │ Identity    │ │ Apps        │      │
+  │  │ (MDE)       │ │ (MDO)       │ │ (MDI)       │ │ (MDCA)      │      │
+  │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘      │
+  │         │               │               │               │             │
+  │         └───────────────┴───────────────┴───────────────┘             │
+  │                                 │                                      │
+  │                                 ▼                                      │
+  │                    ┌─────────────────────────┐                        │
+  │                    │   DEFENDER XDR PORTAL   │                        │
+  │                    │   (security.microsoft.  │                        │
+  │                    │    com)                 │                        │
+  │                    └────────────┬────────────┘                        │
+  └─────────────────────────────────│─────────────────────────────────────┘
+                                    │
+                                    │ Native Connector
+                                    │ (Content Hub)
+                                    ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         MICROSOFT SENTINEL                              │
+  │                                                                         │
+  │  ┌──────────────────────────────────────────────────────────────────┐  │
+  │  │                         DATA TABLES                              │  │
+  │  │                                                                  │  │
+  │  │  ALERTS & INCIDENTS (Always Analytics Tier):                    │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ SecurityAlert     - All Defender alerts                     ││  │
+  │  │  │ SecurityIncident  - Correlated incidents                    ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  RAW TELEMETRY (High Volume - Consider Tier Carefully!):        │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ DeviceProcessEvents    - Process creation (HUGE VOLUME)     ││  │
+  │  │  │ DeviceNetworkEvents    - Network connections (HUGE VOLUME)  ││  │
+  │  │  │ DeviceFileEvents       - File operations (HIGH VOLUME)      ││  │
+  │  │  │ DeviceLogonEvents      - Logon events (MEDIUM VOLUME)       ││  │
+  │  │  │ DeviceRegistryEvents   - Registry changes (HIGH VOLUME)     ││  │
+  │  │  │ DeviceImageLoadEvents  - DLL loads (VERY HIGH VOLUME)       ││  │
+  │  │  │ DeviceEvents           - Misc events (HIGH VOLUME)          ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  OFFICE 365 (MDO):                                               │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ EmailEvents            - Email metadata (MEDIUM VOLUME)     ││  │
+  │  │  │ EmailPostDeliveryEvents- Post-delivery actions              ││  │
+  │  │  │ EmailUrlInfo           - URLs in emails                     ││  │
+  │  │  │ EmailAttachmentInfo    - Attachment info                    ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  IDENTITY (MDI):                                                 │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ IdentityLogonEvents    - AD logons (MEDIUM VOLUME)          ││  │
+  │  │  │ IdentityQueryEvents    - AD queries (HIGH VOLUME)           ││  │
+  │  │  │ IdentityDirectoryEvents- Directory changes                  ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  CLOUD APPS (MDCA):                                              │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ CloudAppEvents         - SaaS activity (MEDIUM VOLUME)      ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  └──────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+STEP-BY-STEP: CONNECT DEFENDER XDR TO SENTINEL
+─────────────────────────────────────────────────────────────────────────────
+
+1. INSTALL SOLUTION FROM CONTENT HUB:
+   Content Hub → Search "Microsoft Defender XDR" → Install
+
+2. CONFIGURE DATA CONNECTOR:
+   Data Connectors → Microsoft Defender XDR → Open connector page
+
+3. CONNECT INCIDENTS AND ALERTS (Always do this):
+   ✅ Connect incidents and alerts
+   
+   This gives you:
+   • SecurityAlert table (all Defender alerts)
+   • SecurityIncident table (correlated incidents)
+   • Bi-directional sync (changes in Sentinel reflect in Defender)
+
+4. SELECT RAW DATA TABLES (Carefully consider each!):
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │ ⚠️ WARNING: Raw tables are HIGH VOLUME and EXPENSIVE!                  │
+   │                                                                         │
+   │ BEFORE ENABLING, ASK:                                                   │
+   │   1. Do I need this data in Sentinel? (Or is Defender portal enough?) │
+   │   2. Will I write detection rules on this data?                        │
+   │   3. Can I afford the ingestion cost?                                   │
+   │   4. Should I use Basic Logs tier instead?                             │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+   RECOMMENDED APPROACH:
+   • Start with alerts only (free with Defender license)
+   • Add DeviceProcessEvents if you need custom detection
+   • Consider Basic Logs for DeviceNetworkEvents if needed
+   • Don't enable everything "just in case"
+
+DEFENDER XDR DATA - ANALYTICS VS BASIC LOG DECISION:
+─────────────────────────────────────────────────────────────────────────────
+
+┌───────────────────────────┬─────────────────────────────────────────────────┐
+│ IF YOU NEED...            │ THEN USE...                                     │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Sentinel analytics rules  │ Analytics Logs (no choice - Basic doesn't work)│
+│ to fire on this data      │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Join with other tables    │ Analytics Logs (Basic can't join)              │
+│ (e.g., correlate with     │                                                 │
+│ SigninLogs)               │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Complex KQL (summarize,   │ Analytics Logs (Basic is limited)              │
+│ aggregations)             │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Simple lookups during     │ Basic Logs is fine                              │
+│ investigation only        │ (saves 76% on ingestion)                        │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Compliance/archive only   │ Basic Logs + Archive tier                       │
+│ (rarely query)            │ (cheapest option)                               │
+└───────────────────────────┴─────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+THIRD-PARTY EDR → SENTINEL
+═══════════════════════════════════════════════════════════════════════════════
+
+CROWDSTRIKE → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐                    ┌─────────────────────────────┐
+  │ CrowdStrike Falcon  │                    │ Sentinel                    │
+  │                     │                    │                             │
+  │ API Credentials     │  Azure Function    │ ┌─────────────────────────┐ │
+  │   ↓                 │ ─────────────────► │ │ Custom Table:           │ │
+  │ Event Streams API   │                    │ │ CrowdStrike_CL          │ │
+  │                     │                    │ └─────────────────────────┘ │
+  └─────────────────────┘                    └─────────────────────────────┘
+
+  SETUP:
+  1. Content Hub → Install "CrowdStrike Falcon Endpoint Protection"
+  2. Deploy Azure Function (provided in solution)
+  3. Configure CrowdStrike API credentials
+  4. Data appears in custom table
+
+  DATA TYPES:
+  • DetectionSummaryEvent (alerts) → Keep LONG retention
+  • ProcessRollup events (telemetry) → Consider shorter retention
+
+CORTEX XDR → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐                    ┌─────────────────────────────┐
+  │ Cortex XDR          │                    │ Sentinel                    │
+  │                     │                    │                             │
+  │ XSIAM Collector OR  │  Azure Function    │ ┌─────────────────────────┐ │
+  │ API Integration     │ ─────────────────► │ │ Custom Table:           │ │
+  │                     │                    │ │ PaloAltoXDR_CL          │ │
+  └─────────────────────┘                    └─────────────────────────────┘
+
+  OPTIONS:
+  1. Content Hub → "Palo Alto Networks" solutions
+  2. Custom integration via Logs Ingestion API
+
+═══════════════════════════════════════════════════════════════════════════════
+COST OPTIMIZATION STRATEGIES
+═══════════════════════════════════════════════════════════════════════════════
+
+Sentinel costs can grow rapidly. Key strategies:
+
+1. USE BASIC LOGS FOR HIGH-VOLUME DATA
+   • DeviceNetworkEvents, DeviceImageLoadEvents → Basic Logs
+   • Saves 76% on ingestion
+   • Still searchable for investigations
+
+2. FILTER AT INGESTION TIME (DCR Transformations)
+   • Drop noisy fields you'll never use
+   • Filter out specific Event IDs
+   • Summarize before ingesting
+
+3. USE COMMITMENT TIERS
+   • 100 GB/day → 50% discount
+   • 200 GB/day → 52% discount
+   • 500 GB/day → 56% discount
+   • Commit to predictable usage
+
+4. DON'T DUPLICATE DATA
+   • If it's in Defender XDR, do you need it in Sentinel too?
+   • Query Defender directly with Advanced Hunting
+   • Only bring to Sentinel what you'll write rules on
+
+5. ARCHIVE AGGRESSIVELY
+   • After 90 days interactive, archive it
+   • Restore when needed for forensics
+   • Archive storage is very cheap
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS & ANSWERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Explain Sentinel storage tiers and when to use each"
+─────────────────────────────────────────────────────────────────────────────
+A: "Sentinel has Analytics Logs which are full-featured but expensive, and
+    Basic Logs which are 76% cheaper but have limited query capability -
+    no joins, no analytics rules, simple filters only. I use Analytics for
+    data I'll write detection rules on, like SecurityEvent and SigninLogs.
+    I use Basic Logs for high-volume telemetry I only need for
+    investigations, like DeviceNetworkEvents. There's also Archive tier
+    for long-term compliance storage that requires restoration to query."
+
+Q: "How does Defender XDR data flow to Sentinel?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Defender XDR has a native connector in Content Hub. Once enabled, it
+    syncs alerts and incidents bi-directionally - changes in one portal
+    reflect in the other. For raw telemetry like DeviceProcessEvents, you
+    optionally enable specific tables. I'm careful here because raw
+    telemetry is high volume - I only enable tables I'll actually write
+    detection rules on. For tables I just need for investigation, I
+    consider using Basic Logs tier or querying directly in Defender portal."
+
+Q: "How would you optimize Sentinel costs for a large enterprise?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Multiple strategies. First, use Basic Logs for high-volume, low-value
+    data like container logs or network telemetry - 76% savings. Second,
+    use DCR transformations to filter or drop data before ingestion.
+    Third, commitment tiers for predictable usage give 50%+ discounts.
+    Fourth, avoid data duplication - if it's already in Defender XDR,
+    query it there instead of ingesting to Sentinel. Fifth, archive
+    aggressively after 90 days. I'd create a cost dashboard to track
+    ingestion by table and identify optimization opportunities."
+                </div></div>
+
+                <h2 id="tables"><i class="fas fa-table"></i> Table Types</h2>
+
+                <div class="config-section"><div class="arch-diagram">
+TABLE TYPES IN LOG ANALYTICS
+═══════════════════════════════════════════════════════════════════════════════
+
+DEFAULT TABLES (Pre-defined by Microsoft):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  Table Name           │ Source                │ Schema                  │
+  │─────────────────────────────────────────────────────────────────────────│
+  │  SecurityEvent        │ Windows Security Log  │ Pre-defined columns     │
+  │  SigninLogs           │ Azure AD              │ Pre-defined columns     │
+  │  AuditLogs            │ Azure AD              │ Pre-defined columns     │
+  │  AzureActivity        │ Azure subscriptions   │ Pre-defined columns     │
+  │  DeviceProcessEvents  │ MDE                   │ Pre-defined columns     │
+  │  OfficeActivity       │ Microsoft 365         │ Pre-defined columns     │
+  │  Syslog               │ Linux systems         │ Pre-defined columns     │
+  │  CommonSecurityLog    │ CEF devices           │ Pre-defined columns     │
+  │  Heartbeat            │ Agent health          │ Pre-defined columns     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  CHARACTERISTICS:
+  • Schema is FIXED - cannot add/remove columns
+  • Optimized for specific log types
+  • Full Analytics features supported
+  • Used by built-in analytics rules
+
+CUSTOM TABLES (User-defined):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  Naming Convention: {TableName}_CL  (CL = Custom Log)                  │
+  │                                                                         │
+  │  Example: MyAppLogs_CL                                                 │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  Column          │ Type      │ Description                     │   │
+  │  │─────────────────────────────────────────────────────────────────│   │
+  │  │  TimeGenerated   │ datetime  │ Required - event timestamp      │   │
+  │  │  Computer        │ string    │ Source system                   │   │
+  │  │  Application     │ string    │ Custom field                    │   │
+  │  │  Level           │ string    │ Custom field                    │   │
+  │  │  ErrorCode       │ int       │ Custom field                    │   │
+  │  │  Message         │ string    │ Custom field                    │   │
+  │  │  UserName        │ string    │ Custom field                    │   │
+  │  │  RequestDuration │ real      │ Custom field                    │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                                                                         │
+  │  CHARACTERISTICS:                                                       │
+  │  • Schema is FLEXIBLE - define your own columns                        │
+  │  • Must have TimeGenerated column                                      │
+  │  • Requires DCR for ingestion                                          │
+  │  • Full Analytics features supported                                   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+BASIC LOGS TABLES (Cost-optimized):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  Same tables, different pricing tier                                    │
+  │                                                                         │
+  │  CONFIGURE via:                                                        │
+  │  Azure Portal → Log Analytics → Tables → Select table → Change plan   │
+  │                                                                         │
+  │  LIMITATIONS:                                                          │
+  │  • 8-day interactive retention only                                    │
+  │  • Limited KQL operators (no join, union across tables)               │
+  │  • Cannot use in Analytics Rules                                       │
+  │  • Cannot use in Workbooks with variables                             │
+  │                                                                         │
+  │  SUPPORTED KQL:                                                        │
+  │  ✅ where, extend, project, summarize (limited)                       │
+  │  ✅ take, count, distinct, top                                        │
+  │  ❌ join, union, materialize, external data                           │
+  │  ❌ time-series functions                                              │
+  └─────────────────────────────────────────────────────────────────────────┘
+                </div></div>
+
+                <h2 id="custom"><i class="fas fa-cog"></i> Custom Table Creation</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# CREATE CUSTOM TABLE - COMPLETE WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════
+
+# STEP 1: Create Data Collection Endpoint (DCE)
+az monitor data-collection endpoint create \
+  --resource-group MyRG \
+  --name "MyApp-DCE" \
+  --location eastus \
+  --public-network-access Enabled
+
+# Get DCE details
+az monitor data-collection endpoint show \
+  --resource-group MyRG \
+  --name "MyApp-DCE" \
+  --query "{logsIngestionEndpoint:logsIngestion.endpoint, id:id}"
+
+# STEP 2: Create Custom Table with Schema
+# Using ARM template or Azure CLI
+
+# ARM Template (tableSchema.json):
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/tables",
+      "apiVersion": "2022-10-01",
+      "name": "[concat(parameters('workspaceName'), '/MyAppLogs_CL')]",
+      "properties": {
+        "schema": {
+          "name": "MyAppLogs_CL",
+          "columns": [
+            { "name": "TimeGenerated", "type": "datetime" },
+            { "name": "Computer", "type": "string" },
+            { "name": "Application", "type": "string" },
+            { "name": "Level", "type": "string" },
+            { "name": "ErrorCode", "type": "int" },
+            { "name": "Message", "type": "string" },
+            { "name": "UserName", "type": "string" },
+            { "name": "RequestDuration", "type": "real" },
+            { "name": "SourceIP", "type": "string" }
+          ]
+        },
+        "retentionInDays": 90,
+        "totalRetentionInDays": 365
+      }
+    }
+  ]
+}
+
+# STEP 3: Create Data Collection Rule (DCR)
+az monitor data-collection rule create \
+  --resource-group MyRG \
+  --name "MyApp-DCR" \
+  --location eastus \
+  --data-collection-endpoint-id "/subscriptions/.../dataCollectionEndpoints/MyApp-DCE" \
+  --stream-declarations '{"Custom-MyAppLogs_CL":{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"Application","type":"string"},{"name":"Level","type":"string"},{"name":"Message","type":"string"}]}}' \
+  --destinations '{"logAnalytics":[{"workspaceResourceId":"/subscriptions/.../workspaces/MySentinelWorkspace","name":"sentinel"}]}' \
+  --data-flows '[{"streams":["Custom-MyAppLogs_CL"],"destinations":["sentinel"],"outputStream":"Custom-MyAppLogs_CL"}]'
+
+# STEP 4: Assign permissions to the application/service principal
+# The app needs "Monitoring Metrics Publisher" role on the DCR
+az role assignment create \
+  --assignee {app-id-or-managed-identity} \
+  --role "Monitoring Metrics Publisher" \
+  --scope "/subscriptions/.../dataCollectionRules/MyApp-DCR"
+
+# STEP 5: Send data via Logs Ingestion API
+# See Python/PowerShell examples below</pre></div></div>
+
+                <h3>Send Data to Custom Table - Python</h3>
+                <div class="code-block"><pre>import requests
+import json
+from datetime import datetime
+from azure.identity import DefaultAzureCredential
+
+# Configuration
+DCE_ENDPOINT = "https://myapp-dce-abc123.eastus-1.ingest.monitor.azure.com"
+DCR_IMMUTABLE_ID = "dcr-abc123def456ghi789"
+STREAM_NAME = "Custom-MyAppLogs_CL"
+
+def send_logs_to_sentinel(logs: list):
+    """Send logs to Microsoft Sentinel via Logs Ingestion API"""
+    
+    # Get Azure AD token
+    credential = DefaultAzureCredential()
+    token = credential.get_token("https://monitor.azure.com/.default").token
+    
+    # Build URL
+    url = f"{DCE_ENDPOINT}/dataCollectionRules/{DCR_IMMUTABLE_ID}/streams/{STREAM_NAME}?api-version=2023-01-01"
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    
+    # Send request
+    response = requests.post(url, headers=headers, json=logs)
+    
+    if response.status_code == 204:
+        print(f"Successfully sent {len(logs)} logs")
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+    
+    return response
+
+# Example usage
+logs = [
+    {
+        "TimeGenerated": datetime.utcnow().isoformat() + "Z",
+        "Computer": "WebServer01",
+        "Application": "MyWebApp",
+        "Level": "Error",
+        "ErrorCode": 500,
+        "Message": "Database connection timeout",
+        "UserName": "john.doe@company.com",
+        "RequestDuration": 30.5,
+        "SourceIP": "10.0.1.100"
+    },
+    {
+        "TimeGenerated": datetime.utcnow().isoformat() + "Z",
+        "Computer": "WebServer01",
+        "Application": "MyWebApp",
+        "Level": "Warning",
+        "ErrorCode": 429,
+        "Message": "Rate limit exceeded",
+        "UserName": "jane.smith@company.com",
+        "RequestDuration": 0.1,
+        "SourceIP": "10.0.1.101"
+    }
+]
+
+send_logs_to_sentinel(logs)</pre></div></div>
+
+                <h3>Send Data to Custom Table - PowerShell</h3>
+                <div class="code-block"><pre># PowerShell - Send logs to Sentinel
+
+$DceEndpoint = "https://myapp-dce-abc123.eastus-1.ingest.monitor.azure.com"
+$DcrImmutableId = "dcr-abc123def456ghi789"
+$StreamName = "Custom-MyAppLogs_CL"
+
+# Get Azure AD token (requires Az.Accounts module)
+Connect-AzAccount
+$token = Get-AzAccessToken -ResourceUrl "https://monitor.azure.com/.default"
+
+# Prepare log data
+$logs = @(
+    @{
+        TimeGenerated = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        Computer = "WebServer01"
+        Application = "MyWebApp"
+        Level = "Error"
+        ErrorCode = 500
+        Message = "Database connection timeout"
+        UserName = "john.doe@company.com"
+        RequestDuration = 30.5
+        SourceIP = "10.0.1.100"
+    }
+)
+
+$body = $logs | ConvertTo-Json -AsArray
+
+# Send to Logs Ingestion API
+$uri = "$DceEndpoint/dataCollectionRules/$DcrImmutableId/streams/$StreamName`?api-version=2023-01-01"
+
+$headers = @{
+    "Authorization" = "Bearer $($token.Token)"
+    "Content-Type" = "application/json"
+}
+
+$response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body
+Write-Host "Logs sent successfully"</pre></div></div>
+
+                <h2 id="transformations"><i class="fas fa-exchange-alt"></i> Ingestion-Time Transformations</h2>
+
+                <div class="config-section"><div class="arch-diagram">
+INGESTION-TIME TRANSFORMATIONS (DCR)
+═══════════════════════════════════════════════════════════════════════════════
+
+WHY USE TRANSFORMATIONS:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  COST REDUCTION                                                         │
+  │  • Filter out noise BEFORE it's stored (don't pay for it)              │
+  │  • Remove unnecessary columns                                           │
+  │  • Aggregate high-volume data                                           │
+  │                                                                         │
+  │  DATA ENRICHMENT                                                        │
+  │  • Add computed columns                                                 │
+  │  • Parse nested JSON                                                    │
+  │  • Normalize field names                                                │
+  │  • Add geo-location, threat intel lookups                              │
+  │                                                                         │
+  │  COMPLIANCE                                                             │
+  │  • Mask/hash sensitive data (PII, credit cards)                        │
+  │  • Remove columns with sensitive data                                   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+TRANSFORMATION KQL SYNTAX:
+─────────────────────────────────────────────────────────────────────────────
+
+  Input: "source" (represents incoming data stream)
+  Output: Transformed data sent to destination table
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  source                                                                 │
+  │  | where {filter_condition}         // FILTER: Remove unwanted events  │
+  │  | extend {new_column = expression} // EXTEND: Add new columns         │
+  │  | project {columns}                // PROJECT: Select columns         │
+  │  | project-away {columns}           // PROJECT-AWAY: Remove columns    │
+  │  | project-rename {new=old}         // PROJECT-RENAME: Rename columns  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+EXAMPLE TRANSFORMATIONS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Example 1: FILTER NOISE (Windows Security Events)
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  source
+  | where EventID in (4624, 4625, 4648, 4672, 4688, 4720, 4726, 4732, 4756)
+  
+  Result: Only collect critical security events, ignore noise like 4634 (logoff)
+
+  Example 2: MASK SENSITIVE DATA
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  source
+  | extend MaskedEmail = replace_regex(Email, @"(.{2}).*@", @"\1***@")
+  | extend HashedSSN = hash_sha256(SSN)
+  | project-away SSN, CreditCard
+  
+  Result: john.doe@company.com → jo***@company.com
+          SSN removed, replaced with hash
+
+  Example 3: PARSE NESTED JSON
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  source
+  | extend ParsedJson = parse_json(RawData)
+  | extend 
+      UserName = tostring(ParsedJson.user.name),
+      Action = tostring(ParsedJson.event.action),
+      SourceIP = tostring(ParsedJson.source.ip)
+  | project-away RawData, ParsedJson
+
+  Example 4: ENRICH WITH COMPUTED FIELDS
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  source
+  | extend 
+      IsWeekend = dayofweek(TimeGenerated) in (0, 6),
+      IsAfterHours = hourofday(TimeGenerated) &lt; 6 or hourofday(TimeGenerated) > 18,
+      GeoHash = geo_point_to_geohash(Longitude, Latitude)
+
+  Example 5: AGGREGATE HIGH-VOLUME DATA
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  source
+  | summarize 
+      Count = count(),
+      BytesTotal = sum(BytesSent),
+      FirstSeen = min(TimeGenerated),
+      LastSeen = max(TimeGenerated)
+    by bin(TimeGenerated, 5m), SourceIP, DestinationIP, DestinationPort
+  
+  Result: Aggregate netflow data to 5-minute buckets
+                </div></div>
+
+                <h3>Configure Transformation in DCR</h3>
+                <div class="code-block"><pre># DCR with Transformation (ARM Template)
+{
+  "properties": {
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "streams": ["Microsoft-SecurityEvent"],
+          "xPathQueries": ["Security!*"],
+          "name": "securityEvents"
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/.../workspaces/MySentinel",
+          "name": "sentinel"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-SecurityEvent"],
+        "destinations": ["sentinel"],
+        "transformKql": "source | where EventID in (4624, 4625, 4648, 4672, 4688, 4720) | extend IsSuspicious = (LogonType == 10 and TimeGenerated between (datetime(22:00)..datetime(06:00)))",
+        "outputStream": "Microsoft-SecurityEvent"
+      }
+    ]
+  }
+}</pre></div></div>
+
+                <h2 id="tiers"><i class="fas fa-layer-group"></i> Storage Tiers & Cost Optimization</h2>
+
+                <div class="tier-card analytics">
+                    <h4><i class="fas fa-bolt"></i> Analytics Tier (Default)</h4>
+                    <p><strong>Cost:</strong> ~$2.76/GB ingestion + retention costs</p>
+                    <p><strong>Retention:</strong> 30 days free interactive, up to 2 years paid, then archive</p>
+                    <p><strong>Query:</strong> Full KQL support, Analytics rules, Workbooks, Hunting</p>
+                    <p><strong>Use for:</strong> Security-critical logs (authentication, endpoint, alerts)</p>
+                </div>
+
+                <div class="tier-card basic">
+                    <h4><i class="fas fa-leaf"></i> Basic Logs Tier</h4>
+                    <p><strong>Cost:</strong> ~$0.65/GB ingestion (76% cheaper!)</p>
+                    <p><strong>Retention:</strong> 8 days interactive, then archive only</p>
+                    <p><strong>Query:</strong> Limited KQL (no joins, limited aggregations)</p>
+                    <p><strong>Use for:</strong> High-volume, low-security-value logs (verbose app logs, netflow)</p>
+                </div>
+
+                <div class="tier-card archive">
+                    <h4><i class="fas fa-archive"></i> Archive Tier</h4>
+                    <p><strong>Cost:</strong> ~$0.02/GB/month storage</p>
+                    <p><strong>Retention:</strong> Up to 12 years</p>
+                    <p><strong>Query:</strong> Not directly queryable - must restore first (minutes to hours)</p>
+                    <p><strong>Use for:</strong> Compliance retention, historical forensics</p>
+                </div>
+
+                <div class="code-block"><pre># Configure Table to Basic Logs
+az monitor log-analytics workspace table update \
+  --resource-group MyRG \
+  --workspace-name MySentinelWorkspace \
+  --name ContainerLog \
+  --plan Basic
+
+# Configure Retention and Archive
+az monitor log-analytics workspace table update \
+  --resource-group MyRG \
+  --workspace-name MySentinelWorkspace \
+  --name SecurityEvent \
+  --retention-time 90 \
+  --total-retention-time 730  # 2 years total (90 interactive + archive)
+
+# Query archive data (search job)
+# In Azure Portal: Log Analytics → Search Jobs → New search job
+# Or via API to create async search job</pre></div></div>
+
+                <h3>Cost Optimization Strategy</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Recommended Tier</th><th>Retention</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>SigninLogs, AuditLogs</td><td>Analytics</td><td>90d + 2y archive</td><td>Critical for identity investigation</td></tr>
+                        <tr><td>SecurityEvent (filtered)</td><td>Analytics</td><td>90d + 1y archive</td><td>Use DCR to filter noise</td></tr>
+                        <tr><td>DeviceProcessEvents (MDE)</td><td>Analytics</td><td>30-90d</td><td>High value, already filtered by MDE</td></tr>
+                        <tr><td>Syslog (auth only)</td><td>Analytics</td><td>90d</td><td>Filter to auth facilities only</td></tr>
+                        <tr><td>Syslog (all)</td><td>Basic</td><td>8d</td><td>Verbose, use for troubleshooting</td></tr>
+                        <tr><td>ContainerLog</td><td>Basic</td><td>8d</td><td>Very high volume</td></tr>
+                        <tr><td>AzureMetrics</td><td>Basic</td><td>8d</td><td>Performance data, not security</td></tr>
+                        <tr><td>Heartbeat</td><td>Basic</td><td>8d</td><td>Agent health only</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="asim"><i class="fas fa-layer-group"></i> ASIM (Advanced Security Information Model)</h2>
+
+                <div class="config-section"><div class="arch-diagram">
+ASIM - NORMALIZATION FOR CROSS-SOURCE DETECTION
+═══════════════════════════════════════════════════════════════════════════════
+
+THE PROBLEM:
+─────────────────────────────────────────────────────────────────────────────
+
+  Same event, different schemas:
+
+  Windows Security Event 4625:     Azure AD SigninLogs:       Linux auth.log:
+  ┌─────────────────────────┐     ┌─────────────────────┐    ┌─────────────────────────┐
+  │ TargetUserName: john    │     │ UserPrincipalName:  │    │ user: john              │
+  │ IpAddress: 10.0.0.1     │     │   john@contoso.com  │    │ rhost: 10.0.0.1         │
+  │ Status: 0xC000006D      │     │ IPAddress: 10.0.0.1 │    │ msg: authentication     │
+  │ LogonType: 3            │     │ ResultType: 50126   │    │      failure            │
+  └─────────────────────────┘     └─────────────────────┘    └─────────────────────────┘
+
+  Writing detection rules requires 3 different queries!
+
+THE SOLUTION: ASIM
+─────────────────────────────────────────────────────────────────────────────
+
+  Normalized schema - same field names across all sources:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  ASIM Authentication Schema                                             │
+  │  ─────────────────────────────────────────────────────────────────────  │
+  │  TargetUsername     → "john" or "john@contoso.com"                     │
+  │  SrcIpAddr          → "10.0.0.1"                                       │
+  │  EventResult        → "Failure"                                         │
+  │  EventResultDetails → "Invalid password"                               │
+  │  EventType          → "Logon"                                          │
+  │  EventProduct       → "Windows Security Events" / "Azure AD" / "Linux" │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+USING ASIM:
+─────────────────────────────────────────────────────────────────────────────
+
+  Parser functions (installed from Content Hub):
+
+  _Im_Authentication        → All authentication events
+  _Im_NetworkSession        → All network connection events
+  _Im_ProcessEvent          → All process execution events
+  _Im_FileEvent             → All file events
+  _Im_DnsQuery              → All DNS query events
+  _Im_WebSession            → All web/proxy logs
+  _Im_RegistryEvent         → All registry events
+
+  Example: Failed logins across ALL sources:
+
+  _Im_Authentication
+  | where EventResult == "Failure"
+  | summarize FailedAttempts = count() by TargetUsername, SrcIpAddr, bin(TimeGenerated, 1h)
+  | where FailedAttempts > 10
+
+  This single query covers: Windows, Linux, Azure AD, Okta, etc.!
+                </div></div>
+
+                <h2 id="monitoring"><i class="fas fa-chart-line"></i> Ingestion Monitoring</h2>
+
+                <div class="code-block"><pre>// ═══════════════════════════════════════════════════════════════════════════
+// INGESTION HEALTH MONITORING QUERIES
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Check data volume by table (last 24h)
+Usage
+| where TimeGenerated > ago(24h)
+| summarize TotalGB = sum(Quantity) / 1000 by DataType
+| order by TotalGB desc
+
+// Find tables with no recent data (potential connector issue)
+union withsource=TableName *
+| summarize LastEvent = max(TimeGenerated) by TableName
+| where LastEvent < ago(1h)
+| order by LastEvent asc
+
+// Check for ingestion latency
+SigninLogs
+| where TimeGenerated > ago(1h)
+| extend IngestionDelay = ingestion_time() - TimeGenerated
+| summarize 
+    AvgDelayMinutes = avg(IngestionDelay) / 1m,
+    MaxDelayMinutes = max(IngestionDelay) / 1m,
+    P95DelayMinutes = percentile(IngestionDelay, 95) / 1m
+
+// Monitor agent health
+Heartbeat
+| where TimeGenerated > ago(1h)
+| summarize LastHeartbeat = max(TimeGenerated) by Computer, OSType
+| where LastHeartbeat < ago(10m)
+| project Computer, OSType, MinutesSinceHeartbeat = datetime_diff('minute', now(), LastHeartbeat)
+
+// Daily ingestion trend
+Usage
+| where TimeGenerated > ago(30d)
+| summarize DailyGB = sum(Quantity) / 1000 by bin(TimeGenerated, 1d), DataType
+| render timechart
+
+// Estimate monthly cost
+Usage
+| where TimeGenerated > ago(24h)
+| summarize DailyGB = sum(Quantity) / 1000 by DataType
+| extend MonthlyGB = DailyGB * 30
+| extend EstimatedMonthlyCost = MonthlyGB * 2.76  // Analytics tier rate
+| order by EstimatedMonthlyCost desc</pre></div></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="pages/sentinel/data-connectors.html">Data Connectors Complete Reference</a></li>
+                    <li><a href="pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
+                    <li><a href="pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="pages/sentinel/architecture.html">Sentinel Architecture</a></li>
+                </ul>
+            </div>
+        </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Time Response | CrowdStrike Falcon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">CrowdStrike</a>
+                <span class="separator">/</span>
+                <span class="current">Real Time Response</span>
+            </div>
+
+<h1><i class="fas fa-terminal"></i> Real Time Response (RTR)</h1>
+                <p class="lead">Master CrowdStrike Real Time Response for remote investigation and remediation. Learn RTR commands, custom scripts, response workflows, and best practices for live forensics.</p>
+
+                <!-- RTR Overview -->
+                <h2><i class="fas fa-info-circle"></i> RTR Overview</h2>
+                <div class="config-section">
+                    <h4>What is Real Time Response?</h4>
+                    <div class="code-block">Real Time Response (RTR):
+
+A remote shell capability that allows analysts to 
+investigate and remediate threats on live endpoints 
+without physical access.
+
+KEY CAPABILITIES:
+├── Live command execution
+├── File system browsing
+├── Process management
+├── Registry access (Windows)
+├── Memory collection
+├── File retrieval and upload
+├── Custom script execution
+└── Remediation actions
+
+USE CASES:
+├── Live forensic investigation
+├── Malware removal
+├── IOC collection
+├── System hardening
+├── Evidence preservation
+├── Threat hunting validation
+└── Emergency response
+
+ARCHITECTURE:
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│   Analyst ──▶ Falcon Console ──▶ Falcon Cloud ──▶ Agent   │
+│      │                              │                │     │
+│      └── RTR Session ◀──────────────┴────────────────┘     │
+│                                                            │
+│   All commands proxied through Falcon cloud               │
+│   Encrypted communication                                  │
+│   Full audit logging                                       │
+│                                                            │
+└────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Permission Levels</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Permission</th><th>Commands</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Read Only</strong></td><td>View-only commands (ls, ps, cat)</td><td>Junior analysts, verification</td></tr>
+                            <tr><td><strong>Active Responder</strong></td><td>+ Remediation (kill, rm, reg delete)</td><td>Incident responders</td></tr>
+                            <tr><td><strong>RTR Administrator</strong></td><td>+ Custom scripts, put files</td><td>Senior analysts, IR leads</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Starting RTR Session -->
+                <h2><i class="fas fa-play"></i> Starting an RTR Session</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Host Management → Hosts → Select Host → Connect</span></p>
+
+                    <h4>Session Initiation</h4>
+                    <div class="code-block">Starting an RTR Session:
+
+FROM HOST DETAILS:
+1. Navigate to Host Management → Hosts
+2. Search for target host
+3. Click host name to open details
+4. Click "Connect" button
+5. Wait for session to establish
+
+FROM DETECTION/INCIDENT:
+1. View detection details
+2. Click on affected host
+3. Click "Connect" for RTR
+4. Session opens in context
+
+SESSION INDICATORS:
+├── Green dot: Online, ready
+├── Yellow dot: Connecting
+├── Red dot: Offline/unreachable
+└── Session timeout: 30 minutes idle
+
+MULTIPLE SESSIONS:
+├── Can open sessions to multiple hosts
+├── Use tabs to switch between
+├── Each session independent
+└── Bulk RTR for simultaneous commands</div>
+
+                    <h4>Session Best Practices</h4>
+                    <div class="code-block">RTR Session Best Practices:
+
+BEFORE STARTING:
+├── Document investigation purpose
+├── Know what you're looking for
+├── Have commands ready
+├── Check host online status
+└── Verify you have needed permissions
+
+DURING SESSION:
+├── Work methodically
+├── Document findings as you go
+├── Collect evidence before remediation
+├── Use "history" to review commands
+├── Save important output
+└── Avoid unnecessary changes
+
+AFTER SESSION:
+├── Document actions taken
+├── Update incident notes
+├── Close session properly
+├── Verify remediation successful
+└── Follow up as needed
+
+AUDIT TRAIL:
+├── All commands logged
+├── Available in RTR audit log
+├── Includes: user, command, time, host
+└── Path: Activity → RTR Audit Log</div>
+                </div>
+
+                <!-- Core Commands -->
+                <h2><i class="fas fa-terminal"></i> Core RTR Commands</h2>
+                <div class="config-section">
+                    <h4>File System Commands</h4>
+                    <div class="code-block">File System Commands:
+
+NAVIGATION:
+cd [path]         # Change directory
+pwd               # Print working directory
+ls                # List directory contents
+ls -l             # Long format with details
+ls -a             # Include hidden files
+
+VIEWING FILES:
+cat [file]        # Display file contents
+cat -n [file]     # With line numbers
+filehash [file]   # Get SHA256 hash
+head [file]       # First 10 lines
+tail [file]       # Last 10 lines
+
+FILE OPERATIONS:
+cp [src] [dst]    # Copy file
+mv [src] [dst]    # Move file
+rm [file]         # Delete file (Active Responder+)
+mkdir [dir]       # Create directory
+rmdir [dir]       # Remove empty directory
+
+FILE TRANSFER:
+get [file]        # Download file from host
+put [file]        # Upload file to host (RTR Admin)
+
+EXAMPLES:
+# Navigate to suspicious directory
+cd C:\Users\Public\Downloads
+
+# List recent files
+ls -la
+
+# Get hash of suspicious file
+filehash malware.exe
+
+# Download file for analysis
+get C:\Users\Public\malware.exe</div>
+
+                    <h4>Process Commands</h4>
+                    <div class="code-block">Process Commands:
+
+VIEWING PROCESSES:
+ps                # List all processes
+ps -a             # All users
+ps | grep [name]  # Filter by name
+
+PROCESS DETAILS:
+psinfo [PID]      # Detailed process info
+
+PROCESS ACTIONS (Active Responder+):
+kill [PID]        # Terminate process
+kill -9 [PID]     # Force terminate
+
+EXAMPLES:
+# List all running processes
+ps
+
+# Find PowerShell processes
+ps | grep powershell
+
+# Get details on suspicious process
+psinfo 4532
+
+# Kill malicious process
+kill 4532
+
+# Verify process killed
+ps | grep [name]</div>
+
+                    <h4>Registry Commands (Windows)</h4>
+                    <div class="code-block">Registry Commands (Windows Only):
+
+VIEWING REGISTRY:
+reg query [key]                    # Query registry key
+reg query [key] /v [value]         # Query specific value
+
+MODIFYING REGISTRY (Active Responder+):
+reg set [key] /v [name] /d [data]  # Set value
+reg delete [key]                   # Delete key
+reg delete [key] /v [name]         # Delete value
+
+COMMON LOCATIONS:
+# Startup locations
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+
+# Services
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\[name]"
+
+# Recent commands
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RunMRU"
+
+EXAMPLES:
+# Check for persistence
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+
+# Find suspicious service
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\MaliciousSvc"
+
+# Remove malicious run key
+reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v malware</div>
+
+                    <h4>Network Commands</h4>
+                    <div class="code-block">Network Commands:
+
+NETWORK STATUS:
+netstat           # Network connections
+netstat -an       # All connections, numeric
+ipconfig          # IP configuration (Windows)
+ifconfig          # IP configuration (Linux/Mac)
+
+EXAMPLES:
+# View all connections
+netstat -an
+
+# Find connections to specific port
+netstat | grep :443
+
+# Check DNS configuration
+ipconfig /all
+
+NETWORK FILTERING:
+# Find connections to specific IP
+netstat | grep "192.168.1.100"
+
+# Find listening ports
+netstat -an | grep LISTEN</div>
+                </div>
+
+                <!-- Advanced Commands -->
+                <h2><i class="fas fa-rocket"></i> Advanced Commands</h2>
+                <div class="config-section">
+                    <h4>Memory and Forensics</h4>
+                    <div class="code-block">Memory and Forensic Commands:
+
+MEMORY COLLECTION:
+memdump [PID]     # Dump process memory
+memdump [PID] -o [file]  # Dump to specific file
+
+SYSTEM INFORMATION:
+users             # Logged-in users
+env               # Environment variables
+whoami            # Current user context
+
+SCHEDULED TASKS (Windows):
+schtasks          # List scheduled tasks
+schtasks /query /fo list  # Detailed list
+
+SERVICES (Windows):
+sc query          # List services
+sc query [name]   # Query specific service
+sc stop [name]    # Stop service (Active Responder+)
+sc delete [name]  # Delete service (Active Responder+)
+
+EXAMPLES:
+# Dump suspicious process memory
+memdump 4532 -o suspect_mem.dmp
+get suspect_mem.dmp
+
+# Check logged-in users
+users
+
+# List scheduled tasks
+schtasks | grep -i suspicious
+
+# Stop malicious service
+sc stop MaliciousSvc
+sc delete MaliciousSvc</div>
+
+                    <h4>Custom Scripts</h4>
+                    <div class="code-block">Custom Scripts (RTR Administrator):
+
+SCRIPT TYPES:
+├── PowerShell (Windows)
+├── Bash (Linux/macOS)
+└── Stored in Falcon cloud
+
+UPLOAD SCRIPT:
+Path: Response → RTR Scripts → Create
+
+SCRIPT REQUIREMENTS:
+├── Name: Descriptive name
+├── Description: What it does
+├── Platform: Windows/Linux/macOS
+├── Script content: Actual code
+└── Timeout: Max execution time
+
+RUN CUSTOM SCRIPT:
+runscript -CloudFile="ScriptName"
+runscript -CloudFile="ScriptName" -CommandLine="arg1 arg2"
+
+EXAMPLE SCRIPTS:
+
+# Collect browser history
+runscript -CloudFile="Collect-BrowserHistory"
+
+# Check for persistence mechanisms
+runscript -CloudFile="Find-Persistence"
+
+# Remediate known malware
+runscript -CloudFile="Remove-Emotet"
+
+PUT FILES:
+# Upload remediation tool
+put -CloudFile="autoruns.exe"
+
+# Run uploaded tool
+run autoruns.exe -a</div>
+                </div>
+
+                <!-- Investigation Workflow -->
+                <h2><i class="fas fa-search"></i> Investigation Workflow</h2>
+                <div class="config-section">
+                    <div class="code-block">RTR Investigation Workflow:
+
+PHASE 1: INITIAL RECONNAISSANCE
+├── Connect to host
+├── Check current processes: ps
+├── Check network connections: netstat -an
+├── Check logged-in users: users
+└── Get system info
+
+PHASE 2: ARTIFACT COLLECTION
+├── Navigate to suspect locations
+├── Hash suspicious files: filehash [file]
+├── Collect files: get [file]
+├── Dump process memory: memdump [PID]
+└── Capture registry keys
+
+PHASE 3: PERSISTENCE CHECK
+├── Registry run keys
+├── Scheduled tasks
+├── Services
+├── Startup folders
+└── WMI subscriptions (script)
+
+PHASE 4: LATERAL MOVEMENT CHECK
+├── Network connections to internal IPs
+├── Authentication logs (if accessible)
+├── Remote execution artifacts
+└── Admin tool usage
+
+PHASE 5: REMEDIATION
+├── Kill malicious processes
+├── Remove malicious files
+├── Delete persistence mechanisms
+├── Reboot if necessary
+└── Verify clean state
+
+PHASE 6: DOCUMENTATION
+├── Document all findings
+├── List all actions taken
+├── Update incident notes
+├── Collect evidence files
+└── Close session properly</div>
+
+                    <h4>Common Investigation Commands</h4>
+                    <div class="code-block"># Complete investigation command sequence
+
+# 1. Initial recon
+ps
+netstat -an
+users
+whoami
+
+# 2. Check common persistence
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+schtasks /query /fo list
+
+# 3. Investigate suspicious process
+psinfo [PID]
+memdump [PID]
+
+# 4. Check suspicious files
+cd C:\Users\Public
+ls -la
+filehash suspicious.exe
+get suspicious.exe
+
+# 5. Check network
+netstat -an | grep ESTABLISHED
+
+# 6. Remediation
+kill [PID]
+rm C:\Users\Public\suspicious.exe
+reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v malware
+
+# 7. Verify
+ps | grep suspicious
+ls C:\Users\Public</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is Real Time Response and when would you use it?</button>
+                        <div class="qa-answer">
+                            <p><strong>RTR</strong> is CrowdStrike's remote shell capability for live investigation and remediation:</p>
+                            <ul>
+                                <li><strong>Use cases:</strong> Live forensics, malware removal, evidence collection</li>
+                                <li><strong>When to use:</strong> Investigating alerts, incident response, hunting validation</li>
+                                <li><strong>Benefits:</strong> No physical access needed, full audit logging, encrypted</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the RTR permission levels?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Read Only:</strong> View commands only (ls, ps, cat)</li>
+                                <li><strong>Active Responder:</strong> + Remediation (kill, rm, reg delete)</li>
+                                <li><strong>RTR Administrator:</strong> + Custom scripts, file upload</li>
+                            </ul>
+                            <p>Permission levels control what actions analysts can take during sessions.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through how you would investigate a suspicious process using RTR.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><code>ps</code> - List processes, identify suspicious one</li>
+                                <li><code>psinfo [PID]</code> - Get detailed process info</li>
+                                <li><code>netstat | grep [PID]</code> - Check network connections</li>
+                                <li><code>filehash [executable]</code> - Get file hash for threat intel</li>
+                                <li><code>memdump [PID]</code> - Dump memory for forensics</li>
+                                <li><code>get [file]</code> - Download for analysis</li>
+                                <li><code>kill [PID]</code> - Terminate if confirmed malicious</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you check for persistence mechanisms using RTR?</button>
+                        <div class="qa-answer">
+                            <div class="code-block"># Registry run keys
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+
+# Scheduled tasks
+schtasks /query /fo list
+
+# Services
+sc query
+
+# Or use custom script for comprehensive check
+runscript -CloudFile="Find-Persistence"</div>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

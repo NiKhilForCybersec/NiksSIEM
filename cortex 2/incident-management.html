@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Management | Cortex XDR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Cortex XDR</a>
+                <span class="separator">/</span>
+                <span class="current">Incident Management</span>
+            </div>
+
+<h1><i class="fas fa-clipboard-list"></i> Cortex XDR Incident Management</h1>
+                <p class="lead">Master incident management in Cortex XDR. Learn the complete incident lifecycle, causality analysis, investigation workflows, and response procedures.</p>
+
+                <!-- Incident Overview -->
+                <h2><i class="fas fa-info-circle"></i> Incident Overview</h2>
+                <div class="config-section">
+                    <h4>Incidents vs Alerts</h4>
+                    <div class="code-block">CORTEX XDR INCIDENT STRUCTURE:
+
+ALERT → INCIDENT RELATIONSHIP:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   ALERTS (Individual Detections)      INCIDENT (Correlated)    │
+│   ──────────────────────────────      ─────────────────────    │
+│                                                                 │
+│   ┌────────────┐                     ┌──────────────────────┐  │
+│   │ Alert 1    │────┐                │     INCIDENT         │  │
+│   │ (Malware)  │    │                │                      │  │
+│   └────────────┘    │                │  ┌────────────────┐  │  │
+│                     ├───────────────▶│  │ Correlated     │  │  │
+│   ┌────────────┐    │                │  │ Alerts         │  │  │
+│   │ Alert 2    │────┤                │  │ + Causality    │  │  │
+│   │ (Network)  │    │                │  │ + Timeline     │  │  │
+│   └────────────┘    │                │  └────────────────┘  │  │
+│                     │                │                      │  │
+│   ┌────────────┐    │                │  Severity: High      │  │
+│   │ Alert 3    │────┘                │  Status: New         │  │
+│   │ (Behavior) │                     │  Assigned: Analyst   │  │
+│   └────────────┘                     └──────────────────────┘  │
+│                                                                 │
+│   CORRELATION FACTORS:                                          │
+│   ├── Same endpoint                                            │
+│   ├── Same user                                                │
+│   ├── Related processes (causality chain)                      │
+│   ├── Temporal proximity                                       │
+│   └── Attack pattern matching                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Incident Properties</h4>
+                    <div class="code-block">INCIDENT ATTRIBUTES:
+
+SEVERITY LEVELS:
+├── Critical: Immediate threat, active attack
+├── High: Significant risk, requires urgent response
+├── Medium: Moderate risk, timely investigation needed
+├── Low: Minor risk, can be batched
+└── Informational: FYI, no action required
+
+STATUS VALUES:
+├── New: Unassigned, not yet triaged
+├── Under Investigation: Actively being worked
+├── Resolved - True Positive: Confirmed threat
+├── Resolved - False Positive: Legitimate activity
+├── Resolved - Security Test: Authorized testing
+├── Resolved - Duplicate: Merged with another
+└── Resolved - Other: Alternative resolution
+
+STARRED INCIDENTS:
+├── Flag important incidents for tracking
+├── Quick filter in incident queue
+└── Useful for shift handoffs
+
+ASSIGNED ANALYST:
+├── Individual assignment
+├── Group assignment
+└── Auto-assignment rules available</div>
+                </div>
+
+                <!-- End-to-End Incident Workflow -->
+                <h2><i class="fas fa-route"></i> End-to-End Incident Workflow</h2>
+                <div class="config-section">
+                    <h4>Complete Incident Lifecycle</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CORTEX XDR INCIDENT LIFECYCLE                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1        PHASE 2        PHASE 3        PHASE 4        PHASE 5       │
+│  TRIAGE         INVESTIGATE    CONTAIN        REMEDIATE      CLOSE         │
+│  ──────         ───────────    ───────        ─────────      ─────         │
+│                                                                             │
+│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐      │
+│  │ Review  │   │ Analyze │   │ Isolate │   │ Remove  │   │ Resolve │      │
+│  │ Queue   │──▶│ Causality──▶│ Endpoint│──▶│ Threat  │──▶│ Incident│      │
+│  └─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘      │
+│       │             │             │             │             │            │
+│       ▼             ▼             ▼             ▼             ▼            │
+│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐      │
+│  │ Assign  │   │ Review  │   │ Block   │   │ Clean   │   │ Document│      │
+│  │ & Star  │   │ Timeline│   │ Hashes  │   │ Registry│   │ Actions │      │
+│  └─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘      │
+│       │             │             │             │             │            │
+│       ▼             ▼             ▼             ▼             ▼            │
+│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐      │
+│  │ Initial │   │ Scope   │   │ Disable │   │ Validate│   │ Update  │      │
+│  │ Analysis│   │ Impact  │   │ User    │   │ Clean   │   │ Rules   │      │
+│  └─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘      │
+│                                                                             │
+│  SLA TARGETS:                                                               │
+│  ├── Critical: Triage <5 min, Contain <30 min                              │
+│  ├── High: Triage <15 min, Contain <1 hour                                 │
+│  ├── Medium: Triage <1 hour, Contain <4 hours                              │
+│  └── Low: Triage <4 hours, Contain <24 hours                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 1: Triage</h4>
+                    <div class="code-block">TRIAGE WORKFLOW:
+
+STEP 1: ACCESS INCIDENT QUEUE
+Path: Incident Response → Incidents
+
+Queue Management:
+├── Filter by severity (Critical/High first)
+├── Filter by status (New incidents)
+├── Sort by creation time
+└── Use saved filters for efficiency
+
+STEP 2: INITIAL ASSESSMENT (2-5 minutes)
+Review Without Opening:
+├── Incident name and description
+├── Severity level
+├── Alert count and types
+├── Affected hosts/users
+├── Detection source (XDR, BIOC, Analytics)
+
+STEP 3: TRIAGE DECISION TREE
+┌─────────────────────────────────────────────────────────────┐
+│ Is this a known false positive pattern?                     │
+├───────────────────┬─────────────────────────────────────────┤
+│        YES        │              NO                         │
+│         │         │               │                         │
+│         ▼         │               ▼                         │
+│  Resolve as FP    │    Does this require immediate action?  │
+│  (Document why)   │    ├── YES → Contain immediately        │
+│                   │    └── NO → Full investigation          │
+└───────────────────┴─────────────────────────────────────────┘
+
+STEP 4: ASSIGN AND ACKNOWLEDGE
+├── Assign to self or team member
+├── Change status to "Under Investigation"
+├── Star if high priority
+└── Add initial triage notes</div>
+
+                    <h4>Phase 2: Investigation</h4>
+                    <div class="code-block">INVESTIGATION WORKFLOW:
+
+STEP 1: OPEN INCIDENT DETAILS
+Path: Click incident → Full investigation view
+
+Key Tabs:
+├── Overview: Summary, timeline, affected assets
+├── Alerts: Individual detections
+├── Causality View: Process tree visualization
+├── Timeline: Chronological events
+└── Artifacts: IOCs, files, network
+
+STEP 2: ANALYZE CAUSALITY VIEW
+Causality Analysis Shows:
+├── Causality Group Owner (CGO): Root process
+├── Process tree: Parent → Child relationships
+├── Network connections per process
+├── File operations per process
+├── Registry modifications
+└── Module loads
+
+Key Questions:
+├── What started the activity? (CGO)
+├── How did it propagate?
+├── What systems are affected?
+├── What data was accessed/exfiltrated?
+
+STEP 3: REVIEW TIMELINE
+├── Chronological event sequence
+├── Correlate with user activity
+├── Identify initial access point
+├── Track lateral movement
+└── Find persistence mechanisms
+
+STEP 4: SCOPE THE INCIDENT
+// XQL Query - Find related activity
+dataset = xdr_data
+| filter agent_hostname in ("affected_host1", "affected_host2")
+| filter timestamp between "start_time" and "end_time"
+| fields timestamp, event_type, action_process_image_name, 
+        action_process_command_line, action_remote_ip
+| sort asc timestamp
+
+STEP 5: COLLECT EVIDENCE
+├── Screenshot causality view
+├── Export timeline
+├── Note IOCs (hashes, IPs, domains)
+├── Document findings in incident notes
+└── Collect artifacts for forensics</div>
+
+                    <h4>Phase 3-4: Containment & Remediation</h4>
+                    <div class="code-block">CONTAINMENT ACTIONS:
+
+ENDPOINT ISOLATION:
+Path: Incident → Response Actions → Isolate
+
+Effect:
+├── Blocks all network except Cortex XDR
+├── Prevents lateral movement
+├── Maintains management access
+└── Can be reversed when clean
+
+PROCESS TERMINATION:
+Path: Incident → Causality → Right-click process → Terminate
+
+Options:
+├── Terminate single process
+├── Terminate process tree
+└── Terminate and block hash
+
+FILE QUARANTINE:
+Path: Incident → Artifacts → File → Quarantine
+
+Effect:
+├── Moves file to quarantine folder
+├── Prevents execution
+├── Preserves for analysis
+└── Can be restored if needed
+
+HASH BLOCKING:
+Path: Incident → Artifacts → File → Block
+
+Effect:
+├── Adds to block list globally
+├── Prevents future execution
+├── Applies to all endpoints
+└── Requires careful consideration
+
+REMEDIATION STEPS:
+├── Remove malicious files
+├── Clean registry persistence
+├── Reset compromised passwords
+├── Patch exploited vulnerabilities
+├── Restore from backup if needed
+└── Re-image severely compromised systems</div>
+
+                    <h4>Phase 5: Closure</h4>
+                    <div class="code-block">CLOSURE WORKFLOW:
+
+STEP 1: VALIDATE REMEDIATION
+├── Confirm threat removed
+├── Verify no persistence remains
+├── Check for reinfection (monitor 24-48h)
+├── Validate system functionality
+└── Confirm user can work normally
+
+STEP 2: RESOLVE INCIDENT
+Path: Incident → Resolve
+
+Resolution Options:
+├── True Positive: Confirmed threat
+├── False Positive: Legitimate activity
+├── Security Test: Authorized pen test/red team
+├── Duplicate: Merged with another incident
+└── Other: Custom resolution
+
+STEP 3: DOCUMENT FINDINGS
+Incident Notes Should Include:
+├── Summary of what happened
+├── Root cause analysis
+├── Scope of impact
+├── Actions taken
+├── IOCs discovered
+├── Lessons learned
+└── Recommended follow-ups
+
+STEP 4: POST-INCIDENT ACTIONS
+├── Create/update BIOC rules if needed
+├── Add exceptions for false positives
+├── Share IOCs with threat intel
+├── Update response playbooks
+├── Brief team on findings
+└── Schedule follow-up review</div>
+                </div>
+
+                <!-- Investigation Queries -->
+                <h2><i class="fas fa-search"></i> Investigation XQL Queries</h2>
+                <div class="config-section">
+                    <div class="code-block">// Timeline of activity on affected endpoint
+dataset = xdr_data
+| filter agent_hostname = "COMPROMISED_HOST"
+| filter timestamp between "2024-01-15T00:00:00Z" and "2024-01-16T00:00:00Z"
+| fields timestamp, event_type, action_process_image_name, 
+        action_process_command_line, action_remote_ip, actor_effective_username
+| sort asc timestamp
+| limit 1000
+
+// Find all endpoints with same malware hash
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+| filter action_file_sha256 = "MALICIOUS_HASH"
+| comp count() by agent_hostname
+| sort desc count()
+
+// Check for lateral movement from compromised host
+dataset = xdr_data
+| filter agent_hostname = "COMPROMISED_HOST"
+| filter event_type = ENUM.NETWORK
+| filter action_remote_port in (445, 135, 3389, 5985, 5986)
+| comp unique_targets = count_distinct(action_remote_ip) by agent_hostname, action_process_image_name
+
+// User activity across all endpoints
+dataset = xdr_data
+| filter actor_effective_username = "compromised_user"
+| comp count(), unique_hosts = count_distinct(agent_hostname) by event_type
+| sort desc count()</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your incident response process in Cortex XDR.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Triage:</strong> Review queue, assess severity, assign to analyst</li>
+                                <li><strong>Investigate:</strong> Analyze causality view, review timeline, scope impact</li>
+                                <li><strong>Contain:</strong> Isolate endpoint, block hashes, terminate processes</li>
+                                <li><strong>Remediate:</strong> Remove malware, clean persistence, validate clean</li>
+                                <li><strong>Close:</strong> Resolve with proper classification, document findings</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the Causality View and why is it important?</button>
+                        <div class="qa-answer">
+                            <p>Causality View shows the complete attack chain as a process tree:</p>
+                            <ul>
+                                <li>Identifies the <strong>Causality Group Owner (CGO)</strong> - root process</li>
+                                <li>Shows parent-child process relationships</li>
+                                <li>Displays network, file, and registry activity per process</li>
+                                <li>Helps understand how the attack propagated</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What containment actions are available in Cortex XDR?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Isolate endpoint:</strong> Block network except XDR communication</li>
+                                <li><strong>Terminate process:</strong> Kill malicious process or tree</li>
+                                <li><strong>Quarantine file:</strong> Move to quarantine, prevent execution</li>
+                                <li><strong>Block hash:</strong> Prevent execution across all endpoints</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What resolution types exist for closing incidents?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>True Positive:</strong> Confirmed malicious activity</li>
+                                <li><strong>False Positive:</strong> Legitimate activity incorrectly flagged</li>
+                                <li><strong>Security Test:</strong> Authorized testing (pen test, red team)</li>
+                                <li><strong>Duplicate:</strong> Same incident reported multiple times</li>
+                                <li><strong>Other:</strong> Alternative resolution with notes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

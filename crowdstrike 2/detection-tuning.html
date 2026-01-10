@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Tuning | Nik's SIEM Compendium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">CrowdStrike</a>
+                <span class="separator">/</span>
+                <span class="current">Detection Tuning</span>
+            </div>
+
+<div class="content-header">
+            <h1>🔴 Detection Tuning</h1>
+            <p>Reduce false positives, optimize detection efficacy, and maintain security coverage</p>
+        </div>
+        <!-- Detection Tuning Overview -->
+        <section class="content-section">
+            <h2>Detection Tuning Overview</h2>
+            <p>Effective detection tuning balances security coverage with operational efficiency. The goal is to reduce noise (false positives) while maintaining visibility into actual threats. CrowdStrike provides multiple tuning mechanisms across different detection layers.</p>
+            <!-- Detection Tuning Workflow Diagram -->
+            <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              DETECTION TUNING WORKFLOW                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│   │  IDENTIFY   │───▶│  ANALYZE    │───▶│  DOCUMENT   │───▶│   CREATE    │───▶│  VALIDATE   │  │
+│   │   NOISE     │    │   ROOT      │    │  BUSINESS   │    │  EXCLUSION  │    │   CHANGE    │  │
+│   └─────────────┘    │   CAUSE     │    │   CASE      │    └─────────────┘    └─────────────┘  │
+│         │            └─────────────┘    └─────────────┘           │                  │         │
+│         ▼                   │                  │                  ▼                  ▼         │
+│   • High volume alerts     │                  │           • Scoped narrowly    • Test first    │
+│   • Repeated FPs           │                  │           • Document purpose   • Monitor       │
+│   • Known good software    │                  │           • Set expiry         • Review        │
+│                            ▼                  ▼             if temporary        weekly        │
+│                      ┌──────────────────────────────────────────┐                              │
+│                      │         ROOT CAUSE ANALYSIS               │                              │
+│                      ├──────────────────────────────────────────┤                              │
+│                      │                                          │                              │
+│                      │  Q1: Is this actually malicious?         │                              │
+│                      │      YES ──▶ Tune detection, not exclude │                              │
+│                      │      NO  ──▶ Continue                    │                              │
+│                      │                                          │                              │
+│                      │  Q2: Can the software be updated?        │                              │
+│                      │      YES ──▶ Update first, then reassess │                              │
+│                      │      NO  ──▶ Continue                    │                              │
+│                      │                                          │                              │
+│                      │  Q3: Is exclusion the only option?       │                              │
+│                      │      NO  ──▶ Consider alternatives       │                              │
+│                      │      YES ──▶ Create minimal exclusion    │                              │
+│                      │                                          │                              │
+│                      └──────────────────────────────────────────┘                              │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+            <!-- Exclusion Types Comparison -->
+            <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              EXCLUSION TYPE COMPARISON                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ML EXCLUSIONS                 IOA EXCLUSIONS                SENSOR VISIBILITY               │
+│   (Prevention Policy)           (IOA Rule Groups)             (Machine Learning)               │
+│   ─────────────────             ──────────────────            ──────────────────               │
+│                                                                                                  │
+│   ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐           │
+│   │ SCOPE: Files/Hashes │      │ SCOPE: Behaviors    │      │ SCOPE: Telemetry    │           │
+│   │                     │      │                     │      │                     │           │
+│   │ USE WHEN:           │      │ USE WHEN:           │      │ USE WHEN:           │           │
+│   │ • Known-good app    │      │ • Legit admin tool  │      │ • High-volume app   │           │
+│   │   triggers ML       │      │   triggers IOA      │      │   performance issue │           │
+│   │ • Vendor software   │      │ • Specific behavior │      │ • AV exclusion      │           │
+│   │   false positive    │      │   is approved       │      │   parity needed     │           │
+│   │                     │      │                     │      │                     │           │
+│   │ FIELDS:             │      │ FIELDS:             │      │ ⚠️ CAUTION:         │           │
+│   │ • File path         │      │ • Command line      │      │ Reduces visibility   │           │
+│   │ • File hash (SHA256)│      │ • Parent process    │      │ Should be rare      │           │
+│   │ • Certificate       │      │ • Image path        │      │                     │           │
+│   └─────────────────────┘      └─────────────────────┘      └─────────────────────┘           │
+│                                                                                                  │
+│   SPECIFICITY HIERARCHY (Most to Least Preferred):                                              │
+│   ─────────────────────────────────────────────────                                             │
+│                                                                                                  │
+│   1. HASH (SHA256)          ◀── Most specific, preferred for known files                       │
+│   2. CERTIFICATE SIGNER     ◀── Good for vendor software                                       │
+│   3. FILE PATH (Exact)      ◀── Acceptable with full path                                      │
+│   4. FILE PATH (Wildcard)   ◀── Use sparingly, document well                                   │
+│   5. PROCESS NAME ONLY      ◀── AVOID - easily spoofed                                         │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+            <div class="grid-container">
+                <div class="grid-item highlight-card">
+                    <h3>🎯 Tuning Objectives</h3>
+                    <ul>
+                        <li><strong>Reduce False Positives</strong> - Minimize analyst alert fatigue</li>
+                        <li><strong>Maintain Coverage</strong> - Preserve detection capability</li>
+                        <li><strong>Optimize Performance</strong> - Reduce sensor resource usage</li>
+                        <li><strong>Enable Prevention</strong> - Safely enable blocking actions</li>
+                    </ul>
+                </div>
+                <div class="grid-item highlight-card">
+                    <h3>⚠️ Tuning Risks</h3>
+                    <ul>
+                        <li><strong>Over-Exclusion</strong> - Creating blind spots attackers can exploit</li>
+                        <li><strong>Broad Exclusions</strong> - Wildcards that cover too much</li>
+                        <li><strong>Undocumented Changes</strong> - Losing track of why exclusions exist</li>
+                        <li><strong>Stale Exclusions</strong> - Old exclusions no longer needed</li>
+                    </ul>
+                </div>
+            </div>
+            <h3>Detection Architecture Layers</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Layer</th><th>Description</th><th>Tuning Mechanism</th><th>Scope</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cloud ML</strong></td>
+                        <td>Cloud-based machine learning detection</td>
+                        <td>ML Exclusions, Severity threshold</td>
+                        <td>Per prevention policy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sensor ML</strong></td>
+                        <td>On-sensor machine learning</td>
+                        <td>ML Exclusions</td>
+                        <td>Per prevention policy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IOA Rules</strong></td>
+                        <td>Behavioral detection rules</td>
+                        <td>IOA Exclusions, Custom IOA disable</td>
+                        <td>Per IOA rule group</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custom IOC</strong></td>
+                        <td>Custom indicators of compromise</td>
+                        <td>IOC modification/deletion</td>
+                        <td>Global or per host group</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Intelligence</strong></td>
+                        <td>CrowdStrike threat intelligence</td>
+                        <td>Not tunable (vendor-managed)</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <!-- Exclusion Types -->
+        <section class="content-section">
+            <h2>Exclusion Types</h2>
+            <p>CrowdStrike provides several exclusion mechanisms, each designed for specific scenarios and detection layers.</p>
+            <h3>Machine Learning Exclusions</h3>
+            <div class="info-box">
+                <strong>Purpose:</strong> Prevent ML-based detections for legitimate software that triggers false positives.
+            </div>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Exclusion Method</th><th>Best For</th><th>Precision</th><th>Persistence</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SHA256 Hash</strong></td>
+                        <td>Specific known-good files</td>
+                        <td>⭐⭐⭐⭐⭐ Highest</td>
+                        <td>Until file changes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>File Path</strong></td>
+                        <td>Trusted application directories</td>
+                        <td>⭐⭐⭐ Medium</td>
+                        <td>Permanent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Certificate</strong></td>
+                        <td>Vendor-signed software</td>
+                        <td>⭐⭐⭐⭐ High</td>
+                        <td>Until cert expires</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wildcard Path</strong></td>
+                        <td>Dynamic paths (user profiles)</td>
+                        <td>⭐⭐ Lower</td>
+                        <td>Permanent</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h4>Creating ML Exclusions</h4>
+            <div class="code-block">
+                <pre><code># Navigate to ML Exclusions
+Configuration → Prevention Policy → [Policy Name] → Machine Learning → Exclusions
+# Add Hash-Based Exclusion (Recommended)
+Type: SHA256
+Value: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2
+Description: CustomApp v2.3.1 - Approved by Security Team - Ticket: SEC-1234
+Applied to: All ML models / Specific model
+# Add Path-Based Exclusion
+Type: File Path
+Value: C:\Program Files\CustomApp\*.exe
+Description: CustomApp installation directory - Vendor: ACME Corp
+# Add Certificate-Based Exclusion
+Type: Code Signing Certificate
+Value: [Certificate thumbprint or subject name]
+Description: All software signed by ACME Corp certificate</code></pre>
+            </div>
+            <h3>IOA Exclusions</h3>
+            <div class="info-box">
+                <strong>Purpose:</strong> Prevent behavioral (IOA) rules from triggering on legitimate activity patterns.
+            </div>
+            <h4>IOA Exclusion Scope Options</h4>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Scope</th><th>Description</th><th>Use Case</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Global</strong></td>
+                        <td>Applies to all IOA rules</td>
+                        <td>Widely-used admin tools (SCCM, Intune)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rule Group</strong></td>
+                        <td>Applies to specific IOA group</td>
+                        <td>Platform-specific exclusions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Single Rule</strong></td>
+                        <td>Applies to one IOA rule</td>
+                        <td>Precise tuning for specific detection</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Host Group</strong></td>
+                        <td>Applies to specific hosts</td>
+                        <td>Server-specific behaviors (DCs, SQL)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h4>IOA Exclusion Configuration</h4>
+            <div class="code-block">
+                <pre><code># Navigate to IOA Exclusions
+Configuration → Custom IOA → [Rule Group] → Exclusions
+# Exclude Specific Process
+Field: ImageFileName
+Operator: Equals
+Value: C:\Windows\CCM\CcmExec.exe
+Apply to: All rules in group
+# Exclude Process with Parent Context
+Field: ParentImageFileName
+Operator: Equals
+Value: C:\Windows\System32\services.exe
+AND
+Field: ImageFileName
+Operator: Contains
+Value: svchost.exe
+# Exclude by Command Line Pattern
+Field: CommandLine
+Operator: Contains
+Value: /S /v /qn REBOOT=ReallySuppress
+Note: Common for legitimate software deployment</code></pre>
+            </div>
+            <h3>Sensor Visibility Exclusions</h3>
+            <div class="warning-box">
+                <strong>⚠️ Critical:</strong> Sensor visibility exclusions completely hide activity from CrowdStrike. Use only when absolutely necessary for performance optimization. These create true blind spots.
+            </div>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Type</th><th>Impact</th><th>Common Use Cases</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Process</strong></td>
+                        <td>No telemetry for specified process</td>
+                        <td>High-volume backup agents, AV scanners</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Directory</strong></td>
+                        <td>No file system monitoring</td>
+                        <td>Database directories, large temp folders</td>
+                    </tr>
+                    <tr>
+                        <td><strong>File Extension</strong></td>
+                        <td>No monitoring for extension</td>
+                        <td>Database files (.mdf, .ldf)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <pre><code># Navigate to Sensor Visibility Exclusions
+Configuration → Sensor Visibility Exclusions → Add Exclusion
+# High-Volume Backup Agent
+Type: Process Path
+Value: C:\Program Files\Veeam\*
+Justification: Backup agent generates excessive telemetry during backup windows
+# Database Directory
+Type: Directory
+Value: D:\SQLData\*
+Justification: SQL Server data files - high I/O volume
+# Temporary Files
+Type: File Extension
+Value: *.tmp
+Justification: Reduce noise from temporary file operations</code></pre>
+            </div>
+            <h3>Quarantine Exclusions</h3>
+            <div class="info-box">
+                <strong>Purpose:</strong> Prevent specific files from being quarantined even when detected as malicious. Use carefully - this allows potentially malicious files to remain on systems.
+            </div>
+            <div class="code-block">
+                <pre><code># Navigate to Quarantine Exclusions
+Configuration → Prevention Policy → [Policy] → Quarantine → Exclusions
+# Allow Specific Penetration Testing Tool
+Type: SHA256
+Value: [hash of authorized pentest tool]
+Description: Authorized - Cobalt Strike Beacon for Red Team Exercise
+Expiration: 2025-01-15
+Approval: CISO - Ticket SEC-4567
+# Allow Security Assessment Script
+Type: File Path
+Value: C:\SecurityTools\assessment.ps1
+Description: Internal vulnerability assessment script
+Approval: Security Team Lead</code></pre>
+            </div>
+        </section>
+        <!-- Exclusion Pattern Syntax -->
+        <section class="content-section">
+            <h2>Exclusion Pattern Syntax</h2>
+            <p>Understanding pattern matching syntax is critical for creating effective exclusions that are neither too broad nor too narrow.</p>
+            <h3>Path Wildcards</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Pattern</th><th>Meaning</th><th>Example</th><th>Matches</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>*</code></td>
+                        <td>Any characters in filename</td>
+                        <td><code>C:\Temp\*.exe</code></td>
+                        <td>All .exe files in C:\Temp</td>
+                    </tr>
+                    <tr>
+                        <td><code>**</code></td>
+                        <td>Any subdirectory depth</td>
+                        <td><code>C:\Users\**\Downloads\*</code></td>
+                        <td>Downloads in all user profiles</td>
+                    </tr>
+                    <tr>
+                        <td><code>?</code></td>
+                        <td>Single character</td>
+                        <td><code>app?.exe</code></td>
+                        <td>app1.exe, appA.exe</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h4>Path Pattern Examples</h4>
+            <div class="code-block">
+                <pre><code># Specific file - Most precise
+C:\Program Files\CustomApp\app.exe
+# All executables in directory - Medium precision
+C:\Program Files\CustomApp\*.exe
+# All files in directory - Lower precision
+C:\Program Files\CustomApp\*
+# All subdirectories and files - Lowest precision (avoid if possible)
+C:\Program Files\CustomApp\**
+# User profile paths with wildcard
+C:\Users\*\AppData\Local\CustomApp\app.exe
+# Multiple file types
+C:\CustomApp\*.exe
+C:\CustomApp\*.dll
+# Environment variable style (NOT supported - use explicit paths)
+# WRONG: %PROGRAMFILES%\CustomApp\*
+# RIGHT: C:\Program Files\CustomApp\*
+#        C:\Program Files (x86)\CustomApp\*</code></pre>
+            </div>
+            <h3>Command Line Pattern Matching</h3>
+            <div class="code-block">
+                <pre><code># IOA Command Line Exclusions
+# Contains - Match substring anywhere
+Operator: Contains
+Value: /silent /norestart
+Matches: Any command line containing this string
+# Starts With - Match beginning
+Operator: Starts With
+Value: C:\Windows\System32\msiexec.exe /i
+Matches: MSI installations
+# Regex Pattern - Complex matching (where supported)
+Operator: Regex
+Value: .*\\msiexec\.exe.*/i.*{[A-F0-9-]{36}}.*
+Matches: MSI with product GUID
+# Case Sensitivity
+- File paths: Case-insensitive on Windows
+- Command line arguments: Case-sensitive for regex
+- Recommendation: Match case of actual usage</code></pre>
+            </div>
+            <h3>Hash-Based Exclusions</h3>
+            <div class="code-block">
+                <pre><code># Get SHA256 hash for exclusion
+# PowerShell - Get file hash
+Get-FileHash -Path "C:\Program Files\CustomApp\app.exe" -Algorithm SHA256
+# Output:
+# Algorithm       Hash                                                                   Path
+# ---------       ----                                                                   ----
+# SHA256          A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2       C:\Program Files\CustomApp\app.exe
+# Linux - Get file hash
+sha256sum /opt/customapp/app
+# From Falcon Console - Detection Details
+# Click on detection → File Details → SHA256 hash displayed
+# Bulk hash collection for multiple files
+Get-ChildItem "C:\Program Files\CustomApp\*.exe" | ForEach-Object {
+    [PSCustomObject]@{
+        File = $_.Name
+        Hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+    }
+} | Export-Csv -Path "hashes.csv" -NoTypeInformation</code></pre>
+            </div>
+        </section>
+        <!-- False Positive Analysis -->
+        <section class="content-section">
+            <h2>False Positive Analysis</h2>
+            <p>Systematic false positive analysis ensures you create appropriate exclusions based on evidence rather than assumptions.</p>
+            <h3>FP Analysis Workflow</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Identify Pattern</h4>
+                    <p>Find recurring alerts using Event Search analytics</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Investigate</h4>
+                    <p>Examine process tree, command line, parent process</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Validate Legitimacy</h4>
+                    <p>Confirm software is authorized and behavior expected</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Determine Scope</h4>
+                    <p>Identify minimum exclusion scope needed</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Document & Approve</h4>
+                    <p>Record justification and obtain approval</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">6</span>
+                    <h4>Implement</h4>
+                    <p>Create exclusion with proper configuration</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">7</span>
+                    <h4>Monitor & Validate</h4>
+                    <p>Verify FP rate decreased, no new blind spots</p>
+                </div>
+            </div>
+            <h3>Event Search Queries for FP Analysis</h3>
+            <div class="code-block">
+                <pre><code># Top alerting files by count (last 7 days)
+#event_simpleName=DetectionSummaryEvent
+| stats count by FileName, SHA256HashData, DetectName
+| sort -count
+| head 50
+# Analyze specific detection pattern
+#event_simpleName=DetectionSummaryEvent DetectName="SuspiciousPowerShellUsage"
+| stats count by ComputerName, FileName, CommandLine, UserName
+| sort -count
+# Find top alerting processes with context
+#event_simpleName=DetectionSummaryEvent
+| stats count, values(ComputerName) as Hosts, dc(ComputerName) as HostCount 
+    by ParentBaseFileName, FileName, DetectName
+| where HostCount > 10
+| sort -count
+# ML detection analysis
+#event_simpleName=DetectionSummaryEvent DetectName=*ML*
+| stats count by FileName, FilePath, SHA256HashData, Technique
+| sort -count
+# Time-based analysis for scheduled tasks
+#event_simpleName=DetectionSummaryEvent
+| bucket _time span=1h
+| stats count by _time, DetectName, FileName
+| where count > 50
+# Parent-child relationship analysis
+#event_simpleName=DetectionSummaryEvent
+| stats count by GrandparentBaseFileName, ParentBaseFileName, FileName, DetectName
+| sort -count
+# Find alerts associated with specific software
+#event_simpleName=DetectionSummaryEvent FilePath="*\\CustomApp\\*"
+| stats count by DetectName, FileName, CommandLine
+| sort -count</code></pre>
+            </div>
+            <h3>Validation Checklist</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Check</th><th>Question</th><th>Validation Method</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Software Authorization</strong></td>
+                        <td>Is this software approved for use?</td>
+                        <td>Check asset inventory, software catalog</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Expected Behavior</strong></td>
+                        <td>Is this activity normal for this software?</td>
+                        <td>Review vendor documentation, baseline behavior</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Digital Signature</strong></td>
+                        <td>Is the file properly signed?</td>
+                        <td>Check signature in detection details</td>
+                    </tr>
+                    <tr>
+                        <td><strong>File Location</strong></td>
+                        <td>Is the file in expected location?</td>
+                        <td>Compare to standard installation paths</td>
+                    </tr>
+                    <tr>
+                        <td><strong>User Context</strong></td>
+                        <td>Is the user expected to run this?</td>
+                        <td>Check user role, department</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prevalence</strong></td>
+                        <td>How widespread is this alert?</td>
+                        <td>Query unique host count in Event Search</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Timing Pattern</strong></td>
+                        <td>Does timing match expected operation?</td>
+                        <td>Correlate with backup windows, deployments</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <!-- Common False Positive Scenarios -->
+        <section class="content-section">
+            <h2>Common False Positive Scenarios</h2>
+            <p>These scenarios frequently generate false positives across CrowdStrike deployments. Use these as reference patterns for your tuning efforts.</p>
+            <h3>Endpoint Management Tools</h3>
+            <div class="code-block">
+                <pre><code># SCCM/MECM
+Detection: SuspiciousScriptExecution, ProcessHollowing
+Cause: ConfigMgr client operations, script deployments
+Exclusion:
+  - Path: C:\Windows\CCM\*
+  - Path: C:\Windows\ccmcache\*
+  - Process: CcmExec.exe, SCClient.exe
+# Microsoft Intune
+Detection: SuspiciousPowerShellUsage, EncodedCommand
+Cause: Intune management extension scripts
+Exclusion:
+  - Path: C:\Program Files (x86)\Microsoft Intune Management Extension\*
+  - Process: IntuneManagementExtension.exe
+  - CommandLine contains: -ExecutionPolicy Bypass (from Intune path)
+# Tanium
+Detection: RemoteThreadCreation, SuspiciousNetworkActivity
+Cause: Tanium client operations
+Exclusion:
+  - Path: C:\Program Files (x86)\Tanium\*
+  - Process: TaniumClient.exe
+# PDQ Deploy
+Detection: RemoteServiceCreation, SuspiciousScriptExecution
+Cause: Software deployment operations
+Exclusion:
+  - Process: PDQDeployRunner-*.exe
+  - Path: C:\Windows\AdminArsenal\*</code></pre>
+            </div>
+            <h3>Security Tools</h3>
+            <div class="code-block">
+                <pre><code># Vulnerability Scanners
+Detection: CredentialAccess, NetworkScan
+Cause: Authenticated vulnerability scanning
+Exclusion:
+  - Process: nessus*, qualys*, rapid7*
+  - Source IP: [Scanner IP addresses]
+  Note: Time-limited exclusions during scan windows preferred
+# Antivirus/EDR Coexistence
+Detection: ProcessInjection, SuspiciousDriverLoad
+Cause: Multiple security agents interacting
+Exclusion:
+  - Path: C:\Program Files\[AV Vendor]\*
+  - Process: Specific AV processes
+  Note: Coordinate with vendor on coexistence configuration
+# Penetration Testing Tools (Authorized)
+Detection: Multiple - these ARE malicious patterns
+Cause: Authorized red team/pentest activity
+Exclusion:
+  - Hash-based only (specific tool versions)
+  - Host group: Specific test systems only
+  - Time-limited: Duration of engagement
+  - MUST have documented approval</code></pre>
+            </div>
+            <h3>Development & DevOps</h3>
+            <div class="code-block">
+                <pre><code># Visual Studio / Build Tools
+Detection: SuspiciousCompilerUsage, ExecutableDropped
+Cause: Normal compilation activity
+Exclusion:
+  - Path: C:\Program Files\Microsoft Visual Studio\*
+  - Path: C:\Users\*\source\repos\**
+  - Process: devenv.exe, MSBuild.exe, cl.exe
+  Host Group: Developer workstations only
+# Docker / Container Operations
+Detection: ProcessHollowing, SuspiciousChildProcess
+Cause: Container runtime operations
+Exclusion:
+  - Process: dockerd.exe, containerd.exe
+  - Path: C:\ProgramData\Docker\*
+# Jenkins / CI-CD Agents
+Detection: SuspiciousScriptExecution, RemoteExecution
+Cause: Build agent operations
+Exclusion:
+  - Path: C:\Jenkins\*
+  - Process: jenkins.exe, java.exe (from Jenkins path)
+  - Host Group: CI/CD infrastructure only
+# Git Operations
+Detection: SuspiciousNetworkActivity
+Cause: Git clone/push to external repositories
+Exclusion:
+  - Process: git.exe
+  - Destination: github.com, gitlab.com, [internal git server]</code></pre>
+            </div>
+            <h3>Backup & Administration</h3>
+            <div class="code-block">
+                <pre><code># Backup Agents
+Detection: FileEncryption, MassFileModification
+Cause: Backup compression, deduplication
+Exclusion:
+  - Path: C:\Program Files\Veeam\*
+  - Path: C:\Program Files\Commvault\*
+  - Process: VeeamAgent.exe, clBackup.exe
+  Sensor Visibility: Consider for high-volume backup servers
+# Remote Administration Tools (Approved)
+Detection: RemoteDesktopConnection, RemoteExecution
+Cause: Authorized remote support tools
+Exclusion:
+  - Process: TeamViewer*.exe, AnyDesk.exe
+  - Approval: IT-approved remote tools only
+  Note: Block unauthorized remote access tools
+# Database Maintenance
+Detection: SuspiciousProcessBehavior
+Cause: Database maintenance operations
+Exclusion:
+  - Process: sqlservr.exe child processes
+  - Path: C:\Program Files\Microsoft SQL Server\**
+  Host Group: Database servers only</code></pre>
+            </div>
+        </section>
+        <!-- Prevention Policy Optimization -->
+        <section class="content-section">
+            <h2>Prevention Policy Optimization</h2>
+            <p>Configure prevention policies to maximize protection while minimizing operational impact.</p>
+            <h3>Prevention Settings Matrix</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Setting</th><th>Conservative</th><th>Moderate</th><th>Aggressive</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cloud ML</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block - Moderate</td>
+                        <td>Block - Aggressive</td>
+                        <td>Start moderate, increase after tuning</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sensor ML</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block - Moderate</td>
+                        <td>Block - Aggressive</td>
+                        <td>Lower latency than cloud ML</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Script-Based Execution</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block + Exclusions</td>
+                        <td>Block</td>
+                        <td>Requires PowerShell exclusions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Credential Theft</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block</td>
+                        <td>Block</td>
+                        <td>Low FP rate - enable blocking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lateral Movement</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block</td>
+                        <td>Block</td>
+                        <td>May need admin tool exclusions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ransomware</strong></td>
+                        <td>Block</td>
+                        <td>Block</td>
+                        <td>Block</td>
+                        <td>Always enable - critical protection</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Exploit Behavior</strong></td>
+                        <td>Detect Only</td>
+                        <td>Block</td>
+                        <td>Block</td>
+                        <td>Enable after application compatibility testing</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>Phased Rollout Strategy</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Week 1-2: Detect Only</h4>
+                    <p>Deploy with all prevention in detect mode. Collect baseline data.</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Week 3-4: Analyze & Tune</h4>
+                    <p>Review detections, create necessary exclusions, validate FPs.</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Week 5: Enable Low-Risk</h4>
+                    <p>Enable blocking for ransomware, credential theft (low FP rate).</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Week 6-8: Moderate Settings</h4>
+                    <p>Enable ML blocking (moderate), continue tuning.</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Week 9+: Full Prevention</h4>
+                    <p>Enable remaining prevention, monitor for issues.</p>
+                </div>
+            </div>
+            <h3>Policy Assignment Strategy</h3>
+            <div class="code-block">
+                <pre><code># Recommended Policy Structure
+# Standard Workstations - Full prevention
+Name: Workstation-Production
+ML: Block - Moderate
+Script: Block (with SCCM/Intune exclusions)
+Credential: Block
+Lateral Movement: Block
+Ransomware: Block
+Applied to: All workstations
+# Servers - Conservative
+Name: Server-Production
+ML: Block - Cautious
+Script: Detect (many legitimate scripts)
+Credential: Block
+Lateral Movement: Detect (admin tools)
+Ransomware: Block
+Applied to: Production servers
+# Developer Workstations
+Name: Developer-Workstations
+ML: Block - Moderate
+Script: Detect (development scripts)
+Credential: Block
+Lateral Movement: Block
+Additional Exclusions: Visual Studio, Docker, Git
+Applied to: Developer host group
+# Domain Controllers
+Name: DomainController-Production
+ML: Block - Cautious
+Script: Detect
+Credential: Detect (replication triggers)
+Lateral Movement: Detect
+Custom IOA: Modified for DC behavior
+Applied to: Domain Controllers</code></pre>
+            </div>
+        </section>
+        <!-- Detection Metrics -->
+        <section class="content-section">
+            <h2>Detection Effectiveness Metrics</h2>
+            <p>Track these metrics to measure tuning effectiveness and maintain optimal detection posture.</p>
+            <h3>Key Performance Indicators</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr><th>Metric</th><th>Target</th><th>Measurement Method</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>False Positive Rate</strong></td>
+                        <td>&lt;5% of total alerts</td>
+                        <td>Closed as FP / Total detections</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mean Time to Triage</strong></td>
+                        <td>&lt;15 minutes</td>
+                        <td>Alert created to first analyst action</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alert Volume</strong></td>
+                        <td>Manageable for team size</td>
+                        <td>Daily alert count / analyst capacity</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prevention Block Rate</strong></td>
+                        <td>&gt;90% for enabled categories</td>
+                        <td>Blocked / (Blocked + Detected)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Exclusion Count</strong></td>
+                        <td>Minimize, review quarterly</td>
+                        <td>Total active exclusions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Coverage Score</strong></td>
+                        <td>&gt;80% of MITRE techniques</td>
+                        <td>Mapped detections vs MITRE ATT&CK</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>Monitoring Queries</h3>
+            <div class="code-block">
+                <pre><code># Daily alert volume trend
+#event_simpleName=DetectionSummaryEvent
+| bucket _time span=1d
+| stats count by _time
+| sort _time
+# False positive tracking (requires workflow integration)
+#event_simpleName=DetectionSummaryEvent
+| stats count by DetectName, Status
+| where Status="false_positive"
+| sort -count
+# Prevention effectiveness
+#event_simpleName=DetectionSummaryEvent
+| stats count by DetectName, PatternDispositionValue
+| eval Action=case(
+    PatternDispositionValue==0, "Detect",
+    PatternDispositionValue==16, "Block",
+    PatternDispositionValue==272, "Kill",
+    true(), "Other")
+| stats sum(count) as Total by DetectName, Action
+# Exclusion coverage analysis
+# Compare alerts before/after exclusion implementation
+#event_simpleName=DetectionSummaryEvent FileName="app.exe"
+| bucket _time span=1d
+| stats count by _time
+| sort _time</code></pre>
+            </div>
+        </section>
+        <!-- Tuning Best Practices -->
+        <section class="content-section">
+            <h2>Tuning Best Practices</h2>
+            <div class="grid-container">
+                <div class="grid-item highlight-card">
+                    <h3>✅ Do</h3>
+                    <ul>
+                        <li>Use hash-based exclusions when possible</li>
+                        <li>Document every exclusion with business justification</li>
+                        <li>Apply exclusions to smallest scope necessary</li>
+                        <li>Review exclusions quarterly</li>
+                        <li>Test exclusions in detect-only mode first</li>
+                        <li>Use host groups for server-specific tuning</li>
+                        <li>Maintain exclusion inventory with approval records</li>
+                        <li>Set expiration dates on temporary exclusions</li>
+                    </ul>
+                </div>
+                <div class="grid-item highlight-card">
+                    <h3>❌ Don't</h3>
+                    <ul>
+                        <li>Create broad wildcard exclusions</li>
+                        <li>Exclude entire directories without investigation</li>
+                        <li>Skip validation before creating exclusions</li>
+                        <li>Leave exclusions undocumented</li>
+                        <li>Apply global exclusions without testing</li>
+                        <li>Ignore exclusion expiration dates</li>
+                        <li>Create exclusions for unvalidated software</li>
+                        <li>Use sensor visibility exclusions as first resort</li>
+                    </ul>
+                </div>
+            </div>
+            <h3>Exclusion Documentation Template</h3>
+            <div class="code-block">
+                <pre><code># Exclusion Documentation Record
+Exclusion ID: EXC-2025-0042
+Type: ML Exclusion (Path-based)
+Created: 2025-01-15
+Created By: [Analyst Name]
+Pattern: C:\Program Files\CustomApp\*.exe
+Scope: All prevention policies
+Justification:
+- Software: CustomApp v3.2.1 by ACME Corporation
+- Purpose: Enterprise resource planning application
+- Validation: Confirmed legitimate by IT Asset Management
+- Detection triggered: MLOnWrite - Medium confidence
+Investigation:
+- Ticket: SEC-1234
+- Files analyzed: app.exe, helper.exe, updater.exe
+- Signature status: Validly signed by ACME Corp
+- VirusTotal: 0/70 detections
+- Behavior: Normal ERP operations, database queries
+Approval:
+- Approved by: [Security Lead]
+- Approval date: 2025-01-14
+- Review date: 2025-04-15
+Monitoring:
+- Post-implementation: FP rate decreased from 15/day to 0/day
+- Last review: [Date]
+- Status: Active</code></pre>
+            </div>
+            <h3>Quarterly Review Process</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Export Exclusions</h4>
+                    <p>Generate complete list of all active exclusions</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Verify Software</h4>
+                    <p>Confirm excluded software still deployed</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Check Versions</h4>
+                    <p>Update hash exclusions for new versions</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Test Removal</h4>
+                    <p>Disable old exclusions, monitor for alerts</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <h4>Document Review</h4>
+                    <p>Update documentation with review results</p>
+                </div>
+            </div>
+        </section>
+        <!-- Interview Questions -->
+        <section class="interview-section">
+            <h2>💼 Interview Questions</h2>
+            <div class="interview-qa">
+                <h4>Q: How do you approach tuning detections to reduce false positives while maintaining security coverage?</h4>
+                <p><strong>A:</strong> I follow a systematic process. First, I use Event Search to identify the highest-volume detections and analyze patterns - looking at file paths, process relationships, and affected hosts. For each potential FP, I validate that the software is authorized and the behavior is expected. I create the most specific exclusion possible - preferring SHA256 hashes over paths, and single rules over global exclusions. Every exclusion requires documentation with business justification and approval. After implementation, I monitor to verify the FP rate decreased. I conduct quarterly reviews to remove obsolete exclusions and update hashes for new software versions. The goal is minimal exclusions with maximum specificity.</p>
+            </div>
+            <div class="interview-qa">
+                <h4>Q: What's your strategy for enabling prevention (blocking) mode safely?</h4>
+                <p><strong>A:</strong> I use a phased rollout approach. Start with detect-only mode for 2-4 weeks to collect baseline data. Analyze detections and create necessary exclusions for legitimate software - SCCM, development tools, backup agents are common culprits. Then enable blocking for low-FP-risk categories first: ransomware and credential theft have low false positive rates and high impact. Next, enable ML blocking at moderate sensitivity. Finally, enable script-based and exploit prevention after application compatibility testing. Throughout, I use different policies for different host types - servers get more conservative settings than workstations. I maintain a rollback plan and monitor closely after each change.</p>
+            </div>
+            <div class="interview-qa">
+                <h4>Q: How do you handle a situation where a critical application is being blocked by CrowdStrike?</h4>
+                <p><strong>A:</strong> Immediate response: If production is impacted, I'd first verify the alert isn't a true positive - even legitimate applications can be compromised. Assuming it's a false positive, I create a hash-based exclusion for the specific file version as a quick fix. For longer-term resolution, I investigate the detection - what triggered it, is there a less-risky exclusion approach. I work with the application team to understand the behavior pattern. If it's a vendor issue, I report it to CrowdStrike as a potential ML false positive. I document the incident, create proper exclusions with approval, and add the application to monitoring for future version updates. I also evaluate if policy settings are too aggressive for that host type.</p>
+            </div>
+            <div class="interview-qa">
+                <h4>Q: What are the risks of over-exclusion and how do you mitigate them?</h4>
+                <p><strong>A:</strong> Over-exclusion creates blind spots attackers can exploit. Adversaries specifically target commonly-excluded paths like C:\Windows\Temp or backup software directories. Mitigation strategies: Use hash-based exclusions instead of path-based where possible since attackers can't easily replicate legitimate file hashes. Apply exclusions to the smallest scope - specific host groups rather than global. Document everything and require approval. Set expiration dates on temporary exclusions. Conduct quarterly reviews to remove unneeded exclusions. Monitor excluded paths with other controls if possible. Never create sensor visibility exclusions without exhausting other options. The principle is: exclude the minimum necessary to resolve the false positive.</p>
+            </div>
+            <div class="interview-qa">
+                <h4>Q: How do you measure detection tuning effectiveness?</h4>
+                <p><strong>A:</strong> Key metrics I track: False positive rate - percentage of alerts closed as FP, target under 5%. Alert volume trend - should be manageable for the team size. Mean time to triage - tuning should reduce investigation time. Prevention block rate - percentage of true threats blocked vs detected. Exclusion count - should be minimal and justified. I also track coverage using MITRE ATT&CK mapping to ensure tuning hasn't created gaps in technique detection. I create dashboards showing these metrics over time and review them weekly. Sudden increases in any metric trigger investigation - new software deployed, configuration change, or potential attack. The goal is optimal signal-to-noise ratio.</p>
+            </div>
+        </section>
+        <div class="navigation-links">
+            <a href="ioa-rules.html">← IOA Rules</a>
+            <a href="threat-hunting.html">Threat Hunting →</a>
+        </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

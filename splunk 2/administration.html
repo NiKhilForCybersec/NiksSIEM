@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Administration | Splunk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Splunk</a>
+                <span class="separator">/</span>
+                <span class="current">Splunk Administration</span>
+            </div>
+
+<h1><i class="fas fa-cogs"></i> Splunk Administration</h1>
+                <p class="lead">Essential Splunk administration tasks for SOC analysts including user management, index administration, data inputs, and troubleshooting common issues.</p>
+
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-sitemap"></i> Splunk Architecture</h2>
+                <div class="config-section">
+                    <div class="code-block">Splunk Components:
+
+┌─────────────────────────────────────────────────────────┐
+│                    SEARCH HEAD                          │
+│  - User interface                                       │
+│  - Search processing                                    │
+│  - Knowledge objects (saved searches, dashboards)       │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                    INDEXER(S)                           │
+│  - Data storage                                         │
+│  - Index maintenance                                    │
+│  - Search execution                                     │
+└─────────────────────────────────────────────────────────┘
+                          ▲
+                          │
+┌─────────────────────────────────────────────────────────┐
+│              FORWARDERS (Universal/Heavy)               │
+│  - Data collection                                      │
+│  - Data forwarding                                      │
+│  - (Heavy only) Parsing, filtering                      │
+└─────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Component Roles</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Component</th><th>Function</th><th>Key Config</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Universal Forwarder</strong></td>
+                                <td>Lightweight data collection</td>
+                                <td>inputs.conf, outputs.conf</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Heavy Forwarder</strong></td>
+                                <td>Parsing, filtering, routing</td>
+                                <td>props.conf, transforms.conf</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Indexer</strong></td>
+                                <td>Storage and search</td>
+                                <td>indexes.conf, server.conf</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Search Head</strong></td>
+                                <td>User interface, searches</td>
+                                <td>savedsearches.conf, web.conf</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Index Management -->
+                <h2><i class="fas fa-database"></i> Index Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Indexes</span></p>
+
+                    <h4>Default Indexes</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Index</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>main</strong></td><td>Default index for events</td></tr>
+                            <tr><td><strong>_internal</strong></td><td>Splunk internal logs</td></tr>
+                            <tr><td><strong>_audit</strong></td><td>Audit trail of Splunk access</td></tr>
+                            <tr><td><strong>_introspection</strong></td><td>Performance data</td></tr>
+                            <tr><td><strong>summary</strong></td><td>Summary index for reports</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Index Configuration</h4>
+                    <div class="code-block"># indexes.conf
+
+[security]
+homePath = $SPLUNK_DB/security/db
+coldPath = $SPLUNK_DB/security/colddb
+thawedPath = $SPLUNK_DB/security/thaweddb
+maxDataSize = auto_high_volume
+maxTotalDataSizeMB = 500000
+frozenTimePeriodInSecs = 7776000  # 90 days
+
+[network]
+homePath = $SPLUNK_DB/network/db
+coldPath = $SPLUNK_DB/network/colddb
+thawedPath = $SPLUNK_DB/network/thaweddb
+maxTotalDataSizeMB = 1000000
+frozenTimePeriodInSecs = 2592000  # 30 days</div>
+
+                    <h4>Index Lifecycle</h4>
+                    <div class="code-block">Data Lifecycle Stages:
+
+HOT → WARM → COLD → FROZEN → DELETED
+
+Hot Buckets:
+- Actively written to
+- Searchable
+- Fastest access
+
+Warm Buckets:
+- No longer written
+- Searchable
+- Fast access
+
+Cold Buckets:
+- Older data
+- Searchable
+- Slower access
+
+Frozen Buckets:
+- Archived or deleted
+- Not searchable by default
+- Can be thawed if needed</div>
+                </div>
+
+                <!-- Data Inputs -->
+                <h2><i class="fas fa-upload"></i> Data Inputs</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Data Inputs</span></p>
+
+                    <h4>Input Types</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Type</th><th>Use Case</th><th>Config File</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Files & Directories</strong></td>
+                                <td>Local log files</td>
+                                <td>inputs.conf [monitor://]</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network (TCP/UDP)</strong></td>
+                                <td>Syslog, network devices</td>
+                                <td>inputs.conf [tcp://] [udp://]</td>
+                            </tr>
+                            <tr>
+                                <td><strong>HTTP Event Collector</strong></td>
+                                <td>API-based ingestion</td>
+                                <td>inputs.conf [http://]</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Scripted Inputs</strong></td>
+                                <td>Custom data collection</td>
+                                <td>inputs.conf [script://]</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Windows Inputs</strong></td>
+                                <td>Event logs, WMI, Registry</td>
+                                <td>inputs.conf [WinEventLog://]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Common Input Configurations</h4>
+                    <div class="code-block"># inputs.conf examples
+
+# Monitor a log file
+[monitor:///var/log/secure]
+disabled = false
+index = security
+sourcetype = linux_secure
+
+# Windows Security Event Log
+[WinEventLog://Security]
+disabled = false
+index = wineventlog
+evt_resolve_ad_obj = 1
+blacklist1 = EventCode="4688" Message="(?:conhost\.exe|RuntimeBroker\.exe)"
+
+# TCP Syslog Input
+[tcp://514]
+disabled = false
+connection_host = dns
+index = network
+sourcetype = syslog
+
+# HTTP Event Collector
+[http://security_events]
+disabled = false
+index = security
+token = your-hec-token-here</div>
+                </div>
+
+                <!-- Source Types -->
+                <h2><i class="fas fa-tag"></i> Source Type Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Source Types</span></p>
+
+                    <h4>Common Security Source Types</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Source Type</th><th>Data Source</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>WinEventLog:Security</td><td>Windows Security logs</td></tr>
+                            <tr><td>WinEventLog:System</td><td>Windows System logs</td></tr>
+                            <tr><td>XmlWinEventLog:Security</td><td>Windows XML format</td></tr>
+                            <tr><td>linux_secure</td><td>Linux auth logs</td></tr>
+                            <tr><td>pan:traffic</td><td>Palo Alto firewall</td></tr>
+                            <tr><td>cisco:asa</td><td>Cisco ASA firewall</td></tr>
+                            <tr><td>aws:cloudtrail</td><td>AWS CloudTrail</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Source Type Configuration</h4>
+                    <div class="code-block"># props.conf - Source type settings
+
+[custom_app_logs]
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+TIME_PREFIX = timestamp=
+LINE_BREAKER = ([\r\n]+)
+SHOULD_LINEMERGE = false
+TRUNCATE = 10000
+MAX_TIMESTAMP_LOOKAHEAD = 30
+
+# Field extractions
+EXTRACT-user = user=(?<user>\w+)
+EXTRACT-action = action=(?<action>\w+)
+EXTRACT-src_ip = src_ip=(?<src_ip>\d+\.\d+\.\d+\.\d+)</div>
+                </div>
+
+                <!-- User Management -->
+                <h2><i class="fas fa-users"></i> User Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Access Controls → Users</span></p>
+
+                    <h4>Default Roles</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Role</th><th>Capabilities</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>admin</strong></td>
+                                <td>Full access to all features</td>
+                            </tr>
+                            <tr>
+                                <td><strong>power</strong></td>
+                                <td>Create alerts, reports, dashboards</td>
+                            </tr>
+                            <tr>
+                                <td><strong>user</strong></td>
+                                <td>Run searches, view dashboards</td>
+                            </tr>
+                            <tr>
+                                <td><strong>can_delete</strong></td>
+                                <td>Delete events (inherits user)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Creating Custom Roles</h4>
+                    <div class="code-block"># authorize.conf
+
+[role_soc_analyst]
+importRoles = user
+srchIndexesAllowed = security;network;wineventlog
+srchIndexesDefault = security
+srchJobsQuota = 10
+rtSrchJobsQuota = 5
+srchDiskQuota = 1000
+cumulativeSrchJobsQuota = 50
+cumulativeRTSrchJobsQuota = 25
+
+[role_soc_lead]
+importRoles = power
+srchIndexesAllowed = security;network;wineventlog;_internal;_audit
+srchJobsQuota = 20
+schedule_search = enabled
+accelerate_search = enabled</div>
+
+                    <h4>Index-Based Access Control</h4>
+                    <div class="code-block">Role Index Permissions:
+
+srchIndexesAllowed:
+- Indexes the role CAN search
+- Comma or semicolon separated
+
+srchIndexesDefault:
+- Default indexes for searches
+- Used when index not specified
+
+Example Strategy:
+- SOC Tier 1: security, network indexes
+- SOC Tier 2: + internal, audit indexes
+- Admin: All indexes</div>
+                </div>
+
+                <!-- Saved Searches and Alerts -->
+                <h2><i class="fas fa-bell"></i> Alerts and Scheduled Searches</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Searches, Reports, and Alerts</span></p>
+
+                    <h4>Alert Types</h4>
+                    <div class="code-block">Alert Types:
+
+Scheduled Alert:
+- Runs on schedule (cron)
+- Checks for condition
+- Triggers action if met
+
+Real-Time Alert:
+- Continuous monitoring
+- Immediate triggering
+- Higher resource usage
+
+Rolling Window:
+- Searches rolling time window
+- Good for rate-based alerts</div>
+
+                    <h4>Alert Configuration</h4>
+                    <div class="code-block"># savedsearches.conf
+
+[Brute Force Detection]
+search = index=security sourcetype=WinEventLog:Security EventCode=4625 \
+| stats count by src_ip, user \
+| where count > 10
+cron_schedule = */15 * * * *
+enableSched = 1
+dispatch.earliest_time = -15m
+dispatch.latest_time = now
+alert.severity = 4
+alert.suppress = 1
+alert.suppress.period = 1h
+alert.suppress.fields = src_ip,user
+alert_condition = search count > 0
+action.email = 1
+action.email.to = soc@company.com
+action.email.subject = Brute Force Alert: $result.src_ip$</div>
+
+                    <h4>Alert Actions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Action</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Send Email</td><td>Notify analysts</td></tr>
+                            <tr><td>Webhook</td><td>Integrate with SOAR/ticketing</td></tr>
+                            <tr><td>Run Script</td><td>Custom automation</td></tr>
+                            <tr><td>Log Event</td><td>Create audit trail</td></tr>
+                            <tr><td>Add to Lookup</td><td>Populate threat lists</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Lookups -->
+                <h2><i class="fas fa-table"></i> Lookup Management</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Settings → Lookups</span></p>
+
+                    <h4>Lookup Types</h4>
+                    <div class="code-block">Lookup Types:
+
+CSV Lookups:
+- Static file-based
+- Good for reference data
+- Easy to update
+
+KV Store Lookups:
+- Dynamic, database-backed
+- Good for changing data
+- Searchable and updatable
+
+External Lookups:
+- Script-based
+- API integration
+- Complex enrichment</div>
+
+                    <h4>Creating Lookups</h4>
+                    <div class="code-block"># transforms.conf
+
+[threat_intel_ips]
+filename = threat_intel_ips.csv
+max_matches = 1
+min_matches = 1
+default_match = unknown
+case_sensitive_match = false
+
+[asset_lookup]
+filename = assets.csv
+max_matches = 1
+
+# Using lookups in searches:
+index=network 
+| lookup threat_intel_ips ip as src_ip OUTPUT threat_category, threat_score
+| where isnotnull(threat_category)
+
+# Automatic lookup (props.conf)
+[network_traffic]
+LOOKUP-threat = threat_intel_ips ip as src_ip OUTPUT threat_category</div>
+
+                    <h4>Common Security Lookups</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Lookup</th><th>Purpose</th><th>Key Fields</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Asset Inventory</td><td>Host enrichment</td><td>hostname, ip, owner, criticality</td></tr>
+                            <tr><td>User Directory</td><td>User enrichment</td><td>username, department, manager</td></tr>
+                            <tr><td>Threat Intel IPs</td><td>Malicious IP detection</td><td>ip, category, confidence</td></tr>
+                            <tr><td>Threat Intel Domains</td><td>Malicious domain detection</td><td>domain, category, source</td></tr>
+                            <tr><td>Known Good Hashes</td><td>Whitelist</td><td>hash, application, vendor</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+                <div class="config-section">
+                    <h4>Common Issues</h4>
+                    <div class="code-block">Data Not Appearing:
+
+1. Check data input status
+   Settings → Data Inputs → [type]
+   
+2. Verify forwarder connectivity
+   index=_internal source=*metrics.log group=tcpin_connections
+   
+3. Check for parsing errors
+   index=_internal sourcetype=splunkd component=LineBreakingProcessor ERROR
+
+4. Verify index permissions
+   | rest /services/data/indexes | table title, totalEventCount
+
+Search Performance:
+
+1. Check search job inspector
+   Job → Inspect Job
+   
+2. Look for expensive operations
+   index=_audit action=search info=completed
+   | stats avg(total_run_time) by search
+   
+3. Use tstats for indexed fields
+   | tstats count WHERE index=security by _time span=1h</div>
+
+                    <h4>Useful Diagnostic Searches</h4>
+                    <div class="code-block">// Forwarder status
+index=_internal source=*metrics.log group=tcpin_connections
+| stats latest(connectionType) as type, latest(sourceIp) as ip, 
+        latest(fwdType) as fwdType, latest(version) as version by hostname
+
+// Index sizes
+| rest /services/data/indexes
+| table title, currentDBSizeMB, totalEventCount, maxTotalDataSizeMB
+
+// License usage
+index=_internal source=*license_usage.log type=Usage
+| stats sum(b) as bytes by idx
+| eval GB = round(bytes/1024/1024/1024, 2)
+
+// Ingestion latency
+index=_internal source=*metrics.log group=queue name=indexqueue
+| timechart avg(current_size) by host</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between Universal and Heavy Forwarder?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Universal Forwarder:</strong> Lightweight, minimal processing, just forwards raw data</li>
+                                <li><strong>Heavy Forwarder:</strong> Full Splunk instance, can parse, filter, route, and transform data before forwarding</li>
+                            </ul>
+                            <p style="margin-top: 12px;"><strong>Use UF</strong> when: Simple log collection, minimal endpoint impact needed</p>
+                            <p><strong>Use HF</strong> when: Need to parse at edge, filter data, route to multiple destinations</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you optimize slow Splunk searches?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Use time range:</strong> Narrow the search window</li>
+                                <li><strong>Specify index:</strong> Always include index=</li>
+                                <li><strong>Filter early:</strong> Put restrictive filters first</li>
+                                <li><strong>Use tstats:</strong> For indexed fields (much faster)</li>
+                                <li><strong>Avoid wildcards:</strong> Leading wildcards are expensive</li>
+                                <li><strong>Use summary indexing:</strong> Pre-compute common aggregations</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does Splunk handle data retention?</button>
+                        <div class="qa-answer">
+                            <p>Splunk uses bucket-based storage with configurable retention:</p>
+                            <ul>
+                                <li><strong>frozenTimePeriodInSecs:</strong> Age-based retention</li>
+                                <li><strong>maxTotalDataSizeMB:</strong> Size-based retention</li>
+                                <li>Data moves: Hot → Warm → Cold → Frozen</li>
+                                <li>Frozen data is deleted or archived (coldToFrozenDir)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

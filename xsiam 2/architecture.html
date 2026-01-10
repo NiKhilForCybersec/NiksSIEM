@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture | XSIAM Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">XSIAM</a>
+                <span class="separator">/</span>
+                <span class="current">Architecture</span>
+            </div>
+
+<h1><i class="fas fa-sitemap"></i> XSIAM Architecture</h1>
+                <p class="lead">Deep dive into Palo Alto Networks XSIAM architecture. Understand the data flow, storage tiers, analytics engine, and how components integrate for autonomous SOC operations.</p>
+
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-info-circle"></i> Architecture Overview</h2>
+                <div class="config-section">
+                    <h4>High-Level Data Flow</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           XSIAM ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  DATA SOURCES                    COLLECTION                  CORTEX DATA LAKE   │
+│  ─────────────                   ──────────                  ────────────────   │
+│                                                                                 │
+│  ┌──────────┐                  ┌─────────────┐              ┌───────────────┐  │
+│  │ Endpoints│──────────────────│ Cortex XDR  │──────────────│   INGESTION   │  │
+│  │ (Agents) │                  │   Agents    │              │   PIPELINE    │  │
+│  └──────────┘                  └─────────────┘              │               │  │
+│                                                              │  ┌─────────┐ │  │
+│  ┌──────────┐                  ┌─────────────┐              │  │ Parsing │ │  │
+│  │ Firewalls│──────────────────│  Broker VM  │──────────────│  │  & XDM  │ │  │
+│  │(PAN-OS)  │                  │  (Syslog)   │              │  └─────────┘ │  │
+│  └──────────┘                  └─────────────┘              │               │  │
+│                                                              │  ┌─────────┐ │  │
+│  ┌──────────┐                  ┌─────────────┐              │  │ Enrich- │ │  │
+│  │  Cloud   │──────────────────│Cloud Collec-│──────────────│  │  ment   │ │  │
+│  │  Apps    │                  │    tors     │              │  └─────────┘ │  │
+│  └──────────┘                  └─────────────┘              └───────────────┘  │
+│                                                                     │          │
+│  ┌──────────┐                  ┌─────────────┐                      │          │
+│  │3rd Party │──────────────────│  API/HTTP   │──────────────────────┘          │
+│  │  Logs    │                  │  Collector  │                                 │
+│  └──────────┘                  └─────────────┘                                 │
+│                                                                                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│                              STORAGE TIERS                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                                                                         │   │
+│  │   HOT (Online)          WARM (Searchable)        COLD (Archive)         │   │
+│  │   ┌─────────┐           ┌─────────┐             ┌─────────┐             │   │
+│  │   │ 0-7 days│           │7-90 days│             │90+ days │             │   │
+│  │   │ Fast    │           │ Slower  │             │ Restore │             │   │
+│  │   │ Query   │───────────│ Query   │─────────────│ Required│             │   │
+│  │   └─────────┘           └─────────┘             └─────────┘             │   │
+│  │                                                                         │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│                            ANALYTICS ENGINE                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │   UEBA   │  │  Threat  │  │ Analytics│  │Detection │  │   ML     │  │   │
+│  │  │  Engine  │  │   Intel  │  │   Rules  │  │  Engine  │  │  Models  │  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                      │                                         │
+│                                      ▼                                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│                         RESPONSE & AUTOMATION                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │ Alerts & │  │Playbooks │  │  XSOAR   │  │ Response │  │Dashboards│  │   │
+│  │  │Incidents │  │(Automated│  │  Engine  │  │ Actions  │  │& Reports │  │   │
+│  │  │          │  │  & Manual│  │          │  │          │  │          │  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <!-- Data Collection Layer -->
+                <h2><i class="fas fa-database"></i> Data Collection Layer</h2>
+                <div class="config-section">
+                    <h4>Collection Methods</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Method</th><th>Data Sources</th><th>Protocol</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Cortex XDR Agents</strong></td><td>Endpoints (Windows, Mac, Linux)</td><td>Proprietary</td><td>EDR telemetry, process, network, file events</td></tr>
+                            <tr><td><strong>Broker VM</strong></td><td>Syslog sources (firewalls, proxies)</td><td>Syslog (UDP/TCP/TLS)</td><td>Network devices, legacy systems</td></tr>
+                            <tr><td><strong>Cloud Collectors</strong></td><td>AWS, Azure, GCP, SaaS apps</td><td>API</td><td>Cloud audit logs, identity logs</td></tr>
+                            <tr><td><strong>HTTP Collector</strong></td><td>Custom applications, webhooks</td><td>HTTPS POST</td><td>Custom log sources, integrations</td></tr>
+                            <tr><td><strong>PAN-OS Integration</strong></td><td>Palo Alto Firewalls</td><td>Native</td><td>Traffic, threat, URL, WildFire logs</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Cortex XDR Agent Data</h4>
+                    <div class="code-block">Cortex XDR Agent Telemetry:
+
+PROCESS EVENTS:
+├── Process creation (with full command line)
+├── Process termination
+├── Module loads (DLLs)
+├── Parent-child relationships
+├── Process injection detection
+└── Image hash (SHA256)
+
+NETWORK EVENTS:
+├── TCP/UDP connections
+├── DNS queries
+├── HTTP/HTTPS activity
+├── Source/destination IPs and ports
+└── Connection state changes
+
+FILE EVENTS:
+├── File creation/modification/deletion
+├── File renames
+├── File hash on write
+├── Executable writes
+└── Sensitive file access
+
+REGISTRY EVENTS (Windows):
+├── Key creation/deletion
+├── Value modifications
+├── Persistence locations
+└── Service configurations
+
+AUTHENTICATION:
+├── Local logons
+├── Remote logons (RDP, etc.)
+├── Service account activity
+└── Privilege escalation</div>
+
+                    <h4>Broker VM Architecture</h4>
+                    <div class="code-block">Broker VM Data Flow:
+
+┌────────────┐     ┌─────────────────────────────────────┐     ┌─────────────┐
+│  Syslog    │     │           BROKER VM                 │     │   XSIAM     │
+│  Sources   │────▶│                                     │────▶│   Cloud     │
+│            │     │  ┌─────────┐    ┌─────────────┐    │     │             │
+│ • Firewalls│     │  │ Syslog  │───▶│  Filebeat   │    │     │ ┌─────────┐ │
+│ • Proxies  │     │  │ Receiver│    │  Forwarder  │    │     │ │Ingestion│ │
+│ • Switches │     │  │(rsyslog)│    │             │    │     │ │ Pipeline│ │
+│ • IDS/IPS  │     │  └─────────┘    └─────────────┘    │     │ └─────────┘ │
+│            │     │       │                │           │     │             │
+└────────────┘     │       ▼                ▼           │     └─────────────┘
+                   │  ┌─────────────────────────────┐   │
+                   │  │     Local Buffer/Queue      │   │
+                   │  │     (handles bursts)        │   │
+                   │  └─────────────────────────────┘   │
+                   │                                     │
+                   │  Resources: 4 vCPU, 8GB RAM min   │
+                   │  Throughput: ~10,000 EPS          │
+                   └─────────────────────────────────────┘
+
+BROKER VM SIZING:
+├── Small: 4 vCPU, 8GB RAM, 100GB disk → 5,000 EPS
+├── Medium: 8 vCPU, 16GB RAM, 200GB disk → 15,000 EPS
+└── Large: 16 vCPU, 32GB RAM, 500GB disk → 50,000 EPS</div>
+                </div>
+
+                <!-- Ingestion Pipeline -->
+                <h2><i class="fas fa-stream"></i> Ingestion Pipeline</h2>
+                <div class="config-section">
+                    <h4>Data Processing Stages</h4>
+                    <div class="code-block">Ingestion Pipeline Stages:
+
+1. COLLECTION
+   └── Data received from collectors
+       ├── Raw log format (syslog, JSON, etc.)
+       ├── Timestamp extraction
+       └── Source identification
+
+2. PARSING
+   └── Log format recognition
+       ├── Built-in parsers (500+ formats)
+       ├── Custom parsing rules
+       └── Field extraction
+
+3. NORMALIZATION (XDM)
+   └── Map to Cross Data Model
+       ├── Standard field names
+       ├── Data type conversion
+       └── Enrichment preparation
+
+4. ENRICHMENT
+   └── Add context to events
+       ├── Threat intelligence correlation
+       ├── Asset information
+       ├── User/identity enrichment
+       └── Geolocation
+
+5. INDEXING
+   └── Write to Cortex Data Lake
+       ├── Hot tier (immediate)
+       ├── Compression
+       └── Index creation
+
+6. ANALYTICS
+   └── Real-time processing
+       ├── Rule evaluation
+       ├── ML model scoring
+       └── Alert generation</div>
+
+                    <h4>XDM (Cross Data Model)</h4>
+                    <div class="code-block">XDM Normalization Schema:
+
+PURPOSE:
+├── Standardize field names across all data sources
+├── Enable cross-source correlation
+├── Simplify query writing
+└── Support analytics engine
+
+KEY XDM FIELDS:
+┌─────────────────────────────────────────────────────────────┐
+│ Field Category    │ Field Name           │ Description      │
+├─────────────────────────────────────────────────────────────┤
+│ Timestamp         │ _time                │ Event time       │
+│ Agent             │ agent_hostname       │ Source hostname  │
+│                   │ agent_id             │ Unique agent ID  │
+│                   │ agent_ip_addresses   │ Agent IPs        │
+├─────────────────────────────────────────────────────────────┤
+│ Actor (Who)       │ actor_process_*      │ Parent process   │
+│                   │ actor_effective_user │ User context     │
+│                   │ actor_primary_user   │ Primary user     │
+├─────────────────────────────────────────────────────────────┤
+│ Action (What)     │ action_process_*     │ Child process    │
+│                   │ action_file_*        │ File operations  │
+│                   │ action_remote_*      │ Network dest     │
+│                   │ action_local_*       │ Network source   │
+├─────────────────────────────────────────────────────────────┤
+│ Event             │ event_type           │ PROCESS, NETWORK │
+│                   │ event_sub_type       │ Specific type    │
+│                   │ event_id             │ Unique event ID  │
+└─────────────────────────────────────────────────────────────┘
+
+EXAMPLE MAPPING:
+Windows Event 4688 → XDM:
+├── NewProcessName → action_process_image_path
+├── CommandLine → action_process_image_command_line
+├── ParentProcessName → actor_process_image_path
+├── SubjectUserName → actor_effective_username
+└── TimeCreated → _time</div>
+                </div>
+
+                <!-- Storage Tiers -->
+                <h2><i class="fas fa-archive"></i> Storage Tiers</h2>
+                <div class="config-section">
+                    <h4>Tier Comparison</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Tier</th><th>Retention</th><th>Query Speed</th><th>Cost</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Hot (Online)</strong></td><td>0-7 days (configurable)</td><td>Fastest (seconds)</td><td>Highest</td><td>Active investigation, real-time alerts</td></tr>
+                            <tr><td><strong>Warm (Searchable)</strong></td><td>7-90 days</td><td>Fast (seconds-minutes)</td><td>Medium</td><td>Recent investigations, threat hunting</td></tr>
+                            <tr><td><strong>Cold (Archive)</strong></td><td>90+ days</td><td>Slow (restore required)</td><td>Lowest</td><td>Compliance, historical analysis</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Storage Configuration</h4>
+                    <div class="code-block">Storage Tier Configuration:
+
+PATH: Settings → Data Management → Storage
+
+HOT TIER SETTINGS:
+├── Default retention: 7 days
+├── Configurable: 1-30 days
+├── Full query capability
+├── Highest performance
+└── Used for: Real-time detection, active IR
+
+WARM TIER SETTINGS:
+├── Default retention: 90 days
+├── Configurable: 30-365 days
+├── Searchable directly
+├── Slightly slower queries
+└── Used for: Hunting, recent investigations
+
+COLD TIER SETTINGS:
+├── Retention: 1-7 years
+├── Requires restore to query
+├── Restore time: Minutes to hours
+├── Lowest cost storage
+└── Used for: Compliance, legal hold
+
+DATA VOLUME PLANNING:
+├── Estimate daily ingestion (GB/day)
+├── Calculate storage per tier
+├── Factor in compression (~10:1)
+└── Plan for growth (20-30% YoY typical)</div>
+
+                    <h4>Data Lifecycle</h4>
+                    <div class="code-block">Data Lifecycle Flow:
+
+Day 0-7 (HOT):
+├── Full query performance
+├── Real-time analytics
+├── Alert correlation
+└── Active investigation
+
+Day 8-90 (WARM):
+├── Automatic transition
+├── Still queryable
+├── Threat hunting
+└── Historical correlation
+
+Day 91+ (COLD):
+├── Archived storage
+├── Restore required for access
+├── Compliance retention
+└── Legal/audit purposes
+
+RESTORE PROCESS:
+1. Navigate to Query Center
+2. Select time range in cold storage
+3. Initiate restore request
+4. Wait for restore (15 min - 2 hours)
+5. Query restored data
+6. Data remains available for configured period</div>
+                </div>
+
+                <!-- Analytics Engine -->
+                <h2><i class="fas fa-brain"></i> Analytics Engine</h2>
+                <div class="config-section">
+                    <h4>Detection Capabilities</h4>
+                    <div class="code-block">Analytics Engine Components:
+
+RULE-BASED DETECTION:
+├── Correlation Rules (OOTB + Custom)
+├── IOC Matching
+├── Threshold-based alerts
+├── Sequence detection
+└── Aggregation rules
+
+MACHINE LEARNING:
+├── Behavioral analysis
+├── Anomaly detection
+├── User baseline deviation
+├── Entity risk scoring
+└── Predictive models
+
+UEBA (User Entity Behavior Analytics):
+├── User activity baselines
+├── Peer group comparison
+├── Unusual access patterns
+├── Privilege escalation detection
+└── Lateral movement detection
+
+THREAT INTELLIGENCE:
+├── Built-in threat feeds
+├── Unit 42 intelligence
+├── Custom IOC uploads
+├── STIX/TAXII integration
+└── Third-party feeds
+
+MITRE ATT&CK MAPPING:
+├── Technique detection
+├── Campaign tracking
+├── Coverage analysis
+└── Gap identification</div>
+
+                    <h4>Alert Generation Flow</h4>
+                    <div class="code-block">Alert Processing Flow:
+
+1. EVENT INGESTION
+   └── Raw event enters pipeline
+
+2. RULE EVALUATION
+   ├── Check against correlation rules
+   ├── IOC matching
+   └── ML model scoring
+
+3. ALERT CREATION
+   ├── Alert generated
+   ├── Severity assigned
+   ├── MITRE mapping applied
+   └── Evidence attached
+
+4. INCIDENT GROUPING
+   ├── Related alerts grouped
+   ├── Timeline constructed
+   ├── Causality chain built
+   └── Scope determined
+
+5. ENRICHMENT
+   ├── Asset information
+   ├── User context
+   ├── Threat intel correlation
+   └── Risk score calculation
+
+6. ROUTING
+   ├── Assignment rules
+   ├── Escalation triggers
+   ├── Automation playbooks
+   └── Notification dispatch</div>
+                </div>
+
+                <!-- XSOAR Integration -->
+                <h2><i class="fas fa-robot"></i> XSOAR Integration</h2>
+                <div class="config-section">
+                    <h4>Automation Architecture</h4>
+                    <div class="code-block">XSOAR Integration in XSIAM:
+
+NATIVE INTEGRATION:
+├── Built into XSIAM platform
+├── Shared data lake
+├── Unified console
+└── Single pane of glass
+
+AUTOMATION CAPABILITIES:
+├── Playbook execution
+├── Integration pack library
+├── Custom script support
+└── Multi-tenancy support
+
+PLAYBOOK TRIGGERS:
+├── Alert creation
+├── Incident creation
+├── Scheduled execution
+├── Manual trigger
+└── API call
+
+COMMON AUTOMATIONS:
+├── Alert enrichment
+├── IOC extraction and blocking
+├── User notification
+├── Ticket creation
+├── Containment actions
+└── Evidence collection
+
+INTEGRATION CATEGORIES:
+├── Endpoint (isolation, scan)
+├── Network (block IP, domain)
+├── Identity (disable account, reset)
+├── Ticketing (ServiceNow, Jira)
+├── Communication (email, Slack)
+└── Threat Intel (lookup, submission)</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain the XSIAM data flow from source to alert.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Collection:</strong> Data from agents, Broker VM, or cloud collectors</li>
+                                <li><strong>Parsing:</strong> Log format recognition, field extraction</li>
+                                <li><strong>Normalization:</strong> Map to XDM standard schema</li>
+                                <li><strong>Enrichment:</strong> Add threat intel, asset info, geolocation</li>
+                                <li><strong>Indexing:</strong> Store in Cortex Data Lake (hot tier)</li>
+                                <li><strong>Analytics:</strong> Rule evaluation, ML scoring, alert generation</li>
+                                <li><strong>Response:</strong> Incident creation, playbook execution</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is XDM and why is it important?</button>
+                        <div class="qa-answer">
+                            <p><strong>XDM (Cross Data Model)</strong> is XSIAM's data normalization schema:</p>
+                            <ul>
+                                <li>Standardizes field names across all data sources</li>
+                                <li>Uses consistent naming: actor_* (who), action_* (what)</li>
+                                <li>Enables cross-source correlation with single queries</li>
+                                <li>Simplifies rule writing and threat hunting</li>
+                            </ul>
+                            <p>Example: "user" field works the same whether from Windows, Linux, or cloud.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Describe the storage tiers in XSIAM.</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Hot (0-7 days):</strong> Fastest queries, real-time detection, highest cost</li>
+                                <li><strong>Warm (7-90 days):</strong> Searchable, threat hunting, moderate cost</li>
+                                <li><strong>Cold (90+ days):</strong> Archive, restore required, lowest cost</li>
+                            </ul>
+                            <p>Data automatically transitions between tiers based on age. Cold data requires restore before querying.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is a Broker VM and when would you use it?</button>
+                        <div class="qa-answer">
+                            <p><strong>Broker VM</strong> is a log forwarder for syslog sources:</p>
+                            <ul>
+                                <li>Receives syslog (UDP/TCP/TLS) from network devices</li>
+                                <li>Buffers and forwards to XSIAM cloud</li>
+                                <li>Used for: firewalls, proxies, switches, legacy systems</li>
+                                <li>Deploy in each network segment or DC</li>
+                            </ul>
+                            <p>Sizing: Small (5K EPS), Medium (15K EPS), Large (50K EPS)</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How does XSIAM differ from traditional SIEM?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Cloud-native:</strong> SaaS model, no infrastructure to manage</li>
+                                <li><strong>XDR integration:</strong> Native endpoint telemetry from Cortex agents</li>
+                                <li><strong>Built-in SOAR:</strong> XSOAR automation included</li>
+                                <li><strong>ML-first:</strong> Behavioral analytics, not just rules</li>
+                                <li><strong>Unified platform:</strong> SIEM + SOAR + XDR + TIP in one</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

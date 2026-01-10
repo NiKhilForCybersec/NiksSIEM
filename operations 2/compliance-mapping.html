@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Mapping | Nik's SIEM Compendium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">SOC Operations</a>
+                <span class="separator">/</span>
+                <span class="current">Compliance Mapping</span>
+            </div>
+
+<div class="page-header">
+                    <h1><i class="fas fa-balance-scale"></i> Compliance Mapping</h1>
+                    <p class="lead">Map SIEM capabilities and log sources to regulatory requirements - PCI-DSS, HIPAA, SOC2, GDPR</p>
+                </div>
+                <!-- Compliance Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-sitemap"></i> Compliance Framework Overview</h2>
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           SIEM COMPLIANCE COVERAGE MODEL                                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│                                    ┌────────────────────┐                                               │
+│                                    │       SIEM         │                                               │
+│                                    │   (Central Hub)    │                                               │
+│                                    └─────────┬──────────┘                                               │
+│                                              │                                                          │
+│           ┌──────────────┬──────────────────┼──────────────────┬──────────────┐                        │
+│           │              │                  │                  │              │                        │
+│           ▼              ▼                  ▼                  ▼              ▼                        │
+│    ┌────────────┐ ┌────────────┐    ┌────────────┐    ┌────────────┐ ┌────────────┐                   │
+│    │  PCI-DSS   │ │   HIPAA    │    │   SOC 2    │    │    GDPR    │ │  SOX/NIST  │                   │
+│    │            │ │            │    │            │    │            │ │            │                   │
+│    │ Payment    │ │ Healthcare │    │  Service   │    │  Privacy   │ │ Financial/ │                   │
+│    │ Card Data  │ │    PHI     │    │  Orgs      │    │   (EU)     │ │   Gov      │                   │
+│    └────────────┘ └────────────┘    └────────────┘    └────────────┘ └────────────┘                   │
+│                                                                                                          │
+│    SIEM PROVIDES:                                                                                        │
+│    ──────────────                                                                                        │
+│    ✓ Centralized log collection & retention                                                             │
+│    ✓ Access monitoring & alerting                                                                       │
+│    ✓ Security event detection                                                                           │
+│    ✓ Incident investigation capability                                                                  │
+│    ✓ Audit trail & reporting                                                                            │
+│    ✓ Integrity monitoring                                                                               │
+│                                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                    <h3>Retention Requirements Summary</h3>
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Framework</th>
+                                <th>Minimum Retention</th>
+                                <th>Recommended</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>PCI-DSS</strong></td>
+                                <td class="retention-highlight">1 year</td>
+                                <td>1 year online, 2+ archive</td>
+                                <td>3 months immediately available</td>
+                            </tr>
+                            <tr>
+                                <td><strong>HIPAA</strong></td>
+                                <td class="retention-highlight">6 years</td>
+                                <td>6 years</td>
+                                <td>From date of creation or last effective date</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOC 2</strong></td>
+                                <td class="retention-highlight">1 year</td>
+                                <td>1-3 years</td>
+                                <td>Based on trust service criteria</td>
+                            </tr>
+                            <tr>
+                                <td><strong>GDPR</strong></td>
+                                <td>As needed</td>
+                                <td>Minimum necessary</td>
+                                <td>Data minimization principle applies</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOX</strong></td>
+                                <td class="retention-highlight">7 years</td>
+                                <td>7 years</td>
+                                <td>Financial system audit logs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <!-- PCI-DSS -->
+                <section class="content-section">
+                    <h2><i class="fas fa-credit-card"></i> PCI-DSS 4.0 Requirements</h2>
+                    <div class="compliance-card pci">
+                        <h3>Requirement 10: Log and Monitor All Access</h3>
+                        <p><em>"Track and monitor all access to network resources and cardholder data"</em></p>
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Requirement</th>
+                                    <th>Description</th>
+                                    <th>Required Log Sources</th>
+                                    <th>SIEM Implementation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>10.2.1</strong></td>
+                                    <td>Individual user access to cardholder data</td>
+                                    <td>Database audit logs, Application logs, File access logs</td>
+                                    <td>
+                                        • Enable database auditing (SQL Server, Oracle, MySQL)<br>
+                                        • Monitor SELECT queries on CHD tables<br>
+                                        • Alert on bulk data access
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.2</strong></td>
+                                    <td>Actions by individuals with root/admin privileges</td>
+                                    <td>Windows Security (4672, 4688), Linux sudo, PAM</td>
+                                    <td>
+                                        • Monitor privileged account usage<br>
+                                        • Alert on off-hours admin activity<br>
+                                        • Track sudo/runas commands
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.3</strong></td>
+                                    <td>Access to all audit trails</td>
+                                    <td>SIEM audit logs, Security tool logs</td>
+                                    <td>
+                                        • Monitor SIEM admin access<br>
+                                        • Alert on audit log deletion attempts<br>
+                                        • Track log configuration changes
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.4</strong></td>
+                                    <td>Invalid logical access attempts</td>
+                                    <td>Authentication logs (all systems in CDE)</td>
+                                    <td>
+                                        • Correlation rule for failed logins<br>
+                                        • Brute force detection<br>
+                                        • Account lockout monitoring
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.5</strong></td>
+                                    <td>Use of identification & authentication mechanisms</td>
+                                    <td>AD logs, RADIUS, TACACS+, MFA logs</td>
+                                    <td>
+                                        • Monitor authentication success/failure<br>
+                                        • Track MFA bypasses<br>
+                                        • Service account usage
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.6</strong></td>
+                                    <td>Initialization, stopping, pausing of audit logs</td>
+                                    <td>System logs, Security logs</td>
+                                    <td>
+                                        • Alert on audit service stop<br>
+                                        • Monitor log agent health<br>
+                                        • Detect log clearing events
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10.2.7</strong></td>
+                                    <td>Creation and deletion of system-level objects</td>
+                                    <td>OS logs, AD logs</td>
+                                    <td>
+                                        • Monitor user/group changes<br>
+                                        • Track GPO modifications<br>
+                                        • Service installation alerts
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4>PCI-DSS Log Content Requirements (10.3)</h4>
+                        <div class="info-box">
+                            <p>Each log entry must contain:</p>
+                            <ul>
+                                <li><strong>10.3.1:</strong> User identification</li>
+                                <li><strong>10.3.2:</strong> Type of event</li>
+                                <li><strong>10.3.3:</strong> Date and time</li>
+                                <li><strong>10.3.4:</strong> Success/failure indication</li>
+                                <li><strong>10.3.5:</strong> Origination of event</li>
+                                <li><strong>10.3.6:</strong> Identity or name of affected data/resource</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                    PCI-DSS SIEM IMPLEMENTATION CHECKLIST                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  DATA COLLECTION                                                                         │
+│  ────────────────                                                                        │
+│  ☐ All CDE systems sending logs to SIEM                                                 │
+│  ☐ Firewalls protecting CDE (inbound/outbound)                                          │
+│  ☐ Routers/switches in CDE                                                              │
+│  ☐ Authentication servers (AD, RADIUS)                                                  │
+│  ☐ Database servers storing CHD                                                         │
+│  ☐ Application servers processing CHD                                                   │
+│  ☐ Web servers in CDE                                                                   │
+│  ☐ Wireless access points (if in CDE)                                                   │
+│                                                                                          │
+│  DETECTION RULES                                                                         │
+│  ───────────────                                                                         │
+│  ☐ Failed login attempts (threshold-based)                                              │
+│  ☐ Privileged account usage                                                             │
+│  ☐ Access to CHD (database queries)                                                     │
+│  ☐ Security tool tampering                                                              │
+│  ☐ Log clearing/stopping                                                                │
+│  ☐ Unauthorized configuration changes                                                   │
+│  ☐ Network anomalies (large data transfers)                                             │
+│                                                                                          │
+│  DAILY REVIEW (10.4)                                                                    │
+│  ─────────────────                                                                       │
+│  ☐ Security events review process documented                                            │
+│  ☐ Daily review of critical system logs                                                 │
+│  ☐ Exception-based review for other logs                                                │
+│  ☐ Review documented with sign-off                                                      │
+│                                                                                          │
+│  RETENTION (10.5)                                                                       │
+│  ───────────────                                                                         │
+│  ☐ Online retention: 3 months minimum                                                   │
+│  ☐ Total retention: 1 year minimum                                                      │
+│  ☐ Archive storage secure and accessible                                                │
+│  ☐ Log integrity protection (hashing)                                                   │
+│                                                                                          │
+│  TIME SYNCHRONIZATION (10.6)                                                            │
+│  ──────────────────────────                                                              │
+│  ☐ All systems using NTP                                                                │
+│  ☐ Authoritative time servers defined                                                   │
+│  ☐ External time sources restricted                                                     │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+                <!-- HIPAA -->
+                <section class="content-section">
+                    <h2><i class="fas fa-hospital"></i> HIPAA Security Rule</h2>
+                    <div class="compliance-card hipaa">
+                        <h3>§164.312 Technical Safeguards</h3>
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Safeguard</th>
+                                    <th>Requirement</th>
+                                    <th>Required Log Sources</th>
+                                    <th>SIEM Implementation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>§164.312(b)</strong><br>Audit Controls</td>
+                                    <td class="req-mandatory">REQUIRED</td>
+                                    <td>EHR/EMR systems, Database, ePHI storage</td>
+                                    <td>
+                                        • Collect audit logs from all ePHI systems<br>
+                                        • Monitor access patterns<br>
+                                        • Detect bulk record access
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>§164.312(d)</strong><br>Person/Entity Auth</td>
+                                    <td class="req-mandatory">REQUIRED</td>
+                                    <td>Authentication systems, SSO, MFA</td>
+                                    <td>
+                                        • Monitor all authentications<br>
+                                        • Track session activity<br>
+                                        • Detect credential sharing
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>§164.308(a)(5)</strong><br>Security Awareness</td>
+                                    <td class="req-mandatory">REQUIRED</td>
+                                    <td>Email gateway, Web proxy</td>
+                                    <td>
+                                        • Phishing attempt detection<br>
+                                        • Malicious link clicks<br>
+                                        • Suspicious attachment alerts
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>§164.308(a)(6)</strong><br>Incident Procedures</td>
+                                    <td class="req-mandatory">REQUIRED</td>
+                                    <td>SIEM alerts, Security tools</td>
+                                    <td>
+                                        • Incident detection rules<br>
+                                        • Automated alerting<br>
+                                        • Incident tracking integration
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>§164.312(c)(1)</strong><br>Integrity Controls</td>
+                                    <td class="req-mandatory">REQUIRED</td>
+                                    <td>FIM logs, Database audit</td>
+                                    <td>
+                                        • File integrity monitoring on ePHI<br>
+                                        • Database change detection<br>
+                                        • Configuration change alerts
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4>HIPAA-Specific Use Cases</h4>
+                        <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        HIPAA SIEM USE CASES                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  1. UNAUTHORIZED ePHI ACCESS                                                            │
+│     ─────────────────────────                                                            │
+│     Detect: User accessing patient records outside their department/role                │
+│     Data: EHR audit logs, AD group membership                                           │
+│     Logic: Access to patient NOT in user's assigned unit/department                     │
+│                                                                                          │
+│  2. BULK PATIENT RECORD ACCESS                                                          │
+│     ──────────────────────────                                                           │
+│     Detect: Unusual volume of patient record access                                     │
+│     Data: EHR audit logs                                                                │
+│     Logic: User accesses >50 unique patient records in 1 hour                           │
+│            (baseline against normal for role)                                           │
+│                                                                                          │
+│  3. AFTER-HOURS ePHI ACCESS                                                             │
+│     ────────────────────────                                                             │
+│     Detect: Access to patient records outside normal working hours                      │
+│     Data: EHR audit logs, HR schedule data                                              │
+│     Logic: Access when user not scheduled, accounting for on-call                       │
+│                                                                                          │
+│  4. TERMINATED USER ACCESS                                                              │
+│     ────────────────────────                                                             │
+│     Detect: Access attempts by terminated employees                                     │
+│     Data: Authentication logs, HR termination feed                                      │
+│     Logic: Auth attempt by user in terminated list                                      │
+│                                                                                          │
+│  5. ePHI EXFILTRATION                                                                   │
+│     ─────────────────                                                                    │
+│     Detect: Large data transfers from ePHI systems                                      │
+│     Data: DLP logs, Network traffic, Print logs                                         │
+│     Logic: Export/download/print volume exceeds baseline                                │
+│                                                                                          │
+│  6. VIP PATIENT SNOOPING                                                                │
+│     ────────────────────                                                                 │
+│     Detect: Access to VIP/celebrity patient records                                     │
+│     Data: EHR audit logs, VIP patient list                                              │
+│     Logic: Any access to flagged VIP patients without care assignment                   │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                        </div>
+                    </div>
+                </section>
+                <!-- SOC 2 -->
+                <section class="content-section">
+                    <h2><i class="fas fa-check-circle"></i> SOC 2 Trust Service Criteria</h2>
+                    <div class="compliance-card soc2">
+                        <h3>Common Criteria (CC) Relevant to SIEM</h3>
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Criteria</th>
+                                    <th>Requirement</th>
+                                    <th>SIEM Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>CC6.1</strong></td>
+                                    <td>Logical access security software</td>
+                                    <td>
+                                        • Monitor authentication systems<br>
+                                        • Track access provisioning/deprovisioning<br>
+                                        • Detect unauthorized access attempts
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CC6.2</strong></td>
+                                    <td>Prior to issuing credentials, register and authorize</td>
+                                    <td>
+                                        • Alert on new account creation<br>
+                                        • Monitor privilege escalation<br>
+                                        • Track access request approvals
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CC6.3</strong></td>
+                                    <td>Remove access when no longer needed</td>
+                                    <td>
+                                        • Correlate HR terminations with access removal<br>
+                                        • Alert on orphaned accounts<br>
+                                        • Detect access after departure
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CC7.2</strong></td>
+                                    <td>Monitor system components for anomalies</td>
+                                    <td>
+                                        • Security event monitoring<br>
+                                        • Anomaly detection rules<br>
+                                        • Performance baseline deviation
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CC7.3</strong></td>
+                                    <td>Evaluate security events</td>
+                                    <td>
+                                        • SOC triage process<br>
+                                        • Incident classification<br>
+                                        • Documented investigation workflow
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CC7.4</strong></td>
+                                    <td>Respond to security incidents</td>
+                                    <td>
+                                        • Incident response procedures<br>
+                                        • SOAR automation<br>
+                                        • Communication templates
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <!-- Audit Evidence -->
+                <section class="content-section">
+                    <h2><i class="fas fa-folder-open"></i> Audit Evidence Preparation</h2>
+                    <div class="workflow-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                     AUDIT EVIDENCE FROM SIEM                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  EVIDENCE TYPE                    SIEM ARTIFACTS                                         │
+│  ─────────────                    ──────────────                                         │
+│                                                                                          │
+│  Log Collection Proof             • Data source inventory report                        │
+│                                   • Ingestion statistics dashboard                       │
+│                                   • Log gap alerts (evidence of monitoring)              │
+│                                                                                          │
+│  Monitoring Evidence              • Correlation rule list with descriptions              │
+│                                   • Alert volume reports by rule                         │
+│                                   • Sample investigation tickets                         │
+│                                                                                          │
+│  Access Reviews                   • Privileged access reports                            │
+│                                   • Authentication success/failure stats                 │
+│                                   • User activity summaries                              │
+│                                                                                          │
+│  Incident Response                • Incident tickets from SIEM alerts                    │
+│                                   • Investigation timelines                              │
+│                                   • Resolution documentation                             │
+│                                                                                          │
+│  Retention Compliance             • Retention policy configuration                       │
+│                                   • Oldest searchable log query                          │
+│                                   • Archive access demonstration                         │
+│                                                                                          │
+│  Integrity Controls               • Log source authentication config                     │
+│                                   • Tamper-evident storage settings                      │
+│                                   • Access controls on SIEM platform                     │
+│                                                                                          │
+│  RECOMMENDED REPORTS TO PREPARE:                                                         │
+│  ───────────────────────────────                                                         │
+│  ☐ Monthly security event summary                                                       │
+│  ☐ Quarterly access review from logs                                                    │
+│  ☐ Annual retention verification                                                        │
+│  ☐ Incident metrics (MTTA, MTTR, volume)                                                │
+│  ☐ Rule effectiveness report (TP/FP rates)                                              │
+│  ☐ Data source completeness report                                                      │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                    </div>
+                </section>
+                <!-- Interview Section -->
+                <section class="content-section interview-section" >
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you configure a SIEM to meet PCI-DSS requirements?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>PCI-DSS 4.0 Requirement 10 is the primary SIEM requirement. Here's my approach:</strong></p>
+                            <p><strong>Data Collection (10.2):</strong> First, I ensure all Cardholder Data Environment (CDE) systems send logs to the SIEM: firewalls, servers, databases storing CHD, authentication systems, and any system that processes, stores, or transmits cardholder data. Each log must include user ID, event type, timestamp, success/failure, origin, and affected resource.</p>
+                            <p><strong>Detection Rules (10.4):</strong> I implement correlation rules for: failed login attempts to CDE systems, privileged account usage, access to CHD databases, changes to audit log configurations, and security tool tampering. These need daily review - I'd create a dashboard for the daily log review requirement.</p>
+                            <p><strong>Retention (10.5):</strong> Configure 1-year retention minimum, with at least 3 months immediately available online. Archive older logs but ensure they're retrievable. Enable integrity protection - hashing or write-once storage.</p>
+                            <p><strong>Time Sync (10.6):</strong> Verify all log sources use NTP from authorized time servers. The SIEM should alert if time drift is detected.</p>
+                            <p><strong>Evidence:</strong> I'd prepare monthly reports showing log collection completeness, security events reviewed, and incident response metrics for auditors.</p>
+                        </div>
+                    </div>
+                </section>
+            
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+                <!-- Comprehensive Troubleshooting -->
+                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
+                <div class="config-section">
+                    <h4>Systematic Troubleshooting Methodology</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <ol style="color: #8b949e;">
+                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
+                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
+                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
+                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
+                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
+                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
+                        </ol>
+                    </div>
+
+                    <h4>Common Issues and Resolutions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="2"><strong>Connectivity</strong></td>
+                                <td>Agent not reporting</td>
+                                <td>Check agent service status, network connectivity, firewall rules</td>
+                                <td>Restart service, verify network path, update firewall rules</td>
+                            </tr>
+                            <tr>
+                                <td>API timeouts</td>
+                                <td>Test API endpoint, check rate limits, verify credentials</td>
+                                <td>Retry with backoff, request limit increase, refresh credentials</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Data Quality</strong></td>
+                                <td>Missing fields</td>
+                                <td>Review parsing rules, check source format, validate schema</td>
+                                <td>Update parser, fix source configuration, adjust schema mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Audit data sources, check collection paths, review timestamps</td>
+                                <td>Consolidate sources, implement deduplication, fix time sync</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Performance</strong></td>
+                                <td>Slow queries</td>
+                                <td>Analyze query execution plan, check resource utilization</td>
+                                <td>Optimize query, add indexes, scale resources</td>
+                            </tr>
+                            <tr>
+                                <td>High latency</td>
+                                <td>Monitor queue depths, check processing bottlenecks</td>
+                                <td>Scale processing capacity, optimize data flow</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Authentication</strong></td>
+                                <td>Login failures</td>
+                                <td>Verify credentials, check account status, review permissions</td>
+                                <td>Reset password, unlock account, grant required permissions</td>
+                            </tr>
+                            <tr>
+                                <td>Token expiration</td>
+                                <td>Check token validity, review refresh mechanism</td>
+                                <td>Refresh token, update token management configuration</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Diagnostic Commands and Queries</h4>
+                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+
+# Check system health status
+| filter log_type = "system_health"
+| sort _time desc
+| limit 50
+
+# Monitor error rates over time
+| filter severity in ("error", "critical")
+| timechart count by component span=1h
+
+# Identify slow operations
+| filter operation_time > 30000
+| stats avg(operation_time), max(operation_time), count by operation_name
+| sort avg(operation_time) desc
+
+# Check connectivity status
+| filter event_type = "connectivity"
+| stats latest(status), latest(_time) by source_name
+| where status != "connected"
+
+# Review authentication failures
+| filter event_type = "authentication" and result = "failure"
+| stats count by user, source_ip, failure_reason
+| sort count desc</div>
+                </div>
+
+                <!-- Real-World Use Cases -->
+                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
+                <div class="config-section">
+                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
+                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>High volume of security events (500+ million events/day)</li>
+                            <li>Multiple security tools with siloed data</li>
+                            <li>Alert fatigue from excessive false positives</li>
+                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Phased rollout starting with critical data sources</li>
+                            <li>Custom detection rules based on threat model</li>
+                            <li>Automated playbooks for common scenarios</li>
+                            <li>Integration with ITSM and CMDB systems</li>
+                        </ul>
+                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
+                    </div>
+
+                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
+                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Need for strict data isolation between customers</li>
+                            <li>Scalable operations with limited staff</li>
+                            <li>Standardized service delivery across customers</li>
+                            <li>Flexible SLA-based prioritization</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Multi-tenant architecture with customer isolation</li>
+                            <li>Shared detection content library with customization</li>
+                            <li>Centralized analyst console with customer context</li>
+                            <li>Automated reporting and SLA tracking</li>
+                        </ul>
+                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
+                    </div>
+
+                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
+                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>HIPAA compliance requirements for PHI protection</li>
+                            <li>Legacy medical devices with limited security logging</li>
+                            <li>Need for 6-year log retention</li>
+                            <li>Limited IT security staff</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Comprehensive EHR and clinical application monitoring</li>
+                            <li>PHI access detection rules</li>
+                            <li>Long-term archival storage configuration</li>
+                            <li>Pre-built compliance dashboards and reports</li>
+                        </ul>
+                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
+                    </div>
+                </div>
+
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

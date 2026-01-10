@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture | Splunk Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Splunk</a>
+                <span class="separator">/</span>
+                <span class="current">Architecture</span>
+            </div>
+
+<h1><i class="fas fa-sitemap"></i> Splunk Architecture</h1>
+                <p class="lead">Master Splunk Enterprise architecture. Understand deployment topologies, component roles, data flow, clustering, and sizing for enterprise-scale deployments.</p>
+
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-info-circle"></i> Architecture Overview</h2>
+                <div class="config-section">
+                    <h4>Core Components</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        SPLUNK ENTERPRISE ARCHITECTURE                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   DATA SOURCES              FORWARDERS              INDEXER TIER                │
+│   ────────────              ──────────              ────────────                │
+│                                                                                 │
+│   ┌──────────┐           ┌─────────────┐         ┌─────────────────────┐       │
+│   │ Servers  │──────────▶│  Universal  │────────▶│                     │       │
+│   │ (Logs)   │           │  Forwarder  │         │   INDEXER CLUSTER   │       │
+│   └──────────┘           └─────────────┘         │                     │       │
+│                                                   │  ┌───┐ ┌───┐ ┌───┐ │       │
+│   ┌──────────┐           ┌─────────────┐         │  │IDX│ │IDX│ │IDX│ │       │
+│   │ Network  │──────────▶│    Heavy    │────────▶│  │ 1 │ │ 2 │ │ 3 │ │       │
+│   │ Devices  │           │  Forwarder  │         │  └───┘ └───┘ └───┘ │       │
+│   └──────────┘           │  (Parsing)  │         │         │          │       │
+│                          └─────────────┘         │    Cluster Master   │       │
+│   ┌──────────┐                                   │     (Manager)       │       │
+│   │  Cloud   │─────────────────────────────────▶│                     │       │
+│   │  APIs    │           HTTP/HEC                └─────────────────────┘       │
+│   └──────────┘                                            │                    │
+│                                                           │                    │
+├───────────────────────────────────────────────────────────┼────────────────────┤
+│                                                           │                    │
+│                         SEARCH TIER                       │                    │
+│                         ───────────                       ▼                    │
+│                                                                                │
+│   ┌─────────────────────────────────────────────────────────────────────┐     │
+│   │                        SEARCH HEAD CLUSTER                          │     │
+│   │                                                                     │     │
+│   │    ┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐      │     │
+│   │    │  SH 1  │      │  SH 2  │      │  SH 3  │      │Deployer│      │     │
+│   │    │(Captain│      │        │      │        │      │        │      │     │
+│   │    └────────┘      └────────┘      └────────┘      └────────┘      │     │
+│   │         │               │               │                          │     │
+│   │         └───────────────┴───────────────┘                          │     │
+│   │                         │                                          │     │
+│   │                    Load Balancer                                   │     │
+│   │                         │                                          │     │
+│   └─────────────────────────┼───────────────────────────────────────────┘     │
+│                             │                                                  │
+│                             ▼                                                  │
+│   ┌─────────────────────────────────────────────────────────────────────┐     │
+│   │                         END USERS                                   │     │
+│   │          (Analysts, Dashboards, API Clients)                        │     │
+│   └─────────────────────────────────────────────────────────────────────┘     │
+│                                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+
+                    <h4>Component Roles</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Component</th><th>Role</th><th>Scalability</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Universal Forwarder</strong></td><td>Lightweight agent, collects and forwards raw data</td><td>Thousands per deployment</td></tr>
+                            <tr><td><strong>Heavy Forwarder</strong></td><td>Full Splunk instance, parses and routes data</td><td>Dozens (aggregation points)</td></tr>
+                            <tr><td><strong>Indexer</strong></td><td>Stores, indexes, and searches data</td><td>Scale horizontally (cluster)</td></tr>
+                            <tr><td><strong>Search Head</strong></td><td>Serves UI, runs searches, manages KO</td><td>Scale horizontally (SHC)</td></tr>
+                            <tr><td><strong>Cluster Master</strong></td><td>Manages indexer cluster, replication</td><td>Single (HA optional)</td></tr>
+                            <tr><td><strong>Deployer</strong></td><td>Distributes apps to SHC members</td><td>Single per SHC</td></tr>
+                            <tr><td><strong>Deployment Server</strong></td><td>Manages forwarder configurations</td><td>Single (or per region)</td></tr>
+                            <tr><td><strong>License Master</strong></td><td>Manages license pool allocation</td><td>Single (can be combined)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Deployment Topologies -->
+                <h2><i class="fas fa-project-diagram"></i> Deployment Topologies</h2>
+                <div class="config-section">
+                    <h4>Single Instance (Dev/Lab)</h4>
+                    <div class="code-block">Single Instance Deployment:
+
+┌─────────────────────────────────────┐
+│         SINGLE SPLUNK INSTANCE      │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │  All Roles Combined:        │   │
+│  │  • Indexer                  │   │
+│  │  • Search Head              │   │
+│  │  • Deployment Server        │   │
+│  │  • License Master           │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  Use Cases:                         │
+│  • Development/Testing              │
+│  • Small deployments (<50 GB/day)   │
+│  • POC environments                 │
+│                                     │
+│  Limitations:                       │
+│  • No redundancy                    │
+│  • Limited scalability              │
+│  • Single point of failure          │
+└─────────────────────────────────────┘</div>
+
+                    <h4>Distributed (Mid-Size)</h4>
+                    <div class="code-block">Distributed Non-Clustered:
+
+┌────────────────────────────────────────────────────┐
+│                                                    │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    │
+│  │   UF     │───▶│   HF     │───▶│  IDX 1   │    │
+│  │ Agents   │    │(Syslog)  │    │          │    │
+│  └──────────┘    └──────────┘    └──────────┘    │
+│                                        │          │
+│  ┌──────────┐                         │          │
+│  │   UF     │─────────────────────────┘          │
+│  │ Agents   │                                    │
+│  └──────────┘                   ┌──────────┐     │
+│                                 │   SH     │     │
+│                                 │(Search)  │     │
+│                                 └──────────┘     │
+│                                                   │
+│  Components:                                      │
+│  • 1 Search Head (or standalone)                 │
+│  • 1-3 Indexers (no replication)                 │
+│  • 1 Deployment Server                           │
+│  • Heavy Forwarder for syslog                    │
+│                                                   │
+│  Capacity: 50-200 GB/day                         │
+└────────────────────────────────────────────────────┘</div>
+
+                    <h4>Clustered (Enterprise)</h4>
+                    <div class="code-block">Enterprise Clustered Deployment:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    MANAGEMENT TIER                              │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐               │
+│  │  Cluster   │  │ Deployment │  │  License   │               │
+│  │  Master    │  │   Server   │  │  Master    │               │
+│  └────────────┘  └────────────┘  └────────────┘               │
+├─────────────────────────────────────────────────────────────────┤
+│                     INDEXER CLUSTER                             │
+│  Replication Factor: 2  |  Search Factor: 2                    │
+│                                                                 │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  │
+│  │ IDX 1  │  │ IDX 2  │  │ IDX 3  │  │ IDX 4  │  │ IDX 5  │  │
+│  │ Site1  │  │ Site1  │  │ Site2  │  │ Site2  │  │ Site3  │  │
+│  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                  SEARCH HEAD CLUSTER                            │
+│  ┌────────────┐                                                │
+│  │  Deployer  │ (App distribution)                             │
+│  └────────────┘                                                │
+│                                                                 │
+│  ┌────────┐  ┌────────┐  ┌────────┐                           │
+│  │  SH 1  │  │  SH 2  │  │  SH 3  │                           │
+│  │Captain │  │        │  │        │                           │
+│  └────────┘  └────────┘  └────────┘                           │
+│       └──────────┴──────────┘                                  │
+│              Load Balancer                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  Capacity: 200+ GB/day                                         │
+│  High Availability: Yes                                         │
+│  Disaster Recovery: Multi-site clustering                       │
+└─────────────────────────────────────────────────────────────────┘</div>
+                </div>
+
+                <!-- Indexer Clustering -->
+                <h2><i class="fas fa-server"></i> Indexer Clustering</h2>
+                <div class="config-section">
+                    <h4>Cluster Concepts</h4>
+                    <div class="code-block">Indexer Cluster Key Concepts:
+
+REPLICATION FACTOR (RF):
+├── Number of copies of raw data
+├── RF=2: Two copies of each bucket
+├── RF=3: Three copies (recommended production)
+└── Higher RF = more disk, better fault tolerance
+
+SEARCH FACTOR (SF):
+├── Number of searchable copies
+├── SF=2: Two searchable copies
+├── Must be <= Replication Factor
+└── Higher SF = better search availability
+
+BUCKETS:
+├── Hot: Currently being written to (1 per index per indexer)
+├── Warm: Rolled from hot, searchable, read-only
+├── Cold: Rolled from warm, searchable, slower storage
+├── Frozen: Archived or deleted (not searchable)
+└── Thawed: Restored from frozen to warm
+
+BUCKET LIFECYCLE:
+Hot → Warm → Cold → Frozen → (Delete or Archive)
+
+CLUSTER STATES:
+├── Green: All buckets meet RF and SF
+├── Yellow: Searching available, replication incomplete
+├── Red: Search availability impacted
+└── Manual detention: Maintenance mode</div>
+
+                    <h4>Cluster Configuration</h4>
+                    <div class="code-block"># Cluster Master server.conf
+[clustering]
+mode = master
+replication_factor = 3
+search_factor = 2
+pass4SymmKey = your_secret_key
+cluster_label = production_cluster
+
+# Indexer (Peer) server.conf
+[replication_port://9887]
+
+[clustering]
+mode = slave
+master_uri = https://cm.domain.com:8089
+pass4SymmKey = your_secret_key
+
+# Multi-Site Clustering
+[clustering]
+mode = master
+multisite = true
+available_sites = site1,site2
+site_replication_factor = origin:1,total:2
+site_search_factor = origin:1,total:2
+
+# Site-specific indexer
+[clustering]
+mode = slave
+site = site1
+master_uri = https://cm.domain.com:8089</div>
+                </div>
+
+                <!-- Search Head Clustering -->
+                <h2><i class="fas fa-search"></i> Search Head Clustering</h2>
+                <div class="config-section">
+                    <h4>SHC Architecture</h4>
+                    <div class="code-block">Search Head Cluster Components:
+
+CAPTAIN:
+├── Elected leader of the cluster
+├── Coordinates job scheduling
+├── Manages artifact replication
+├── Dynamic election (automatic failover)
+└── Any member can become captain
+
+MEMBERS:
+├── Process search requests
+├── Serve Splunk Web UI
+├── Replicate knowledge objects
+└── Share scheduled search workload
+
+DEPLOYER:
+├── NOT a cluster member
+├── Distributes apps to SHC
+├── Single point for app management
+└── Uses shcluster/apps directory
+
+KNOWLEDGE OBJECTS REPLICATED:
+├── Saved searches
+├── Dashboards
+├── Reports
+├── Alerts
+├── Lookups
+├── Data models
+└── Field extractions</div>
+
+                    <h4>SHC Configuration</h4>
+                    <div class="code-block"># Initialize SHC member
+splunk init shcluster-config -auth admin:password \
+  -mgmt_uri https://sh1.domain.com:8089 \
+  -replication_port 9887 \
+  -replication_factor 3 \
+  -conf_deploy_fetch_url https://deployer.domain.com:8089 \
+  -secret your_shc_secret \
+  -shcluster_label production_shc
+
+# Bootstrap captain (first time only, on one member)
+splunk bootstrap shcluster-captain -servers_list \
+  "https://sh1.domain.com:8089,https://sh2.domain.com:8089,https://sh3.domain.com:8089" \
+  -auth admin:password
+
+# Check SHC status
+splunk show shcluster-status -auth admin:password
+
+# Deploy apps from Deployer
+splunk apply shcluster-bundle -target https://sh1.domain.com:8089 \
+  -auth admin:password
+
+# Rolling restart
+splunk rolling-restart shcluster-members -auth admin:password</div>
+                </div>
+
+                <!-- Data Flow -->
+                <h2><i class="fas fa-stream"></i> Data Flow</h2>
+                <div class="config-section">
+                    <h4>Ingestion Pipeline</h4>
+                    <div class="code-block">Splunk Data Processing Pipeline:
+
+1. INPUT PHASE (Forwarder or Indexer)
+   ├── Data source monitoring
+   ├── File/network input
+   └── Source assignment
+
+2. PARSING PHASE
+   ├── Line breaking (EVENT_BREAKER)
+   ├── Timestamp extraction (TIME_FORMAT)
+   ├── Charset encoding
+   └── Line merging
+
+3. INDEXING PHASE
+   ├── Segment data for search
+   ├── Create index structure
+   ├── Build bloom filters
+   └── Write to buckets
+
+PROCESSING QUEUES:
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+│  Input   │──▶│ Parsing  │──▶│ Indexing │──▶│  Index   │
+│  Queue   │   │  Queue   │   │  Queue   │   │ (Bucket) │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘
+   10KB/s        2MB max        2MB max
+
+PROPS.CONF (Parsing):
+[sourcetype_name]
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+TIME_PREFIX = timestamp=
+LINE_BREAKER = ([\r\n]+)
+SHOULD_LINEMERGE = false
+TRUNCATE = 10000
+
+TRANSFORMS.CONF (Field Extraction):
+[extract_fields]
+REGEX = user=(\w+)\s+action=(\w+)
+FORMAT = user::$1 action::$2</div>
+
+                    <h4>Search Pipeline</h4>
+                    <div class="code-block">Search Processing Pipeline:
+
+1. SEARCH HEAD PHASE
+   ├── Parse search string
+   ├── Generate search job
+   ├── Dispatch to indexers
+   └── Coordinate results
+
+2. INDEXER PHASE
+   ├── Identify relevant buckets
+   ├── Apply bloom filters
+   ├── Read raw data
+   ├── Apply transforming commands
+   └── Return results to SH
+
+3. RESULTS PHASE
+   ├── Merge indexer results
+   ├── Apply final transformations
+   ├── Generate visualization
+   └── Cache results
+
+COMMAND TYPES:
+├── Streaming: Process events one at a time (search, rex)
+├── Transforming: Aggregate events (stats, chart, timechart)
+├── Generating: Create events (inputlookup, makeresults)
+└── Dataset: Reference datasets (from, datamodel)
+
+DISTRIBUTED SEARCH:
+Search Head ──▶ Dispatch to Indexers ──▶ Parallel Processing
+              └──▶ Map Phase                └──▶ Reduce Phase</div>
+                </div>
+
+                <!-- Sizing Guidelines -->
+                <h2><i class="fas fa-calculator"></i> Sizing Guidelines</h2>
+                <div class="config-section">
+                    <h4>Component Sizing</h4>
+                    <div class="code-block">Splunk Sizing Guidelines:
+
+INDEXER SIZING (per indexer):
+┌──────────────────────────────────────────────────────────────┐
+│ Ingestion Rate    │ CPU     │ RAM    │ Storage             │
+├───────────────────┼─────────┼────────┼─────────────────────┤
+│ 50-100 GB/day     │ 8 cores │ 32 GB  │ 500GB SSD + HDD     │
+│ 100-200 GB/day    │ 16 cores│ 64 GB  │ 1TB SSD + HDD       │
+│ 200-500 GB/day    │ 24 cores│ 128 GB │ 2TB SSD + HDD       │
+└──────────────────────────────────────────────────────────────┘
+
+Storage Calculation:
+Daily Volume × Retention Days × Compression Factor × RF
+Example: 100GB × 90 days × 0.5 (compression) × 2 (RF) = 9TB
+
+SEARCH HEAD SIZING:
+├── 8-16 cores per SH
+├── 32-64 GB RAM
+├── SSD storage for KV Store and dispatch
+└── Add SH for: More concurrent users, scheduled searches
+
+FORWARDER CAPACITY:
+├── Universal Forwarder: 256KB-500KB/sec sustained
+├── Heavy Forwarder: Limited by parsing complexity
+└── Rule of thumb: 1 HF per 50,000-100,000 EPS
+
+REFERENCE NUMBERS:
+├── 1 Indexer ≈ 100-300 GB/day (with search load)
+├── 1 SH supports ≈ 16-32 concurrent searches
+├── SHC minimum: 3 members
+└── Indexer Cluster minimum: 3 nodes (RF=2, SF=2)</div>
+
+                    <h4>Capacity Planning</h4>
+                    <div class="code-block">Capacity Planning Checklist:
+
+1. ESTIMATE DAILY VOLUME
+   □ Inventory all data sources
+   □ Measure current log generation
+   □ Factor in growth (20-30% YoY)
+   □ Account for peak periods (2-3x average)
+
+2. DETERMINE RETENTION
+   □ Compliance requirements
+   □ Operational needs
+   □ Cost constraints
+   □ Hot/Warm/Cold distribution
+
+3. CALCULATE STORAGE
+   □ Raw data × retention × compression (0.5)
+   □ Multiply by RF for cluster
+   □ Add 20% overhead
+   □ Plan for growth
+
+4. SIZE COMPUTE
+   □ Indexers: Based on daily volume
+   □ Search Heads: Based on users/searches
+   □ Allow for scheduled searches
+   □ Consider Enterprise Security overhead
+
+5. NETWORK PLANNING
+   □ Forwarder → Indexer bandwidth
+   □ Inter-site replication
+   □ Search head to indexer traffic
+   □ 10 Gbps recommended for production</div>
+                </div>
+
+                <!-- High Availability -->
+                <h2><i class="fas fa-shield-alt"></i> High Availability</h2>
+                <div class="config-section">
+                    <div class="code-block">High Availability Design:
+
+INDEXER TIER HA:
+├── Indexer Clustering (RF=3, SF=2)
+├── Multi-site for DR
+├── Cluster Master HA (manual failover or DR)
+└── Automatic bucket repair
+
+SEARCH TIER HA:
+├── Search Head Cluster (3+ members)
+├── Captain election automatic
+├── Load balancer for user access
+└── Deployer (single, backup recommended)
+
+FORWARDER HA:
+├── Multiple indexer targets (autoLB)
+├── Persistent queue for reliability
+├── useACK for guaranteed delivery
+└── indexer_discovery for dynamic targets
+
+MANAGEMENT HA:
+├── License Master: DR standby
+├── Deployment Server: Cold standby or distributed
+├── Monitoring Console: Single (not critical path)
+
+DISASTER RECOVERY:
+├── Multi-site indexer clustering
+├── Site affinity for search heads
+├── Cross-site replication
+└── RTO/RPO based on site_replication_factor
+
+outputs.conf (Forwarder HA):
+[tcpout]
+defaultGroup = indexers
+
+[tcpout:indexers]
+server = idx1:9997, idx2:9997, idx3:9997
+autoLB = true
+useACK = true</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain Splunk's replication factor and search factor.</button>
+                        <div class="qa-answer">
+                            <p><strong>Replication Factor (RF):</strong> Number of copies of raw data maintained across the cluster. RF=3 means 3 copies of each bucket.</p>
+                            <p><strong>Search Factor (SF):</strong> Number of searchable copies. SF must be ≤ RF. SF=2 means 2 copies have indexed/searchable data.</p>
+                            <p><strong>Example:</strong> RF=3, SF=2 provides data redundancy (survive 2 indexer failures) with search availability (survive 1 failure for searching).</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the role of the Cluster Master?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li>Coordinates indexer cluster operations</li>
+                                <li>Manages bucket replication across peers</li>
+                                <li>Handles peer node failures and recovery</li>
+                                <li>Maintains cluster configuration (RF, SF)</li>
+                                <li>Does NOT store or search data itself</li>
+                            </ul>
+                            <p>Note: Renamed to "Cluster Manager" in recent versions.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Describe Splunk's bucket lifecycle.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Hot:</strong> Currently being written, one per index per indexer</li>
+                                <li><strong>Warm:</strong> Rolled from hot, read-only, still searchable</li>
+                                <li><strong>Cold:</strong> Rolled from warm, moved to slower storage</li>
+                                <li><strong>Frozen:</strong> Archived or deleted, not searchable</li>
+                                <li><strong>Thawed:</strong> Restored from frozen back to searchable</li>
+                            </ol>
+                            <p>Rollover triggers: Size (10GB default), time, or event count.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between Universal and Heavy Forwarder?</button>
+                        <div class="qa-answer">
+                            <table class="styled-table">
+                                <tr><td><strong>Universal Forwarder</strong></td><td>Lightweight (~100MB), forwards raw data, no parsing, CLI only</td></tr>
+                                <tr><td><strong>Heavy Forwarder</strong></td><td>Full Splunk (~1GB), parses data, routing logic, web UI available</td></tr>
+                            </table>
+                            <p>Use UF for endpoints, HF for syslog aggregation and data transformation.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you size a Splunk deployment?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Estimate daily ingestion volume (GB/day)</li>
+                                <li>Determine retention requirements</li>
+                                <li>Calculate storage: Volume × Days × 0.5 (compression) × RF</li>
+                                <li>Size indexers: ~100-300 GB/day per indexer</li>
+                                <li>Size search heads: Based on concurrent users/searches</li>
+                                <li>Add 20% overhead and plan for growth</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">Architecture</span>
+            </div>
+
+<h1><i class="fas fa-sitemap"></i> Microsoft Sentinel Architecture</h1>
+                <p class="lead">Deep dive into Microsoft Sentinel's cloud-native SIEM architecture. Understand workspace design, data flow, ingestion pipelines, and multi-tenant configurations for enterprise deployments.</p>
+
+                <!-- Architecture Overview -->
+                <h2><i class="fas fa-info-circle"></i> Architecture Overview</h2>
+                <div class="config-section">
+                    <h4>High-Level Architecture</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        MICROSOFT SENTINEL ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   DATA SOURCES                    INGESTION                   LOG ANALYTICS     │
+│   ────────────                    ─────────                   ─────────────     │
+│                                                                                 │
+│   ┌──────────┐                  ┌─────────────┐             ┌───────────────┐  │
+│   │ Azure    │─────────────────▶│  Service-   │────────────▶│               │  │
+│   │ Services │                  │  to-Service │             │  LOG ANALYTICS│  │
+│   └──────────┘                  │  Connectors │             │   WORKSPACE   │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              │  ┌─────────┐  │  │
+│   │ Microsoft│                  ┌─────────────┐             │  │  Tables │  │  │
+│   │   365    │─────────────────▶│  Diagnostic │────────────▶│  │ (Data) │  │  │
+│   └──────────┘                  │  Settings   │             │  └─────────┘  │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              │  ┌─────────┐  │  │
+│   │ On-Prem  │                  ┌─────────────┐             │  │  Index  │  │  │
+│   │ Servers  │─────────────────▶│     AMA     │────────────▶│  │         │  │  │
+│   └──────────┘                  │   Agent     │             │  └─────────┘  │  │
+│                                 └─────────────┘             │               │  │
+│   ┌──────────┐                                              └───────────────┘  │
+│   │  Syslog  │                  ┌─────────────┐                    │           │
+│   │ Sources  │─────────────────▶│ Log Forward │────────────────────┘           │
+│   └──────────┘                  │     VM      │                                │
+│                                 └─────────────┘                                │
+│   ┌──────────┐                                                                 │
+│   │ External │                  ┌─────────────┐                                │
+│   │  APIs    │─────────────────▶│  Data Coll. │────────────────────────────────┘
+│   └──────────┘                  │  Endpoints  │                                │
+│                                 └─────────────┘                                │
+│                                                                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│                              SENTINEL LAYER                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │Analytics │  │ Hunting  │  │Notebooks │  │Workbooks │  │Automation│  │   │
+│  │  │  Rules   │  │ Queries  │  │(Jupyter) │  │(Dashbd)  │  │(Playbook)│  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
+│  │  │Incidents │  │ Entities │  │  Threat  │  │  UEBA    │  │  SOAR    │  │   │
+│  │  │  Queue   │  │(Behavior)│  │  Intel   │  │          │  │          │  │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
+│  │                                                                         │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                    </div>
+
+                    <h4>Core Components</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Component</th><th>Description</th><th>Azure Service</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Log Analytics Workspace</strong></td><td>Data storage and query engine</td><td>Azure Monitor</td></tr>
+                            <tr><td><strong>Sentinel Solution</strong></td><td>SIEM capabilities layer</td><td>Microsoft Sentinel</td></tr>
+                            <tr><td><strong>Data Connectors</strong></td><td>Ingestion from various sources</td><td>Built-in & Custom</td></tr>
+                            <tr><td><strong>Analytics Engine</strong></td><td>Rule evaluation, alert generation</td><td>Sentinel Analytics</td></tr>
+                            <tr><td><strong>Automation</strong></td><td>Playbooks and response actions</td><td>Logic Apps</td></tr>
+                            <tr><td><strong>Content Hub</strong></td><td>Solutions, rules, playbooks</td><td>Sentinel Content</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Log Analytics Workspace -->
+                <h2><i class="fas fa-database"></i> Log Analytics Workspace</h2>
+                <div class="config-section">
+                    <h4>Workspace Fundamentals</h4>
+                    <div class="code-block">Log Analytics Workspace:
+
+WHAT IT IS:
+├── Central repository for all log data
+├── Scalable, cloud-native data store
+├── KQL query engine
+├── Retention and archival management
+└── Foundation for Sentinel
+
+KEY PROPERTIES:
+├── Workspace ID: Unique identifier (GUID)
+├── Primary Key: Agent authentication
+├── Region: Data residency location
+├── Pricing Tier: Commitment tier or Pay-as-you-go
+└── Retention: 30-730 days (interactive)
+
+DATA STRUCTURE:
+├── Tables: Schema-defined containers
+│   ├── Built-in tables (SecurityEvent, Syslog, etc.)
+│   ├── Custom tables (Custom_CL)
+│   └── Basic logs tables (_Basic)
+├── Columns: Typed fields within tables
+└── Records: Individual log entries
+
+WORKSPACE LIMITS:
+├── Ingestion: No hard limit (throttling at extreme scale)
+├── Query: 500,000 results per query
+├── Retention: 730 days interactive, 7 years archive
+├── Tables: 500 custom tables per workspace
+└── Concurrent queries: 200 per workspace</div>
+
+                    <h4>Workspace Design Patterns</h4>
+                    <div class="code-block">Workspace Design Patterns:
+
+1. SINGLE WORKSPACE (Recommended for most)
+   ┌─────────────────────────────────────┐
+   │         CENTRAL WORKSPACE           │
+   │  ┌─────────┐  ┌─────────┐          │
+   │  │ Azure   │  │ On-Prem │          │
+   │  │ Data    │  │  Data   │          │
+   │  └─────────┘  └─────────┘          │
+   └─────────────────────────────────────┘
+   
+   Pros: Simple, unified view, efficient
+   Cons: Single region, shared permissions
+   Use when: Single org, one region, unified SOC
+
+2. REGIONAL WORKSPACES
+   ┌──────────────┐  ┌──────────────┐
+   │  US EAST     │  │  EU WEST     │
+   │  Workspace   │  │  Workspace   │
+   └──────────────┘  └──────────────┘
+   
+   Pros: Data residency compliance, reduced latency
+   Cons: Fragmented view, higher cost
+   Use when: GDPR, data sovereignty requirements
+
+3. HYBRID (Production + Security)
+   ┌──────────────┐  ┌──────────────┐
+   │  Operations  │  │   Security   │
+   │  Workspace   │  │  Workspace   │
+   │  (IT Ops)    │  │  (Sentinel)  │
+   └──────────────┘  └──────────────┘
+   
+   Pros: Separation of concerns, different retention
+   Cons: Potential duplication, cross-workspace queries
+   Use when: Separate IT and Security teams
+
+4. MULTI-TENANT (MSSP)
+   ┌─────────────────────────────────┐
+   │         MSSP WORKSPACE          │
+   │  ┌────────┐ ┌────────┐         │
+   │  │Client A│ │Client B│         │
+   │  └────────┘ └────────┘         │
+   └─────────────────────────────────┘
+   
+   Via Azure Lighthouse delegation
+   Pros: Centralized management
+   Cons: Complex RBAC, resource limits</div>
+                </div>
+
+                <!-- Data Ingestion Pipeline -->
+                <h2><i class="fas fa-stream"></i> Data Ingestion Pipeline</h2>
+                <div class="config-section">
+                    <h4>Ingestion Methods</h4>
+                    <div class="code-block">Data Ingestion Methods:
+
+1. SERVICE-TO-SERVICE CONNECTORS
+   ├── Direct API integration
+   ├── No agent required
+   ├── Examples: Azure AD, M365, Azure Activity
+   └── Configuration: Enable in Data Connectors blade
+
+2. DIAGNOSTIC SETTINGS
+   ├── Azure resource logs
+   ├── Platform metrics (optional)
+   ├── Destination: Log Analytics Workspace
+   └── Per-resource configuration
+
+3. AZURE MONITOR AGENT (AMA)
+   ├── Modern agent (replaces MMA/OMS)
+   ├── Windows/Linux support
+   ├── Data Collection Rules (DCR)
+   ├── Azure Arc for hybrid/multi-cloud
+   └── Recommended for new deployments
+
+4. DATA COLLECTION ENDPOINTS (DCE)
+   ├── Custom log ingestion
+   ├── REST API endpoint
+   ├── Supports transformation
+   └── For custom applications
+
+5. SYSLOG/CEF COLLECTION
+   ├── Linux VM as forwarder
+   ├── rsyslog/syslog-ng configuration
+   ├── AMA with Syslog DCR
+   └── For network devices, appliances
+
+6. LOGSTASH PLUGIN
+   ├── Output plugin for Log Analytics
+   ├── Existing Logstash pipelines
+   ├── Transformation capabilities
+   └── For complex parsing needs</div>
+
+                    <h4>Data Collection Rules (DCR)</h4>
+                    <div class="code-block">Data Collection Rules (DCR):
+
+WHAT IS A DCR:
+├── Defines what data to collect
+├── Specifies transformations
+├── Routes to destinations
+└── Replaces agent-based config
+
+DCR COMPONENTS:
+┌─────────────────────────────────────────────────┐
+│                    DCR                          │
+│                                                 │
+│  ┌───────────┐   ┌───────────┐   ┌───────────┐│
+│  │  Data     │──▶│ Transform │──▶│  Destina- ││
+│  │  Sources  │   │ (KQL)     │   │   tions   ││
+│  └───────────┘   └───────────┘   └───────────┘│
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+DATA SOURCES:
+├── Windows Event Logs
+├── Linux Syslog
+├── Performance Counters
+├── Custom Text Logs
+├── IIS Logs
+└── Custom API (via DCE)
+
+TRANSFORMATIONS (Ingest-time KQL):
+├── Filter unwanted records
+├── Parse/extract fields
+├── Enrich data
+├── Modify schema
+└── Reduce ingestion volume
+
+EXAMPLE DCR TRANSFORM:
+source
+| where EventID != 4688 or CommandLine !has "legitimate_process"
+| extend ParsedData = parse_json(EventData)
+| project-away EventData</div>
+                </div>
+
+                <!-- Data Storage & Retention -->
+                <h2><i class="fas fa-archive"></i> Data Storage & Retention</h2>
+                <div class="config-section">
+                    <h4>Storage Tiers</h4>
+                    <div class="code-block">Log Analytics Storage Tiers:
+
+ANALYTICS LOGS (Default):
+├── Full query capability
+├── 30-730 days retention
+├── Higher cost per GB
+├── All KQL functions available
+└── Real-time ingestion
+
+BASIC LOGS:
+├── Reduced query capability
+├── 8 days retention (then archive)
+├── 50% lower ingestion cost
+├── Limited KQL (no joins, limited functions)
+├── Pay-per-query for search
+└── Good for: High-volume, low-query tables
+
+ARCHIVED LOGS:
+├── Long-term storage (up to 7 years)
+├── Requires restore to query
+├── Lowest storage cost
+├── Restore takes minutes to hours
+├── Good for: Compliance, historical analysis
+
+AUXILIARY LOGS:
+├── High-volume, low-value data
+├── 30 days retention
+├── Lowest cost tier
+├── Limited query capability
+└── Good for: Verbose debug logs
+
+TIER SELECTION MATRIX:
+┌────────────────────┬──────────────┬──────────────┬────────────┐
+│ Use Case           │ Query Freq   │ Retention    │ Tier       │
+├────────────────────┼──────────────┼──────────────┼────────────┤
+│ Security Events    │ High         │ 90-365 days  │ Analytics  │
+│ NetFlow/Traffic    │ Low          │ 30-90 days   │ Basic      │
+│ Compliance Archive │ Rare         │ 1-7 years    │ Archive    │
+│ Debug/Verbose      │ Very Low     │ 30 days      │ Auxiliary  │
+└────────────────────┴──────────────┴──────────────┴────────────┘</div>
+
+                    <h4>Retention Configuration</h4>
+                    <div class="code-block"># Set workspace default retention (days)
+az monitor log-analytics workspace update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --retention-time 90
+
+# Set table-specific retention
+az monitor log-analytics workspace table update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --name SecurityEvent \
+  --retention-time 365 \
+  --total-retention-time 730
+
+# Enable archiving for table
+az monitor log-analytics workspace table update \
+  --resource-group myRG \
+  --workspace-name mySentinelWorkspace \
+  --name SecurityEvent \
+  --total-retention-time 2555  # 7 years
+
+RETENTION HIERARCHY:
+├── Workspace default: Applies to all tables
+├── Table override: Per-table retention
+├── Archive extension: Beyond interactive retention
+└── Sentinel free retention: 90 days for security tables</div>
+                </div>
+
+                <!-- Multi-Tenant Architecture -->
+                <h2><i class="fas fa-building"></i> Multi-Tenant Architecture</h2>
+                <div class="config-section">
+                    <h4>Azure Lighthouse</h4>
+                    <div class="code-block">Azure Lighthouse for Multi-Tenant:
+
+WHAT IS AZURE LIGHTHOUSE:
+├── Cross-tenant management
+├── Delegated resource access
+├── MSSP/enterprise scenarios
+├── Centralized SOC operations
+└── Maintain customer ownership
+
+ARCHITECTURE:
+┌────────────────────────────────────────────────────────┐
+│                   MANAGING TENANT                      │
+│                   (MSSP / Central SOC)                 │
+│  ┌────────────────────────────────────────────────┐   │
+│  │              Azure Lighthouse                   │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐     │   │
+│  │  │ Sentinel │  │ Sentinel │  │ Sentinel │     │   │
+│  │  │ View     │  │ View     │  │ View     │     │   │
+│  │  │ Tenant A │  │ Tenant B │  │ Tenant C │     │   │
+│  │  └──────────┘  └──────────┘  └──────────┘     │   │
+│  └────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   TENANT A   │  │   TENANT B   │  │   TENANT C   │
+│  (Customer)  │  │  (Customer)  │  │  (Customer)  │
+│  ┌────────┐  │  │  ┌────────┐  │  │  ┌────────┐  │
+│  │Sentinel│  │  │  │Sentinel│  │  │  │Sentinel│  │
+│  │Workspace│ │  │  │Workspace│ │  │  │Workspace│ │
+│  └────────┘  │  │  └────────┘  │  │  └────────┘  │
+└──────────────┘  └──────────────┘  └──────────────┘
+
+DELEGATION PROCESS:
+1. Customer creates ARM template for delegation
+2. Template specifies:
+   ├── Managing tenant ID
+   ├── Principal IDs (users/groups)
+   ├── Role assignments
+   └── Scope (subscription/resource group)
+3. Customer deploys template
+4. MSSP gains delegated access</div>
+
+                    <h4>Workspace Manager</h4>
+                    <div class="code-block">Sentinel Workspace Manager:
+
+PURPOSE:
+├── Centrally manage multiple Sentinel workspaces
+├── Publish content across workspaces
+├── Maintain consistency
+└── Enterprise/MSSP scenarios
+
+CAPABILITIES:
+├── Create member workspace groups
+├── Publish analytics rules
+├── Publish automation rules
+├── Publish hunting queries
+├── Monitor deployment status
+└── Manage at scale
+
+PATH: Sentinel → Configuration → Workspace manager
+
+CONTENT TYPES SUPPORTED:
+├── Analytics rules
+├── Automation rules
+├── Hunting queries
+├── Parsers
+└── Workbooks (coming)
+
+WORKFLOW:
+1. Create workspace group
+2. Add member workspaces
+3. Create content items
+4. Publish to members
+5. Monitor deployment
+6. Handle conflicts</div>
+                </div>
+
+                <!-- Cost Optimization -->
+                <h2><i class="fas fa-dollar-sign"></i> Cost Optimization</h2>
+                <div class="config-section">
+                    <div class="code-block">Sentinel Cost Optimization:
+
+COST COMPONENTS:
+├── Log Analytics ingestion ($/GB)
+├── Sentinel analysis ($/GB)
+├── Log Analytics retention ($/GB/month after 90 days)
+├── Playbook runs (Logic Apps pricing)
+└── Data export (if enabled)
+
+OPTIMIZATION STRATEGIES:
+
+1. COMMITMENT TIERS
+   ├── 100 GB/day: ~30% savings
+   ├── 200 GB/day: ~35% savings
+   ├── 500+ GB/day: ~40%+ savings
+   └── Evaluate: 31-day rolling average
+
+2. BASIC LOGS
+   ├── High-volume, low-query tables
+   ├── 50% ingestion savings
+   ├── Candidates: NetFlow, verbose logs
+   └── Trade-off: Limited query capability
+
+3. DATA COLLECTION RULES
+   ├── Filter at ingestion (before storage)
+   ├── Drop unnecessary events
+   ├── Parse and project only needed fields
+   └── Reduce volume by 30-50%
+
+4. TABLE RETENTION TUNING
+   ├── Reduce retention for high-volume tables
+   ├── Archive instead of delete
+   ├── 90 days free for security tables
+   └── Per-table optimization
+
+5. DATA FILTERING EXAMPLES:
+   // DCR Transform - filter noisy events
+   source
+   | where EventID !in (4688, 5156, 5158)
+   | where not (EventID == 4624 and LogonType == 3)
+
+COST MONITORING:
+├── Usage blade in workspace
+├── Azure Cost Management
+├── Custom workbook for Sentinel costs
+└── Set up budget alerts</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain the relationship between Log Analytics and Sentinel.</button>
+                        <div class="qa-answer">
+                            <p><strong>Log Analytics Workspace</strong> is the foundation - it stores all log data and provides the KQL query engine.</p>
+                            <p><strong>Microsoft Sentinel</strong> is a solution layer on top that adds:</p>
+                            <ul>
+                                <li>Analytics rules and incident management</li>
+                                <li>SOAR/automation capabilities</li>
+                                <li>Threat intelligence integration</li>
+                                <li>Entity behavior analytics</li>
+                                <li>Content Hub for solutions</li>
+                            </ul>
+                            <p>You must have a Log Analytics Workspace to enable Sentinel.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are Data Collection Rules and why are they important?</button>
+                        <div class="qa-answer">
+                            <p><strong>DCRs</strong> define what data to collect, how to transform it, and where to send it:</p>
+                            <ul>
+                                <li><strong>Sources:</strong> Windows events, Syslog, custom logs</li>
+                                <li><strong>Transforms:</strong> Filter, parse, enrich at ingest-time</li>
+                                <li><strong>Destinations:</strong> Which workspace/table</li>
+                            </ul>
+                            <p><strong>Benefits:</strong> Reduce ingestion costs, centralized config, ingest-time transformations.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How would you design a multi-tenant Sentinel deployment?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Azure Lighthouse:</strong> Enable cross-tenant delegation</li>
+                                <li><strong>Workspace per tenant:</strong> Data isolation and sovereignty</li>
+                                <li><strong>Workspace Manager:</strong> Centrally publish content</li>
+                                <li><strong>RBAC:</strong> Granular permissions per tenant</li>
+                                <li><strong>Cross-workspace queries:</strong> Unified hunting when needed</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the different log tiers and when to use each?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Analytics:</strong> Full query, 30-730 days, security/hunting data</li>
+                                <li><strong>Basic:</strong> Limited query, 8 days, high-volume/low-value logs</li>
+                                <li><strong>Archive:</strong> Restore required, 7 years, compliance</li>
+                                <li><strong>Auxiliary:</strong> Minimal query, 30 days, debug logs</li>
+                            </ul>
+                            <p>Choose based on query frequency, retention needs, and cost optimization.</p>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Hunting | Microsoft Defender for Endpoint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Defender for Endpoint</a>
+                <span class="separator">/</span>
+                <span class="current">Advanced Hunting</span>
+            </div>
+
+<h1><i class="fas fa-search"></i> Advanced Hunting</h1>
+                <p class="lead">Master advanced hunting in Microsoft Defender for Endpoint. Learn the complete hunting workflow, key tables, query patterns, and how to create custom detection rules.</p>
+
+                <!-- Hunting Overview -->
+                <h2><i class="fas fa-info-circle"></i> Advanced Hunting Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">security.microsoft.com → Hunting → Advanced hunting</span></p>
+
+                    <h4>Hunting Interface</h4>
+                    <div class="code-block">ADVANCED HUNTING INTERFACE:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                 ADVANCED HUNTING CONSOLE                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                    QUERY EDITOR                           │ │
+│  │  DeviceProcessEvents                                      │ │
+│  │  | where Timestamp > ago(7d)                             │ │
+│  │  | where FileName =~ "powershell.exe"                    │ │
+│  │  | project Timestamp, DeviceName, ProcessCommandLine     │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  [Run Query]  [Save Query]  [Create Detection Rule]            │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐                     │
+│  │ Schema Browser  │  │ Query Examples  │                     │
+│  │ ─────────────── │  │ ─────────────── │                     │
+│  │ DeviceProcess.. │  │ Ransomware      │                     │
+│  │ DeviceNetwork.. │  │ Credential Acc  │                     │
+│  │ DeviceFile...   │  │ Persistence     │                     │
+│  │ DeviceRegistry  │  │ Lateral Move    │                     │
+│  └─────────────────┘  └─────────────────┘                     │
+│                                                                 │
+│  RESULTS PANE:                                                  │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │ Timestamp    │ DeviceName  │ ProcessCommandLine           │ │
+│  │ 2024-01-15   │ WKS001      │ powershell.exe -enc...      │ │
+│  │ 2024-01-15   │ SRV002      │ powershell.exe -noprofile   │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+DATA RETENTION:
+├── Default: 30 days
+├── Can extend to 180 days (requires configuration)
+└── Real-time data available within minutes
+
+QUERY LIMITS:
+├── Max results: 10,000 rows
+├── Query timeout: 10 minutes
+├── Best practice: Use time filters to optimize</div>
+
+                    <h4>Key Tables Reference</h4>
+                    <div class="code-block">MDE HUNTING TABLES:
+
+ENDPOINT TELEMETRY:
+┌────────────────────────┬─────────────────────────────────────┐
+│ Table                  │ Contains                            │
+├────────────────────────┼─────────────────────────────────────┤
+│ DeviceProcessEvents    │ Process creation, termination       │
+│ DeviceNetworkEvents    │ Network connections                 │
+│ DeviceFileEvents       │ File create, modify, delete         │
+│ DeviceRegistryEvents   │ Registry operations                 │
+│ DeviceLogonEvents      │ Authentication events               │
+│ DeviceImageLoadEvents  │ DLL/module loads                    │
+│ DeviceEvents           │ Miscellaneous security events       │
+└────────────────────────┴─────────────────────────────────────┘
+
+ALERT AND INCIDENT DATA:
+├── AlertInfo: Alert metadata
+├── AlertEvidence: Evidence linked to alerts
+├── DeviceAlertEvents: Device-specific alerts
+
+IDENTITY AND EMAIL (M365 Defender):
+├── IdentityLogonEvents: Identity sign-ins
+├── IdentityQueryEvents: LDAP/directory queries
+├── EmailEvents: Email metadata
+├── EmailAttachmentInfo: Attachment details
+
+DEVICE INVENTORY:
+├── DeviceInfo: Device properties
+├── DeviceTvmSoftwareInventory: Installed software
+├── DeviceTvmSoftwareVulnerabilities: Known CVEs</div>
+                </div>
+
+                <!-- End-to-End Hunting Workflow -->
+                <h2><i class="fas fa-route"></i> End-to-End Hunting Workflow</h2>
+                <div class="config-section">
+                    <h4>Complete Hunting Process</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ADVANCED HUNTING WORKFLOW                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1           PHASE 2           PHASE 3           PHASE 4             │
+│  HYPOTHESIS        QUERY BUILD       INVESTIGATION     OPERATIONALIZE      │
+│  ──────────        ───────────       ─────────────     ──────────────      │
+│                                                                             │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Threat   │     │ Identify │     │ Execute  │     │ Document │          │
+│  │ Intel    │────▶│ Tables   │────▶│ Query    │────▶│ Findings │          │
+│  │ Input    │     │ & Fields │     │          │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Map to   │     │ Write    │     │ Analyze  │     │ Create   │          │
+│  │ MITRE    │────▶│ KQL      │────▶│ Results  │────▶│ Detection│          │
+│  │ Technique│     │ Query    │     │          │     │ Rule     │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Select   │     │ Test &   │     │ Triage   │     │ Share    │          │
+│  │ Time     │────▶│ Refine   │────▶│ True vs  │────▶│ With     │          │
+│  │ Range    │     │          │     │ False Pos│     │ Team     │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│                                                                             │
+│  ◀──────────────────── ITERATE AND REFINE ────────────────────────────▶    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 1: Hypothesis Development</h4>
+                    <div class="code-block">HYPOTHESIS DEVELOPMENT:
+
+STEP 1: IDENTIFY THREAT SCENARIO
+Sources:
+├── Threat intelligence reports
+├── MITRE ATT&CK techniques
+├── Recent incidents in environment
+├── Industry-specific threats
+└── Vulnerability disclosures
+
+STEP 2: FORMULATE HYPOTHESIS
+Template: "Attackers may use [TECHNIQUE] to [OBJECTIVE],
+          which would generate [OBSERVABLE] in [TABLE]"
+
+Examples:
+├── "Attackers may use encoded PowerShell to download
+│    malware, visible in DeviceProcessEvents"
+├── "Threat actors may establish persistence via
+│    registry run keys, visible in DeviceRegistryEvents"
+└── "APT groups may perform credential dumping,
+     visible in DeviceProcessEvents targeting LSASS"
+
+STEP 3: MAP TO MITRE ATT&CK
+For T1059.001 (PowerShell):
+├── Tactic: Execution
+├── Technique: Command and Scripting Interpreter
+├── Sub-technique: PowerShell
+├── Data Sources: Process creation, Script execution
+└── Detection: Command-line logging, Script Block logging
+
+HYPOTHESIS SELECTION DECISION TREE:
+┌─────────────────────────────────────────────────────────────┐
+│ Do you have specific threat intel?                          │
+├────────────────┬────────────────────────────────────────────┤
+│      YES       │              NO                            │
+│       │        │               │                            │
+│       ▼        │               ▼                            │
+│  Hunt specific │    Review MITRE coverage gaps              │
+│  IOCs/TTPs     │               │                            │
+│                │               ▼                            │
+│                │    Select undermonitored technique         │
+│                │               │                            │
+│                │               ▼                            │
+│                │    Build detection hypothesis              │
+└────────────────┴────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 2: Query Building</h4>
+                    <div class="code-block">QUERY BUILDING PROCESS:
+
+STEP 1: SELECT APPROPRIATE TABLE
+Execution → DeviceProcessEvents
+Network → DeviceNetworkEvents
+Files → DeviceFileEvents
+Registry → DeviceRegistryEvents
+Auth → DeviceLogonEvents
+
+STEP 2: START BROAD
+// Initial broad query
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "powershell.exe"
+| take 100
+
+STEP 3: ADD DETECTION LOGIC
+// Refined with specific patterns
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+| where ProcessCommandLine has_any (
+    "-enc", "-encodedcommand",
+    "downloadstring", "downloadfile",
+    "invoke-webrequest", "iwr",
+    "invoke-expression", "iex",
+    "-hidden", "-bypass", "-noprofile"
+)
+
+STEP 4: REDUCE FALSE POSITIVES
+// Add exclusions for known good
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has "-enc"
+| where ProcessCommandLine !has "Microsoft"
+| where ProcessCommandLine !has "Windows\\Temp\\PSScript"
+| where InitiatingProcessFileName !in~ ("sccm.exe", "intune.exe")
+
+STEP 5: ADD CONTEXT
+// Include useful fields
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has_any ("-enc", "downloadstring")
+| project Timestamp, DeviceName, AccountName,
+          FileName, ProcessCommandLine,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc</div>
+                </div>
+
+                <!-- Essential Hunting Queries -->
+                <h2><i class="fas fa-code"></i> Essential Hunting Queries</h2>
+                <div class="config-section">
+                    <h4>Execution Hunting</h4>
+                    <div class="code-block">// Suspicious PowerShell execution
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+| where ProcessCommandLine has_any (
+    "-enc", "-encodedcommand", "frombase64",
+    "downloadstring", "downloadfile", "invoke-webrequest",
+    "-hidden", "bypass", "-noprofile"
+)
+| project Timestamp, DeviceName, AccountName, 
+          ProcessCommandLine, InitiatingProcessFileName
+| order by Timestamp desc
+
+// Living Off the Land Binaries (LOLBins)
+let LOLBins = dynamic([
+    "certutil.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe",
+    "wmic.exe", "cscript.exe", "wscript.exe", "bitsadmin.exe"
+]);
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName in~ (LOLBins)
+| where ProcessCommandLine has_any ("http", "ftp", "/c", "-e", "-decode")
+| project Timestamp, DeviceName, FileName, ProcessCommandLine
+
+// Process from suspicious locations
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FolderPath has_any ("\\Users\\Public\\", "\\Temp\\", "\\AppData\\Local\\Temp\\")
+| where FileName endswith ".exe"
+| summarize Count = count(), Devices = dcount(DeviceName) by FileName, FolderPath
+| where Devices < 5</div>
+
+                    <h4>Persistence Hunting</h4>
+                    <div class="code-block">// Registry run key modifications
+DeviceRegistryEvents
+| where Timestamp > ago(7d)
+| where RegistryKey has_any (
+    "\\CurrentVersion\\Run",
+    "\\CurrentVersion\\RunOnce",
+    "\\Winlogon\\Shell",
+    "\\Winlogon\\Userinit"
+)
+| where ActionType in ("RegistryValueSet", "RegistryKeyCreated")
+| project Timestamp, DeviceName, InitiatingProcessAccountName,
+          RegistryKey, RegistryValueName, RegistryValueData
+
+// Scheduled task creation
+DeviceEvents
+| where Timestamp > ago(7d)
+| where ActionType == "ScheduledTaskCreated"
+| extend TaskName = tostring(parse_json(AdditionalFields).TaskName)
+| project Timestamp, DeviceName, AccountName, TaskName, AdditionalFields
+
+// New service installation
+DeviceEvents
+| where Timestamp > ago(7d)
+| where ActionType == "ServiceInstalled"
+| extend ServiceName = tostring(parse_json(AdditionalFields).ServiceName)
+| project Timestamp, DeviceName, ServiceName, AdditionalFields</div>
+
+                    <h4>Credential Access</h4>
+                    <div class="code-block">// LSASS access indicators
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "lsass.exe" or ProcessCommandLine has "lsass"
+| where InitiatingProcessFileName !in~ ("svchost.exe", "services.exe", "csrss.exe")
+| project Timestamp, DeviceName, InitiatingProcessFileName,
+          InitiatingProcessCommandLine
+
+// Mimikatz patterns
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where ProcessCommandLine has_any (
+    "sekurlsa", "kerberos::list", "lsadump",
+    "privilege::debug", "token::elevate"
+)
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine
+
+// Credential file access
+DeviceFileEvents
+| where Timestamp > ago(7d)
+| where FileName in~ ("sam", "system", "security", "ntds.dit")
+| where FolderPath has_any ("\\config\\", "\\NTDS\\")
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, FolderPath</div>
+
+                    <h4>Network & Lateral Movement</h4>
+                    <div class="code-block">// Connections to rare IPs
+DeviceNetworkEvents
+| where Timestamp > ago(7d)
+| where RemoteIPType == "Public"
+| summarize Connections = count(), 
+            FirstSeen = min(Timestamp),
+            LastSeen = max(Timestamp),
+            Devices = dcount(DeviceName)
+  by RemoteIP, RemotePort
+| where Devices == 1 and Connections > 50
+| order by Connections desc
+
+// Beaconing detection
+DeviceNetworkEvents
+| where Timestamp > ago(24h)
+| where RemoteIPType == "Public"
+| summarize ConnectionCount = count() by DeviceName, RemoteIP, bin(Timestamp, 1h)
+| where ConnectionCount > 10
+| summarize HoursActive = count() by DeviceName, RemoteIP
+| where HoursActive > 6
+
+// Lateral movement indicators
+DeviceNetworkEvents
+| where Timestamp > ago(7d)
+| where RemotePort in (445, 135, 3389, 5985, 5986)
+| where LocalIPType == "Private" and RemoteIPType == "Private"
+| summarize TargetCount = dcount(RemoteIP) by DeviceName, RemotePort
+| where TargetCount > 5</div>
+                </div>
+
+                <!-- Custom Detection Rules -->
+                <h2><i class="fas fa-bell"></i> Custom Detection Rules</h2>
+                <div class="config-section">
+                    <div class="code-block">CREATING CUSTOM DETECTION RULES:
+
+STEP 1: DEVELOP AND TEST QUERY
+├── Build query in Advanced Hunting
+├── Test against 7-30 days of data
+├── Validate results (minimize false positives)
+└── Document expected behavior
+
+STEP 2: CREATE RULE
+Path: Hunting → Advanced Hunting → Create detection rule
+
+Configuration:
+├── Name: Descriptive name
+├── Frequency: How often to run
+│   ├── Every hour
+│   ├── Every 3 hours
+│   ├── Every 12 hours
+│   └── Every 24 hours
+├── Lookback: Data window to query
+├── Alert title: What appears in alerts
+└── Severity: Informational/Low/Medium/High
+
+STEP 3: MAP ENTITIES
+Entity Types:
+├── Device: DeviceName, DeviceId
+├── User: AccountName, AccountSid
+├── IP: LocalIP, RemoteIP
+├── URL: RemoteUrl
+└── File: SHA256, FileName
+
+STEP 4: CONFIGURE ACTIONS
+├── Generate alert
+├── Create incident
+├── Trigger automated investigation
+└── Custom response actions
+
+EXAMPLE RULE:
+Name: Encoded PowerShell with Network Activity
+Query:
+DeviceProcessEvents
+| where Timestamp > ago(1h)
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has "-enc"
+| join kind=inner (
+    DeviceNetworkEvents
+    | where Timestamp > ago(1h)
+    | where RemoteIPType == "Public"
+) on DeviceId, $left.ProcessId == $right.InitiatingProcessId
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, RemoteIP
+
+Frequency: Every hour
+Lookback: 1 hour
+Severity: High
+MITRE: T1059.001</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the key tables in MDE Advanced Hunting?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>DeviceProcessEvents:</strong> Process creation, command lines</li>
+                                <li><strong>DeviceNetworkEvents:</strong> Network connections</li>
+                                <li><strong>DeviceFileEvents:</strong> File operations</li>
+                                <li><strong>DeviceRegistryEvents:</strong> Registry modifications</li>
+                                <li><strong>DeviceLogonEvents:</strong> Authentication events</li>
+                                <li><strong>DeviceImageLoadEvents:</strong> DLL/module loads</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you hunt for credential dumping?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">DeviceProcessEvents
+| where ProcessCommandLine has_any (
+    "sekurlsa", "lsadump", "privilege::debug"
+)
+// Also check for:
+// - LSASS memory access
+// - SAM/SYSTEM file access
+// - procdump targeting lsass</div>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you turn a hunting query into a detection rule?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Test query, validate results, minimize FPs</li>
+                                <li>Click "Create detection rule" from results</li>
+                                <li>Configure: name, frequency, severity</li>
+                                <li>Map entities (Device, User, IP)</li>
+                                <li>Set actions (alert, incident)</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect beaconing behavior?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li>Regular time intervals between connections</li>
+                                <li>Consistent packet sizes</li>
+                                <li>Persistent connections over hours</li>
+                                <li>Group by time bins, look for patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

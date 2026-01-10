@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Security Monitoring | SOC Operations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">SOC Operations</a>
+                <span class="separator">/</span>
+                <span class="current">Cloud Security Monitoring</span>
+            </div>
+
+<h1><i class="fas fa-cloud"></i> Cloud Security Monitoring</h1>
+                <p class="lead">Monitor and detect threats in cloud environments. Learn to analyze Azure, AWS, and GCP security logs for identity attacks, misconfigurations, and data exposure.</p>
+
+                <!-- Cloud Security Overview -->
+                <h2><i class="fas fa-info-circle"></i> Cloud Security Overview</h2>
+                <div class="config-section">
+                    <h4>Shared Responsibility Model</h4>
+                    <div class="code-block">Cloud Security Responsibilities:
+
+CLOUD PROVIDER (Azure/AWS/GCP):
+- Physical security
+- Network infrastructure
+- Hypervisor security
+- Service availability
+
+CUSTOMER:
+- Identity and access management
+- Data classification and encryption
+- Network security configuration
+- Application security
+- Endpoint protection
+
+Key Monitoring Areas:
+- Identity and authentication
+- Resource configuration changes
+- Data access and movement
+- Network traffic
+- API activity</div>
+
+                    <h4>Key Cloud Threats</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Threat</th><th>Description</th><th>Detection Focus</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Credential Theft</strong></td><td>Stolen cloud credentials</td><td>Unusual sign-ins, impossible travel</td></tr>
+                            <tr><td><strong>Privilege Escalation</strong></td><td>Gaining higher permissions</td><td>Role changes, policy modifications</td></tr>
+                            <tr><td><strong>Data Exposure</strong></td><td>Public buckets/blobs</td><td>Configuration changes, access patterns</td></tr>
+                            <tr><td><strong>Cryptomining</strong></td><td>Unauthorized compute</td><td>Resource creation, high CPU</td></tr>
+                            <tr><td><strong>Lateral Movement</strong></td><td>Moving between services</td><td>Cross-account access, unusual APIs</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Azure Security Logs -->
+                <h2><i class="fab fa-microsoft"></i> Azure Security Logs</h2>
+                <div class="config-section">
+                    <h4>Key Azure Log Sources</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Log</th><th>Contents</th><th>Sentinel Table</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Azure AD Sign-in</strong></td><td>Authentication events</td><td>SigninLogs</td></tr>
+                            <tr><td><strong>Azure AD Audit</strong></td><td>Directory changes</td><td>AuditLogs</td></tr>
+                            <tr><td><strong>Activity Log</strong></td><td>Resource operations</td><td>AzureActivity</td></tr>
+                            <tr><td><strong>Defender for Cloud</strong></td><td>Security alerts</td><td>SecurityAlert</td></tr>
+                            <tr><td><strong>Storage Analytics</strong></td><td>Blob/file access</td><td>StorageBlobLogs</td></tr>
+                            <tr><td><strong>Key Vault</strong></td><td>Secret access</td><td>AzureDiagnostics</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Azure AD Sign-in Analysis</h4>
+                    <div class="code-block">// Failed sign-ins by user
+SigninLogs
+| where ResultType != 0
+| summarize FailedAttempts = count() by UserPrincipalName, IPAddress
+| where FailedAttempts > 10
+| order by FailedAttempts desc
+
+// Impossible travel detection
+SigninLogs
+| where ResultType == 0
+| summarize Locations = make_set(Location), 
+            Times = make_list(TimeGenerated) by UserPrincipalName
+| where array_length(Locations) > 1
+
+// Sign-ins from unusual countries
+SigninLogs
+| where ResultType == 0
+| extend Country = tostring(LocationDetails.countryOrRegion)
+| where Country !in ("United States", "Canada", "United Kingdom")
+| summarize count() by UserPrincipalName, Country, IPAddress
+
+// Legacy authentication (security risk)
+SigninLogs
+| where ClientAppUsed !in ("Browser", "Mobile Apps and Desktop clients")
+| summarize count() by UserPrincipalName, ClientAppUsed, AppDisplayName
+
+// Risky sign-ins
+SigninLogs
+| where RiskLevelDuringSignIn in ("high", "medium")
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+          RiskLevelDuringSignIn, RiskDetail</div>
+
+                    <h4>Azure Activity Log Analysis</h4>
+                    <div class="code-block">// Resource deletions
+AzureActivity
+| where OperationNameValue endswith "delete"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, ResourceGroup, 
+          OperationNameValue, Resource
+
+// Firewall rule changes
+AzureActivity
+| where OperationNameValue has "securityRules"
+| project TimeGenerated, Caller, OperationNameValue, 
+          ActivityStatusValue, Properties
+
+// Role assignments
+AzureActivity
+| where OperationNameValue == "Microsoft.Authorization/roleAssignments/write"
+| extend RoleDetails = parse_json(Properties)
+| project TimeGenerated, Caller, RoleDetails
+
+// VM creation
+AzureActivity
+| where OperationNameValue == "Microsoft.Compute/virtualMachines/write"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, ResourceGroup, Resource</div>
+                </div>
+
+                <!-- AWS Security Logs -->
+                <h2><i class="fab fa-aws"></i> AWS Security Logs</h2>
+                <div class="config-section">
+                    <h4>Key AWS Log Sources</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Log</th><th>Contents</th><th>Service</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>CloudTrail</strong></td><td>API activity</td><td>All AWS services</td></tr>
+                            <tr><td><strong>GuardDuty</strong></td><td>Threat detection</td><td>Security findings</td></tr>
+                            <tr><td><strong>VPC Flow Logs</strong></td><td>Network traffic</td><td>VPC</td></tr>
+                            <tr><td><strong>S3 Access Logs</strong></td><td>Bucket access</td><td>S3</td></tr>
+                            <tr><td><strong>Config</strong></td><td>Resource changes</td><td>Configuration</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>CloudTrail Analysis</h4>
+                    <div class="code-block">// Splunk - Console logins
+index=aws sourcetype=aws:cloudtrail eventName=ConsoleLogin
+| stats count by userIdentity.arn, sourceIPAddress, eventTime
+
+// Failed logins
+index=aws sourcetype=aws:cloudtrail eventName=ConsoleLogin
+| where errorCode="Failed"
+| stats count by userIdentity.userName, sourceIPAddress
+
+// IAM changes
+index=aws sourcetype=aws:cloudtrail 
+eventName IN ("CreateUser", "CreateAccessKey", "AttachUserPolicy", 
+              "PutUserPolicy", "CreateRole", "AttachRolePolicy")
+| table _time, userIdentity.arn, eventName, requestParameters.*
+
+// Security group changes
+index=aws sourcetype=aws:cloudtrail 
+eventName IN ("AuthorizeSecurityGroupIngress", "AuthorizeSecurityGroupEgress",
+              "RevokeSecurityGroupIngress", "CreateSecurityGroup")
+| table _time, userIdentity.arn, eventName, requestParameters.groupId
+
+// S3 bucket policy changes
+index=aws sourcetype=aws:cloudtrail 
+eventName IN ("PutBucketPolicy", "PutBucketAcl", "PutBucketPublicAccessBlock")
+| table _time, userIdentity.arn, eventName, requestParameters.bucketName
+
+// EC2 instance launches
+index=aws sourcetype=aws:cloudtrail eventName="RunInstances"
+| table _time, userIdentity.arn, requestParameters.instanceType, 
+        responseElements.instancesSet.items{}.instanceId</div>
+
+                    <h4>GuardDuty Findings</h4>
+                    <div class="code-block">GuardDuty Finding Types:
+
+RECONNAISSANCE:
+- Recon:EC2/PortProbeUnprotectedPort
+- Recon:EC2/Portscan
+
+UNAUTHORIZED ACCESS:
+- UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration
+- UnauthorizedAccess:EC2/SSHBruteForce
+- UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B
+
+CRYPTOCURRENCY:
+- CryptoCurrency:EC2/BitcoinTool.B
+
+DATA EXFILTRATION:
+- Exfiltration:S3/MaliciousIPCaller
+
+CREDENTIAL COMPROMISE:
+- CredentialAccess:IAMUser/AnomalousBehavior
+
+Priority for Investigation:
+High severity + resource criticality = Immediate response</div>
+                </div>
+
+                <!-- Cloud Attack Patterns -->
+                <h2><i class="fas fa-skull-crossbones"></i> Cloud Attack Patterns</h2>
+                <div class="config-section">
+                    <div class="code-block">Common Cloud Attack Patterns:
+
+INITIAL ACCESS:
+1. Phished credentials
+2. Exposed access keys in code
+3. Compromised service account
+4. SSRF to metadata service
+
+PERSISTENCE:
+1. Create new IAM user/role
+2. Add access keys
+3. Create Lambda backdoor
+4. Modify existing policies
+
+PRIVILEGE ESCALATION:
+1. iam:PassRole abuse
+2. AssumeRole chain
+3. EC2 instance profile
+4. Lambda execution role
+
+DATA ACCESS:
+1. List/access S3 buckets
+2. Query databases
+3. Access secrets manager
+4. Download from storage
+
+DETECTION QUERIES:
+
+// KQL - New service principal
+AuditLogs
+| where OperationName == "Add service principal"
+| project TimeGenerated, InitiatedBy, TargetResources
+
+// Splunk - Access key creation
+index=aws eventName="CreateAccessKey"
+| table _time, userIdentity.arn, responseElements.accessKey.userName</div>
+                </div>
+
+                <!-- M365 Security -->
+                <h2><i class="fas fa-envelope"></i> Microsoft 365 Security</h2>
+                <div class="config-section">
+                    <h4>Key M365 Security Events</h4>
+                    <div class="code-block">// Mailbox forwarding rules (BEC indicator)
+OfficeActivity
+| where Operation in ("New-InboxRule", "Set-InboxRule")
+| where Parameters has_any ("ForwardTo", "RedirectTo", "ForwardAsAttachmentTo")
+| project TimeGenerated, UserId, Operation, Parameters
+
+// Unusual mail access
+OfficeActivity
+| where Operation == "MailItemsAccessed"
+| where ClientIPAddress !startswith "10."
+| summarize count() by UserId, ClientIPAddress
+
+// SharePoint/OneDrive downloads
+OfficeActivity
+| where Operation == "FileDownloaded"
+| summarize DownloadCount = count(), 
+            TotalSize = sum(toint(OfficeObjectId)) by UserId
+| where DownloadCount > 100
+
+// Admin role assignments
+AuditLogs
+| where OperationName == "Add member to role"
+| where TargetResources has "Admin"
+| project TimeGenerated, InitiatedBy, TargetResources
+
+// App consent grants
+AuditLogs
+| where OperationName == "Consent to application"
+| project TimeGenerated, InitiatedBy, TargetResources</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What indicates a compromised cloud identity?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Impossible travel:</strong> Logins from distant locations</li>
+                                <li><strong>New access keys:</strong> Unexpected key creation</li>
+                                <li><strong>Privilege changes:</strong> Self-elevation, new roles</li>
+                                <li><strong>Resource creation:</strong> Unexpected VMs, functions</li>
+                                <li><strong>Data access:</strong> Bulk downloads, unusual queries</li>
+                                <li><strong>API patterns:</strong> Reconnaissance API calls</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you investigate an AWS GuardDuty finding?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Review finding:</strong> Understand what was detected</li>
+                                <li><strong>Check CloudTrail:</strong> Related API activity</li>
+                                <li><strong>Identify principal:</strong> User, role, or service</li>
+                                <li><strong>Scope impact:</strong> What resources were accessed?</li>
+                                <li><strong>Check legitimacy:</strong> Is this expected activity?</li>
+                                <li><strong>Respond:</strong> Disable credentials, rotate keys if compromised</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's a common attack after S3 bucket discovery?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>List contents:</strong> Enumerate bucket objects</li>
+                                <li><strong>Download data:</strong> Exfiltrate sensitive files</li>
+                                <li><strong>Upload malware:</strong> If write access exists</li>
+                                <li><strong>Modify objects:</strong> Inject malicious content</li>
+                            </ol>
+                            <p style="margin-top: 12px;"><strong>Detection:</strong> Monitor S3 access logs for unusual principals, bulk downloads, or public access.</p>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

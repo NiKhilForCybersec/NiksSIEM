@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Hunting | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">Threat Hunting</span>
+            </div>
+
+<h1><i class="fas fa-crosshairs"></i> Threat Hunting in Microsoft Sentinel</h1>
+                <p class="lead">Master proactive threat hunting in Microsoft Sentinel. Learn the complete hunting workflow, hypothesis development, query techniques, and how to operationalize findings into detections.</p>
+
+                <!-- Hunting Overview -->
+                <h2><i class="fas fa-info-circle"></i> Threat Hunting Overview</h2>
+                <div class="config-section">
+                    <h4>What is Threat Hunting?</h4>
+                    <div class="code-block">Threat Hunting Definition:
+
+Proactive, iterative searching through data to detect 
+threats that evade existing security solutions.
+
+HUNTING vs DETECTION:
+┌────────────────────────┬────────────────────────┐
+│     DETECTION          │      HUNTING           │
+├────────────────────────┼────────────────────────┤
+│ Reactive               │ Proactive              │
+│ Automated alerts       │ Human-driven analysis  │
+│ Known patterns         │ Unknown threats        │
+│ Continuous monitoring  │ Focused investigation  │
+│ High volume, low touch │ Low volume, high touch │
+└────────────────────────┴────────────────────────┘
+
+HUNTING OBJECTIVES:
+├── Find threats missed by automated detection
+├── Validate detection coverage
+├── Discover new attack techniques
+├── Reduce attacker dwell time
+├── Improve security posture
+└── Generate new detection rules
+
+SENTINEL HUNTING CAPABILITIES:
+├── Built-in hunting queries (100+)
+├── Custom KQL queries
+├── Bookmarks for evidence
+├── Livestream for real-time monitoring
+├── Notebooks for advanced analysis
+└── MITRE ATT&CK mapping</div>
+
+                    <h4>Hunting Interface</h4>
+                    <p><span class="console-path">Sentinel → Threat management → Hunting</span></p>
+                    <div class="code-block">Sentinel Hunting Interface Components:
+
+┌─────────────────────────────────────────────────────────────┐
+│                    HUNTING DASHBOARD                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Queries   │  │  Bookmarks  │  │  Livestream │         │
+│  │    (150)    │  │    (12)     │  │   (Active)  │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│                                                             │
+│  FILTERS:                                                   │
+│  ├── Tactics: [All] [Initial Access] [Execution]...       │
+│  ├── Techniques: [T1059] [T1078] [T1003]...               │
+│  ├── Data Sources: [SecurityEvent] [SigninLogs]...        │
+│  └── Custom Tags: [High Priority] [Weekly Hunt]           │
+│                                                             │
+│  QUERY LIST:                                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ Query Name          │ Tactic    │ Results │ Status  │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │ Rare process exec   │ Execution │   45    │ New     │   │
+│  │ Suspicious PS       │ Execution │   12    │ Review  │   │
+│  │ Failed logins       │ Cred Acc  │  234    │ Done    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+                </div>
+
+                <!-- End-to-End Hunting Workflow -->
+                <h2><i class="fas fa-route"></i> End-to-End Hunting Workflow</h2>
+                <div class="config-section">
+                    <h4>Complete Hunting Process</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     THREAT HUNTING WORKFLOW                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1              PHASE 2              PHASE 3              PHASE 4    │
+│  HYPOTHESIS           DATA COLLECTION      INVESTIGATION        OUTPUT     │
+│  ───────────          ───────────────      ─────────────        ──────     │
+│                                                                             │
+│  ┌──────────┐        ┌──────────┐        ┌──────────┐        ┌──────────┐ │
+│  │ Threat   │        │ Identify │        │ Execute  │        │ Document │ │
+│  │ Intel    │───────▶│ Data     │───────▶│ Queries  │───────▶│ Findings │ │
+│  │ Input    │        │ Sources  │        │          │        │          │ │
+│  └──────────┘        └──────────┘        └──────────┘        └──────────┘ │
+│       │                   │                   │                    │       │
+│       ▼                   ▼                   ▼                    ▼       │
+│  ┌──────────┐        ┌──────────┐        ┌──────────┐        ┌──────────┐ │
+│  │ Develop  │        │ Validate │        │ Analyze  │        │ Create   │ │
+│  │ Hypoth-  │───────▶│ Data     │───────▶│ Results  │───────▶│ Detection│ │
+│  │ esis     │        │ Avail.   │        │          │        │ Rules    │ │
+│  └──────────┘        └──────────┘        └──────────┘        └──────────┘ │
+│       │                   │                   │                    │       │
+│       ▼                   ▼                   ▼                    ▼       │
+│  ┌──────────┐        ┌──────────┐        ┌──────────┐        ┌──────────┐ │
+│  │ Map to   │        │ Build    │        │ Bookmark │        │ Share    │ │
+│  │ MITRE    │        │ KQL      │        │ Evidence │        │ Intel    │ │
+│  │ ATT&CK   │        │ Queries  │        │          │        │          │ │
+│  └──────────┘        └──────────┘        └──────────┘        └──────────┘ │
+│                                                                             │
+│  ◀──────────────────── ITERATE AND REFINE ────────────────────────────▶    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 1: Hypothesis Development</h4>
+                    <div class="code-block">HYPOTHESIS DEVELOPMENT:
+
+STEP 1: GATHER INTELLIGENCE
+├── Threat intelligence feeds
+├── Recent security advisories
+├── Industry-specific threats
+├── Internal incident patterns
+├── MITRE ATT&CK updates
+└── Peer organization sharing
+
+STEP 2: FORMULATE HYPOTHESIS
+Template: "Adversaries may use [TECHNIQUE] to [OBJECTIVE] 
+          which would generate [OBSERVABLE] in [DATA SOURCE]"
+
+EXAMPLES:
+├── "Attackers may use encoded PowerShell to download 
+│    malware, visible in SecurityEvent process creation"
+│
+├── "Threat actors may perform password spraying against 
+│    Azure AD, visible in SigninLogs failed authentications"
+│
+└── "APT groups may use scheduled tasks for persistence,
+     visible in SecurityEvent 4698 events"
+
+STEP 3: MAP TO MITRE ATT&CK
+├── Identify relevant tactics
+├── Map to specific techniques
+├── Note sub-techniques
+└── Check detection coverage
+
+DECISION TREE - HYPOTHESIS SELECTION:
+┌─────────────────────────────────────────┐
+│ Is there recent threat intel?           │
+├────────────┬────────────────────────────┤
+│    YES     │           NO               │
+│     │      │            │               │
+│     ▼      │            ▼               │
+│  Priority  │    Check MITRE gaps        │
+│  Hunt      │            │               │
+│            │            ▼               │
+│            │    Low coverage area?      │
+│            │    ├── YES → Hunt there    │
+│            │    └── NO → Random sample  │
+└────────────┴────────────────────────────┘</div>
+
+                    <h4>Phase 2: Data Collection & Query Building</h4>
+                    <div class="code-block">DATA SOURCE IDENTIFICATION:
+
+STEP 1: IDENTIFY REQUIRED DATA
+For hypothesis: "Encoded PowerShell execution"
+├── Primary: SecurityEvent (Process Creation)
+├── Secondary: DeviceProcessEvents (if MDE integrated)
+├── Supporting: DeviceNetworkEvents (C2 communication)
+└── Context: IdentityInfo (user details)
+
+STEP 2: VALIDATE DATA AVAILABILITY
+// Check if data exists
+SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4688
+| where Process has "powershell"
+| count
+
+// Check data freshness
+SecurityEvent
+| where EventID == 4688
+| summarize LastEvent = max(TimeGenerated)
+
+STEP 3: BUILD HUNTING QUERY
+// Start broad, then narrow
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688  // Process creation
+| where Process has_any ("powershell.exe", "pwsh.exe")
+| where CommandLine has_any (
+    "-enc", "-encodedcommand", "-e ",
+    "frombase64", "downloadstring"
+)
+| project TimeGenerated, Computer, Account, 
+          Process, CommandLine, ParentProcessName
+| order by TimeGenerated desc
+
+STEP 4: REFINE QUERY
+// Add context and reduce false positives
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where Process has_any ("powershell.exe", "pwsh.exe")
+| where CommandLine has "-enc"
+| where CommandLine !has "Microsoft"  // Exclude known good
+| extend DecodedLength = strlen(extract(@"-enc\s+([A-Za-z0-9+/=]+)", 1, CommandLine))
+| where DecodedLength > 100  // Long encoded commands
+| project TimeGenerated, Computer, Account, 
+          CommandLine, DecodedLength, ParentProcessName</div>
+
+                    <h4>Phase 3: Investigation & Analysis</h4>
+                    <div class="code-block">INVESTIGATION WORKFLOW:
+
+STEP 1: EXECUTE QUERY AND REVIEW RESULTS
+├── Run query against 7-30 days
+├── Review result count
+├── Sample results for patterns
+└── Identify outliers
+
+STEP 2: TRIAGE RESULTS
+Decision Tree for Each Result:
+┌─────────────────────────────────────────────┐
+│ Is this expected behavior?                  │
+├─────────────┬───────────────────────────────┤
+│    YES      │            NO                 │
+│     │       │             │                 │
+│     ▼       │             ▼                 │
+│  Document   │    Is it malicious?           │
+│  as known   │    ├── YES → Escalate         │
+│  good       │    ├── NO → False positive    │
+│             │    └── UNSURE → Investigate   │
+└─────────────┴───────────────────────────────┘
+
+STEP 3: DEEP DIVE INVESTIGATION
+For suspicious findings:
+// Get full context around event
+let SuspiciousTime = datetime(2024-01-15T10:30:00Z);
+let SuspiciousHost = "WORKSTATION01";
+SecurityEvent
+| where Computer == SuspiciousHost
+| where TimeGenerated between ((SuspiciousTime - 1h) .. (SuspiciousTime + 1h))
+| where EventID in (4688, 4624, 4625, 4672)
+| project TimeGenerated, EventID, Activity, Account, Process, CommandLine
+| order by TimeGenerated
+
+// Check for lateral movement
+SecurityEvent
+| where TimeGenerated > ago(1d)
+| where EventID == 4624
+| where LogonType in (3, 10)  // Network, RemoteInteractive
+| where TargetUserName == "suspicious_user"
+| summarize Hosts = make_set(Computer) by TargetUserName
+
+STEP 4: BOOKMARK EVIDENCE
+├── Select suspicious rows
+├── Click "Add bookmark"
+├── Add notes and tags
+├── Link to investigation
+└── Include in incident if confirmed</div>
+
+                    <h4>Phase 4: Operationalize Findings</h4>
+                    <div class="code-block">OPERATIONALIZE FINDINGS:
+
+STEP 1: DOCUMENT FINDINGS
+├── Hypothesis tested
+├── Data sources used
+├── Query methodology
+├── Results summary
+├── True/False positive rates
+└── Recommendations
+
+STEP 2: CREATE DETECTION RULE (if warranted)
+Path: Sentinel → Analytics → Create → Scheduled query rule
+
+Rule Configuration:
+├── Name: Encoded PowerShell with Download Activity
+├── Description: Detects encoded PowerShell commands 
+│                containing download functions
+├── Severity: High
+├── MITRE: T1059.001 (PowerShell)
+├── Query: (refined hunting query)
+├── Frequency: Every 1 hour
+├── Lookback: 1 hour
+├── Entity mapping:
+│   ├── Host: Computer
+│   └── Account: Account
+└── Incident settings: Create incidents
+
+STEP 3: SHARE INTELLIGENCE
+├── Update threat intel platform
+├── Share IOCs with team
+├── Document in wiki/runbook
+├── Brief SOC team
+└── Update MITRE coverage map
+
+STEP 4: MEASURE SUCCESS
+├── Track detection effectiveness
+├── Monitor false positive rate
+├── Adjust thresholds as needed
+└── Schedule follow-up hunts</div>
+                </div>
+
+                <!-- Hunting Query Library -->
+                <h2><i class="fas fa-book"></i> Hunting Query Library</h2>
+                <div class="config-section">
+                    <h4>Initial Access Hunting</h4>
+                    <div class="code-block">// Phishing - Office spawning suspicious processes
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where ParentProcessName has_any ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE", "OUTLOOK.EXE")
+| where Process has_any ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| project TimeGenerated, Computer, Account, ParentProcessName, Process, CommandLine
+
+// Impossible travel detection
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType == 0  // Successful
+| summarize 
+    Locations = make_set(Location),
+    LocationCount = dcount(Location),
+    Times = make_list(TimeGenerated)
+  by UserPrincipalName
+| where LocationCount > 1
+| mv-expand Times
+| order by UserPrincipalName, Times
+
+// Brute force attempts
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType != 0
+| summarize 
+    FailedAttempts = count(),
+    DistinctUsers = dcount(UserPrincipalName),
+    Users = make_set(UserPrincipalName, 10)
+  by IPAddress, bin(TimeGenerated, 1h)
+| where FailedAttempts > 20</div>
+
+                    <h4>Execution Hunting</h4>
+                    <div class="code-block">// Living off the land binaries
+let LOLBins = dynamic(["certutil.exe", "mshta.exe", "regsvr32.exe", 
+                       "rundll32.exe", "wmic.exe", "cscript.exe"]);
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where Process has_any (LOLBins)
+| where CommandLine has_any ("http", "ftp", "/c", "-e", "-decode")
+| project TimeGenerated, Computer, Account, Process, CommandLine, ParentProcessName
+
+// Suspicious script execution
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where Process has_any ("wscript.exe", "cscript.exe")
+| where CommandLine has_any (".js", ".vbs", ".wsf")
+| where CommandLine !has "C:\\Windows"
+| project TimeGenerated, Computer, Account, CommandLine
+
+// PowerShell download cradles
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where Process has "powershell"
+| where CommandLine has_any (
+    "Net.WebClient", "DownloadString", "DownloadFile",
+    "Invoke-WebRequest", "iwr", "curl", "wget",
+    "Start-BitsTransfer", "Invoke-RestMethod"
+)
+| project TimeGenerated, Computer, Account, CommandLine</div>
+
+                    <h4>Persistence Hunting</h4>
+                    <div class="code-block">// Registry run key modifications
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4657  // Registry value modified
+| where ObjectName has_any (
+    "\\CurrentVersion\\Run",
+    "\\CurrentVersion\\RunOnce",
+    "\\CurrentVersion\\RunServices"
+)
+| project TimeGenerated, Computer, Account, ObjectName, ObjectValueName
+
+// Scheduled task creation
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4698  // Scheduled task created
+| extend TaskContent = tostring(parse_xml(EventData).DataItem.EventData.Data)
+| project TimeGenerated, Computer, Account, TaskContent
+
+// New services installed
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 7045  // Service installed
+| extend ServiceName = tostring(parse_xml(EventData).DataItem.EventData.Data[0])
+| extend ServicePath = tostring(parse_xml(EventData).DataItem.EventData.Data[1])
+| where ServicePath !has "C:\\Windows"
+| project TimeGenerated, Computer, ServiceName, ServicePath</div>
+
+                    <h4>Lateral Movement Hunting</h4>
+                    <div class="code-block">// Remote execution via WMI
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4688
+| where Process has "WmiPrvSE.exe"
+| where CommandLine has_any ("powershell", "cmd", "wscript")
+| project TimeGenerated, Computer, Account, Process, CommandLine
+
+// PsExec-like behavior
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 7045  // Service installed
+| extend ServiceName = tostring(parse_xml(EventData).DataItem.EventData.Data[0])
+| where ServiceName matches regex @"^[A-Za-z]{8}$"  // Random 8-char name
+| project TimeGenerated, Computer, ServiceName
+
+// Pass-the-hash detection
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4624
+| where LogonType == 9  // NewCredentials
+| where AuthenticationPackageName == "Negotiate"
+| project TimeGenerated, Computer, TargetUserName, IpAddress, LogonProcessName</div>
+                </div>
+
+                <!-- Bookmarks & Evidence -->
+                <h2><i class="fas fa-bookmark"></i> Bookmarks & Evidence Collection</h2>
+                <div class="config-section">
+                    <div class="code-block">BOOKMARK WORKFLOW:
+
+CREATING BOOKMARKS:
+1. Run hunting query
+2. Identify suspicious results
+3. Select row(s) in results
+4. Click "Add bookmark" button
+5. Fill in details:
+   ├── Bookmark name
+   ├── Notes (investigation findings)
+   ├── Tags (categorization)
+   └── Entity mapping (auto-detected)
+
+BOOKMARK BEST PRACTICES:
+├── Use descriptive names
+├── Include context in notes
+├── Tag consistently (Hunt-2024-01, Persistence, etc.)
+├── Link related bookmarks
+└── Convert to incident when confirmed
+
+MANAGING BOOKMARKS:
+Path: Sentinel → Hunting → Bookmarks
+
+Actions:
+├── View all bookmarks
+├── Filter by tag, date, creator
+├── Create incident from bookmarks
+├── Export bookmarks
+└── Delete old bookmarks
+
+CREATING INCIDENT FROM BOOKMARKS:
+1. Select related bookmarks
+2. Click "Incident actions" → "Create new incident"
+3. Configure incident:
+   ├── Title
+   ├── Severity
+   ├── Owner
+   └── Description
+4. Bookmarks become incident evidence</div>
+                </div>
+
+                <!-- Livestream -->
+                <h2><i class="fas fa-broadcast-tower"></i> Livestream Hunting</h2>
+                <div class="config-section">
+                    <div class="code-block">LIVESTREAM OVERVIEW:
+
+PURPOSE:
+├── Real-time query monitoring
+├── Watch for specific events as they happen
+├── Useful during active incidents
+└── Monitor for expected attack activity
+
+CREATING LIVESTREAM:
+1. Go to Hunting → Queries
+2. Select or create query
+3. Click "Livestream" button
+4. Configure:
+   ├── Stream name
+   ├── Query (pre-filled)
+   ├── Time window (last 5 min, 15 min, 30 min)
+   └── Alert threshold
+
+EXAMPLE USE CASES:
+├── Monitor for attacker return during IR
+├── Watch for specific IOCs
+├── Validate detection during red team
+├── Real-time threat tracking
+
+LIVESTREAM QUERY EXAMPLE:
+// Monitor for specific attacker TTP
+SecurityEvent
+| where EventID == 4688
+| where CommandLine has "mimikatz"
+   or CommandLine has "sekurlsa"
+   or CommandLine has "lsadump"
+| project TimeGenerated, Computer, Account, CommandLine
+
+LIMITATIONS:
+├── Max 5 active livestreams
+├── Auto-stops after 8 hours
+├── Limited query complexity
+└── Resource intensive</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your threat hunting process.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Hypothesis:</strong> Develop based on threat intel, MITRE ATT&CK gaps, or incidents</li>
+                                <li><strong>Data Collection:</strong> Identify required data sources, validate availability</li>
+                                <li><strong>Query Building:</strong> Start broad, refine to reduce false positives</li>
+                                <li><strong>Investigation:</strong> Analyze results, triage, bookmark evidence</li>
+                                <li><strong>Operationalize:</strong> Create detection rules, share intel, document findings</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you develop a hunting hypothesis?</button>
+                        <div class="qa-answer">
+                            <p>Use the template: "Adversaries may use [TECHNIQUE] to [OBJECTIVE] which would generate [OBSERVABLE] in [DATA SOURCE]"</p>
+                            <p><strong>Sources for hypotheses:</strong></p>
+                            <ul>
+                                <li>Threat intelligence reports</li>
+                                <li>MITRE ATT&CK coverage gaps</li>
+                                <li>Recent incidents in your environment</li>
+                                <li>Industry-specific threat actors</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you operationalize hunting findings?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Document:</strong> Record hypothesis, methodology, findings</li>
+                                <li><strong>Create Detection:</strong> Convert validated query to analytics rule</li>
+                                <li><strong>Share Intel:</strong> Update TI platform, brief team</li>
+                                <li><strong>Measure:</strong> Track detection effectiveness over time</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between hunting and detection?</button>
+                        <div class="qa-answer">
+                            <table class="styled-table">
+                                <tr><th>Detection</th><th>Hunting</th></tr>
+                                <tr><td>Reactive (alerts)</td><td>Proactive (searching)</td></tr>
+                                <tr><td>Automated</td><td>Human-driven</td></tr>
+                                <tr><td>Known patterns</td><td>Unknown threats</td></tr>
+                                <tr><td>High volume</td><td>Focused investigation</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

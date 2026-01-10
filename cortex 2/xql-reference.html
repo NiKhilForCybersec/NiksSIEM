@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XQL Reference | Cortex XDR | Nik's SIEM Compendium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Cortex XDR</a>
+                <span class="separator">/</span>
+                <span class="current">XQL Reference</span>
+            </div>
+
+<div class="page-header">
+                    <h1><i class="fas fa-code"></i> XQL Reference</h1>
+                    <p class="lead">Complete XDR Query Language reference with syntax, operators, functions, and production-ready examples</p>
+                </div>
+                <!-- Query Structure -->
+                <section class="content-section">
+                    <h2><i class="fas fa-layer-group"></i> Query Structure</h2>
+                    <div class="workflow-diagram">
+<pre>
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                              XQL QUERY STRUCTURE                                                                      ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                       ║
+║   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐   ║
+║   │  dataset = xdr_data                         // 1. DATA SOURCE - Required, specifies the dataset to query                    │   ║
+║   │  | preset = xdr_process                     // 2. PRESET (optional) - Pre-filtered views for common use cases               │   ║
+║   │  | filter event_type = PROCESS              // 3. FILTER - Narrow down results (WHERE clause equivalent)                    │   ║
+║   │  | filter action_process_image_name contains "powershell"                                                                    │   ║
+║   │  | fields agent_hostname, _time, ...        // 4. FIELDS - Select specific columns to return                                │   ║
+║   │  | alter new_field = concat(a, b)           // 5. ALTER - Create calculated fields                                          │   ║
+║   │  | comp count() as total by hostname        // 6. COMP - Aggregate/compute statistics (GROUP BY equivalent)                 │   ║
+║   │  | sort desc _time                          // 7. SORT - Order results                                                      │   ║
+║   │  | limit 100                                // 8. LIMIT - Restrict number of results                                        │   ║
+║   └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   ║
+║                                                                                                                                       ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre>
+                    </div>
+                </section>
+                <!-- Datasets -->
+                <section class="content-section">
+                    <h2><i class="fas fa-database"></i> Available Datasets</h2>
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <th>Description</th>
+                                    <th>Key Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>xdr_data</code></td>
+                                    <td>All endpoint telemetry data</td>
+                                    <td>event_type, agent_hostname, action_*, actor_*</td>
+                                </tr>
+                                <tr>
+                                    <td><code>cloud_audit_logs</code></td>
+                                    <td>Cloud platform audit events</td>
+                                    <td>cloud_provider, cloud_operation, cloud_resource</td>
+                                </tr>
+                                <tr>
+                                    <td><code>firewall_logs</code></td>
+                                    <td>Palo Alto firewall logs</td>
+                                    <td>src_ip, dst_ip, dst_port, action</td>
+                                </tr>
+                                <tr>
+                                    <td><code>identity_data</code></td>
+                                    <td>Identity and authentication events</td>
+                                    <td>user_name, auth_result, source_ip</td>
+                                </tr>
+                                <tr>
+                                    <td><code>alerts</code></td>
+                                    <td>Cortex XDR alerts</td>
+                                    <td>alert_name, severity, alert_source</td>
+                                </tr>
+                                <tr>
+                                    <td><code>incidents</code></td>
+                                    <td>Cortex XDR incidents</td>
+                                    <td>incident_id, status, severity</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <!-- Presets -->
+                <section class="content-section">
+                    <h2><i class="fas fa-filter"></i> Presets (Pre-filtered Views)</h2>
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Preset</th>
+                                    <th>Pre-applied Filter</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>xdr_process</code></td>
+                                    <td>event_type = PROCESS</td>
+                                    <td>Process execution analysis</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_file</code></td>
+                                    <td>event_type = FILE</td>
+                                    <td>File operations</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_registry</code></td>
+                                    <td>event_type = REGISTRY</td>
+                                    <td>Registry modifications</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_network</code></td>
+                                    <td>event_type = NETWORK</td>
+                                    <td>Network connections</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_event_log</code></td>
+                                    <td>event_type = EVENT_LOG</td>
+                                    <td>Windows event logs</td>
+                                </tr>
+                                <tr>
+                                    <td><code>xdr_injection</code></td>
+                                    <td>event_type = INJECTION</td>
+                                    <td>Process injection events</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <!-- Filter Operators -->
+                <section class="content-section">
+                    <h2><i class="fas fa-equals"></i> Filter Operators</h2>
+                    <div class="concept-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon cyan"><i class="fas fa-equals"></i></div>
+                                <div><div class="card-title">Comparison Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>= , != , < , > , <= , >=
+// Examples
+| filter severity = "High"
+| filter _time >= timestamp("2024-01-01")
+| filter bytes_sent > 1000000</code></pre>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon purple"><i class="fas fa-search"></i></div>
+                                <div><div class="card-title">String Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>contains, ~contains (case-insensitive)
+!contains, !~contains
+in, not in
+// Examples
+| filter cmd contains "-enc"
+| filter process ~contains "powershell"
+| filter user in ("admin", "system")</code></pre>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon green"><i class="fas fa-asterisk"></i></div>
+                                <div><div class="card-title">Pattern Matching</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>matches (regex)
+// Examples
+| filter filename matches ".*\.exe$"
+| filter ip matches "^10\.\d+\.\d+\.\d+$"
+| filter path matches ".*\\Temp\\.*"</code></pre>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon orange"><i class="fas fa-code-branch"></i></div>
+                                <div><div class="card-title">Logical Operators</div></div>
+                            </div>
+                            <div class="card-body">
+<pre><code>and, or, not
+() for grouping
+// Examples
+| filter (severity = "High" or severity = "Critical")
+| filter user != null and auth_result = "Failed"
+| filter not (ip in allow_list)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Functions -->
+                <section class="content-section">
+                    <h2><i class="fas fa-function"></i> Functions Reference</h2>
+                    <h3>String Functions</h3>
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>lowercase(str)</code></td>
+                                    <td>Convert to lowercase</td>
+                                    <td><code>alter user_lower = lowercase(user_name)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>uppercase(str)</code></td>
+                                    <td>Convert to uppercase</td>
+                                    <td><code>alter host_upper = uppercase(hostname)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>concat(str1, str2, ...)</code></td>
+                                    <td>Concatenate strings</td>
+                                    <td><code>alter full_path = concat(dir, "\\", filename)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>substring(str, start, len)</code></td>
+                                    <td>Extract substring</td>
+                                    <td><code>alter short = substring(hash, 0, 8)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>split(str, delim)</code></td>
+                                    <td>Split into array</td>
+                                    <td><code>alter parts = split(path, "\\")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>replace(str, old, new)</code></td>
+                                    <td>Replace substring</td>
+                                    <td><code>alter clean = replace(cmd, "  ", " ")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>trim(str)</code></td>
+                                    <td>Remove whitespace</td>
+                                    <td><code>alter trimmed = trim(input)</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>length(str)</code></td>
+                                    <td>String length</td>
+                                    <td><code>alter cmd_len = length(command_line)</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <h3>Aggregation Functions</h3>
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>count()</code></td>
+                                    <td>Count records</td>
+                                    <td><code>comp count() as total by hostname</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>count_distinct(field)</code></td>
+                                    <td>Count unique values</td>
+                                    <td><code>comp count_distinct(user) as unique_users</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>sum(field)</code></td>
+                                    <td>Sum values</td>
+                                    <td><code>comp sum(bytes_sent) as total_bytes</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>avg(field)</code></td>
+                                    <td>Average value</td>
+                                    <td><code>comp avg(duration) as avg_duration</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>min(field)</code></td>
+                                    <td>Minimum value</td>
+                                    <td><code>comp min(_time) as first_seen</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>max(field)</code></td>
+                                    <td>Maximum value</td>
+                                    <td><code>comp max(_time) as last_seen</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>values(field)</code></td>
+                                    <td>Collect unique values</td>
+                                    <td><code>comp values(src_ip) as source_ips</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <h3>Time Functions</h3>
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>timestamp(str)</code></td>
+                                    <td>Parse timestamp string</td>
+                                    <td><code>filter _time >= timestamp("2024-01-01T00:00:00Z")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>now()</code></td>
+                                    <td>Current time</td>
+                                    <td><code>alter age = now() - _time</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>format_timestamp(ts, fmt)</code></td>
+                                    <td>Format timestamp</td>
+                                    <td><code>alter date = format_timestamp(_time, "%Y-%m-%d")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>extract_time(ts, part)</code></td>
+                                    <td>Extract time part</td>
+                                    <td><code>alter hour = extract_time(_time, "HOUR")</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <!-- Production Queries -->
+                <section class="content-section">
+                    <h2><i class="fas fa-crosshairs"></i> Production Threat Hunting Queries</h2>
+                    <h3>Credential Access Detection</h3>
+                    <pre><code>// LSASS Access - Credential Dumping Detection
+dataset = xdr_data
+| filter event_type = PROCESS
+| filter action_process_image_name ~contains "lsass"
+| filter actor_process_image_name not in ("svchost.exe", "wininit.exe", "csrss.exe", "services.exe")
+| fields _time, agent_hostname, actor_process_image_name, actor_process_image_path, 
+         action_process_image_name, actor_process_image_command_line
+| sort desc _time</code></pre>
+                    <h3>Encoded PowerShell Detection</h3>
+                    <pre><code>// Detect Base64 Encoded PowerShell Commands
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name ~contains "powershell"
+| filter action_process_image_command_line contains "-enc" 
+         or action_process_image_command_line contains "-encodedcommand"
+         or action_process_image_command_line contains "frombase64"
+| fields _time, agent_hostname, actor_process_image_name, action_process_image_command_line
+| alter cmd_length = length(action_process_image_command_line)
+| filter cmd_length > 500  // Long encoded commands are suspicious
+| sort desc _time</code></pre>
+                    <h3>Lateral Movement Detection</h3>
+                    <pre><code>// Detect Remote Execution Tools
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name in ("psexec.exe", "psexesvc.exe", "wmic.exe", 
+         "winrs.exe", "wmiexec.exe", "smbexec.exe", "atexec.exe")
+| fields _time, agent_hostname, actor_process_image_name, actor_process_image_path,
+         action_process_image_name, action_process_image_command_line
+| sort desc _time</code></pre>
+                    <h3>Persistence Mechanisms</h3>
+                    <pre><code>// Registry Run Key Modifications
+dataset = xdr_data
+| preset = xdr_registry
+| filter action_registry_key_name contains "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+| filter action_registry_value_name != null
+| fields _time, agent_hostname, actor_process_image_name, action_registry_key_name,
+         action_registry_value_name, action_registry_data
+| sort desc _time
+// Scheduled Task Creation
+dataset = xdr_data
+| preset = xdr_process
+| filter action_process_image_name = "schtasks.exe"
+| filter action_process_image_command_line contains "/create"
+| fields _time, agent_hostname, actor_process_image_name, action_process_image_command_line
+| sort desc _time</code></pre>
+                    <h3>Data Exfiltration Indicators</h3>
+                    <pre><code>// Large Outbound Transfers
+dataset = xdr_data
+| preset = xdr_network
+| filter action_remote_ip != null
+| filter action_local_ip matches "^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+| filter action_remote_ip not matches "^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+| comp sum(action_total_sent_bytes) as bytes_sent, count() as conn_count by agent_hostname, action_remote_ip
+| filter bytes_sent > 100000000  // >100MB
+| sort desc bytes_sent</code></pre>
+                    <h3>DNS Tunneling Detection</h3>
+                    <pre><code>// Detect Potential DNS Exfiltration
+dataset = xdr_data
+| preset = xdr_network
+| filter action_app_protocol = "DNS"
+| comp count() as query_count, count_distinct(action_external_hostname) as unique_domains by agent_hostname
+| filter query_count > 1000 and unique_domains > 500
+| sort desc query_count</code></pre>
+                </section>
+                <!-- Interview Section -->
+                <section class="content-section interview-section">
+                    <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                    <div class="interview-box">
+                        <div class="interview-question">
+                            <i class="fas fa-question-circle"></i>
+                            <span>How would you hunt for credential dumping using Cortex XDR?</span>
+                        </div>
+                        <div class="interview-answer">
+                            <p><strong>I would use XQL to query for LSASS access patterns:</strong></p>
+                            <p>First, I'd look for any process accessing LSASS that isn't a known legitimate process like svchost.exe or csrss.exe. In XQL:</p>
+                            <p><code>dataset = xdr_data | filter event_type = PROCESS | filter action_process_image_name ~contains "lsass" | filter actor_process_image_name not in ("svchost.exe", "wininit.exe")</code></p>
+                            <p>I'd also look for Mimikatz-related activity by searching for suspicious command-line patterns like "sekurlsa" or known Mimikatz process names. Additionally, I'd check for process injection events targeting LSASS using the xdr_injection preset.</p>
+                            <p>The key indicators are: unusual parent processes accessing LSASS, command lines containing credential dumping keywords, and any remote thread creation into LSASS.</p>
+                        </div>
+                    </div>
+                </section>
+            
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+                <!-- Comprehensive Troubleshooting -->
+                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
+                <div class="config-section">
+                    <h4>Systematic Troubleshooting Methodology</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <ol style="color: #8b949e;">
+                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
+                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
+                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
+                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
+                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
+                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
+                        </ol>
+                    </div>
+
+                    <h4>Common Issues and Resolutions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="2"><strong>Connectivity</strong></td>
+                                <td>Agent not reporting</td>
+                                <td>Check agent service status, network connectivity, firewall rules</td>
+                                <td>Restart service, verify network path, update firewall rules</td>
+                            </tr>
+                            <tr>
+                                <td>API timeouts</td>
+                                <td>Test API endpoint, check rate limits, verify credentials</td>
+                                <td>Retry with backoff, request limit increase, refresh credentials</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Data Quality</strong></td>
+                                <td>Missing fields</td>
+                                <td>Review parsing rules, check source format, validate schema</td>
+                                <td>Update parser, fix source configuration, adjust schema mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Audit data sources, check collection paths, review timestamps</td>
+                                <td>Consolidate sources, implement deduplication, fix time sync</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Performance</strong></td>
+                                <td>Slow queries</td>
+                                <td>Analyze query execution plan, check resource utilization</td>
+                                <td>Optimize query, add indexes, scale resources</td>
+                            </tr>
+                            <tr>
+                                <td>High latency</td>
+                                <td>Monitor queue depths, check processing bottlenecks</td>
+                                <td>Scale processing capacity, optimize data flow</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Authentication</strong></td>
+                                <td>Login failures</td>
+                                <td>Verify credentials, check account status, review permissions</td>
+                                <td>Reset password, unlock account, grant required permissions</td>
+                            </tr>
+                            <tr>
+                                <td>Token expiration</td>
+                                <td>Check token validity, review refresh mechanism</td>
+                                <td>Refresh token, update token management configuration</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Diagnostic Commands and Queries</h4>
+                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+
+# Check system health status
+| filter log_type = "system_health"
+| sort _time desc
+| limit 50
+
+# Monitor error rates over time
+| filter severity in ("error", "critical")
+| timechart count by component span=1h
+
+# Identify slow operations
+| filter operation_time > 30000
+| stats avg(operation_time), max(operation_time), count by operation_name
+| sort avg(operation_time) desc
+
+# Check connectivity status
+| filter event_type = "connectivity"
+| stats latest(status), latest(_time) by source_name
+| where status != "connected"
+
+# Review authentication failures
+| filter event_type = "authentication" and result = "failure"
+| stats count by user, source_ip, failure_reason
+| sort count desc</div>
+                </div>
+
+                <!-- Real-World Use Cases -->
+                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
+                <div class="config-section">
+                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
+                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>High volume of security events (500+ million events/day)</li>
+                            <li>Multiple security tools with siloed data</li>
+                            <li>Alert fatigue from excessive false positives</li>
+                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Phased rollout starting with critical data sources</li>
+                            <li>Custom detection rules based on threat model</li>
+                            <li>Automated playbooks for common scenarios</li>
+                            <li>Integration with ITSM and CMDB systems</li>
+                        </ul>
+                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
+                    </div>
+
+                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
+                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Need for strict data isolation between customers</li>
+                            <li>Scalable operations with limited staff</li>
+                            <li>Standardized service delivery across customers</li>
+                            <li>Flexible SLA-based prioritization</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Multi-tenant architecture with customer isolation</li>
+                            <li>Shared detection content library with customization</li>
+                            <li>Centralized analyst console with customer context</li>
+                            <li>Automated reporting and SLA tracking</li>
+                        </ul>
+                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
+                    </div>
+
+                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
+                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>HIPAA compliance requirements for PHI protection</li>
+                            <li>Legacy medical devices with limited security logging</li>
+                            <li>Need for 6-year log retention</li>
+                            <li>Limited IT security staff</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Comprehensive EHR and clinical application monitoring</li>
+                            <li>PHI access detection rules</li>
+                            <li>Long-term archival storage configuration</li>
+                            <li>Pre-built compliance dashboards and reports</li>
+                        </ul>
+                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
+                    </div>
+                </div>
+
+                <!-- Interview Preparation -->
+                <h2><i class="fas fa-user-tie"></i> Interview Preparation</h2>
+                <div class="config-section">
+                    <h4>Common Interview Questions</h4>
+                    <div class="qa-section">
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach implementing a new security monitoring capability?</button>
+                            <div class="qa-answer">
+                                <p><strong>Structured approach:</strong></p>
+                                <ol>
+                                    <li><strong>Requirements Gathering:</strong> Understand use case, data sources, detection goals, and compliance needs</li>
+                                    <li><strong>Design:</strong> Plan data collection, parsing, storage, and detection logic</li>
+                                    <li><strong>Implementation:</strong> Configure data sources, build detection rules, set up dashboards</li>
+                                    <li><strong>Testing:</strong> Validate with test data, tune for false positives, verify performance</li>
+                                    <li><strong>Deployment:</strong> Roll out in phases, monitor for issues, gather feedback</li>
+                                    <li><strong>Optimization:</strong> Continuously tune based on operational experience</li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle alert fatigue in a SOC environment?</button>
+                            <div class="qa-answer">
+                                <p><strong>Multi-pronged approach:</strong></p>
+                                <ul>
+                                    <li><strong>Tune Detection Rules:</strong> Adjust thresholds, add exclusions for known-good behavior</li>
+                                    <li><strong>Implement Alert Aggregation:</strong> Group related alerts into incidents</li>
+                                    <li><strong>Prioritization:</strong> Use risk scoring to surface high-priority alerts</li>
+                                    <li><strong>Automation:</strong> Auto-close or auto-enrich low-severity alerts</li>
+                                    <li><strong>Regular Review:</strong> Weekly review of noisy rules for tuning</li>
+                                    <li><strong>Metrics Tracking:</strong> Monitor false positive rates by rule</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe your experience with security data analysis and threat hunting.</button>
+                            <div class="qa-answer">
+                                <p><strong>Key competencies to highlight:</strong></p>
+                                <ul>
+                                    <li><strong>Query Languages:</strong> Proficiency in SPL, KQL, XQL, or similar</li>
+                                    <li><strong>Hypothesis-Driven Hunting:</strong> Developing and testing threat hypotheses</li>
+                                    <li><strong>IOC Analysis:</strong> Working with threat intelligence to hunt for indicators</li>
+                                    <li><strong>Behavioral Analysis:</strong> Identifying anomalous patterns in user and system behavior</li>
+                                    <li><strong>Tool Proficiency:</strong> Experience with SIEM, EDR, and analysis tools</li>
+                                    <li><strong>Documentation:</strong> Recording findings and developing new detection rules</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you stay current with security threats and platform updates?</button>
+                            <div class="qa-answer">
+                                <p><strong>Continuous learning approach:</strong></p>
+                                <ul>
+                                    <li><strong>Threat Intelligence:</strong> Follow threat reports, security blogs, and advisories</li>
+                                    <li><strong>Vendor Resources:</strong> Review release notes, attend webinars, complete training</li>
+                                    <li><strong>Community Engagement:</strong> Participate in forums, conferences, and user groups</li>
+                                    <li><strong>Hands-On Practice:</strong> Lab environments for testing new features</li>
+                                    <li><strong>Certifications:</strong> Pursue relevant certifications and continuing education</li>
+                                    <li><strong>Knowledge Sharing:</strong> Present learnings to team, write documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4>Technical Scenarios to Prepare</h4>
+                    <ul style="color: #8b949e;">
+                        <li>Walk through investigating a phishing incident from alert to resolution</li>
+                        <li>Explain how you would detect lateral movement in your environment</li>
+                        <li>Describe your approach to onboarding a new log source</li>
+                        <li>Discuss how you would build a detection rule for a specific attack technique</li>
+                        <li>Explain capacity planning for a growing environment</li>
+                    </ul>
+                </div>
+
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

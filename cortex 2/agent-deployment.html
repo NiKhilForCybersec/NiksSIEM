@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Deployment | Cortex XDR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Cortex XDR</a>
+                <span class="separator">/</span>
+                <span class="current">Agent Deployment</span>
+            </div>
+
+<h1><i class="fas fa-download"></i> Cortex XDR Agent Deployment</h1>
+                <p class="lead">Complete guide to deploying Cortex XDR agents. Learn deployment methods, configuration, endpoint groups, and troubleshooting for enterprise-scale rollouts.</p>
+
+                <!-- Agent Overview -->
+                <h2><i class="fas fa-info-circle"></i> Agent Overview</h2>
+                <div class="config-section">
+                    <h4>Agent Architecture</h4>
+                    <div class="code-block">Cortex XDR Agent Architecture:
+
+AGENT COMPONENTS:
+├── Traps Service (cyserver.exe / cytool)
+│   └── Core protection and telemetry engine
+├── Content Updates
+│   └── Detection signatures and rules
+├── Policy Engine
+│   └── Applies endpoint policies from console
+├── Communication Module
+│   └── Connects to Cortex XDR cloud
+└── Local Analysis Engine
+    └── On-device threat analysis
+
+SUPPORTED PLATFORMS:
+┌─────────────────────────────────────────────────────────────┐
+│ Platform              │ Versions Supported                  │
+├───────────────────────┼─────────────────────────────────────┤
+│ Windows               │ 7 SP1, 8.1, 10, 11                  │
+│                       │ Server 2008 R2 - 2022               │
+│ macOS                 │ 10.15 (Catalina) - 14 (Sonoma)      │
+│ Linux                 │ RHEL 6-9, Ubuntu 16.04-22.04,       │
+│                       │ CentOS, Debian, SLES, Amazon Linux  │
+│ Android               │ 8.0 - 14                            │
+│ iOS                   │ 14.0 - 17.x                         │
+│ Chrome OS             │ Supported                           │
+└───────────────────────┴─────────────────────────────────────┘
+
+AGENT CAPABILITIES BY TYPE:
+├── Full Agent: Complete protection + collection
+├── Collect Agent: Telemetry only (no prevention)
+└── VDI Agent: Optimized for virtual desktops</div>
+
+                    <h4>Deployment Planning</h4>
+                    <div class="code-block">DEPLOYMENT PLANNING DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────┐
+│              WHAT ENDPOINTS ARE YOU DEPLOYING TO?           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌─────────┐ │
+│  │ Workstat. │  │  Servers  │  │    VDI    │  │ Mobile  │ │
+│  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └────┬────┘ │
+│        │              │              │              │       │
+│        ▼              ▼              ▼              ▼       │
+│   Full Agent    Full Agent     VDI Agent      Mobile Agent │
+│   via SCCM/     via SCCM/      Golden Image   MDM Push    │
+│   GPO/Intune    Script         + Clone        (Intune/WS1)│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+PRE-DEPLOYMENT CHECKLIST:
+├── □ Download correct agent version from console
+├── □ Create endpoint groups for policies
+├── □ Configure security profiles
+├── □ Plan phased rollout (pilot → production)
+├── □ Identify deployment method
+├── □ Test in lab environment
+├── □ Prepare rollback procedure
+└── □ Communicate to IT and users</div>
+                </div>
+
+                <!-- End-to-End Deployment Workflow -->
+                <h2><i class="fas fa-route"></i> End-to-End Deployment Workflow</h2>
+                <div class="config-section">
+                    <h4>Complete Deployment Process</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CORTEX XDR DEPLOYMENT WORKFLOW                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1           PHASE 2           PHASE 3           PHASE 4             │
+│  PREPARE           CONFIGURE         DEPLOY            VALIDATE            │
+│  ───────           ─────────         ──────            ────────            │
+│                                                                             │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Download │     │ Create   │     │ Pilot    │     │ Verify   │          │
+│  │ Agent    │────▶│ Endpoint │────▶│ Deploy   │────▶│ Check-in │          │
+│  │ Package  │     │ Groups   │     │ (10%)    │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Generate │     │ Configure│     │ Phase 1  │     │ Monitor  │          │
+│  │ Install  │────▶│ Security │────▶│ Deploy   │────▶│ Alerts   │          │
+│  │ ID       │     │ Profiles │     │ (50%)    │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Prepare  │     │ Assign   │     │ Full     │     │ Tune     │          │
+│  │ Infra    │────▶│ Profiles │────▶│ Rollout  │────▶│ Policies │          │
+│  │          │     │ to Groups│     │ (100%)   │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│                                                                             │
+│  TIMELINE:                                                                  │
+│  ├── Pilot (Week 1): 10% of endpoints, IT department                       │
+│  ├── Phase 1 (Week 2-3): 50% of endpoints, low-risk groups                │
+│  └── Full Rollout (Week 4+): Remaining endpoints                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 1: Preparation</h4>
+                    <div class="code-block">PREPARATION STEPS:
+
+STEP 1: DOWNLOAD AGENT PACKAGE
+Path: Endpoints → Endpoint Management → Agent Installations
+
+Package Types:
+├── Windows: .msi installer
+├── macOS: .pkg installer
+├── Linux: .sh script or .rpm/.deb
+└── Mobile: App store links
+
+Download Options:
+├── Full package (includes content)
+├── Stub installer (downloads content during install)
+└── Upgrade package (existing agents)
+
+STEP 2: GENERATE INSTALLATION ID
+Path: Endpoints → Agent Installations → Create Installation Package
+
+Installation Package Settings:
+├── Name: Descriptive name (e.g., "Windows_Workstations_2024")
+├── Platform: Windows/macOS/Linux
+├── Agent Type: Full/Collect/VDI
+├── Target Endpoint Group: (select or leave default)
+└── Proxy Settings: If required
+
+# Installation ID format
+# Example: abc123def456-installation-id
+
+STEP 3: PREPARE INFRASTRUCTURE
+Network Requirements:
+├── Outbound 443 to *.paloaltonetworks.com
+├── Outbound 443 to *.cortex.paloaltonetworks.com
+├── Proxy configuration if required
+└── Internal distribution share
+
+Firewall Rules:
+├── Allow agent → Cortex cloud
+├── Allow agent updates
+└── Allow content downloads</div>
+
+                    <h4>Phase 2: Configuration</h4>
+                    <div class="code-block">CONFIGURATION STEPS:
+
+STEP 1: CREATE ENDPOINT GROUPS
+Path: Endpoints → Endpoint Management → Endpoint Groups → New Group
+
+Group Types:
+├── Static: Manually add endpoints
+├── Dynamic: Rule-based membership
+└── AD Sync: Import from Active Directory
+
+Dynamic Rules Examples:
+├── OS Type = Windows AND OS Version contains "10"
+├── Hostname contains "WKS-"
+├── IP Address in 10.1.0.0/16
+└── Tags contains "Servers"
+
+STEP 2: CONFIGURE SECURITY PROFILES
+Path: Endpoints → Endpoint Management → Profiles
+
+Profile Types:
+├── Malware Security Profile
+│   ├── WildFire analysis settings
+│   ├── Local analysis sensitivity
+│   └── Quarantine settings
+├── Exploit Security Profile
+│   ├── Memory protection
+│   ├── Child process protection
+│   └── DLL protection
+├── Restrictions Profile
+│   ├── Executable restrictions
+│   ├── USB restrictions
+│   └── Network restrictions
+└── Agent Settings Profile
+    ├── Heartbeat interval
+    ├── Log verbosity
+    └── Proxy settings
+
+STEP 3: ASSIGN PROFILES TO GROUPS
+Path: Endpoint Groups → Select Group → Security Policy
+
+Assignment Priority:
+├── Specific group policies override default
+├── More specific groups take precedence
+└── Test with pilot group first</div>
+
+                    <h4>Phase 3: Deployment Methods</h4>
+                    <div class="code-block">DEPLOYMENT METHODS:
+
+METHOD 1: SCCM/MECM
+# Create Application
+├── Content: Agent .msi file
+├── Installation: msiexec /i cortex.msi /qn INSTALLATION_ID=xyz
+├── Uninstall: msiexec /x cortex.msi /qn
+├── Detection: Registry key or file exists
+└── Deploy to collection
+
+# Command Line
+msiexec /i cortex-agent.msi /qn /l*v install.log ^
+  INSTALLATION_ID="abc123-your-id" ^
+  PROXY="http://proxy:8080"
+
+METHOD 2: GROUP POLICY
+# Create GPO with startup script
+# Script content:
+@echo off
+if exist "C:\Program Files\Palo Alto Networks\Traps\cyserver.exe" exit /b 0
+msiexec /i \\server\share\cortex-agent.msi /qn INSTALLATION_ID=xyz
+exit /b %errorlevel%
+
+METHOD 3: INTUNE/MEM
+# Add as Win32 app (.intunewin)
+├── Install: msiexec /i cortex.msi /qn INSTALLATION_ID=xyz
+├── Uninstall: msiexec /x cortex.msi /qn
+├── Detection: File exists C:\Program Files\...\cyserver.exe
+└── Assign to device groups
+
+METHOD 4: MANUAL/SCRIPT
+# PowerShell remote deployment
+$computers = Get-Content C:\computers.txt
+foreach ($computer in $computers) {
+    Invoke-Command -ComputerName $computer -ScriptBlock {
+        Start-Process msiexec.exe -ArgumentList '/i \\share\cortex.msi /qn INSTALLATION_ID=xyz' -Wait
+    }
+}
+
+METHOD 5: LINUX DEPLOYMENT
+# RPM-based
+sudo rpm -i cortex-agent.rpm
+sudo /opt/traps/bin/cytool runtime install-id abc123-your-id
+
+# Debian-based
+sudo dpkg -i cortex-agent.deb
+sudo /opt/traps/bin/cytool runtime install-id abc123-your-id
+
+# Start service
+sudo systemctl start traps
+sudo systemctl enable traps</div>
+
+                    <h4>Phase 4: Validation</h4>
+                    <div class="code-block">VALIDATION STEPS:
+
+STEP 1: VERIFY AGENT CHECK-IN
+Path: Endpoints → Endpoint Management → All Endpoints
+
+Check:
+├── Endpoint appears in list
+├── Status shows "Connected"
+├── Last seen is recent
+├── Content version is current
+└── Policy applied correctly
+
+STEP 2: VALIDATE PROTECTION
+# Local verification (Windows)
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" info
+
+# Check service status
+sc query cyserver
+
+# Check connectivity
+"C:\Program Files\Palo Alto Networks\Traps\cytool.exe" connectivity
+
+STEP 3: TEST DETECTION
+Path: Endpoints → select endpoint → Actions → Run malware test
+
+# Or download EICAR test file
+# https://www.eicar.org/download-anti-malware-testfile/
+
+Expected Result:
+├── File blocked
+├── Alert generated in console
+└── Incident created
+
+STEP 4: MONITOR DEPLOYMENT
+// XQL Query - Deployment Status
+dataset = endpoints
+| filter agent_status = "CONNECTED"
+| comp count() by agent_version, os_type
+
+// Check for failed installations
+dataset = endpoints  
+| filter agent_status != "CONNECTED"
+| fields endpoint_name, last_seen, agent_status</div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+                <div class="config-section">
+                    <div class="code-block">TROUBLESHOOTING DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────┐
+│             AGENT NOT CHECKING IN?                          │
+├─────────────────────────┬───────────────────────────────────┤
+│                         │                                   │
+│  Is service running?    │                                   │
+│  ├── NO → Start service │                                   │
+│  │   sc start cyserver  │                                   │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Network connectivity?  │                                   │
+│  ├── NO → Check firewall│                                   │
+│  │   Allow *.paloaltonetworks.com:443                      │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Correct Install ID?    │                                   │
+│  ├── NO → Reinstall with correct ID                        │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Check logs:            │                                   │
+│  C:\ProgramData\Cyvera\Logs\                               │
+│                         │                                   │
+└─────────────────────────┴───────────────────────────────────┘
+
+COMMON ISSUES:
+
+1. INSTALLATION FAILS
+   ├── Check prerequisites (.NET, VC++ runtime)
+   ├── Run as administrator
+   ├── Check for conflicting AV
+   └── Review MSI log: msiexec /i agent.msi /l*v install.log
+
+2. AGENT NOT CONNECTING
+   ├── Verify network/proxy settings
+   ├── Check DNS resolution
+   ├── Test: cytool.exe connectivity
+   └── Review firewall rules
+
+3. POLICY NOT APPLYING
+   ├── Check endpoint group membership
+   ├── Force policy refresh
+   ├── Verify profile assignment
+   └── Check for policy conflicts
+
+4. HIGH RESOURCE USAGE
+   ├── Check content update in progress
+   ├── Review exclusion settings
+   ├── Check for scan activity
+   └── Contact support if persistent</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your Cortex XDR agent deployment process.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Prepare:</strong> Download agent, generate installation ID</li>
+                                <li><strong>Configure:</strong> Create endpoint groups, configure security profiles</li>
+                                <li><strong>Deploy:</strong> Phased rollout - pilot (10%) → phase 1 (50%) → full</li>
+                                <li><strong>Validate:</strong> Verify check-in, test detection, monitor status</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What deployment methods are available?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>SCCM/MECM:</strong> Enterprise software distribution</li>
+                                <li><strong>Group Policy:</strong> Startup script deployment</li>
+                                <li><strong>Intune:</strong> Win32 app for cloud-managed devices</li>
+                                <li><strong>Manual/Script:</strong> PowerShell remote deployment</li>
+                                <li><strong>Golden Image:</strong> VDI base image deployment</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you troubleshoot an agent not checking in?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Verify service running: <code>sc query cyserver</code></li>
+                                <li>Test connectivity: <code>cytool connectivity</code></li>
+                                <li>Check installation ID is correct</li>
+                                <li>Verify firewall allows *.paloaltonetworks.com:443</li>
+                                <li>Review logs in <code>C:\ProgramData\Cyvera\Logs\</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

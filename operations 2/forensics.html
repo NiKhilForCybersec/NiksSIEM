@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Forensics | SOC Operations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">SOC Operations</a>
+                <span class="separator">/</span>
+                <span class="current">Digital Forensics</span>
+            </div>
+
+<h1><i class="fas fa-fingerprint"></i> Digital Forensics</h1>
+                <p class="lead">Essential digital forensics techniques for SOC analysts. Learn evidence collection, artifact analysis, and investigation procedures to support incident response.</p>
+
+                <!-- Forensics Fundamentals -->
+                <h2><i class="fas fa-book"></i> Forensics Fundamentals</h2>
+                <div class="config-section">
+                    <h4>Forensic Principles</h4>
+                    <div class="code-block">Core Forensic Principles:
+
+1. PRESERVE EVIDENCE
+   - Don't modify original data
+   - Work on copies when possible
+   - Document all actions
+
+2. CHAIN OF CUSTODY
+   - Track who handled evidence
+   - Document transfers
+   - Maintain integrity
+
+3. DOCUMENTATION
+   - Record every action
+   - Screenshot findings
+   - Note timestamps
+
+4. REPRODUCIBILITY
+   - Steps should be repeatable
+   - Use validated tools
+   - Document methodology</div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Important:</strong> In legal/HR investigations, coordinate with Legal before collecting evidence. Improper collection can make evidence inadmissible.
+                    </div>
+                </div>
+
+                <!-- Evidence Collection -->
+                <h2><i class="fas fa-archive"></i> Evidence Collection</h2>
+                <div class="config-section">
+                    <h4>Order of Volatility</h4>
+                    <div class="code-block">Collect in Order of Volatility (Most → Least):
+
+1. CPU registers, cache
+2. Memory (RAM)         ← Collect FIRST
+3. Network state
+4. Running processes
+5. Disk contents
+6. Remote logging
+7. Physical configuration
+8. Archival media
+
+Memory is CRITICAL - lost on power off!</div>
+
+                    <h4>What to Collect</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Artifact</th><th>Location</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Memory</strong></td><td>RAM dump</td><td>Running processes, injected code</td></tr>
+                            <tr><td><strong>Event Logs</strong></td><td>Windows/Linux logs</td><td>Activity timeline</td></tr>
+                            <tr><td><strong>Registry</strong></td><td>Windows registry</td><td>Persistence, config</td></tr>
+                            <tr><td><strong>Prefetch</strong></td><td>C:\Windows\Prefetch</td><td>Program execution</td></tr>
+                            <tr><td><strong>Browser Data</strong></td><td>User profiles</td><td>Web activity, downloads</td></tr>
+                            <tr><td><strong>$MFT</strong></td><td>NTFS Master File Table</td><td>File metadata, deleted files</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Memory Forensics -->
+                <h2><i class="fas fa-memory"></i> Memory Forensics</h2>
+                <div class="config-section">
+                    <h4>Memory Acquisition</h4>
+                    <div class="code-block">Memory Acquisition Tools:
+
+Windows:
+- WinPmem (free)
+- FTK Imager (free)
+- Belkasoft RAM Capturer (free)
+- Magnet RAM Capture (free)
+
+Linux:
+- LiME (Linux Memory Extractor)
+- /proc/kcore (if accessible)
+
+EDR-based:
+- CrowdStrike: xmemdump
+- Cortex XDR: Memory collection
+- MDE: Collect investigation package</div>
+
+                    <h4>Memory Analysis with Volatility</h4>
+                    <div class="code-block"># Volatility 3 Commands
+
+# Identify OS profile
+vol -f memory.raw windows.info
+
+# List processes
+vol -f memory.raw windows.pslist
+vol -f memory.raw windows.pstree  # Tree view
+
+# Find hidden/injected processes
+vol -f memory.raw windows.malfind
+
+# Network connections
+vol -f memory.raw windows.netscan
+
+# Command line arguments
+vol -f memory.raw windows.cmdline
+
+# DLLs loaded by process
+vol -f memory.raw windows.dlllist --pid 1234
+
+# Registry analysis
+vol -f memory.raw windows.registry.hivelist
+
+# Extract files from memory
+vol -f memory.raw windows.filescan
+vol -f memory.raw windows.dumpfiles --pid 1234</div>
+
+                    <h4>What to Look For in Memory</h4>
+                    <div class="code-block">Memory Analysis Checklist:
+
+SUSPICIOUS PROCESSES:
+□ Unknown process names
+□ Processes with no parent
+□ Duplicate system processes
+□ Processes in wrong locations
+
+INJECTED CODE:
+□ malfind results (RWX memory)
+□ Hollowed processes
+□ Injected DLLs
+
+NETWORK:
+□ Unexpected connections
+□ Connections to bad IPs
+□ Hidden connections
+
+PERSISTENCE:
+□ Registry run keys in memory
+□ Service configurations
+□ Scheduled tasks</div>
+                </div>
+
+                <!-- Windows Artifacts -->
+                <h2><i class="fab fa-windows"></i> Windows Forensic Artifacts</h2>
+                <div class="config-section">
+                    <h4>Key Windows Artifacts</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Artifact</th><th>Location</th><th>Information</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Prefetch</strong></td>
+                                <td>C:\Windows\Prefetch\</td>
+                                <td>Program execution history</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Amcache</strong></td>
+                                <td>C:\Windows\AppCompat\Programs\</td>
+                                <td>Program execution, SHA1</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ShimCache</strong></td>
+                                <td>SYSTEM registry hive</td>
+                                <td>Application compatibility</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SRUM</strong></td>
+                                <td>C:\Windows\System32\sru\</td>
+                                <td>Resource usage, network</td>
+                            </tr>
+                            <tr>
+                                <td><strong>$MFT</strong></td>
+                                <td>Root of NTFS volume</td>
+                                <td>File system metadata</td>
+                            </tr>
+                            <tr>
+                                <td><strong>USN Journal</strong></td>
+                                <td>$Extend\$UsnJrnl</td>
+                                <td>File changes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Registry Forensic Locations</h4>
+                    <div class="code-block">Important Registry Keys:
+
+PERSISTENCE:
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKLM\SYSTEM\CurrentControlSet\Services
+
+USER ACTIVITY:
+NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs
+NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU
+NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths
+
+USB HISTORY:
+HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR
+HKLM\SYSTEM\MountedDevices
+
+NETWORK:
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles</div>
+
+                    <h4>Prefetch Analysis</h4>
+                    <div class="code-block"># Prefetch file format: APPNAME-HASH.pf
+
+Information Available:
+- Executable name
+- Run count
+- Last run time (up to 8 times)
+- Files/folders accessed
+- Volumes accessed
+
+Tools:
+- PECmd (Eric Zimmerman)
+- Windows Prefetch Parser
+- Autopsy
+
+# Example PECmd usage
+PECmd.exe -f "C:\Windows\Prefetch\CMD.EXE-HASH.pf"
+PECmd.exe -d "C:\Windows\Prefetch" --csv output.csv</div>
+                </div>
+
+                <!-- Timeline Analysis -->
+                <h2><i class="fas fa-clock"></i> Timeline Analysis</h2>
+                <div class="config-section">
+                    <h4>Building a Timeline</h4>
+                    <div class="code-block">Timeline Sources:
+
+FILE SYSTEM:
+- $MFT timestamps (MACB)
+- USN Journal changes
+- $LogFile entries
+
+REGISTRY:
+- Last write times
+- UserAssist (ROT13 encoded)
+
+EVENT LOGS:
+- Security events
+- System events
+- Application events
+
+APPLICATION:
+- Browser history
+- Email timestamps
+- Recent documents
+
+EDR/SIEM:
+- Process events
+- Network connections
+- Alert timestamps</div>
+
+                    <h4>MACB Timestamps</h4>
+                    <div class="code-block">NTFS Timestamps:
+
+M - Modified: Content changed
+A - Accessed: File opened (may be disabled)
+C - Changed: Metadata changed ($MFT updated)
+B - Birth: File created
+
+$STANDARD_INFORMATION (user-visible):
+- Easily modified by attackers
+- Shown in Explorer
+
+$FILE_NAME (hidden):
+- Harder to modify
+- More reliable for forensics
+
+Timestomping Detection:
+- Compare $SI and $FN timestamps
+- $FN Born > $SI Modified = suspicious</div>
+
+                    <h4>Timeline Tools</h4>
+                    <div class="code-block">Timeline Creation:
+
+Plaso/Log2Timeline:
+log2timeline.py timeline.plaso image.E01
+psort.py -w timeline.csv timeline.plaso
+
+Eric Zimmerman Tools:
+MFTECmd.exe -f $MFT --csv output
+Timeline Explorer for visualization
+
+Autopsy:
+Built-in timeline view
+Multiple artifact sources</div>
+                </div>
+
+                <!-- Linux Forensics -->
+                <h2><i class="fab fa-linux"></i> Linux Forensic Artifacts</h2>
+                <div class="config-section">
+                    <h4>Key Linux Artifacts</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Artifact</th><th>Location</th><th>Information</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Auth logs</strong></td><td>/var/log/auth.log</td><td>Authentication events</td></tr>
+                            <tr><td><strong>Bash history</strong></td><td>~/.bash_history</td><td>Command history</td></tr>
+                            <tr><td><strong>Cron</strong></td><td>/etc/crontab, /var/spool/cron</td><td>Scheduled tasks</td></tr>
+                            <tr><td><strong>Systemd</strong></td><td>/etc/systemd/system/</td><td>Services, persistence</td></tr>
+                            <tr><td><strong>SSH</strong></td><td>~/.ssh/, /var/log/</td><td>Remote access</td></tr>
+                            <tr><td><strong>Audit</strong></td><td>/var/log/audit/audit.log</td><td>Detailed syscall logging</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Linux Investigation Commands</h4>
+                    <div class="code-block"># User activity
+cat /etc/passwd                    # User accounts
+cat /etc/shadow                    # Password hashes (root)
+lastlog                           # Last login times
+last                              # Login history
+who                               # Current users
+
+# Persistence
+crontab -l                        # User cron jobs
+cat /etc/crontab                  # System cron
+systemctl list-unit-files         # Services
+ls -la /etc/init.d/               # Init scripts
+
+# Network
+netstat -tulpn                    # Listening ports
+ss -tulpn                         # Socket statistics
+cat /etc/hosts                    # Host file
+iptables -L                       # Firewall rules
+
+# Process investigation
+ps auxf                           # Process tree
+cat /proc/[pid]/cmdline           # Command line
+ls -la /proc/[pid]/exe            # Executable path
+cat /proc/[pid]/maps              # Memory maps</div>
+                </div>
+
+                <!-- Forensic Tools -->
+                <h2><i class="fas fa-toolbox"></i> Forensic Tools</h2>
+                <div class="config-section">
+                    <h4>Essential Tools</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Tool</th><th>Purpose</th><th>Type</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Autopsy</td><td>Full forensic suite</td><td>Free</td></tr>
+                            <tr><td>FTK Imager</td><td>Disk imaging</td><td>Free</td></tr>
+                            <tr><td>Volatility</td><td>Memory analysis</td><td>Free</td></tr>
+                            <tr><td>Eric Zimmerman Tools</td><td>Windows artifacts</td><td>Free</td></tr>
+                            <tr><td>Plaso/Log2Timeline</td><td>Timeline creation</td><td>Free</td></tr>
+                            <tr><td>KAPE</td><td>Artifact collection</td><td>Free</td></tr>
+                            <tr><td>Velociraptor</td><td>Remote forensics</td><td>Free</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is the order of volatility and why does it matter?</button>
+                        <div class="qa-answer">
+                            <p>Order of volatility ranks evidence by how quickly it disappears:</p>
+                            <ol>
+                                <li>CPU registers/cache (nanoseconds)</li>
+                                <li>RAM/Memory (power dependent)</li>
+                                <li>Network state (seconds)</li>
+                                <li>Running processes (changes constantly)</li>
+                                <li>Disk (persistent but modifiable)</li>
+                            </ol>
+                            <p style="margin-top: 12px;"><strong>Why it matters:</strong> Collect most volatile evidence first. Memory contains processes, credentials, and malware that are lost when powered off.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect timestomping?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li>Compare $STANDARD_INFORMATION and $FILE_NAME timestamps</li>
+                                <li>$FN Born time > $SI Modified = suspicious</li>
+                                <li>Timestamps before OS installation = suspicious</li>
+                                <li>Use tools like MFTECmd to parse both attributes</li>
+                            </ul>
+                            <p style="margin-top: 12px;">Attackers modify $SI timestamps but $FN is harder to change.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What Windows artifacts show program execution?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Prefetch:</strong> Run count, last 8 execution times</li>
+                                <li><strong>Amcache:</strong> SHA1 hash, first execution</li>
+                                <li><strong>ShimCache:</strong> Execution flag, timestamps</li>
+                                <li><strong>UserAssist:</strong> GUI program execution count</li>
+                                <li><strong>BAM/DAM:</strong> Background Activity Moderator</li>
+                                <li><strong>SRUM:</strong> Resource usage per application</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

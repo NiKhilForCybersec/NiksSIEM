@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Deployment | CrowdStrike Falcon</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">CrowdStrike</a>
+                <span class="separator">/</span>
+                <span class="current">Sensor Deployment</span>
+            </div>
+
+<h1><i class="fas fa-download"></i> CrowdStrike Sensor Deployment</h1>
+                <p class="lead">Complete guide to deploying CrowdStrike Falcon sensors. Learn deployment methods, CID configuration, sensor policies, and enterprise-scale rollout strategies.</p>
+
+                <!-- Sensor Overview -->
+                <h2><i class="fas fa-info-circle"></i> Falcon Sensor Overview</h2>
+                <div class="config-section">
+                    <h4>Sensor Architecture</h4>
+                    <div class="code-block">Falcon Sensor Architecture:
+
+SENSOR COMPONENTS:
+├── CSAgent Service (csagent.exe / falcon-sensor)
+│   └── Primary sensor process
+├── Kernel Driver (csdriver.sys)
+│   └── Low-level system monitoring
+├── User-Mode Components
+│   └── Application-level monitoring
+└── Cloud Connector
+    └── Communication with Falcon cloud
+
+SENSOR CAPABILITIES:
+├── Endpoint Detection & Response (EDR)
+├── Next-Generation Antivirus (NGAV)
+├── USB Device Control
+├── Firewall Management
+├── Spotlight (Vulnerability Assessment)
+├── Discover (Asset Discovery)
+└── Real Time Response (RTR)
+
+SUPPORTED PLATFORMS:
+┌───────────────────────────────────────────────────────────────┐
+│ Platform           │ Versions                                │
+├────────────────────┼──────────────────────────────────────────┤
+│ Windows            │ 7 SP1, 8.1, 10, 11                      │
+│                    │ Server 2008 R2 - 2022                   │
+│ macOS              │ 10.15 - 14.x (Sonoma)                   │
+│ Linux              │ RHEL/CentOS 6-9, Ubuntu 16.04-22.04,    │
+│                    │ SLES, Debian, Amazon Linux 1/2          │
+│ Chrome OS          │ Enterprise enrolled devices             │
+│ iOS/Android        │ Falcon for Mobile                       │
+└────────────────────┴──────────────────────────────────────────┘
+
+RESOURCE REQUIREMENTS:
+├── Memory: ~50-100 MB typical
+├── CPU: Minimal (<1% average)
+├── Disk: ~100 MB for sensor
+└── Network: Outbound 443 to CrowdStrike cloud</div>
+
+                    <h4>Deployment Planning Decision Tree</h4>
+                    <div class="code-block">DEPLOYMENT DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                 WHAT ARE YOU DEPLOYING TO?                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │ Windows  │  │ Windows  │  │  macOS   │  │  Linux   │       │
+│  │ Workst.  │  │ Servers  │  │          │  │          │       │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘       │
+│       │             │             │             │              │
+│       ▼             ▼             ▼             ▼              │
+│    SCCM/GPO      SCCM/        Jamf/        Ansible/           │
+│    Intune      Script        Intune       Puppet/             │
+│                                           Chef                 │
+│                                                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  PHASED ROLLOUT STRATEGY:                                       │
+│  ├── Pilot (5%): IT/Security teams, test systems               │
+│  ├── Phase 1 (25%): Low-risk workstations                      │
+│  ├── Phase 2 (50%): Servers, remaining workstations            │
+│  └── Phase 3 (100%): Full production, VDI, mobile              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+                </div>
+
+                <!-- End-to-End Deployment Workflow -->
+                <h2><i class="fas fa-route"></i> End-to-End Deployment Workflow</h2>
+                <div class="config-section">
+                    <h4>Complete Deployment Process</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   FALCON SENSOR DEPLOYMENT WORKFLOW                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1           PHASE 2           PHASE 3           PHASE 4             │
+│  PREPARATION       CONFIGURATION     DEPLOYMENT        VALIDATION          │
+│  ───────────       ─────────────     ──────────        ──────────          │
+│                                                                             │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Obtain   │     │ Create   │     │ Pilot    │     │ Verify   │          │
+│  │ CID      │────▶│ Sensor   │────▶│ (5%)     │────▶│ Check-in │          │
+│  │          │     │ Policies │     │          │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Download │     │ Create   │     │ Phase 1  │     │ Monitor  │          │
+│  │ Sensor   │────▶│ Host     │────▶│ (25%)    │────▶│ Detects  │          │
+│  │ Installer│     │ Groups   │     │          │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│       │                │                │                │                 │
+│       ▼                ▼                ▼                ▼                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Prep     │     │ Assign   │     │ Full     │     │ Tune &   │          │
+│  │ Deploy   │────▶│ Policies │────▶│ Rollout  │────▶│ Optimize │          │
+│  │ Tools    │     │ to Groups│     │ (100%)   │     │          │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Phase 1: Preparation</h4>
+                    <div class="code-block">PREPARATION STEPS:
+
+STEP 1: OBTAIN CUSTOMER ID (CID)
+Path: Falcon Console → Host setup and management → 
+      Sensor downloads → Show CID
+
+CID Format: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XX
+├── 32-character hexadecimal string
+├── 2-character checksum suffix
+└── Unique per Falcon tenant
+
+STEP 2: DOWNLOAD SENSOR INSTALLER
+Path: Host setup and management → Sensor downloads
+
+Download Options:
+├── Windows: WindowsSensor.exe (full installer)
+├── macOS: FalconSensorMacOS.pkg
+├── Linux: falcon-sensor-X.X.X.rpm / .deb
+└── Platform-specific versions available
+
+STEP 3: PREPARE DEPLOYMENT INFRASTRUCTURE
+Windows:
+├── Distribution share: \\server\CrowdStrike\
+├── SCCM application package
+├── GPO startup script
+└── Intune Win32 app
+
+Linux:
+├── Package repository (internal mirror)
+├── Ansible playbook
+├── Puppet module
+└── Chef cookbook
+
+STEP 4: NETWORK REQUIREMENTS
+Outbound Connections (TCP 443):
+├── ts01-b.cloudsink.net (telemetry)
+├── lfodown01-b.cloudsink.net (downloads)
+├── falconctl.cloudsink.net (control)
+└── Region-specific endpoints (if applicable)
+
+Proxy Configuration:
+├── Support for HTTP proxies
+├── Set via installation parameter
+└── Or via sensor policy post-install</div>
+
+                    <h4>Phase 2: Configuration</h4>
+                    <div class="code-block">CONFIGURATION STEPS:
+
+STEP 1: CREATE HOST GROUPS
+Path: Host setup and management → Host groups → Create group
+
+Group Types:
+├── Static: Manual host assignment
+└── Dynamic: Rule-based membership
+
+Dynamic Group Rules:
+├── Hostname contains/starts with/ends with
+├── OS type/version
+├── IP range (CIDR notation)
+├── Tags
+└── Custom fields
+
+Examples:
+├── "Windows Workstations": OS Type = Windows AND 
+    NOT Hostname contains "SRV"
+├── "Linux Servers": OS Type = Linux
+├── "Production Servers": Tag = Production
+└── "Finance Department": Hostname starts with "FIN-"
+
+STEP 2: CREATE/MODIFY SENSOR POLICIES
+Path: Configuration → Sensor update → Create policy
+
+Policy Settings:
+├── Sensor Update Policy
+│   ├── Auto-update: On/Off
+│   ├── Update timing: Immediate/Maintenance window
+│   └── Version pinning (optional)
+├── Prevention Policy
+│   ├── Detection/Prevention modes
+│   ├── Exploit mitigation settings
+│   └── Ransomware protection
+└── Response and Containment Policy
+    ├── Network containment allowed
+    └── RTR enabled
+
+STEP 3: ASSIGN POLICIES TO GROUPS
+Path: Policy → Assign groups
+
+Priority Order:
+├── More specific group policies override general
+├── Host can only be in one group
+└── Default policy applies if no group match</div>
+
+                    <h4>Phase 3: Deployment Methods</h4>
+                    <div class="code-block">WINDOWS DEPLOYMENT METHODS:
+
+METHOD 1: MANUAL/SCRIPT
+# Command line installation
+WindowsSensor.exe /install /quiet /norestart CID=YOUR_CID
+
+# With proxy
+WindowsSensor.exe /install /quiet /norestart CID=YOUR_CID ^
+  PROXY=http://proxy.company.com:8080
+
+# PowerShell silent install
+Start-Process -FilePath "WindowsSensor.exe" -ArgumentList @(
+    "/install",
+    "/quiet",
+    "/norestart",
+    "CID=YOUR_CID"
+) -Wait
+
+METHOD 2: SCCM/MECM
+# Create Application
+├── Content: WindowsSensor.exe
+├── Install: WindowsSensor.exe /install /quiet /norestart CID=YOUR_CID
+├── Uninstall: WindowsSensor.exe /uninstall /quiet
+├── Detection: File exists C:\Windows\System32\drivers\CrowdStrike\
+└── Deploy to collection
+
+METHOD 3: GPO STARTUP SCRIPT
+# Script content
+@echo off
+if exist "C:\Windows\System32\drivers\CrowdStrike\csagent.sys" exit /b 0
+\\server\share\WindowsSensor.exe /install /quiet /norestart CID=YOUR_CID
+
+METHOD 4: INTUNE WIN32 APP
+# Package as .intunewin
+├── Install: WindowsSensor.exe /install /quiet /norestart CID=YOUR_CID
+├── Uninstall: WindowsSensor.exe /uninstall /quiet
+├── Detection: Registry exists HKLM\SYSTEM\CrowdStrike
+└── Assign to device groups
+
+LINUX DEPLOYMENT:
+
+# RPM-based
+sudo rpm -i falcon-sensor.rpm
+sudo /opt/CrowdStrike/falconctl -s --cid=YOUR_CID
+sudo systemctl start falcon-sensor
+
+# Debian-based
+sudo dpkg -i falcon-sensor.deb
+sudo /opt/CrowdStrike/falconctl -s --cid=YOUR_CID
+sudo systemctl start falcon-sensor
+
+macOS DEPLOYMENT:
+
+# Interactive install
+sudo installer -pkg FalconSensorMacOS.pkg -target /
+sudo /Library/CS/falconctl license YOUR_CID
+
+# Jamf Pro
+├── Upload .pkg to Jamf
+├── Policy: Install package
+├── Run command: /Library/CS/falconctl license YOUR_CID
+└── Scope to computer groups</div>
+
+                    <h4>Phase 4: Validation</h4>
+                    <div class="code-block">VALIDATION STEPS:
+
+STEP 1: VERIFY SENSOR REGISTRATION
+Path: Falcon Console → Host management → Hosts
+├── Search for deployed hostname
+├── Verify "Last Seen" is recent
+├── Check OS version detected correctly
+└── Confirm sensor version
+
+STEP 2: LOCAL VERIFICATION
+# Windows - Check service
+sc query csagent
+# Expected: RUNNING
+
+# Check driver
+sc query csdevicecontrol
+# Expected: RUNNING
+
+# Check connectivity
+REG QUERY "HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4190f7f9b}\{16e0423f-7058-48c9-a204-725362b67639}\Default" /v ConnectionState
+# Expected: 0x4 (Connected)
+
+# Linux
+sudo /opt/CrowdStrike/falconctl -g --cid
+sudo systemctl status falcon-sensor
+sudo /opt/CrowdStrike/falconctl -g --rfm-state
+
+STEP 3: TEST DETECTION
+# Generate test detection (DO NOT run in production without approval!)
+# Use CrowdStrike's provided test script or EICAR file
+
+STEP 4: MONITOR DASHBOARD
+Path: Activity → Detections
+├── Verify no unexpected detections
+├── Review any prevention events
+├── Check policy application
+└── Monitor sensor health dashboard</div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+                <div class="config-section">
+                    <div class="code-block">TROUBLESHOOTING DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────┐
+│             SENSOR NOT APPEARING IN CONSOLE?                │
+├─────────────────────────┬───────────────────────────────────┤
+│                         │                                   │
+│  Is service running?    │                                   │
+│  ├── NO → Check install │                                   │
+│  │   sc query csagent   │                                   │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Is CID correct?        │                                   │
+│  ├── NO → Reinstall     │                                   │
+│  │   with correct CID   │                                   │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Network connectivity?  │                                   │
+│  ├── NO → Check proxy/  │                                   │
+│  │   firewall           │                                   │
+│  └── YES ↓              │                                   │
+│                         │                                   │
+│  Check logs:            │                                   │
+│  C:\Windows\System32\   │                                   │
+│  drivers\CrowdStrike\   │                                   │
+│  *.log                  │                                   │
+│                         │                                   │
+└─────────────────────────┴───────────────────────────────────┘
+
+COMMON ISSUES:
+
+1. INSTALLATION FAILS
+   ├── Check admin rights
+   ├── Verify CID format (32 chars + 2 checksum)
+   ├── Check for conflicting AV
+   ├── Review Windows event log
+   └── Check available disk space
+
+2. SENSOR NOT CONNECTING
+   ├── Verify outbound 443 allowed
+   ├── Check proxy configuration
+   ├── Test: telnet ts01-b.cloudsink.net 443
+   └── Review sensor logs for connection errors
+
+3. HIGH CPU/MEMORY
+   ├── Check sensor version (update if old)
+   ├── Review exclusions needed
+   ├── Check for scan activity
+   └── Contact support if persistent
+
+4. SENSOR REMOVAL
+   # Windows
+   WindowsSensor.exe /uninstall /quiet
+   # Requires maintenance token from console
+   
+   # Linux
+   sudo /opt/CrowdStrike/falconctl -d
+   sudo yum remove falcon-sensor  # or dpkg -r</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Walk through your Falcon sensor deployment process.</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Prepare:</strong> Obtain CID, download sensor, prep deployment tools</li>
+                                <li><strong>Configure:</strong> Create host groups and sensor policies</li>
+                                <li><strong>Deploy:</strong> Phased rollout (pilot 5% → phase 25% → full)</li>
+                                <li><strong>Validate:</strong> Verify check-in, test detection, monitor health</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the CID and why is it important?</button>
+                        <div class="qa-answer">
+                            <p><strong>CID (Customer ID)</strong> is a 32+2 character identifier that links the sensor to your Falcon tenant. Without the correct CID, sensors cannot register with your console.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you troubleshoot a sensor not appearing in the console?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Check service running: <code>sc query csagent</code></li>
+                                <li>Verify CID is correct (32+2 characters)</li>
+                                <li>Test network: <code>telnet ts01-b.cloudsink.net 443</code></li>
+                                <li>Check proxy settings if applicable</li>
+                                <li>Review logs in <code>C:\Windows\System32\drivers\CrowdStrike\</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

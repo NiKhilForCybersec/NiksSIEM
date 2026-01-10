@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forwarders | Splunk Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Splunk</a>
+                <span class="separator">/</span>
+                <span class="current">Forwarders</span>
+            </div>
+
+<h1><i class="fas fa-share"></i> Splunk Forwarders</h1>
+                <p class="lead">Complete guide to Splunk forwarders. Learn Universal Forwarder vs Heavy Forwarder, deployment strategies, configuration management, and troubleshooting for enterprise data collection.</p>
+
+                <!-- Forwarder Overview -->
+                <h2><i class="fas fa-info-circle"></i> Forwarder Overview</h2>
+                <div class="config-section">
+                    <h4>Forwarder Types Comparison</h4>
+                    <div class="code-block">Splunk Forwarder Types:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     FORWARDER COMPARISON                                    │
+├─────────────────────┬─────────────────────┬─────────────────────────────────┤
+│                     │ Universal Forwarder │ Heavy Forwarder                 │
+├─────────────────────┼─────────────────────┼─────────────────────────────────┤
+│ Resource Usage      │ Minimal (~40MB RAM) │ Higher (~1GB+ RAM)              │
+│ Parsing             │ No (raw forwarding) │ Yes (full parsing)              │
+│ Indexing            │ No                  │ Optional (interim indexing)     │
+│ Search              │ No                  │ Yes (local search capability)   │
+│ Data Routing        │ Basic               │ Advanced (conditional routing)  │
+│ Field Extraction    │ No                  │ Yes (at ingest time)            │
+│ Data Filtering      │ Limited             │ Full (drop, filter, modify)     │
+│ Scripted Inputs     │ Yes                 │ Yes                             │
+│ Deployment          │ Mass deployment     │ Strategic placement             │
+│ License             │ Free                │ Consumes license                │
+│ Best For            │ Endpoints, servers  │ Aggregation, parsing, filtering │
+└─────────────────────┴─────────────────────┴─────────────────────────────────┘</div>
+
+                    <h4>Forwarder Decision Tree</h4>
+                    <div class="code-block">FORWARDER SELECTION DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────┐
+│              DO YOU NEED DATA COLLECTION?                   │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ YES
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│         DO YOU NEED PARSING/FILTERING AT SOURCE?            │
+├────────────────────────┬────────────────────────────────────┤
+│          NO            │              YES                   │
+│           │            │               │                    │
+│           ▼            │               ▼                    │
+│  ┌────────────────┐    │    ┌────────────────────────────┐ │
+│  │   UNIVERSAL    │    │    │ Is it aggregating from     │ │
+│  │   FORWARDER    │    │    │ multiple sources?          │ │
+│  └────────────────┘    │    ├───────────┬────────────────┤ │
+│                        │    │    YES    │      NO        │ │
+│                        │    │     │     │       │        │ │
+│                        │    │     ▼     │       ▼        │ │
+│                        │    │  HEAVY    │   HEAVY        │ │
+│                        │    │  FORWARDER│   FORWARDER    │ │
+│                        │    │  (Central)│   (Local)      │ │
+└────────────────────────┴────┴───────────┴────────────────┴─┘
+
+USE CASE MAPPING:
+├── Endpoints (workstations): Universal Forwarder
+├── Servers (Windows/Linux): Universal Forwarder
+├── Syslog aggregation: Heavy Forwarder
+├── Network devices: Heavy Forwarder (syslog receiver)
+├── Database logs: Universal Forwarder with DB Connect
+├── Cloud sources: Universal Forwarder or HTTP Event Collector
+└── Data transformation: Heavy Forwarder</div>
+                </div>
+
+                <!-- Universal Forwarder Deployment -->
+                <h2><i class="fas fa-download"></i> Universal Forwarder Deployment</h2>
+                <div class="config-section">
+                    <h4>End-to-End Deployment Workflow</h4>
+                    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               UNIVERSAL FORWARDER DEPLOYMENT WORKFLOW                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  PHASE 1           PHASE 2           PHASE 3           PHASE 4             │
+│  PREPARATION       INSTALLATION      CONFIGURATION     VALIDATION          │
+│  ───────────       ────────────      ─────────────     ──────────          │
+│                                                                             │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐          │
+│  │ Download │     │ Deploy   │     │ Configure│     │ Verify   │          │
+│  │ Package  │────▶│ to Host  │────▶│ Inputs   │────▶│ Data     │          │
+│  └──────────┘     └──────────┘     └──────────┘     │ Flow     │          │
+│       │                │                │           └──────────┘          │
+│       ▼                ▼                ▼                │                 │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐         ▼                 │
+│  │ Prep     │     │ Configure│     │ Configure│     ┌──────────┐          │
+│  │ Deployment│────▶│ Output   │────▶│ via      │────▶│ Monitor  │          │
+│  │ Server   │     │ (Indexer)│     │ DS       │     │ Health   │          │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Step 1: Download and Prepare</h4>
+                    <div class="code-block">PREPARATION STEPS:
+
+DOWNLOAD FORWARDER:
+├── URL: https://www.splunk.com/en_us/download/universal-forwarder.html
+├── Version: Match your Splunk Enterprise version
+├── Packages available:
+│   ├── Windows: .msi installer
+│   ├── Linux: .rpm, .deb, .tgz
+│   ├── macOS: .dmg, .tgz
+│   └── Solaris/AIX: .pkg
+
+PREPARE DEPLOYMENT SERVER (Recommended):
+# Create deployment server apps structure
+$SPLUNK_HOME/etc/deployment-apps/
+├── Org_all_forwarder_outputs/
+│   └── local/
+│       └── outputs.conf
+├── Org_all_forwarder_base/
+│   └── local/
+│       └── deploymentclient.conf
+└── Org_Windows_inputs/
+    └── local/
+        └── inputs.conf
+
+# Basic outputs.conf for all forwarders
+[tcpout]
+defaultGroup = primary_indexers
+
+[tcpout:primary_indexers]
+server = idx1.company.com:9997, idx2.company.com:9997
+useACK = true
+autoLBFrequency = 30</div>
+
+                    <h4>Step 2: Installation Methods</h4>
+                    <div class="code-block">WINDOWS INSTALLATION:
+
+# Silent MSI install with configuration
+msiexec.exe /i splunkforwarder-9.1.0-x64.msi ^
+  AGREETOLICENSE=Yes ^
+  RECEIVING_INDEXER="idx1.company.com:9997" ^
+  DEPLOYMENT_SERVER="ds.company.com:8089" ^
+  LAUNCHSPLUNK=1 ^
+  SERVICESTARTTYPE=auto ^
+  /quiet
+
+# Alternative: GPO deployment
+# Create MSI transform with pre-configured settings
+# Deploy via Software Installation policy
+
+# PowerShell remote installation
+$servers = Get-Content C:\servers.txt
+foreach ($server in $servers) {
+    Invoke-Command -ComputerName $server -ScriptBlock {
+        Start-Process msiexec.exe -ArgumentList '/i \\share\splunk\splunkforwarder.msi AGREETOLICENSE=Yes /quiet' -Wait
+    }
+}
+
+LINUX INSTALLATION:
+
+# RPM-based (RHEL/CentOS)
+rpm -i splunkforwarder-9.1.0-linux-x86_64.rpm
+/opt/splunkforwarder/bin/splunk start --accept-license
+/opt/splunkforwarder/bin/splunk enable boot-start
+
+# Debian-based (Ubuntu)
+dpkg -i splunkforwarder-9.1.0-linux-amd64.deb
+/opt/splunkforwarder/bin/splunk start --accept-license
+/opt/splunkforwarder/bin/splunk enable boot-start
+
+# Configure outputs
+cat > /opt/splunkforwarder/etc/system/local/outputs.conf << 'EOF'
+[tcpout]
+defaultGroup = primary_indexers
+
+[tcpout:primary_indexers]
+server = idx1.company.com:9997,idx2.company.com:9997
+EOF
+
+# Configure deployment client
+cat > /opt/splunkforwarder/etc/system/local/deploymentclient.conf << 'EOF'
+[deployment-client]
+
+[target-broker:deploymentServer]
+targetUri = ds.company.com:8089
+EOF
+
+# Restart to apply
+/opt/splunkforwarder/bin/splunk restart</div>
+
+                    <h4>Step 3: Configure Inputs</h4>
+                    <div class="code-block">COMMON INPUT CONFIGURATIONS:
+
+# Windows Security Events
+# inputs.conf
+[WinEventLog://Security]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Security
+evt_resolve_ad_obj = 1
+checkpointInterval = 5
+
+[WinEventLog://System]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:System
+
+[WinEventLog://Application]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Application
+
+# Sysmon logs
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+renderXml = true
+
+# Linux auth logs
+[monitor:///var/log/auth.log]
+disabled = 0
+index = linux
+sourcetype = linux_secure
+
+[monitor:///var/log/secure]
+disabled = 0
+index = linux
+sourcetype = linux_secure
+
+# Custom application logs
+[monitor:///var/log/myapp/*.log]
+disabled = 0
+index = application
+sourcetype = myapp:log
+crcSalt = <SOURCE></div>
+                </div>
+
+                <!-- Heavy Forwarder Deployment -->
+                <h2><i class="fas fa-server"></i> Heavy Forwarder Deployment</h2>
+                <div class="config-section">
+                    <h4>Heavy Forwarder Use Cases</h4>
+                    <div class="code-block">HEAVY FORWARDER SCENARIOS:
+
+1. SYSLOG AGGREGATION POINT
+   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │  Firewalls ──┐                                         │
+   │  Routers ────┼──▶ Heavy Forwarder ──▶ Indexers        │
+   │  Switches ───┘    (Syslog receiver)                    │
+   │                   (Parse & route)                      │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+
+2. DATA FILTERING/TRANSFORMATION
+   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │  High Volume ──▶ Heavy Forwarder ──▶ Indexers          │
+   │  Source          (Filter 90%)        (10% valuable)    │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+
+3. INTERMEDIATE FORWARDER (DMZ)
+   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │  DMZ ──▶ Heavy Forwarder ──▶ Firewall ──▶ Indexers    │
+   │  Hosts   (Single egress)     (Port 9997)               │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+
+4. DATA ENRICHMENT
+   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │  Raw Data ──▶ Heavy Forwarder ──▶ Indexers             │
+   │               (Add GeoIP, DNS)   (Enriched data)       │
+   │               (Lookup tables)                          │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘</div>
+
+                    <h4>Heavy Forwarder Configuration</h4>
+                    <div class="code-block"># Heavy Forwarder as Syslog Receiver
+# inputs.conf
+[udp://514]
+connection_host = dns
+sourcetype = syslog
+index = network
+
+[tcp://514]
+connection_host = dns
+sourcetype = syslog
+index = network
+
+# Syslog-ng/rsyslog forwarding to HF
+# On syslog server: forward to HF on 514
+
+# outputs.conf - forward to indexers
+[tcpout]
+defaultGroup = primary_indexers
+
+[tcpout:primary_indexers]
+server = idx1.company.com:9997,idx2.company.com:9997
+useACK = true
+
+# props.conf - parse syslog
+[syslog]
+TIME_FORMAT = %b %d %H:%M:%S
+MAX_TIMESTAMP_LOOKAHEAD = 32
+SHOULD_LINEMERGE = false
+TRANSFORMS-routing = route_by_sourcetype
+
+# transforms.conf - routing rules
+[route_by_sourcetype]
+REGEX = ^(?<host>\S+)\s+(?<sourcetype>\w+)
+DEST_KEY = _MetaData:Index
+FORMAT = $1</div>
+                </div>
+
+                <!-- Deployment Server Management -->
+                <h2><i class="fas fa-cogs"></i> Deployment Server Management</h2>
+                <div class="config-section">
+                    <h4>Deployment Server Architecture</h4>
+                    <div class="code-block">DEPLOYMENT SERVER WORKFLOW:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEPLOYMENT SERVER                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  $SPLUNK_HOME/etc/deployment-apps/                             │
+│  ├── Org_all_outputs/          (All forwarders)                │
+│  ├── Org_all_base/             (Base config)                   │
+│  ├── Org_Windows_WinEventLog/  (Windows servers)               │
+│  ├── Org_Linux_auth/           (Linux servers)                 │
+│  ├── Org_DMZ_inputs/           (DMZ hosts)                     │
+│  └── TA-xxx/                   (Technology add-ons)            │
+│                                                                 │
+│  serverclass.conf                                               │
+│  ├── Server classes (groups of forwarders)                     │
+│  ├── App assignments                                           │
+│  └── Whitelist/blacklist rules                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+           │
+           ▼ Phone home (every 30 sec default)
+┌─────────────────────────────────────────────────────────────────┐
+│  Forwarders receive apps based on server class membership       │
+│  ├── Deploy apps to $SPLUNK_HOME/etc/apps/                     │
+│  └── Restart if required (restartSplunkd = true)               │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+                    <h4>serverclass.conf Configuration</h4>
+                    <div class="code-block"># $SPLUNK_HOME/etc/system/local/serverclass.conf
+
+# Define server classes based on criteria
+[serverClass:All_Forwarders]
+whitelist.0 = *
+# Assign base apps to all
+
+[serverClass:All_Forwarders:app:Org_all_outputs]
+restartSplunkd = true
+
+[serverClass:All_Forwarders:app:Org_all_base]
+
+# Windows servers
+[serverClass:Windows_Servers]
+whitelist.0 = *.company.com
+machineTypesFilter = windows-x64
+
+[serverClass:Windows_Servers:app:Org_Windows_WinEventLog]
+restartSplunkd = true
+
+[serverClass:Windows_Servers:app:TA-microsoft-sysmon]
+restartSplunkd = true
+
+# Linux servers
+[serverClass:Linux_Servers]
+whitelist.0 = *.company.com
+machineTypesFilter = linux-x86_64
+
+[serverClass:Linux_Servers:app:Org_Linux_auth]
+restartSplunkd = true
+
+# DMZ hosts (specific list)
+[serverClass:DMZ_Hosts]
+whitelist.0 = dmz-web01.company.com
+whitelist.1 = dmz-web02.company.com
+whitelist.2 = dmz-app01.company.com
+
+[serverClass:DMZ_Hosts:app:Org_DMZ_inputs]
+restartSplunkd = true
+
+# Reload deployment server
+# $SPLUNK_HOME/bin/splunk reload deploy-server</div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+                <div class="config-section">
+                    <h4>Troubleshooting Decision Tree</h4>
+                    <div class="code-block">FORWARDER TROUBLESHOOTING DECISION TREE:
+
+┌─────────────────────────────────────────────────────────────┐
+│                IS DATA REACHING INDEXER?                    │
+├─────────────────────────┬───────────────────────────────────┤
+│          YES            │              NO                   │
+│           │             │               │                   │
+│           ▼             │               ▼                   │
+│   Check sourcetype      │    Is forwarder service running?  │
+│   and index mapping     │    ├── YES → Check network        │
+│                         │    └── NO → Start service         │
+│                         │                  │                │
+│                         │                  ▼                │
+│                         │         Network connectivity?     │
+│                         │         ├── YES → Check outputs   │
+│                         │         └── NO → Fix firewall     │
+│                         │                      │            │
+│                         │                      ▼            │
+│                         │         Outputs.conf correct?     │
+│                         │         ├── YES → Check indexer   │
+│                         │         └── NO → Fix config       │
+└─────────────────────────┴───────────────────────────────────┘
+
+COMMON ISSUES AND SOLUTIONS:
+
+1. SERVICE NOT RUNNING
+   # Windows
+   sc query SplunkForwarder
+   sc start SplunkForwarder
+   
+   # Linux
+   /opt/splunkforwarder/bin/splunk status
+   /opt/splunkforwarder/bin/splunk start
+
+2. NETWORK CONNECTIVITY
+   # Test port connectivity
+   telnet idx1.company.com 9997
+   nc -zv idx1.company.com 9997
+   
+   # Check firewall rules
+   netstat -an | grep 9997
+
+3. CONFIGURATION ERRORS
+   # Validate configuration
+   /opt/splunkforwarder/bin/splunk btool inputs list --debug
+   /opt/splunkforwarder/bin/splunk btool outputs list --debug
+   
+   # Check for syntax errors
+   /opt/splunkforwarder/bin/splunk cmd btprobe -d $SPLUNK_HOME/etc/apps
+
+4. DATA NOT INDEXED
+   # Check internal logs
+   index=_internal host=forwarder_host source=*splunkd.log
+   | search error OR warning
+   
+   # Check for blocked queue
+   index=_internal source=*metrics.log group=queue
+   | stats avg(current_size) by name</div>
+
+                    <h4>Health Monitoring Commands</h4>
+                    <div class="code-block"># Forwarder health checks
+
+# Check forwarder status
+/opt/splunkforwarder/bin/splunk list forward-server
+
+# Check connection status
+/opt/splunkforwarder/bin/splunk list monitor
+
+# Check indexer acknowledgment
+index=_internal source=*metrics.log group=tcpout_connections
+| stats latest(destPort) latest(status) by destHost
+
+# Check forwarder queues
+index=_internal source=*metrics.log group=queue
+| where current_size > 0
+| stats latest(current_size) by host name
+
+# Deployment server client status
+/opt/splunkforwarder/bin/splunk show deploy-poll
+
+# List deployed apps
+/opt/splunkforwarder/bin/splunk display deploy-poll</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between Universal and Heavy Forwarder?</button>
+                        <div class="qa-answer">
+                            <table class="styled-table">
+                                <tr><th>Universal Forwarder</th><th>Heavy Forwarder</th></tr>
+                                <tr><td>Minimal resources (~40MB)</td><td>Full Splunk instance (~1GB+)</td></tr>
+                                <tr><td>No parsing capability</td><td>Full parsing at ingest</td></tr>
+                                <tr><td>Free license</td><td>Consumes license</td></tr>
+                                <tr><td>For endpoints/servers</td><td>For aggregation/transformation</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you manage forwarder configuration at scale?</button>
+                        <div class="qa-answer">
+                            <p>Use <strong>Deployment Server</strong>:</p>
+                            <ol>
+                                <li>Create apps in <code>$SPLUNK_HOME/etc/deployment-apps/</code></li>
+                                <li>Define server classes in <code>serverclass.conf</code></li>
+                                <li>Forwarders phone home and receive assigned apps</li>
+                                <li>Changes propagate automatically to all forwarders</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: A forwarder isn't sending data. How do you troubleshoot?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Check service: <code>splunk status</code></li>
+                                <li>Test network: <code>telnet indexer 9997</code></li>
+                                <li>Validate config: <code>splunk btool outputs list --debug</code></li>
+                                <li>Check logs: <code>$SPLUNK_HOME/var/log/splunk/splunkd.log</code></li>
+                                <li>Monitor queue: Check <code>_internal</code> for blocked queues</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: When would you use a Heavy Forwarder?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Syslog aggregation:</strong> Receive from network devices</li>
+                                <li><strong>Data filtering:</strong> Reduce volume before indexing</li>
+                                <li><strong>Data transformation:</strong> Parse, enrich, route</li>
+                                <li><strong>DMZ aggregation:</strong> Single egress point</li>
+                                <li><strong>Compliance:</strong> Interim storage for data integrity</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

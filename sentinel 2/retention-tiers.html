@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retention & Storage Tiers | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">Retention & Storage Tiers</span>
+            </div>
+
+<h1><i class="fas fa-archive"></i> Retention & Storage Tiers</h1>
+                <p class="lead">Complete guide to Log Analytics storage tiers, retention configuration, and cost optimization strategies for Microsoft Sentinel.</p>
+
+                <!-- Tier Overview -->
+                <h2><i class="fas fa-layer-group"></i> Storage Tier Overview</h2>
+
+                <div class="tier-card tier-analytics">
+                    <h3 style="color: #58a6ff;"><i class="fas fa-search"></i> Analytics Logs (Default)</h3>
+                    <p><strong>What:</strong> Full KQL query capability, analytics rules, hunting queries</p>
+                    <p><strong>Retention:</strong> 30-730 days (default 90 days for Sentinel tables)</p>
+                    <p><strong>Cost:</strong> Higher ingestion + retention cost, but full functionality</p>
+                    <p><strong>Use for:</strong> Security events, alerts, incidents, active investigation data</p>
+                </div>
+
+                <div class="tier-card tier-basic">
+                    <h3 style="color: #3fb950;"><i class="fas fa-database"></i> Basic Logs</h3>
+                    <p><strong>What:</strong> Reduced cost, limited query capabilities</p>
+                    <p><strong>Retention:</strong> 8 days interactive + up to 4383 days archive</p>
+                    <p><strong>Cost:</strong> ~65% less than Analytics tier</p>
+                    <p><strong>Limitations:</strong> No scheduled alerts, limited KQL (single table, no joins)</p>
+                    <p><strong>Use for:</strong> Verbose logs, debug data, low-value telemetry</p>
+                </div>
+
+                <div class="tier-card tier-archive">
+                    <h3 style="color: #8b949e;"><i class="fas fa-archive"></i> Archive Tier</h3>
+                    <p><strong>What:</strong> Long-term retention, search jobs required to query</p>
+                    <p><strong>Retention:</strong> Up to 12 years (4383 days)</p>
+                    <p><strong>Cost:</strong> Lowest storage cost, pay per search job</p>
+                    <p><strong>Access:</strong> Must run "Search Job" to restore data for querying</p>
+                    <p><strong>Use for:</strong> Compliance retention, historical investigation, audit logs</p>
+                </div>
+
+                <!-- Configuration -->
+                <h2><i class="fas fa-cog"></i> Configure Retention</h2>
+
+                <div class="config-section">
+                    <h3>Per-Table Retention (Azure Portal)</h3>
+                    <p><span class="azure-path">Log Analytics workspace</span> → <span class="azure-path">Tables</span> → <span class="azure-path">[Select table]</span> → <span class="azure-path">Manage table</span></p>
+                    
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Setting</th><th>Description</th><th>Range</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Interactive retention</td>
+                                <td>Days data is queryable with full KQL</td>
+                                <td>4-730 days</td>
+                            </tr>
+                            <tr>
+                                <td>Total retention</td>
+                                <td>Total days stored (includes archive)</td>
+                                <td>4-4383 days (12 years)</td>
+                            </tr>
+                            <tr>
+                                <td>Table plan</td>
+                                <td>Analytics or Basic</td>
+                                <td>Analytics (default) / Basic</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="config-section">
+                    <h3>Configure via CLI/PowerShell</h3>
+                    <div class="code-block">
+# Set retention for specific table (Azure CLI)
+az monitor log-analytics workspace table update \
+    --resource-group rg-sentinel \
+    --workspace-name sentinel-workspace \
+    --name SecurityEvent \
+    --retention-time 90 \
+    --total-retention-time 365
+
+# Set table to Basic tier
+az monitor log-analytics workspace table update \
+    --resource-group rg-sentinel \
+    --workspace-name sentinel-workspace \
+    --name ContainerLog \
+    --plan Basic
+
+# PowerShell
+Update-AzOperationalInsightsTable `
+    -ResourceGroupName "rg-sentinel" `
+    -WorkspaceName "sentinel-workspace" `
+    -TableName "SecurityEvent" `
+    -RetentionInDays 90 `
+    -TotalRetentionInDays 365</div>
+                </div>
+
+                <!-- Recommended Retention -->
+                <h2><i class="fas fa-check-circle"></i> Recommended Retention by Table</h2>
+
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Table</th><th>Tier</th><th>Interactive</th><th>Total</th><th>Rationale</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>SecurityEvent</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Core security, compliance</td></tr>
+                            <tr><td>SecurityAlert</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Alert investigation</td></tr>
+                            <tr><td>SecurityIncident</td><td>Analytics</td><td>365 days</td><td>730 days</td><td>Incident tracking</td></tr>
+                            <tr><td>SigninLogs</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Auth investigation</td></tr>
+                            <tr><td>AuditLogs</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Compliance</td></tr>
+                            <tr><td>AzureActivity</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Cloud audit trail</td></tr>
+                            <tr><td>CommonSecurityLog</td><td>Analytics</td><td>30 days</td><td>90 days</td><td>High volume, rotate faster</td></tr>
+                            <tr><td>Syslog</td><td>Analytics</td><td>30 days</td><td>90 days</td><td>High volume</td></tr>
+                            <tr><td>Perf</td><td>Basic</td><td>8 days</td><td>30 days</td><td>Ops data, not security</td></tr>
+                            <tr><td>ContainerLog</td><td>Basic</td><td>8 days</td><td>30 days</td><td>Verbose, cost optimize</td></tr>
+                            <tr><td>AWSCloudTrail</td><td>Analytics</td><td>90 days</td><td>365 days</td><td>Cloud audit compliance</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Archive & Search Jobs -->
+                <h2><i class="fas fa-search"></i> Querying Archived Data</h2>
+
+                <div class="config-section">
+                    <h3>Create Search Job</h3>
+                    <p><span class="azure-path">Log Analytics workspace</span> → <span class="azure-path">Logs</span> → <span class="azure-path">Search job mode</span></p>
+                    
+                    <div class="code-block">
+// Search job query - searches archived data
+// Results stored in new table: SearchResults_[jobid]
+SecurityEvent
+| where TimeGenerated between (datetime(2023-01-01) .. datetime(2023-03-31))
+| where EventID == 4625
+| project TimeGenerated, Computer, Account, IpAddress</div>
+
+                    <p style="color: #8b949e; margin-top: 12px;"><strong>How search jobs work:</strong></p>
+                    <ol style="color: #8b949e;">
+                        <li>Submit query against archived time range</li>
+                        <li>Job runs async, restoring data from archive</li>
+                        <li>Results stored in SearchResults table (retained 30 days)</li>
+                        <li>Query results table for analysis</li>
+                    </ol>
+
+                    <h4>CLI Method:</h4>
+                    <div class="code-block">
+# Create search job via CLI
+az monitor log-analytics workspace search-job create \
+    --resource-group rg-sentinel \
+    --workspace-name sentinel-workspace \
+    --name "HistoricalInvestigation" \
+    --query "SecurityEvent | where EventID == 4625" \
+    --start-time "2023-01-01T00:00:00Z" \
+    --end-time "2023-03-31T23:59:59Z"</div>
+                </div>
+
+                <!-- Data Export -->
+                <h2><i class="fas fa-external-link-alt"></i> Data Export (Long-term Archive)</h2>
+
+                <div class="config-section">
+                    <h3>Export to Storage Account</h3>
+                    <p><span class="azure-path">Log Analytics workspace</span> → <span class="azure-path">Data Export</span> → <span class="azure-path">New export rule</span></p>
+                    
+                    <table style="color: #8b949e; font-size: 0.9rem; width: 100%;">
+                        <tr><td style="width: 150px;">Destination:</td><td>Storage Account or Event Hub</td></tr>
+                        <tr><td>Tables:</td><td>Select tables to export</td></tr>
+                        <tr><td>Format:</td><td>JSON (one file per hour)</td></tr>
+                        <tr><td>Retention:</td><td>Configure in Storage Account lifecycle</td></tr>
+                    </table>
+                    
+                    <p style="margin-top: 16px;"><strong>Use cases:</strong></p>
+                    <ul style="color: #8b949e;">
+                        <li>Compliance requiring 7+ years retention</li>
+                        <li>Lower cost than Log Analytics archive</li>
+                        <li>Integration with external SIEM or data lake</li>
+                    </ul>
+                </div>
+
+                <!-- Cost Optimization -->
+                <h2><i class="fas fa-dollar-sign"></i> Cost Optimization Strategies</h2>
+
+                <div class="config-section">
+                    <h3>Quick Wins</h3>
+                    <ol style="color: #8b949e;">
+                        <li><strong>Use Basic tier</strong> for verbose, low-security-value logs (Perf, ContainerLog, traces)</li>
+                        <li><strong>Shorten retention</strong> on high-volume tables (CommonSecurityLog, Syslog)</li>
+                        <li><strong>Filter at ingestion</strong> using DCR transformations to drop unwanted events</li>
+                        <li><strong>Use archive tier</strong> instead of interactive for compliance-only data</li>
+                        <li><strong>Data export</strong> to Storage Account for cheapest long-term storage</li>
+                    </ol>
+                </div>
+
+                <div class="config-section">
+                    <h3>Monitor Costs</h3>
+                    <div class="code-block">
+// Daily ingestion by table
+Usage
+| where TimeGenerated > ago(30d)
+| where DataType != ""
+| summarize IngestedGB = sum(Quantity) / 1000 by DataType
+| sort by IngestedGB desc
+
+// Billable data by solution
+Usage
+| where TimeGenerated > ago(30d)
+| where IsBillable == true
+| summarize BillableGB = sum(Quantity) / 1000 by Solution
+| sort by BillableGB desc</div>
+                </div>
+
+                <!-- Interview Q&A -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the storage tiers in Microsoft Sentinel.</button>
+                        <div class="qa-answer">
+                            <p><strong>Three tiers:</strong></p>
+                            <ol>
+                                <li><strong>Analytics Logs:</strong> Default tier, full KQL queries, analytics rules, hunting. 30-730 days retention. Use for security-relevant data.</li>
+                                <li><strong>Basic Logs:</strong> 65% cheaper, limited KQL (no joins, single table). 8 days interactive + archive. Use for verbose, low-value logs.</li>
+                                <li><strong>Archive:</strong> Lowest cost storage for retention beyond interactive period. Requires search jobs to query (async restore). Up to 12 years.</li>
+                            </ol>
+                            <p><strong>Best practice:</strong> Use Analytics for security tables (SecurityEvent, Alerts), Basic for verbose ops logs (ContainerLog, Perf), Archive for compliance retention.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you query archived data in Sentinel?</button>
+                        <div class="qa-answer">
+                            <p><strong>Search Jobs:</strong></p>
+                            <ol>
+                                <li>Create search job with time range that includes archived period</li>
+                                <li>Job runs asynchronously, restoring data from archive</li>
+                                <li>Results stored in SearchResults_[jobid] table</li>
+                                <li>Query results table for analysis (retained 30 days)</li>
+                            </ol>
+                            <p><strong>Note:</strong> Search jobs have costs (per GB scanned) and take time depending on data volume. Cannot use for real-time alerting.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Extended Interview Questions -->
+                <h2><i class="fas fa-question-circle"></i> Additional Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach troubleshooting in this area?</button>
+                        <div class="qa-answer">
+                            <p><strong>Systematic troubleshooting approach:</strong></p>
+                            <ol>
+                                <li><strong>Identify the symptom:</strong> What exactly is not working as expected?</li>
+                                <li><strong>Check connectivity:</strong> Verify network paths and authentication</li>
+                                <li><strong>Review logs:</strong> Check internal/audit logs for errors</li>
+                                <li><strong>Validate configuration:</strong> Compare against documented standards</li>
+                                <li><strong>Test incrementally:</strong> Isolate the problem component</li>
+                                <li><strong>Document findings:</strong> Record what worked and what didn't</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What metrics would you track for this area?</button>
+                        <div class="qa-answer">
+                            <p><strong>Key performance indicators:</strong></p>
+                            <ul>
+                                <li><strong>Availability:</strong> Uptime percentage, service availability</li>
+                                <li><strong>Performance:</strong> Query response time, processing latency</li>
+                                <li><strong>Volume:</strong> Events per second, data ingestion rate</li>
+                                <li><strong>Quality:</strong> Parse success rate, enrichment coverage</li>
+                                <li><strong>Efficiency:</strong> Resource utilization, cost per GB</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure high availability?</button>
+                        <div class="qa-answer">
+                            <p><strong>High availability strategies:</strong></p>
+                            <ul>
+                                <li><strong>Redundancy:</strong> Multiple instances of critical components</li>
+                                <li><strong>Load balancing:</strong> Distribute traffic across instances</li>
+                                <li><strong>Failover:</strong> Automatic switchover on failure</li>
+                                <li><strong>Monitoring:</strong> Health checks and alerting</li>
+                                <li><strong>DR Planning:</strong> Documented recovery procedures</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Best Practices -->
+                <h2><i class="fas fa-star"></i> Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation:</strong> Maintain runbooks for all procedures</li>
+                        <li><strong>Change Management:</strong> Test changes in non-production first</li>
+                        <li><strong>Monitoring:</strong> Set up proactive alerting for issues</li>
+                        <li><strong>Regular Reviews:</strong> Periodic audits of configuration and performance</li>
+                        <li><strong>Training:</strong> Keep team skills current with platform updates</li>
+                    </ul>
+
+                    <h4>Security Considerations</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Least Privilege:</strong> Grant minimum necessary permissions</li>
+                        <li><strong>Audit Logging:</strong> Enable comprehensive audit trails</li>
+                        <li><strong>Encryption:</strong> Encrypt data in transit and at rest</li>
+                        <li><strong>Access Reviews:</strong> Regular review of user access</li>
+                        <li><strong>Secrets Management:</strong> Secure storage of credentials</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Efficiency:</strong> Optimize queries for speed</li>
+                        <li><strong>Resource Planning:</strong> Right-size infrastructure</li>
+                        <li><strong>Caching:</strong> Use caching where appropriate</li>
+                        <li><strong>Indexing:</strong> Ensure proper indexing for search</li>
+                        <li><strong>Cleanup:</strong> Regular maintenance and data hygiene</li>
+                    </ul>
+                </div>
+
+                <!-- Troubleshooting Guide -->
+                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+                <div class="config-section">
+                    <h4>Common Issues and Solutions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Issue</th><th>Possible Cause</th><th>Solution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Data not appearing</td>
+                                <td>Collection or parsing issue</td>
+                                <td>Check collector status, verify parser configuration</td>
+                            </tr>
+                            <tr>
+                                <td>Slow performance</td>
+                                <td>Resource constraints or inefficient queries</td>
+                                <td>Review resource utilization, optimize queries</td>
+                            </tr>
+                            <tr>
+                                <td>Authentication failures</td>
+                                <td>Credential or permission issues</td>
+                                <td>Verify credentials, check RBAC configuration</td>
+                            </tr>
+                            <tr>
+                                <td>Missing fields</td>
+                                <td>Parser not extracting fields</td>
+                                <td>Review parsing rules, update field extraction</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Multiple collection paths</td>
+                                <td>Audit data sources, implement deduplication</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Diagnostic Steps</h4>
+                    <ol style="color: #8b949e;">
+                        <li><strong>Check Status:</strong> Verify component health in console</li>
+                        <li><strong>Review Logs:</strong> Examine internal logs for errors</li>
+                        <li><strong>Test Connectivity:</strong> Verify network paths and authentication</li>
+                        <li><strong>Validate Config:</strong> Compare configuration against documentation</li>
+                        <li><strong>Isolate Issue:</strong> Narrow down to specific component</li>
+                        <li><strong>Escalate:</strong> Contact support if needed with diagnostics</li>
+                    </ol>
+                </div>
+
+                <!-- Use Cases -->
+                <h2><i class="fas fa-briefcase"></i> Real-World Use Cases</h2>
+                <div class="config-section">
+                    <h4>Use Case 1: Enterprise SOC</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <p><strong>Scenario:</strong> Large enterprise with 20,000 endpoints, multiple cloud environments</p>
+                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Centralized collection from all security data sources</li>
+                            <li>Custom detection rules aligned to threat model</li>
+                            <li>Automated response playbooks for common scenarios</li>
+                            <li>Integration with ticketing and CMDB systems</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Outcome:</strong> 60% reduction in MTTR, improved threat visibility</p>
+                    </div>
+
+                    <h4>Use Case 2: MSSP Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <p><strong>Scenario:</strong> Managed security provider serving 50 customers</p>
+                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Multi-tenant architecture with customer isolation</li>
+                            <li>Standardized detection content across customers</li>
+                            <li>Centralized analyst workflow and reporting</li>
+                            <li>SLA-driven prioritization and escalation</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Outcome:</strong> Efficient operations at scale, consistent service delivery</p>
+                    </div>
+
+                    <h4>Use Case 3: Compliance-Focused</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <p><strong>Scenario:</strong> Healthcare organization with HIPAA requirements</p>
+                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Comprehensive audit logging for PHI access</li>
+                            <li>Long-term retention for compliance evidence</li>
+                            <li>Pre-built compliance dashboards and reports</li>
+                            <li>Automated compliance violation detection</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Outcome:</strong> Audit-ready documentation, reduced compliance risk</p>
+                    </div>
+                </div>
+
+                <!-- Quick Reference -->
+                <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
+                <div class="config-section">
+                    <h4>Common Commands/Queries</h4>
+                    <div class="code-block"># Basic health check query
+# Adjust syntax for your platform (XQL/SPL/KQL)
+
+# Check data ingestion rate
+| stats count by _time span=1h
+
+# Find recent errors
+| filter severity = "error" 
+| sort _time desc 
+| limit 100
+
+# Top sources by volume
+| stats sum(bytes) as total_bytes by source
+| sort total_bytes desc
+| limit 10
+
+# Detection rule effectiveness
+| filter alert_type = "detection"
+| stats count by rule_name, disposition
+| sort count desc</div>
+
+                    <h4>Key Configuration Files/Paths</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Purpose</th><th>Location/Path</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Main Configuration</td><td>Settings → Configuration</td></tr>
+                            <tr><td>Data Sources</td><td>Settings → Data Sources</td></tr>
+                            <tr><td>Detection Rules</td><td>Detection → Rules</td></tr>
+                            <tr><td>User Management</td><td>Settings → Access Management</td></tr>
+                            <tr><td>Audit Logs</td><td>Settings → Audit Trail</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Important Thresholds</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Metric</th><th>Warning</th><th>Critical</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Query Response Time</td><td>> 30 seconds</td><td>> 120 seconds</td></tr>
+                            <tr><td>Ingestion Latency</td><td>> 5 minutes</td><td>> 15 minutes</td></tr>
+                            <tr><td>Storage Utilization</td><td>> 70%</td><td>> 85%</td></tr>
+                            <tr><td>Error Rate</td><td>> 1%</td><td>> 5%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Related Topics -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="config-section">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <h4 style="margin-top: 0;"><i class="fas fa-book" style="color: #58a6ff;"></i> Documentation</h4>
+                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
+                                <li>Official vendor documentation</li>
+                                <li>API reference guides</li>
+                                <li>Release notes</li>
+                            </ul>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <h4 style="margin-top: 0;"><i class="fas fa-users" style="color: #58a6ff;"></i> Community</h4>
+                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
+                                <li>User forums</li>
+                                <li>Community Slack/Discord</li>
+                                <li>Blog posts and articles</li>
+                            </ul>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <h4 style="margin-top: 0;"><i class="fas fa-graduation-cap" style="color: #58a6ff;"></i> Training</h4>
+                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
+                                <li>Vendor certifications</li>
+                                <li>Online courses</li>
+                                <li>Hands-on labs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+                <!-- Comprehensive Troubleshooting -->
+                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
+                <div class="config-section">
+                    <h4>Systematic Troubleshooting Methodology</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <ol style="color: #8b949e;">
+                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
+                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
+                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
+                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
+                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
+                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
+                        </ol>
+                    </div>
+
+                    <h4>Common Issues and Resolutions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="2"><strong>Connectivity</strong></td>
+                                <td>Agent not reporting</td>
+                                <td>Check agent service status, network connectivity, firewall rules</td>
+                                <td>Restart service, verify network path, update firewall rules</td>
+                            </tr>
+                            <tr>
+                                <td>API timeouts</td>
+                                <td>Test API endpoint, check rate limits, verify credentials</td>
+                                <td>Retry with backoff, request limit increase, refresh credentials</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Data Quality</strong></td>
+                                <td>Missing fields</td>
+                                <td>Review parsing rules, check source format, validate schema</td>
+                                <td>Update parser, fix source configuration, adjust schema mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Audit data sources, check collection paths, review timestamps</td>
+                                <td>Consolidate sources, implement deduplication, fix time sync</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Performance</strong></td>
+                                <td>Slow queries</td>
+                                <td>Analyze query execution plan, check resource utilization</td>
+                                <td>Optimize query, add indexes, scale resources</td>
+                            </tr>
+                            <tr>
+                                <td>High latency</td>
+                                <td>Monitor queue depths, check processing bottlenecks</td>
+                                <td>Scale processing capacity, optimize data flow</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Authentication</strong></td>
+                                <td>Login failures</td>
+                                <td>Verify credentials, check account status, review permissions</td>
+                                <td>Reset password, unlock account, grant required permissions</td>
+                            </tr>
+                            <tr>
+                                <td>Token expiration</td>
+                                <td>Check token validity, review refresh mechanism</td>
+                                <td>Refresh token, update token management configuration</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Diagnostic Commands and Queries</h4>
+                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+
+# Check system health status
+| filter log_type = "system_health"
+| sort _time desc
+| limit 50
+
+# Monitor error rates over time
+| filter severity in ("error", "critical")
+| timechart count by component span=1h
+
+# Identify slow operations
+| filter operation_time > 30000
+| stats avg(operation_time), max(operation_time), count by operation_name
+| sort avg(operation_time) desc
+
+# Check connectivity status
+| filter event_type = "connectivity"
+| stats latest(status), latest(_time) by source_name
+| where status != "connected"
+
+# Review authentication failures
+| filter event_type = "authentication" and result = "failure"
+| stats count by user, source_ip, failure_reason
+| sort count desc</div>
+                </div>
+
+                <!-- Real-World Use Cases -->
+                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
+                <div class="config-section">
+                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
+                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>High volume of security events (500+ million events/day)</li>
+                            <li>Multiple security tools with siloed data</li>
+                            <li>Alert fatigue from excessive false positives</li>
+                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Phased rollout starting with critical data sources</li>
+                            <li>Custom detection rules based on threat model</li>
+                            <li>Automated playbooks for common scenarios</li>
+                            <li>Integration with ITSM and CMDB systems</li>
+                        </ul>
+                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
+                    </div>
+
+                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
+                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Need for strict data isolation between customers</li>
+                            <li>Scalable operations with limited staff</li>
+                            <li>Standardized service delivery across customers</li>
+                            <li>Flexible SLA-based prioritization</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Multi-tenant architecture with customer isolation</li>
+                            <li>Shared detection content library with customization</li>
+                            <li>Centralized analyst console with customer context</li>
+                            <li>Automated reporting and SLA tracking</li>
+                        </ul>
+                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
+                    </div>
+
+                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
+                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>HIPAA compliance requirements for PHI protection</li>
+                            <li>Legacy medical devices with limited security logging</li>
+                            <li>Need for 6-year log retention</li>
+                            <li>Limited IT security staff</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Comprehensive EHR and clinical application monitoring</li>
+                            <li>PHI access detection rules</li>
+                            <li>Long-term archival storage configuration</li>
+                            <li>Pre-built compliance dashboards and reports</li>
+                        </ul>
+                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
+                    </div>
+                </div>
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

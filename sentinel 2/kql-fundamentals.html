@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KQL Fundamentals | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">KQL Fundamentals</span>
+            </div>
+
+<h1><i class="fas fa-code"></i> KQL Fundamentals</h1>
+                <p class="lead">Master Kusto Query Language (KQL) for Microsoft Sentinel. KQL is used for log queries, analytics rules, hunting, and workbooks.</p>
+
+                <!-- KQL Overview -->
+                <h2><i class="fas fa-info-circle"></i> Understanding KQL</h2>
+                <div class="config-section">
+                    <p>KQL (Kusto Query Language) is a read-only query language designed for large-scale data exploration. Key characteristics:</p>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Pipeline-based:</strong> Data flows through operators separated by <code>|</code></li>
+                        <li><strong>Case-sensitive:</strong> Table and column names are case-sensitive</li>
+                        <li><strong>Schema-on-read:</strong> Flexible schema, columns can vary between records</li>
+                        <li><strong>Optimized for logs:</strong> Designed for time-series data analysis</li>
+                    </ul>
+                    
+                    <h4>Where KQL is Used in Sentinel</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Feature</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Log Analytics</td><td>Ad-hoc queries, investigation</td></tr>
+                            <tr><td>Analytics Rules</td><td>Scheduled detection rules</td></tr>
+                            <tr><td>Hunting Queries</td><td>Proactive threat hunting</td></tr>
+                            <tr><td>Workbooks</td><td>Dashboards and visualizations</td></tr>
+                            <tr><td>Notebooks</td><td>Advanced analysis with Python</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Basic Query Structure -->
+                <h2><i class="fas fa-sitemap"></i> Basic Query Structure</h2>
+                <div class="config-section">
+                    <div class="code-block">// Basic KQL query structure
+TableName
+| where TimeGenerated > ago(24h)
+| where Column == "Value"
+| summarize count() by GroupColumn
+| sort by count_ desc
+| take 10</div>
+
+                    <p style="color: #8b949e; margin-top: 16px;"><strong>Pipeline breakdown:</strong></p>
+                    <ol style="color: #8b949e;">
+                        <li><strong>Table:</strong> <code>TableName</code> - Source table (e.g., SecurityEvent)</li>
+                        <li><strong>Filter time:</strong> <code>where TimeGenerated > ago(24h)</code> - Always filter by time first</li>
+                        <li><strong>Filter data:</strong> <code>where Column == "Value"</code> - Additional filters</li>
+                        <li><strong>Aggregate:</strong> <code>summarize count() by GroupColumn</code> - Group and count</li>
+                        <li><strong>Sort:</strong> <code>sort by count_ desc</code> - Order results</li>
+                        <li><strong>Limit:</strong> <code>take 10</code> - Return top N</li>
+                    </ol>
+                </div>
+
+                <!-- Common Tables -->
+                <h2><i class="fas fa-database"></i> Key Sentinel Tables</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Table</th><th>Data Source</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>SecurityEvent</td><td>Windows Security logs</td><td>Authentication, process, audit events</td></tr>
+                            <tr><td>SigninLogs</td><td>Azure AD</td><td>User sign-in activity</td></tr>
+                            <tr><td>AuditLogs</td><td>Azure AD</td><td>Directory changes, app consent</td></tr>
+                            <tr><td>SecurityAlert</td><td>Security products</td><td>Alerts from Defender, etc.</td></tr>
+                            <tr><td>SecurityIncident</td><td>Sentinel</td><td>Incident management</td></tr>
+                            <tr><td>CommonSecurityLog</td><td>CEF devices</td><td>Firewalls, proxies (CEF format)</td></tr>
+                            <tr><td>Syslog</td><td>Linux/Unix</td><td>Linux system logs</td></tr>
+                            <tr><td>DeviceEvents</td><td>MDE</td><td>Endpoint security events</td></tr>
+                            <tr><td>DeviceProcessEvents</td><td>MDE</td><td>Process creation</td></tr>
+                            <tr><td>DeviceNetworkEvents</td><td>MDE</td><td>Network connections</td></tr>
+                            <tr><td>OfficeActivity</td><td>Office 365</td><td>SharePoint, Exchange, Teams</td></tr>
+                            <tr><td>AzureActivity</td><td>Azure</td><td>Azure management operations</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Essential Operators -->
+                <h2><i class="fas fa-terminal"></i> Essential Operators</h2>
+
+                <!-- where -->
+                <div class="op-card">
+                    <span class="op-name">where</span> - Filter rows
+                    <span class="op-syntax">| where condition</span>
+                    <div class="code-block">// Equality (case-sensitive)
+| where EventID == 4625
+
+// String equality (case-insensitive)
+| where AccountName =~ "admin"
+
+// Contains
+| where CommandLine contains "powershell"
+| where CommandLine contains_cs "PowerShell"  // case-sensitive
+
+// Starts/ends with
+| where ProcessName startswith "cmd"
+| where FilePath endswith ".exe"
+
+// In list
+| where EventID in (4624, 4625, 4634)
+
+// Not equal
+| where Status != "Success"
+
+// Numeric comparison
+| where BytesSent > 1000000
+
+// Null checks
+| where isnotnull(SourceIP)
+| where isempty(UserName)</div>
+                </div>
+
+                <!-- summarize -->
+                <div class="op-card">
+                    <span class="op-name">summarize</span> - Aggregate data
+                    <span class="op-syntax">| summarize aggregation by grouping_columns</span>
+                    <div class="code-block">// Count
+| summarize count()
+| summarize EventCount = count() by Computer
+
+// Multiple aggregations
+| summarize 
+    TotalEvents = count(),
+    UniqueUsers = dcount(UserName),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by SourceIP
+
+// Conditional counting
+| summarize 
+    SuccessCount = countif(Status == "Success"),
+    FailureCount = countif(Status == "Failure")
+    by UserName
+
+// Collect values into array
+| summarize IPAddresses = make_set(SourceIP) by UserName
+
+// With time binning
+| summarize count() by bin(TimeGenerated, 1h)</div>
+                </div>
+
+                <!-- project -->
+                <div class="op-card">
+                    <span class="op-name">project / project-away</span> - Select or remove columns
+                    <span class="op-syntax">| project Column1, Column2, NewName = Expression</span>
+                    <div class="code-block">// Select specific columns
+| project TimeGenerated, Computer, EventID, Account
+
+// Rename columns
+| project 
+    Timestamp = TimeGenerated,
+    Host = Computer,
+    User = TargetUserName
+
+// Create calculated column
+| project 
+    TimeGenerated,
+    Computer,
+    MB_Sent = BytesSent / 1048576
+
+// Remove columns (keep all except)
+| project-away TenantId, _ResourceId, Type</div>
+                </div>
+
+                <!-- extend -->
+                <div class="op-card">
+                    <span class="op-name">extend</span> - Add calculated columns
+                    <span class="op-syntax">| extend NewColumn = expression</span>
+                    <div class="code-block">// Simple calculation
+| extend MB = BytesSent / 1048576
+
+// String manipulation
+| extend Domain = tolower(split(UserPrincipalName, "@")[1])
+
+// Conditional
+| extend Risk = iff(FailedAttempts > 5, "High", "Low")
+
+// Case expression
+| extend Severity = case(
+    EventID == 4625, "High",
+    EventID == 4624, "Info",
+    "Unknown"
+)
+
+// Date extraction
+| extend 
+    Hour = datetime_part("hour", TimeGenerated),
+    DayOfWeek = dayofweek(TimeGenerated)</div>
+                </div>
+
+                <!-- sort / order -->
+                <div class="op-card">
+                    <span class="op-name">sort / order</span> - Order results
+                    <span class="op-syntax">| sort by Column [asc|desc]</span>
+                    <div class="code-block">// Descending (default for numbers)
+| sort by count_ desc
+
+// Ascending
+| sort by TimeGenerated asc
+
+// Multiple columns
+| sort by Severity desc, TimeGenerated desc
+
+// Nulls handling
+| sort by Column asc nulls last</div>
+                </div>
+
+                <!-- take / limit -->
+                <div class="op-card">
+                    <span class="op-name">take / limit</span> - Limit rows returned
+                    <span class="op-syntax">| take N</span>
+                    <div class="code-block">// Get first 100 rows
+| take 100
+
+// Often combined with sort for "top N"
+| sort by count_ desc
+| take 10</div>
+                </div>
+
+                <!-- top -->
+                <div class="op-card">
+                    <span class="op-name">top</span> - Get top N by column
+                    <span class="op-syntax">| top N by Column [asc|desc]</span>
+                    <div class="code-block">// Top 10 by count (shortcut for sort + take)
+| summarize count() by SourceIP
+| top 10 by count_ desc
+
+// Top with ties
+| top-hitters 10 of SourceIP by count()</div>
+                </div>
+
+                <!-- join -->
+                <div class="op-card">
+                    <span class="op-name">join</span> - Combine tables
+                    <span class="op-syntax">| join [kind=type] (RightTable) on KeyColumn</span>
+                    <div class="code-block">// Inner join (default)
+SigninLogs
+| join (IdentityInfo | project UserPrincipalName, Department) 
+    on UserPrincipalName
+
+// Left outer join (keep all from left)
+SecurityEvent
+| join kind=leftouter (
+    Heartbeat 
+    | summarize LastSeen = max(TimeGenerated) by Computer
+) on Computer
+
+// Anti join (rows in left NOT in right)
+SigninLogs
+| join kind=leftanti (AllowedIPs) on IPAddress
+
+// Join with different column names
+TableA
+| join (TableB) on $left.SourceIP == $right.IPAddress</div>
+                </div>
+
+                <!-- union -->
+                <div class="op-card">
+                    <span class="op-name">union</span> - Combine multiple tables
+                    <span class="op-syntax">union Table1, Table2</span>
+                    <div class="code-block">// Union multiple tables
+union SecurityEvent, Syslog, CommonSecurityLog
+
+// With wildcard
+union Security*
+
+// Add source indicator
+union withsource=TableName SecurityEvent, Syslog
+
+// Search across all tables
+union *
+| where TimeGenerated > ago(1h)
+| search "malware"</div>
+                </div>
+
+                <!-- parse -->
+                <div class="op-card">
+                    <span class="op-name">parse</span> - Extract data from strings
+                    <span class="op-syntax">| parse Column with * "pattern" ExtractedColumn * "pattern" ...</span>
+                    <div class="code-block">// Extract from structured text
+| parse EventData with * 'TargetUserName">' TargetUser '<' *
+
+// Multiple extractions
+| parse Message with "User " User " logged in from " SourceIP " at " *
+
+// Parse with regex
+| parse kind=regex CommandLine with @"(?i)-file\s+""?(?<FilePath>[^""]+)"""
+
+// Parse JSON
+| parse EventData with * '"AccountName":"' AccountName '"' *</div>
+                </div>
+
+                <!-- String Functions -->
+                <h2><i class="fas fa-font"></i> String Functions</h2>
+                <div class="config-section">
+                    <div class="code-block">// Case conversion
+| extend LowerUser = tolower(UserName)
+| extend UpperUser = toupper(UserName)
+
+// Substring
+| extend Domain = substring(Email, indexof(Email, "@") + 1)
+
+// Split
+| extend Parts = split(FilePath, "\\")
+| extend FileName = Parts[-1]  // Last element
+
+// String length
+| extend PathLength = strlen(FilePath)
+
+// Trim
+| extend CleanValue = trim(" ", RawValue)
+
+// Replace
+| extend CleanPath = replace_string(Path, "\\", "/")
+
+// Contains check (returns bool)
+| extend HasPowerShell = CommandLine contains "powershell"
+
+// Concatenation
+| extend FullPath = strcat(Directory, "\\", FileName)
+
+// Format string
+| extend Message = strcat_delim(" - ", Computer, UserName, Action)
+
+// Extract with regex
+| extend IP = extract(@"(\d+\.\d+\.\d+\.\d+)", 1, Message)</div>
+                </div>
+
+                <!-- DateTime Functions -->
+                <h2><i class="fas fa-clock"></i> DateTime Functions</h2>
+                <div class="config-section">
+                    <div class="code-block">// Time ago
+| where TimeGenerated > ago(24h)
+| where TimeGenerated > ago(7d)
+| where TimeGenerated > ago(1h)
+
+// Specific time range
+| where TimeGenerated between (datetime(2024-01-01) .. datetime(2024-01-31))
+
+// Start/end of day
+| where TimeGenerated > startofday(ago(7d))
+| where TimeGenerated < endofday(ago(1d))
+
+// Time binning for aggregation
+| summarize count() by bin(TimeGenerated, 1h)
+| summarize count() by bin(TimeGenerated, 15m)
+
+// Extract components
+| extend 
+    Hour = datetime_part("hour", TimeGenerated),
+    DayOfWeek = dayofweek(TimeGenerated),
+    Month = datetime_part("month", TimeGenerated)
+
+// Format datetime
+| extend FormattedTime = format_datetime(TimeGenerated, "yyyy-MM-dd HH:mm")
+
+// Time difference
+| extend Duration = datetime_diff("minute", EndTime, StartTime)
+
+// Add/subtract time
+| extend ExpiryTime = TimeGenerated + 7d</div>
+                </div>
+
+                <!-- Aggregation Functions -->
+                <h2><i class="fas fa-calculator"></i> Aggregation Functions</h2>
+                <div class="config-section">
+                    <div class="code-block">// Basic counts
+| summarize 
+    Total = count(),
+    UniqueUsers = dcount(UserName),
+    UniqueIPs = dcount(SourceIP)
+
+// Conditional aggregations
+| summarize 
+    SuccessCount = countif(Result == "Success"),
+    FailureCount = countif(Result == "Failure"),
+    SuccessRate = round(100.0 * countif(Result == "Success") / count(), 2)
+
+// Statistics
+| summarize 
+    TotalBytes = sum(BytesSent),
+    AvgBytes = avg(BytesSent),
+    MaxBytes = max(BytesSent),
+    MinBytes = min(BytesSent),
+    Percentile95 = percentile(BytesSent, 95)
+
+// Collect values
+| summarize 
+    AllIPs = make_set(SourceIP),           // Unique values
+    AllActions = make_list(Action),         // All values (with duplicates)
+    SampleEvents = take_any(EventData, 5)   // Sample of 5
+
+// First/last
+| summarize 
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated),
+    FirstValue = arg_min(TimeGenerated, *)  // Row with min time</div>
+                </div>
+
+                <!-- Security Query Examples -->
+                <h2><i class="fas fa-shield-alt"></i> Security Query Examples</h2>
+                <div class="config-section">
+                    <h4>Failed Sign-ins Analysis</h4>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType != 0  // Failed
+| summarize 
+    FailedAttempts = count(),
+    UniqueIPs = dcount(IPAddress),
+    DistinctErrors = make_set(ResultDescription)
+    by UserPrincipalName
+| where FailedAttempts > 10
+| sort by FailedAttempts desc</div>
+
+                    <h4>Successful Login After Multiple Failures</h4>
+                    <div class="code-block">SigninLogs
+| where TimeGenerated > ago(1h)
+| summarize 
+    Failures = countif(ResultType != 0),
+    Successes = countif(ResultType == 0),
+    IPs = make_set(IPAddress)
+    by UserPrincipalName
+| where Failures > 5 and Successes > 0
+| project UserPrincipalName, Failures, Successes, IPs</div>
+
+                    <h4>Rare Process Execution</h4>
+                    <div class="code-block">DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| summarize ExecutionCount = count() by FileName
+| where ExecutionCount < 5
+| join kind=inner (
+    DeviceProcessEvents
+    | where TimeGenerated > ago(24h)
+) on FileName
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine</div>
+
+                    <h4>Outbound Connections to Rare Destinations</h4>
+                    <div class="code-block">DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize 
+    ConnectionCount = count(),
+    Devices = dcount(DeviceName)
+    by RemoteIP
+| where ConnectionCount < 5 and Devices < 3
+| sort by ConnectionCount asc</div>
+
+                    <h4>Data Exfiltration Detection</h4>
+                    <div class="code-block">CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where DeviceVendor == "Palo Alto Networks"
+| where SentBytes > 10000000  // > 10 MB
+| summarize 
+    TotalBytes = sum(SentBytes),
+    Destinations = dcount(DestinationIP)
+    by SourceIP, SourceHostName
+| extend MB = round(TotalBytes / 1048576, 2)
+| where MB > 100 or Destinations > 20
+| project SourceIP, SourceHostName, MB, Destinations</div>
+
+                    <h4>Azure AD Privilege Escalation</h4>
+                    <div class="code-block">AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has_any ("Add member to role", "Add eligible member to role")
+| where TargetResources[0].modifiedProperties[1].newValue has_any 
+    ("Global Administrator", "Privileged Role Administrator", "Security Administrator")
+| project 
+    TimeGenerated,
+    Actor = InitiatedBy.user.userPrincipalName,
+    Target = TargetResources[0].userPrincipalName,
+    Role = TargetResources[0].modifiedProperties[1].newValue</div>
+                </div>
+
+                <!-- Let Statements -->
+                <h2><i class="fas fa-box"></i> Let Statements (Variables)</h2>
+                <div class="config-section">
+                    <div class="code-block">// Define a time variable
+let lookback = 24h;
+SigninLogs
+| where TimeGenerated > ago(lookback)
+
+// Define a list
+let SuspiciousIPs = dynamic(["1.2.3.4", "5.6.7.8", "9.10.11.12"]);
+SigninLogs
+| where IPAddress in (SuspiciousIPs)
+
+// Define a subquery
+let FailedUsers = 
+    SigninLogs
+    | where ResultType != 0
+    | summarize FailCount = count() by UserPrincipalName
+    | where FailCount > 5
+    | project UserPrincipalName;
+SigninLogs
+| where ResultType == 0
+| where UserPrincipalName in (FailedUsers)
+
+// Define a function
+let GetRisk = (count:long) {
+    case(
+        count > 100, "Critical",
+        count > 50, "High",
+        count > 10, "Medium",
+        "Low"
+    )
+};
+SecurityEvent
+| summarize EventCount = count() by Computer
+| extend Risk = GetRisk(EventCount)</div>
+                </div>
+
+                <!-- Performance Tips -->
+                <h2><i class="fas fa-tachometer-alt"></i> Query Performance Tips</h2>
+                <div class="config-section">
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Tip</th><th>Why</th><th>Example</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Filter by time first</td>
+                                <td>Reduces data scanned</td>
+                                <td><code>| where TimeGenerated > ago(1h)</code></td>
+                            </tr>
+                            <tr>
+                                <td>Use specific table names</td>
+                                <td>Avoids scanning all tables</td>
+                                <td><code>SecurityEvent</code> not <code>search *</code></td>
+                            </tr>
+                            <tr>
+                                <td>Filter before summarize</td>
+                                <td>Less data to aggregate</td>
+                                <td>Put <code>where</code> before <code>summarize</code></td>
+                            </tr>
+                            <tr>
+                                <td>Use project early</td>
+                                <td>Reduces memory usage</td>
+                                <td><code>| project Column1, Column2</code></td>
+                            </tr>
+                            <tr>
+                                <td>Avoid has_any with large lists</td>
+                                <td>Slow for large lists</td>
+                                <td>Use join instead</td>
+                            </tr>
+                            <tr>
+                                <td>Use == instead of contains</td>
+                                <td>Exact match is faster</td>
+                                <td><code>where Status == "Failed"</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between summarize and extend?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>summarize:</strong> Aggregates rows, reducing the result set. Groups rows and computes statistics.
+                                    <div class="code-block">| summarize count() by Computer  // One row per Computer</div>
+                                </li>
+                                <li><strong>extend:</strong> Adds new columns to each row, keeping all rows.
+                                    <div class="code-block">| extend MB = Bytes / 1048576  // Same row count, new column</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect brute force attacks with KQL?</button>
+                        <div class="qa-answer">
+                            <div class="code-block">SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != 0  // Failed logins
+| summarize 
+    FailedCount = count(),
+    DistinctIPs = dcount(IPAddress),
+    IPs = make_set(IPAddress)
+    by UserPrincipalName
+| where FailedCount > 10
+| project UserPrincipalName, FailedCount, DistinctIPs, IPs</div>
+                            <p style="margin-top: 12px;">Key elements:</p>
+                            <ul>
+                                <li>Filter to failed logins (ResultType != 0)</li>
+                                <li>Count failures per user</li>
+                                <li>Set threshold (e.g., > 10 failures)</li>
+                                <li>Track source IPs for investigation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the different join types in KQL?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>inner:</strong> Only matching rows from both tables (default)</li>
+                                <li><strong>leftouter:</strong> All from left + matching from right</li>
+                                <li><strong>rightouter:</strong> All from right + matching from left</li>
+                                <li><strong>fullouter:</strong> All rows from both tables</li>
+                                <li><strong>leftanti:</strong> Rows from left NOT in right</li>
+                                <li><strong>rightanti:</strong> Rows from right NOT in left</li>
+                                <li><strong>leftsemi:</strong> Rows from left that have a match in right</li>
+                            </ul>
+                            <p style="margin-top: 12px;"><strong>Common use:</strong> leftanti for finding events NOT in a known-good list.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you optimize a slow KQL query?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li><strong>Add time filter first:</strong> <code>| where TimeGenerated > ago(1h)</code></li>
+                                <li><strong>Use specific table:</strong> Instead of <code>search *</code></li>
+                                <li><strong>Filter before aggregate:</strong> Put <code>where</code> before <code>summarize</code></li>
+                                <li><strong>Use project early:</strong> Drop unneeded columns</li>
+                                <li><strong>Use == over contains:</strong> When exact match works</li>
+                                <li><strong>Avoid wildcards at start:</strong> <code>startswith</code> faster than <code>contains</code></li>
+                                <li><strong>Break into steps:</strong> Use <code>let</code> for complex queries</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

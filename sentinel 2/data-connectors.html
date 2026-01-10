@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Connectors | Microsoft Sentinel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">Sentinel</a>
+                <span class="separator">/</span>
+                <span class="current">Data Connectors</span>
+            </div>
+
+<h1><i class="fas fa-plug"></i> Sentinel Data Connectors</h1>
+                <p class="lead">Master Microsoft Sentinel data connectors. Learn connector types, configuration methods, troubleshooting, and best practices for ingesting security data from diverse sources.</p>
+
+                <!-- Connector Overview -->
+                <h2><i class="fas fa-info-circle"></i> Connector Overview</h2>
+                <div class="config-section">
+                    <p><span class="console-path">Sentinel → Configuration → Data connectors</span></p>
+
+                    <h4>Connector Categories</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Method</th><th>Examples</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Service-to-Service</strong></td><td>Direct API integration</td><td>Azure AD, M365, Azure Activity</td></tr>
+                            <tr><td><strong>API-Based</strong></td><td>REST API polling</td><td>AWS, Okta, Salesforce</td></tr>
+                            <tr><td><strong>Agent-Based</strong></td><td>AMA or MMA agent</td><td>Windows Events, Syslog</td></tr>
+                            <tr><td><strong>Syslog/CEF</strong></td><td>Log forwarder VM</td><td>Firewalls, Network devices</td></tr>
+                            <tr><td><strong>Custom (DCR/DCE)</strong></td><td>Data Collection Rules</td><td>Custom applications</td></tr>
+                            <tr><td><strong>Codeless (CCP)</strong></td><td>REST API config</td><td>Community connectors</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Connector Architecture</h4>
+                    <div class="code-block">Data Connector Architecture:
+
+SERVICE-TO-SERVICE (Easiest):
+┌──────────────┐    Direct API    ┌──────────────┐
+│   Azure AD   │─────────────────▶│   Sentinel   │
+│   M365       │  (Native)        │  Workspace   │
+│   Azure      │                  └──────────────┘
+└──────────────┘
+
+API-BASED (Managed):
+┌──────────────┐    REST API      ┌──────────────┐
+│   AWS        │◀────────────────▶│   Azure      │
+│   Okta       │   (Polling)      │   Function   │
+│   3rd Party  │                  │   or Logic   │
+└──────────────┘                  │   App        │
+                                  └──────┬───────┘
+                                         │
+                                         ▼
+                                  ┌──────────────┐
+                                  │   Sentinel   │
+                                  │   Workspace  │
+                                  └──────────────┘
+
+SYSLOG/CEF (Agent-based):
+┌──────────────┐    Syslog       ┌──────────────┐    AMA    ┌──────────────┐
+│   Firewalls  │────────────────▶│   Linux VM   │─────────▶│   Sentinel   │
+│   IDS/IPS    │   UDP/TCP/TLS   │  (Forwarder) │          │   Workspace  │
+│   Proxies    │                 └──────────────┘          └──────────────┘
+└──────────────┘</div>
+                </div>
+
+                <!-- Microsoft Connectors -->
+                <h2><i class="fab fa-microsoft"></i> Microsoft Service Connectors</h2>
+                <div class="config-section">
+                    <h4>Azure AD / Entra ID</h4>
+                    <div class="code-block">Azure AD Connector:
+
+TABLES POPULATED:
+├── SigninLogs: User sign-in events
+├── AADNonInteractiveUserSignInLogs: Non-interactive logins
+├── AADServicePrincipalSignInLogs: Service principal activity
+├── AADManagedIdentitySignInLogs: Managed identity logins
+├── AADProvisioningLogs: User provisioning
+├── AuditLogs: Directory changes
+└── AADRiskyUsers: Identity Protection
+
+PREREQUISITES:
+├── Azure AD P1 or P2 license (for all logs)
+├── Global Administrator or Security Administrator
+├── Diagnostic settings permissions
+└── P2 required for risky users/sign-ins
+
+CONFIGURATION:
+1. Go to Data connectors → Azure Active Directory
+2. Click "Open connector page"
+3. Select log types to enable
+4. Click "Apply Changes"
+
+KEY QUERIES:
+// Failed sign-ins
+SigninLogs
+| where ResultType != 0
+| summarize count() by UserPrincipalName, ResultType
+
+// Risky sign-ins
+SigninLogs
+| where RiskLevelDuringSignIn in ("high", "medium")
+| project TimeGenerated, UserPrincipalName, RiskLevelDuringSignIn</div>
+
+                    <h4>Microsoft 365 Defender</h4>
+                    <div class="code-block">M365 Defender Connector:
+
+TABLES POPULATED:
+├── AlertInfo: Defender alerts
+├── AlertEvidence: Evidence linked to alerts
+├── DeviceInfo: Device inventory
+├── DeviceNetworkInfo: Network configuration
+├── DeviceProcessEvents: Process execution
+├── DeviceNetworkEvents: Network connections
+├── DeviceFileEvents: File operations
+├── DeviceRegistryEvents: Registry changes
+├── DeviceLogonEvents: Authentication
+├── DeviceImageLoadEvents: DLL loads
+├── DeviceEvents: Other events
+├── EmailEvents: Email activity
+├── EmailUrlInfo: URLs in emails
+├── EmailAttachmentInfo: Attachments
+├── IdentityLogonEvents: Identity sign-ins
+├── IdentityQueryEvents: Directory queries
+├── IdentityDirectoryEvents: AD changes
+└── CloudAppEvents: Cloud app activity
+
+CONFIGURATION:
+1. Data connectors → Microsoft 365 Defender
+2. Connect incidents and alerts
+3. Select raw data tables to sync
+4. Choose specific product data (MDE, MDO, MDI, MDA)
+
+SYNC OPTIONS:
+├── Incidents: Sync M365D incidents to Sentinel
+├── Alerts: Include all alerts
+├── Raw Data: Device*, Email*, Identity*, CloudApp*
+└── Bi-directional sync: Changes reflect in both</div>
+
+                    <h4>Azure Activity</h4>
+                    <div class="code-block">Azure Activity Connector:
+
+TABLE: AzureActivity
+
+LOG CATEGORIES:
+├── Administrative: Resource operations
+├── Service Health: Azure service issues
+├── Resource Health: Resource availability
+├── Alert: Azure Monitor alerts
+├── Autoscale: Scaling events
+├── Recommendation: Advisor recommendations
+├── Security: Security Center alerts
+└── Policy: Azure Policy events
+
+CONFIGURATION:
+1. Data connectors → Azure Activity
+2. Click "Launch Azure Policy Assignment Wizard"
+3. Select subscriptions to monitor
+4. Assign policy to send logs to workspace
+
+OR MANUAL (per subscription):
+1. Azure Portal → Subscriptions → [Subscription]
+2. Activity log → Export to Log Analytics
+3. Select workspace and log categories
+
+KEY QUERIES:
+// Administrative operations
+AzureActivity
+| where OperationNameValue has "write" or OperationNameValue has "delete"
+| summarize count() by Caller, OperationNameValue
+
+// Failed operations
+AzureActivity
+| where ActivityStatusValue == "Failed"
+| project TimeGenerated, Caller, OperationNameValue, ResourceGroup</div>
+                </div>
+
+                <!-- Third-Party Connectors -->
+                <h2><i class="fas fa-cloud"></i> Third-Party Cloud Connectors</h2>
+                <div class="config-section">
+                    <h4>AWS Connector</h4>
+                    <div class="code-block">AWS Connector Options:
+
+OPTION 1: AWS S3 Connector (CloudTrail, VPC Flow, GuardDuty)
+├── CloudTrail logs → S3 bucket → SQS queue → Sentinel
+├── VPC Flow logs → S3 bucket → SQS queue → Sentinel
+├── GuardDuty findings → S3 → Sentinel
+└── Tables: AWSCloudTrail, AWSVPCFlow, AWSGuardDuty
+
+CONFIGURATION STEPS:
+1. Create S3 bucket for logs
+2. Enable CloudTrail to write to S3
+3. Create SQS queue for notifications
+4. Configure S3 event notifications to SQS
+5. Create IAM role with cross-account trust
+6. Add connector in Sentinel with role ARN
+
+IAM POLICY REQUIRED:
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-bucket/*",
+        "arn:aws:sqs:region:account:your-queue"
+      ]
+    }
+  ]
+}
+
+OPTION 2: AWS CloudWatch (via Azure Functions)
+├── CloudWatch logs → Kinesis → Lambda → Sentinel
+└── More real-time, more complex setup</div>
+
+                    <h4>Okta Connector</h4>
+                    <div class="code-block">Okta Connector:
+
+TABLE: Okta_CL (custom log)
+
+CONFIGURATION:
+1. In Okta Admin Console:
+   ├── Security → API → Tokens
+   ├── Create new token
+   └── Copy token value
+
+2. In Sentinel:
+   ├── Data connectors → Okta Single Sign-On
+   ├── Deploy Azure Function (template provided)
+   ├── Configure Function App settings:
+   │   ├── OktaDomain: your-org.okta.com
+   │   ├── OktaToken: [API token]
+   │   └── WorkspaceId/Key: [from workspace]
+   └── Function polls Okta System Log API
+
+DATA COLLECTED:
+├── Authentication events
+├── User lifecycle events
+├── Application access
+├── Policy evaluations
+├── Admin actions
+└── Security events
+
+KEY QUERIES:
+// Failed Okta logins
+Okta_CL
+| where eventType_s == "user.session.start"
+| where outcome_result_s == "FAILURE"
+| summarize count() by actor_alternateId_s</div>
+                </div>
+
+                <!-- Syslog/CEF Collection -->
+                <h2><i class="fas fa-server"></i> Syslog/CEF Collection</h2>
+                <div class="config-section">
+                    <h4>Log Forwarder Setup</h4>
+                    <div class="code-block">Syslog/CEF Collection Architecture:
+
+REQUIREMENTS:
+├── Linux VM (Ubuntu 18.04+ or RHEL 7+)
+├── Azure Monitor Agent (AMA) installed
+├── Network access from log sources
+├── Data Collection Rule configured
+└── Syslog ports open (514 UDP/TCP, 6514 TLS)
+
+SETUP STEPS:
+
+1. DEPLOY LINUX VM
+   ├── Size: Standard_D2s_v3 minimum
+   ├── OS: Ubuntu 20.04 or RHEL 8
+   ├── NSG: Allow syslog ports from sources
+   └── Install AMA agent
+
+2. INSTALL AMA
+   # For Azure VMs (automatic via DCR assignment)
+   # For Arc-enabled (hybrid):
+   az connectedmachine extension create \
+     --name AzureMonitorLinuxAgent \
+     --publisher Microsoft.Azure.Monitor \
+     --type AzureMonitorLinuxAgent \
+     --machine-name [vmname] \
+     --resource-group [rg]
+
+3. CONFIGURE RSYSLOG
+   # /etc/rsyslog.d/95-omsagent.conf
+   # For CEF:
+   if $rawmsg contains "CEF:" then @@127.0.0.1:25226
+
+4. CREATE DCR
+   ├── Data sources: Syslog
+   ├── Facilities: auth, authpriv, local0-7
+   ├── Log levels: Info and above
+   └── Destination: Sentinel workspace
+
+5. CONFIGURE SOURCES
+   ├── Point firewalls/devices to forwarder IP
+   ├── Use TCP for reliability
+   ├── Use TLS (port 6514) when possible
+   └── Test with logger command</div>
+
+                    <h4>CEF Format</h4>
+                    <div class="code-block">Common Event Format (CEF):
+
+FORMAT:
+CEF:Version|Device Vendor|Device Product|Device Version|
+    Signature ID|Name|Severity|Extension
+
+EXAMPLE:
+CEF:0|Palo Alto Networks|PAN-OS|10.0|THREAT|
+    Spyware|7|src=192.168.1.100 dst=10.0.0.1 
+    suser=jsmith act=alert
+
+SENTINEL TABLE: CommonSecurityLog
+
+KEY FIELDS:
+├── DeviceVendor: Vendor name
+├── DeviceProduct: Product name
+├── Activity: Event description
+├── SourceIP: Source IP address
+├── DestinationIP: Destination IP
+├── SourceUserName: Source user
+├── DeviceAction: Action taken
+└── LogSeverity: Severity level
+
+COMMON SOURCES:
+├── Palo Alto Networks
+├── Check Point
+├── Fortinet FortiGate
+├── Cisco ASA
+├── F5 BIG-IP
+├── Imperva WAF
+└── Trend Micro
+
+TROUBLESHOOTING:
+# Check syslog receiving
+sudo tcpdump -i any port 514 -n
+
+# Check rsyslog status
+sudo systemctl status rsyslog
+
+# Check CEF parsing
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| take 10</div>
+                </div>
+
+                <!-- Connector Health -->
+                <h2><i class="fas fa-heartbeat"></i> Connector Health Monitoring</h2>
+                <div class="config-section">
+                    <div class="code-block">Connector Health Queries:
+
+// Check data freshness per table
+union withsource=TableName *
+| summarize LastRecord = max(TimeGenerated) by TableName
+| extend HoursSinceLastRecord = datetime_diff('hour', now(), LastRecord)
+| where HoursSinceLastRecord > 1
+| order by HoursSinceLastRecord desc
+
+// Data volume by table (last 24h)
+Usage
+| where TimeGenerated > ago(24h)
+| summarize DataGB = sum(Quantity)/1024 by DataType
+| order by DataGB desc
+
+// Connector status check
+SentinelHealth
+| where TimeGenerated > ago(1h)
+| where Status != "Success"
+| summarize count() by SentinelResourceName, Status
+
+// CEF connector health
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| summarize Count = count(), 
+            LastEvent = max(TimeGenerated) 
+  by DeviceVendor, DeviceProduct
+| order by LastEvent asc
+
+// Check for parsing errors
+_CL
+| where TimeGenerated > ago(24h)
+| where _IsBillable == true
+| summarize count() by Type
+| where Type endswith "_CL"
+
+HEALTH WORKBOOK:
+├── Built-in: Data connectors health monitoring
+├── Shows: Status, last log time, volume
+├── Alerts: Configure alerts for gaps
+└── Path: Sentinel → Workbooks → Templates</div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the main data connector types in Sentinel?</button>
+                        <div class="qa-answer">
+                            <ul>
+                                <li><strong>Service-to-Service:</strong> Native Azure/M365 integration (Azure AD, M365 Defender)</li>
+                                <li><strong>API-Based:</strong> REST API polling (AWS, Okta, third-party)</li>
+                                <li><strong>Agent-Based:</strong> AMA or MMA agent (Windows/Linux servers)</li>
+                                <li><strong>Syslog/CEF:</strong> Linux forwarder VM (firewalls, network devices)</li>
+                                <li><strong>Custom DCR:</strong> Data Collection Rules for custom sources</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you collect firewall logs in Sentinel?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Deploy Linux VM as log forwarder</li>
+                                <li>Install Azure Monitor Agent (AMA)</li>
+                                <li>Configure rsyslog to receive logs</li>
+                                <li>Create Data Collection Rule for Syslog/CEF</li>
+                                <li>Point firewall syslog to forwarder IP</li>
+                            </ol>
+                            <p>Logs appear in <code>CommonSecurityLog</code> table (CEF) or <code>Syslog</code> table.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you troubleshoot a connector not receiving data?</button>
+                        <div class="qa-answer">
+                            <ol>
+                                <li>Check connector status page for errors</li>
+                                <li>Verify prerequisites (permissions, licenses)</li>
+                                <li>Query table for recent data: <code>TableName | where TimeGenerated > ago(1h)</code></li>
+                                <li>For syslog: Check rsyslog service, tcpdump on port 514</li>
+                                <li>Check AMA/agent health on source machine</li>
+                                <li>Review DCR configuration and assignments</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What tables does M365 Defender connector populate?</button>
+                        <div class="qa-answer">
+                            <p>Key tables include:</p>
+                            <ul>
+                                <li><strong>Alerts:</strong> AlertInfo, AlertEvidence</li>
+                                <li><strong>Devices:</strong> DeviceInfo, DeviceProcessEvents, DeviceNetworkEvents, DeviceFileEvents</li>
+                                <li><strong>Email:</strong> EmailEvents, EmailUrlInfo, EmailAttachmentInfo</li>
+                                <li><strong>Identity:</strong> IdentityLogonEvents, IdentityDirectoryEvents</li>
+                                <li><strong>Cloud Apps:</strong> CloudAppEvents</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Guide | Nik's SIEM Compendium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <a href="../index.html" class="back-home"><i class="fas fa-arrow-left"></i> Nik's SIEM</a>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a>
+                <span class="separator">/</span>
+                <a href="index.html">SOC Operations</a>
+                <span class="separator">/</span>
+                <span class="current">Migration Guide</span>
+            </div>
+
+<div class="page-header">
+                    <h1><i class="fas fa-exchange-alt"></i> SIEM Migration Guide</h1>
+                    <p class="lead">Enterprise methodology for migrating between SIEM platforms with minimal operational disruption</p>
+                </div>
+                <!-- Migration Overview -->
+                <section class="content-section">
+                    <h2><i class="fas fa-map-signs"></i> Migration Methodology Overview</h2>
+                    <p>SIEM migrations are complex undertakings requiring careful planning to maintain security visibility. This guide provides a structured approach for common migration scenarios.</p>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Migration Path</th>
+                                <th>Complexity</th>
+                                <th>Duration</th>
+                                <th>Key Considerations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Splunk → Sentinel</td>
+                                <td class="risk-medium">Medium-High</td>
+                                <td>12-20 weeks</td>
+                                <td>SPL to KQL translation, data model differences</td>
+                            </tr>
+                            <tr>
+                                <td>RSA NetWitness → Sentinel</td>
+                                <td class="risk-high">High</td>
+                                <td>16-24 weeks</td>
+                                <td>Architecture shift, parser rewrites, analytics rebuild</td>
+                            </tr>
+                            <tr>
+                                <td>QRadar → Splunk</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>12-16 weeks</td>
+                                <td>AQL to SPL, offense to notable mapping</td>
+                            </tr>
+                            <tr>
+                                <td>ArcSight → Sentinel</td>
+                                <td class="risk-high">High</td>
+                                <td>16-24 weeks</td>
+                                <td>Rule complexity translation, data model transformation</td>
+                            </tr>
+                            <tr>
+                                <td>Splunk ES → XSIAM</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>10-16 weeks</td>
+                                <td>SPL to XQL, native EDR integration benefits</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <!-- Phase 1: Assessment -->
+                <section class="content-section">
+                    <h2><i class="fas fa-search-plus"></i> Phase 1: Current State Assessment</h2>
+                    <div class="phase-card assess">
+                        <h3><i class="fas fa-clipboard-list"></i> Assessment Activities (Weeks 1-2)</h3>
+                        <p>Comprehensive discovery of your current SIEM deployment before migration planning.</p>
+                    </div>
+                    <h3>Data Source Inventory</h3>
+                    <div class="code-block">
+                        <div class="code-header">Splunk - List All Data Sources</div>
+                        <pre><code>| tstats count WHERE index=* by index, sourcetype, source
+| stats sum(count) as event_count dc(source) as source_count by index, sourcetype
+| sort -event_count
+| eval daily_gb = round(event_count * 0.0005 / 30, 2)
+| table index sourcetype source_count event_count daily_gb</code></pre>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header">Sentinel - List All Data Sources</div>
+                        <pre><code>Usage
+| where TimeGenerated > ago(30d)
+| summarize TotalGB = sum(Quantity) / 1024, EventCount = count() by DataType
+| sort by TotalGB desc
+| extend DailyGB = round(TotalGB / 30, 2)</code></pre>
+                    </div>
+                    <h3>Detection Rule Inventory</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Items to Document</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Active Detections</td>
+                                <td>Rule name, logic, severity, MITRE mapping</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                            <tr>
+                                <td>Correlation Rules</td>
+                                <td>Multi-event correlations, time windows</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards</td>
+                                <td>Name, purpose, queries, visualizations</td>
+                                <td class="risk-medium">High</td>
+                            </tr>
+                            <tr>
+                                <td>Automation/Playbooks</td>
+                                <td>SOAR integrations, auto-response actions</td>
+                                <td class="risk-high">Critical</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Detection Export Template</h3>
+                    <div class="code-block">
+                        <div class="code-header">Detection Documentation Template</div>
+                        <pre><code>Rule_ID,Rule_Name,Description,Query_Logic,Severity,MITRE_Tactic,MITRE_Technique,Data_Sources,Alert_Frequency,FP_Rate,Migration_Priority
+R001,Suspicious PowerShell,Encoded PS commands,&lt;query&gt;,High,Execution,T1059.001,Windows Logs,12/day,15%,Critical
+R002,Brute Force Auth,Failed logins + success,&lt;query&gt;,Medium,Cred Access,T1110,Azure AD,3/day,8%,Critical</code></pre>
+                    </div>
+                </section>
+                <!-- Phase 2: Planning -->
+                <section class="content-section">
+                    <h2><i class="fas fa-tasks"></i> Phase 2: Migration Planning</h2>
+                    <div class="phase-card plan">
+                        <h3><i class="fas fa-sitemap"></i> Planning Activities (Weeks 3-4)</h3>
+                        <p>Develop parallel operation strategy and rollback procedures.</p>
+                    </div>
+                    <h3>Parallel Operation Strategy</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <h4>Week 1-2: Dual Ingestion Setup</h4>
+                            <p>Configure log forwarding to both platforms. Validate data parity.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 3-4: Detection Parity</h4>
+                            <p>Migrate critical detections. Compare alerts between platforms.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 5-6: SOC Training</h4>
+                            <p>Train analysts on new platform. Shadow operations.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 7-8: Primary Cutover</h4>
+                            <p>New SIEM becomes primary. Legacy remains for validation.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Week 9-12: Decommission</h4>
+                            <p>Archive legacy data. Complete decommission.</p>
+                        </div>
+                    </div>
+                    <h3>Risk Assessment Matrix</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Risk</th>
+                                <th>Likelihood</th>
+                                <th>Impact</th>
+                                <th>Mitigation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Detection Gap</td>
+                                <td class="risk-medium">Medium</td>
+                                <td class="risk-high">High</td>
+                                <td>Parallel operation, detection parity validation</td>
+                            </tr>
+                            <tr>
+                                <td>Data Loss</td>
+                                <td class="risk-low">Low</td>
+                                <td class="risk-high">High</td>
+                                <td>Dual ingestion, buffer queues, validation scripts</td>
+                            </tr>
+                            <tr>
+                                <td>Performance Issues</td>
+                                <td class="risk-medium">Medium</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>Load testing, phased rollout</td>
+                            </tr>
+                            <tr>
+                                <td>Analyst Productivity</td>
+                                <td class="risk-high">High</td>
+                                <td class="risk-medium">Medium</td>
+                                <td>Extensive training, quick reference guides</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <!-- Phase 3: Query Translation -->
+                <section class="content-section">
+                    <h2><i class="fas fa-language"></i> Phase 3: Query Language Translation</h2>
+                    <div class="phase-card execute">
+                        <h3><i class="fas fa-code"></i> Query Translation Reference</h3>
+                        <p>Common patterns between major SIEM platforms.</p>
+                    </div>
+                    <h3>SPL to KQL Translation</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>SPL (Splunk)</th>
+                                <th>KQL (Sentinel)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Basic Search</td>
+                                <td><code>index=main sourcetype=WinEventLog</code></td>
+                                <td><code>SecurityEvent</code></td>
+                            </tr>
+                            <tr>
+                                <td>Field Filter</td>
+                                <td><code>| where EventCode=4625</code></td>
+                                <td><code>| where EventID == 4625</code></td>
+                            </tr>
+                            <tr>
+                                <td>Stats Count</td>
+                                <td><code>| stats count by user</code></td>
+                                <td><code>| summarize count() by Account</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Range</td>
+                                <td><code>earliest=-24h latest=now</code></td>
+                                <td><code>| where TimeGenerated > ago(24h)</code></td>
+                            </tr>
+                            <tr>
+                                <td>String Contains</td>
+                                <td><code>| search user="*admin*"</code></td>
+                                <td><code>| where Account contains "admin"</code></td>
+                            </tr>
+                            <tr>
+                                <td>Regex Extract</td>
+                                <td><code>| rex "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></td>
+                                <td><code>| extend ip = extract(@"(\d+.\d+.\d+.\d+)", 1, msg)</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Bucket</td>
+                                <td><code>| bucket _time span=1h</code></td>
+                                <td><code>| summarize by bin(TimeGenerated, 1h)</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Detection Translation Example</h3>
+                    <div class="mapping-example">
+                        <h4>Brute Force Detection - Splunk SPL</h4>
+                        <div class="code-block">
+                            <pre><code>index=windows sourcetype=WinEventLog EventCode=4625
+| bucket _time span=5m
+| stats count as failed_attempts by src_ip, _time
+| where failed_attempts > 10
+| join type=inner src_ip [
+    search index=windows EventCode=4624 earliest=-1h
+    | stats count by src_ip
+]</code></pre>
+                        </div>
+                    </div>
+                    <div class="mapping-example">
+                        <h4>Brute Force Detection - Sentinel KQL</h4>
+                        <div class="code-block">
+                            <pre><code>let failed_threshold = 10;
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts = count() by IpAddress, bin(TimeGenerated, 5m)
+| where FailedAttempts > failed_threshold
+| join kind=inner (
+    SecurityEvent
+    | where EventID == 4624 and TimeGenerated > ago(1h)
+    | summarize SuccessCount = count() by IpAddress
+) on IpAddress</code></pre>
+                        </div>
+                    </div>
+                    <h3>AQL to SPL Translation</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>AQL (QRadar)</th>
+                                <th>SPL (Splunk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Basic Query</td>
+                                <td><code>SELECT * FROM events WHERE logsourcename='Windows'</code></td>
+                                <td><code>index=windows sourcetype=WinEventLog</code></td>
+                            </tr>
+                            <tr>
+                                <td>Aggregation</td>
+                                <td><code>SELECT username, COUNT(*) GROUP BY username</code></td>
+                                <td><code>| stats count by user</code></td>
+                            </tr>
+                            <tr>
+                                <td>Time Filter</td>
+                                <td><code>WHERE devicetime > NOW() - 24 HOURS</code></td>
+                                <td><code>earliest=-24h</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <!-- Phase 4: Data Migration -->
+                <section class="content-section">
+                    <h2><i class="fas fa-database"></i> Phase 4: Data Migration</h2>
+                    <div class="phase-card execute">
+                        <h3><i class="fas fa-truck-loading"></i> Historical Data Strategies</h3>
+                        <p>Approaches for handling historical data during migration.</p>
+                    </div>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Description</th>
+                                <th>Pros</th>
+                                <th>Cons</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cold Start</strong></td>
+                                <td>Begin fresh, no historical migration</td>
+                                <td>Simplest, fastest</td>
+                                <td>No historical context</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Archive Access</strong></td>
+                                <td>Keep legacy SIEM read-only</td>
+                                <td>Full history preserved</td>
+                                <td>Ongoing costs</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Selective Migration</strong></td>
+                                <td>Migrate only critical data</td>
+                                <td>Balanced approach</td>
+                                <td>Partial history</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Full Migration</strong></td>
+                                <td>Export and import all data</td>
+                                <td>Complete continuity</td>
+                                <td>Expensive, time-consuming</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Data Validation Checklist</h3>
+                    <div class="checklist-grid">
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Volume Validation</h4>
+                            <p>Compare event counts. Allow 1-2% variance.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Schema Validation</h4>
+                            <p>Verify field mappings and data types.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Time Validation</h4>
+                            <p>Confirm timestamps and timezone handling.</p>
+                        </div>
+                        <div class="checklist-item">
+                            <h4><i class="fas fa-check-circle" style="color:#2ecc71"></i> Search Validation</h4>
+                            <p>Run identical queries, compare results.</p>
+                        </div>
+                    </div>
+                </section>
+                <!-- Phase 5: Cutover -->
+                <section class="content-section">
+                    <h2><i class="fas fa-rocket"></i> Phase 5: Production Cutover</h2>
+                    <div class="phase-card cutover">
+                        <h3><i class="fas fa-flag-checkered"></i> Go-Live Checklist</h3>
+                        <p>Critical steps for production cutover.</p>
+                    </div>
+                    <h3>Pre-Cutover Checklist</h3>
+                    <table class="migration-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Checkpoint</th>
+                                <th>Owner</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Data Ingestion</strong></td>
+                                <td>All critical data sources connected and validated</td>
+                                <td>Engineering</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Detections</strong></td>
+                                <td>Critical detections migrated and tested</td>
+                                <td>Detection Eng</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOC Readiness</strong></td>
+                                <td>All analysts trained, runbooks updated</td>
+                                <td>SOC Manager</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Integration</strong></td>
+                                <td>SOAR/ticketing integration tested</td>
+                                <td>Engineering</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Compliance</strong></td>
+                                <td>Retention policies configured</td>
+                                <td>Compliance</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Cutover Day Timeline</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <h4>T-2 Hours: Final Validation</h4>
+                            <p>Run final data parity checks. Brief on-call team.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T-0: Primary Switch</h4>
+                            <p>Update SOC primary monitoring. Enable production alerting.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T+1 Hour: Initial Check</h4>
+                            <p>Verify alerts flowing. Check analyst access.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>T+24 Hours: Day 1 Review</h4>
+                            <p>Full metrics review. Document lessons learned.</p>
+                        </div>
+                    </div>
+                    <h3>Rollback Procedure</h3>
+                    <div class="alert-box warning">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Rollback Triggers</h4>
+                        <ul>
+                            <li>Critical detection failures (>3 missed known threats)</li>
+                            <li>Data ingestion failure >30 minutes for critical sources</li>
+                            <li>Platform unavailability >15 minutes</li>
+                            <li>SOC productivity drop >50%</li>
+                        </ul>
+                    </div>
+                </section>
+                <!-- Common Scenarios -->
+                <section class="content-section">
+                    <h2><i class="fas fa-route"></i> Common Migration Scenarios</h2>
+                    <h3>RSA NetWitness to Microsoft Sentinel</h3>
+                    <div class="mapping-example">
+                        <h4>Key Challenges</h4>
+                        <ul>
+                            <li><strong>Architecture:</strong> Packet capture → Log-centric model</li>
+                            <li><strong>Parsers:</strong> Lua parsers → KQL parsing functions</li>
+                            <li><strong>Meta Keys:</strong> NetWitness meta → Sentinel schema</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header">NetWitness to Sentinel Schema Mapping</div>
+                        <pre><code>NetWitness Meta    → Sentinel Field
+user.dst           → TargetUserName
+ip.src             → SourceIP  
+ip.dst             → DestinationIP
+service            → Service
+action             → EventResult
+time               → TimeGenerated</code></pre>
+                    </div>
+                    <h3>Splunk ES to XSIAM</h3>
+                    <div class="mapping-example">
+                        <h4>Migration Advantages</h4>
+                        <ul>
+                            <li><strong>Native EDR:</strong> Cortex XDR data without parsing</li>
+                            <li><strong>Similar Concepts:</strong> SPL → XQL translation straightforward</li>
+                            <li><strong>Built-in Analytics:</strong> XSIAM analytics replace custom searches</li>
+                        </ul>
+                    </div>
+                </section>
+                <!-- Interview Q&A -->
+                <div class="interview-qa">
+                    <h3><i class="fas fa-user-tie"></i> Interview Q&A: SIEM Migration</h3>
+                    <div class="qa-item">
+                        <strong>Q: Walk me through planning a SIEM migration from Splunk to Sentinel.</strong>
+                        <p><strong>A:</strong> I use a 6-phase approach. Assessment: inventory data sources, detection rules, dashboards, and integrations with volumes and priorities. Planning: develop parallel operation strategy, map SPL to KQL, identify native Sentinel content, create risk matrix and rollback procedures. Implementation: configure data connectors, migrate critical detections prioritized by MITRE coverage, enable dual ingestion. Validation: run atomic tests, compare alert outputs targeting >95% correlation. Training: train analysts on KQL, update runbooks. Cutover: execute checklist, monitor 24-48 hours, keep legacy available for rollback. Key is never cutting over without validated detection parity.</p>
+                    </div>
+                    <div class="qa-item">
+                        <strong>Q: How do you handle historical data during migration?</strong>
+                        <p><strong>A:</strong> Depends on compliance needs. Cold Start is cleanest but loses context. Archive Access keeps legacy read-only—best for large datasets where migration cost exceeds benefits. Selective Migration exports compliance-required data—balances effort with continuity. Full Migration is necessary for strict compliance but expensive. Most enterprises benefit from Archive Access with parallel operation, letting natural aging handle transition while maintaining compliance. Key is validating approach meets regulatory requirements before decommission.</p>
+                    </div>
+                    <div class="qa-item">
+                        <strong>Q: What are the biggest risks and mitigations?</strong>
+                        <p><strong>A:</strong> Three critical risks: Detection Gap—threats undetected during transition. Mitigation: parallel operation, >95% detection parity validation. Data Loss—events dropping during cutover. Mitigation: dual ingestion, message queues, volume validation scripts. Analyst Productivity Drop—efficiency tanks while learning new platform. Mitigation: extensive training, quick reference guides, mentoring, extended parallel operation. Always ensure rollback capability—if failures emerge post-cutover, revert to legacy within minutes while resolving issues.</p>
+                    </div>
+                    <div class="qa-item">
+                        <strong>Q: How do you translate detection rules between query languages?</strong>
+                        <p><strong>A:</strong> Systematic approach, not line-by-line. First, understand detection intent—what behavior is it catching? Second, identify data source and fields in new platform. Third, rebuild using target platform's native capabilities—often better than direct translation. For example, Splunk correlation might map to Sentinel's native Fusion rules. Maintain pattern mapping reference: stats→summarize, rex→extract, transaction→session windows. Critical step is validation—run both queries against same dataset to confirm equivalent results. Document behavioral differences like time window handling.</p>
+                    </div>
+                </div>
+            
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+                <!-- Comprehensive Troubleshooting -->
+                <h2><i class="fas fa-tools"></i> Comprehensive Troubleshooting</h2>
+                <div class="config-section">
+                    <h4>Systematic Troubleshooting Methodology</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <ol style="color: #8b949e;">
+                            <li><strong>Define the Problem:</strong> Clearly articulate what is not working as expected. Gather specific error messages, timestamps, and affected components.</li>
+                            <li><strong>Gather Information:</strong> Collect relevant logs, metrics, and configuration details. Document recent changes that might be related.</li>
+                            <li><strong>Analyze Data:</strong> Review collected information for patterns and anomalies. Compare against baseline behavior and known-good configurations.</li>
+                            <li><strong>Develop Hypothesis:</strong> Form theories about potential root causes. Prioritize based on likelihood and impact.</li>
+                            <li><strong>Test Solutions:</strong> Implement fixes in a controlled manner. Test one change at a time to isolate the effective solution.</li>
+                            <li><strong>Document Resolution:</strong> Record the root cause and solution. Update runbooks and knowledge base for future reference.</li>
+                        </ol>
+                    </div>
+
+                    <h4>Common Issues and Resolutions</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr><th>Category</th><th>Issue</th><th>Diagnostic Steps</th><th>Resolution</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="2"><strong>Connectivity</strong></td>
+                                <td>Agent not reporting</td>
+                                <td>Check agent service status, network connectivity, firewall rules</td>
+                                <td>Restart service, verify network path, update firewall rules</td>
+                            </tr>
+                            <tr>
+                                <td>API timeouts</td>
+                                <td>Test API endpoint, check rate limits, verify credentials</td>
+                                <td>Retry with backoff, request limit increase, refresh credentials</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Data Quality</strong></td>
+                                <td>Missing fields</td>
+                                <td>Review parsing rules, check source format, validate schema</td>
+                                <td>Update parser, fix source configuration, adjust schema mapping</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate events</td>
+                                <td>Audit data sources, check collection paths, review timestamps</td>
+                                <td>Consolidate sources, implement deduplication, fix time sync</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Performance</strong></td>
+                                <td>Slow queries</td>
+                                <td>Analyze query execution plan, check resource utilization</td>
+                                <td>Optimize query, add indexes, scale resources</td>
+                            </tr>
+                            <tr>
+                                <td>High latency</td>
+                                <td>Monitor queue depths, check processing bottlenecks</td>
+                                <td>Scale processing capacity, optimize data flow</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2"><strong>Authentication</strong></td>
+                                <td>Login failures</td>
+                                <td>Verify credentials, check account status, review permissions</td>
+                                <td>Reset password, unlock account, grant required permissions</td>
+                            </tr>
+                            <tr>
+                                <td>Token expiration</td>
+                                <td>Check token validity, review refresh mechanism</td>
+                                <td>Refresh token, update token management configuration</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Diagnostic Commands and Queries</h4>
+                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+
+# Check system health status
+| filter log_type = "system_health"
+| sort _time desc
+| limit 50
+
+# Monitor error rates over time
+| filter severity in ("error", "critical")
+| timechart count by component span=1h
+
+# Identify slow operations
+| filter operation_time > 30000
+| stats avg(operation_time), max(operation_time), count by operation_name
+| sort avg(operation_time) desc
+
+# Check connectivity status
+| filter event_type = "connectivity"
+| stats latest(status), latest(_time) by source_name
+| where status != "connected"
+
+# Review authentication failures
+| filter event_type = "authentication" and result = "failure"
+| stats count by user, source_ip, failure_reason
+| sort count desc</div>
+                </div>
+
+                <!-- Real-World Use Cases -->
+                <h2><i class="fas fa-building"></i> Real-World Implementation Scenarios</h2>
+                <div class="config-section">
+                    <h4>Scenario 1: Enterprise SOC Deployment</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #3fb950;">
+                        <p><strong>Organization Profile:</strong> Fortune 500 company with 50,000 employees, hybrid cloud infrastructure</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>High volume of security events (500+ million events/day)</li>
+                            <li>Multiple security tools with siloed data</li>
+                            <li>Alert fatigue from excessive false positives</li>
+                            <li>Compliance requirements (SOX, PCI-DSS, GDPR)</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Phased rollout starting with critical data sources</li>
+                            <li>Custom detection rules based on threat model</li>
+                            <li>Automated playbooks for common scenarios</li>
+                            <li>Integration with ITSM and CMDB systems</li>
+                        </ul>
+                        <p style="color: #3fb950;"><strong>Results:</strong> 70% reduction in MTTR, 50% reduction in false positives, unified security visibility</p>
+                    </div>
+
+                    <h4>Scenario 2: MSSP Multi-Tenant Operations</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #58a6ff;">
+                        <p><strong>Organization Profile:</strong> Managed security provider serving 100+ SMB customers</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Need for strict data isolation between customers</li>
+                            <li>Scalable operations with limited staff</li>
+                            <li>Standardized service delivery across customers</li>
+                            <li>Flexible SLA-based prioritization</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Multi-tenant architecture with customer isolation</li>
+                            <li>Shared detection content library with customization</li>
+                            <li>Centralized analyst console with customer context</li>
+                            <li>Automated reporting and SLA tracking</li>
+                        </ul>
+                        <p style="color: #58a6ff;"><strong>Results:</strong> 3x increase in customers per analyst, consistent service quality, improved customer satisfaction</p>
+                    </div>
+
+                    <h4>Scenario 3: Healthcare Compliance Focus</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #d29922;">
+                        <p><strong>Organization Profile:</strong> Regional hospital network with 15 facilities</p>
+                        <p style="color: #8b949e;"><strong>Challenges:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>HIPAA compliance requirements for PHI protection</li>
+                            <li>Legacy medical devices with limited security logging</li>
+                            <li>Need for 6-year log retention</li>
+                            <li>Limited IT security staff</li>
+                        </ul>
+                        <p style="color: #8b949e;"><strong>Implementation Approach:</strong></p>
+                        <ul style="color: #8b949e;">
+                            <li>Comprehensive EHR and clinical application monitoring</li>
+                            <li>PHI access detection rules</li>
+                            <li>Long-term archival storage configuration</li>
+                            <li>Pre-built compliance dashboards and reports</li>
+                        </ul>
+                        <p style="color: #d29922;"><strong>Results:</strong> Audit-ready compliance posture, early detection of PHI access violations, reduced audit preparation time by 80%</p>
+                    </div>
+                </div>
+
+                <!-- Extended Best Practices -->
+                <h2><i class="fas fa-check-double"></i> Extended Best Practices</h2>
+                <div class="config-section">
+                    <h4>Operational Excellence</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Documentation Standards:</strong> Maintain comprehensive runbooks for all procedures. Include step-by-step instructions, expected outcomes, and rollback procedures.</li>
+                        <li><strong>Change Management:</strong> Test all changes in non-production environments first. Document changes and obtain approvals before production deployment.</li>
+                        <li><strong>Monitoring Strategy:</strong> Implement proactive monitoring with clear thresholds. Set up alerting for critical metrics before they become problems.</li>
+                        <li><strong>Regular Reviews:</strong> Conduct periodic audits of configurations, performance metrics, and security posture. Schedule quarterly reviews at minimum.</li>
+                        <li><strong>Continuous Training:</strong> Keep team skills current with platform updates. Allocate time for learning new features and best practices.</li>
+                        <li><strong>Knowledge Sharing:</strong> Document lessons learned and share across the team. Build institutional knowledge through wikis and team sessions.</li>
+                    </ul>
+
+                    <h4>Security Hardening</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Principle of Least Privilege:</strong> Grant minimum necessary permissions for each role. Review and revoke unnecessary access regularly.</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Enable detailed audit trails for all administrative actions. Retain logs according to compliance requirements.</li>
+                        <li><strong>Data Protection:</strong> Encrypt sensitive data in transit and at rest. Implement data classification and handling policies.</li>
+                        <li><strong>Access Reviews:</strong> Conduct regular reviews of user access and permissions. Implement automated access certification workflows.</li>
+                        <li><strong>Secrets Management:</strong> Use secure vaults for credential storage. Rotate secrets regularly and avoid hardcoding credentials.</li>
+                        <li><strong>Network Security:</strong> Implement network segmentation and firewall rules. Monitor for unauthorized network access attempts.</li>
+                    </ul>
+
+                    <h4>Performance Optimization</h4>
+                    <ul style="color: #8b949e;">
+                        <li><strong>Query Optimization:</strong> Review and optimize frequently-used queries. Use indexed fields and appropriate time ranges.</li>
+                        <li><strong>Capacity Planning:</strong> Monitor resource utilization trends. Plan for growth and scale proactively.</li>
+                        <li><strong>Caching Strategies:</strong> Implement caching for frequently-accessed data. Configure cache TTLs appropriately.</li>
+                        <li><strong>Index Management:</strong> Ensure proper indexing for search performance. Review and optimize index configurations.</li>
+                        <li><strong>Data Lifecycle:</strong> Implement appropriate retention policies. Archive or delete data according to requirements.</li>
+                        <li><strong>Load Distribution:</strong> Distribute workloads across available resources. Implement load balancing for high availability.</li>
+                    </ul>
+                </div>
+
+        </main>
+    </div>
+    <script>
+        // Q&A toggle functionality
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) { answer.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>
