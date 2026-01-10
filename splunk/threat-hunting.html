@@ -259,7 +259,7 @@
                 <h2><i class="fas fa-info-circle"></i> Threat Hunting Overview</h2>
                 <div class="config-section">
                     <h4>What is Threat Hunting?</h4>
-                    <div class="code-block">Threat Hunting Definition:
+                    <div class="arch-diagram">Threat Hunting Definition:
 
 Proactive, iterative search through networks and datasets to detect 
 advanced threats that evade existing security solutions.
@@ -308,7 +308,7 @@ HUNTING OUTCOMES:
                 <h2><i class="fas fa-route"></i> Hunting Methodology</h2>
                 <div class="config-section">
                     <h4>The Hunting Loop</h4>
-                    <div class="code-block">SQRRL Hunting Loop (Industry Standard):
+                    <div class="arch-diagram">SQRRL Hunting Loop (Industry Standard):
 
     ┌─────────────────────────────────────────────┐
     │                                             │
@@ -345,7 +345,7 @@ HUNTING OUTCOMES:
    └── Share intelligence with team</div>
 
                     <h4>Hypothesis Sources</h4>
-                    <div class="code-block">Where to Get Hunt Ideas:
+                    <div class="arch-diagram">Where to Get Hunt Ideas:
 
 THREAT INTELLIGENCE:
 ├── APT reports (Mandiant, CrowdStrike, etc.)
@@ -378,7 +378,7 @@ EXTERNAL EVENTS:
                 <h2><i class="fas fa-database"></i> Essential Data Sources</h2>
                 <div class="config-section">
                     <h4>Data Source Priority</h4>
-                    <div class="code-block">Hunting Data Sources (Priority Order):
+                    <div class="arch-diagram">Hunting Data Sources (Priority Order):
 
 TIER 1 - CRITICAL:
 ├── Process Execution (Sysmon 1, Windows 4688)
@@ -414,7 +414,7 @@ SPLUNK SOURCETYPES:
 └── pan:traffic, cisco:asa</div>
 
                     <h4>Data Model Usage</h4>
-                    <div class="code-block">// Using tstats for fast hunting (accelerated data)
+                    <div class="arch-diagram">// Using tstats for fast hunting (accelerated data)
 
 // Process execution hunt
 | tstats count from datamodel=Endpoint.Processes 
@@ -442,7 +442,7 @@ SPLUNK SOURCETYPES:
                 <h2><i class="fas fa-shield-alt"></i> MITRE ATT&CK-Based Hunts</h2>
                 <div class="config-section">
                     <h4>Initial Access (TA0001)</h4>
-                    <div class="code-block">// T1566.001 - Spearphishing Attachment
+                    <div class="arch-diagram">// T1566.001 - Spearphishing Attachment
 // Hunt for Office spawning suspicious processes
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
 | where match(ParentImage, "(?i)(winword|excel|powerpnt|outlook)\.exe")
@@ -463,7 +463,7 @@ index=windows sourcetype="WinEventLog:Security" EventCode=4624 LogonType=10
 | table user, cities, time_diff_hours, first_login, last_login</div>
 
                     <h4>Execution (TA0002)</h4>
-                    <div class="code-block">// T1059.001 - PowerShell
+                    <div class="arch-diagram">// T1059.001 - PowerShell
 // Hunt for encoded PowerShell commands
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
   Image="*powershell.exe"
@@ -493,7 +493,7 @@ index=windows sourcetype="WinEventLog:Security" EventCode=4698
 | sort -count</div>
 
                     <h4>Persistence (TA0003)</h4>
-                    <div class="code-block">// T1547.001 - Registry Run Keys
+                    <div class="arch-diagram">// T1547.001 - Registry Run Keys
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode IN (12,13,14)
 | where match(TargetObject, "(?i)(currentversion\\\\run|currentversion\\\\runonce)")
 | stats count by Computer, EventType, TargetObject, Details
@@ -518,7 +518,7 @@ index=web sourcetype=iis OR sourcetype=apache
 | sort -count</div>
 
                     <h4>Defense Evasion (TA0005)</h4>
-                    <div class="code-block">// T1070.001 - Clear Windows Event Logs
+                    <div class="arch-diagram">// T1070.001 - Clear Windows Event Logs
 index=windows sourcetype="WinEventLog:Security" EventCode=1102
 | stats count by Computer, SubjectUserName
 | sort -count
@@ -546,7 +546,7 @@ index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" E
 | sort -count</div>
 
                     <h4>Credential Access (TA0006)</h4>
-                    <div class="code-block">// T1003.001 - LSASS Memory Dump (Mimikatz)
+                    <div class="arch-diagram">// T1003.001 - LSASS Memory Dump (Mimikatz)
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=10
   TargetImage="*lsass.exe" GrantedAccess IN ("0x1010", "0x1410", "0x1438", "0x143a")
 | stats count by Computer, SourceImage, SourceUser, GrantedAccess
@@ -574,7 +574,7 @@ index=windows sourcetype="WinEventLog:Security" EventCode=4625
 | sort -count</div>
 
                     <h4>Lateral Movement (TA0008)</h4>
-                    <div class="code-block">// T1021.002 - SMB/Windows Admin Shares
+                    <div class="arch-diagram">// T1021.002 - SMB/Windows Admin Shares
 index=windows sourcetype="WinEventLog:Security" EventCode=5140
 | where match(ShareName, "(?i)(ADMIN\\$|C\\$|IPC\\$)")
 | stats count by IpAddress, ShareName, SubjectUserName, Computer
@@ -599,7 +599,7 @@ index=windows sourcetype="WinEventLog:Security" EventCode=4624
 | sort -count</div>
 
                     <h4>Collection & Exfiltration (TA0009, TA0010)</h4>
-                    <div class="code-block">// T1560.001 - Archive Collection
+                    <div class="arch-diagram">// T1560.001 - Archive Collection
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
 | where match(CommandLine, "(?i)(7z|rar|zip|tar|compress).*(-p|password)")
 | stats count by Computer, User, CommandLine
@@ -633,7 +633,7 @@ index=proxy OR index=firewall
                 <h2><i class="fas fa-code"></i> Advanced Hunting SPL</h2>
                 <div class="config-section">
                     <h4>Statistical Anomaly Detection</h4>
-                    <div class="code-block">// Find rare processes (executed on < 3 hosts)
+                    <div class="arch-diagram">// Find rare processes (executed on < 3 hosts)
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
 | stats dc(Computer) as host_count, values(Computer) as hosts,
         count as exec_count by Image
@@ -666,7 +666,7 @@ index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" E
 | sort -count</div>
 
                     <h4>Stack Counting & Long Tail Analysis</h4>
-                    <div class="code-block">// Stack counting - find outliers in command lines
+                    <div class="arch-diagram">// Stack counting - find outliers in command lines
 index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
 | rex field=CommandLine "^(?<cmd_base>[^\s]+)"
 | stats count by cmd_base
@@ -688,7 +688,7 @@ index=windows sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" E
 | sort pct</div>
 
                     <h4>Temporal Analysis</h4>
-                    <div class="code-block">// Beaconing detection (regular intervals)
+                    <div class="arch-diagram">// Beaconing detection (regular intervals)
 index=proxy OR index=firewall
 | bucket _time span=1m
 | stats count by _time, src_ip, dest_ip
@@ -712,7 +712,7 @@ index=windows Computer="SUSPECT-HOST"
 | table _time, event_num, sourcetype, EventCode, Message</div>
 
                     <h4>Network Hunting Queries</h4>
-                    <div class="code-block">// DGA detection (high entropy domains)
+                    <div class="arch-diagram">// DGA detection (high entropy domains)
 index=dns sourcetype=stream:dns
 | rex field=query "^(?<subdomain>[^.]+)\.(?<domain>[^.]+\.[^.]+)$"
 | eval subdomain_len = len(subdomain)
@@ -747,7 +747,7 @@ index=proxy
                 <h2><i class="fas fa-cogs"></i> Operationalizing Hunts</h2>
                 <div class="config-section">
                     <h4>From Hunt to Detection</h4>
-                    <div class="code-block">Hunt-to-Detection Workflow:
+                    <div class="arch-diagram">Hunt-to-Detection Workflow:
 
 1. DOCUMENT FINDINGS
    ├── Hypothesis tested
@@ -781,7 +781,7 @@ index=proxy
    └── Coverage gaps</div>
 
                     <h4>Correlation Search Example</h4>
-                    <div class="code-block">// Convert hunt to scheduled search
+                    <div class="arch-diagram">// Convert hunt to scheduled search
 // Original hunt: Encoded PowerShell detection
 
 [hunt_encoded_powershell]
@@ -812,7 +812,7 @@ action.notable.param.drilldown_search = index=windows Computer="$Computer$"</div
                 <!-- Hunt Documentation -->
                 <h2><i class="fas fa-file-alt"></i> Hunt Documentation</h2>
                 <div class="config-section">
-                    <div class="code-block">Hunt Documentation Template:
+                    <div class="arch-diagram">Hunt Documentation Template:
 
 HUNT METADATA:
 ├── Hunt ID: HUNT-2024-001
@@ -888,7 +888,7 @@ RECOMMENDATIONS:
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you find rare or anomalous processes in Splunk?</button>
                         <div class="qa-answer">
-                            <div class="code-block">// Rare processes across environment
+                            <div class="arch-diagram">// Rare processes across environment
 index=windows EventCode=1
 | stats dc(Computer) as host_count, count by Image
 | where host_count < 3
@@ -905,7 +905,7 @@ index=windows EventCode=1
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect beaconing behavior?</button>
                         <div class="qa-answer">
                             <p>Beaconing shows regular, periodic communication patterns:</p>
-                            <div class="code-block">index=proxy
+                            <div class="arch-diagram">index=proxy
 | bucket _time span=1m
 | stats count by _time, src_ip, dest_ip
 | streamstats last(_time) as prev_time by src_ip, dest_ip

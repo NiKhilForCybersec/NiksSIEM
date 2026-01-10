@@ -236,7 +236,7 @@
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1110</span> Brute Force Detection</h3>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(1h)
 | where ResultType != 0  // Failed logins
 | summarize 
@@ -257,7 +257,7 @@
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1078</span> Successful Login After Failures</h3>
-                    <div class="code-block">let FailedLogins = SigninLogs
+                    <div class="arch-diagram">let FailedLogins = SigninLogs
 | where TimeGenerated > ago(1h)
 | where ResultType != 0
 | summarize FailCount = count() by IPAddress, UserPrincipalName;
@@ -274,7 +274,7 @@ FailedLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1078</span> Impossible Travel</h3>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(24h)
 | where ResultType == 0
 | project TimeGenerated, UserPrincipalName, IPAddress, Location, 
@@ -297,7 +297,7 @@ FailedLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1078</span> Off-Hours Sign-in</h3>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(7d)
 | where ResultType == 0
 | extend HourOfDay = datetime_part("hour", TimeGenerated)
@@ -315,7 +315,7 @@ FailedLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1078</span> First-Time User Login to Application</h3>
-                    <div class="code-block">let LookbackPeriod = 30d;
+                    <div class="arch-diagram">let LookbackPeriod = 30d;
 let RecentLogins = SigninLogs
 | where TimeGenerated > ago(1d)
 | where ResultType == 0
@@ -335,7 +335,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1059.001</span> PowerShell Encoded Commands</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName in~ ("powershell.exe", "pwsh.exe")
 | where ProcessCommandLine has_any ("-enc", "-EncodedCommand", "-e ")
@@ -348,7 +348,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1059.001</span> PowerShell Download Cradle</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName in~ ("powershell.exe", "pwsh.exe")
 | where ProcessCommandLine has_any (
@@ -363,7 +363,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1218</span> LOLBin Abuse</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName in~ ("certutil.exe", "mshta.exe", "regsvr32.exe", 
                       "rundll32.exe", "msiexec.exe", "cmstp.exe",
@@ -382,7 +382,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1059</span> Office Application Spawning Shell</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where InitiatingProcessFileName in~ ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE", 
                                         "OUTLOOK.EXE", "MSACCESS.EXE")
@@ -397,7 +397,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1021.001</span> RDP Connection Monitoring</h3>
-                    <div class="code-block">SecurityEvent
+                    <div class="arch-diagram">SecurityEvent
 | where TimeGenerated > ago(1d)
 | where EventID == 4624 and LogonType == 10
 | summarize 
@@ -411,7 +411,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1021.002</span> SMB Lateral Movement</h3>
-                    <div class="code-block">DeviceNetworkEvents
+                    <div class="arch-diagram">DeviceNetworkEvents
 | where TimeGenerated > ago(1d)
 | where RemotePort == 445
 | where not(ipv4_is_private(RemoteIP) == false)
@@ -431,7 +431,7 @@ RecentLogins
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1047</span> WMI Remote Execution</h3>
-                    <div class="code-block">// WMI remote command
+                    <div class="arch-diagram">// WMI remote command
 DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName =~ "wmic.exe"
@@ -449,7 +449,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1021.006</span> Windows Remote Management</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where InitiatingProcessFileName =~ "wsmprovhost.exe"
 | project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
@@ -461,7 +461,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1547.001</span> Registry Run Key Modification</h3>
-                    <div class="code-block">DeviceRegistryEvents
+                    <div class="arch-diagram">DeviceRegistryEvents
 | where TimeGenerated > ago(1d)
 | where ActionType == "RegistryValueSet"
 | where RegistryKey has_any (@"\CurrentVersion\Run", @"\CurrentVersion\RunOnce")
@@ -473,7 +473,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1053.005</span> Scheduled Task Creation</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName =~ "schtasks.exe"
 | where ProcessCommandLine has "/create"
@@ -491,7 +491,7 @@ SecurityEvent
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1543.003</span> Service Creation</h3>
-                    <div class="code-block">SecurityEvent
+                    <div class="arch-diagram">SecurityEvent
 | where TimeGenerated > ago(1d)
 | where EventID == 4697
 | where not(ServiceFileName has_any ("Microsoft", "Windows", "System32"))
@@ -512,7 +512,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1003.001</span> LSASS Memory Access</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName in~ ("procdump.exe", "procdump64.exe", "mimikatz.exe", 
                       "nanodump.exe", "sqldumper.exe")
@@ -529,7 +529,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1558.003</span> Kerberoasting</h3>
-                    <div class="code-block">SecurityEvent
+                    <div class="arch-diagram">SecurityEvent
 | where TimeGenerated > ago(1d)
 | where EventID == 4769
 | where TicketEncryptionType == "0x17"  // RC4
@@ -543,7 +543,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1048</span> Large Data Transfer</h3>
-                    <div class="code-block">DeviceNetworkEvents
+                    <div class="arch-diagram">DeviceNetworkEvents
 | where TimeGenerated > ago(1d)
 | where not(ipv4_is_private(RemoteIP))
 | summarize TotalBytes = sum(SentBytes) by DeviceName, RemoteIP, bin(TimeGenerated, 1h)
@@ -554,7 +554,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1567</span> Cloud Storage Upload</h3>
-                    <div class="code-block">// Web proxy or firewall logs
+                    <div class="arch-diagram">// Web proxy or firewall logs
 CommonSecurityLog
 | where TimeGenerated > ago(1d)
 | where RequestURL has_any ("dropbox.com", "drive.google.com", "onedrive.live.com",
@@ -568,7 +568,7 @@ CommonSecurityLog
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1041</span> DNS Tunneling Detection</h3>
-                    <div class="code-block">DnsEvents
+                    <div class="arch-diagram">DnsEvents
 | where TimeGenerated > ago(1d)
 | extend QueryLength = strlen(Name)
 | where QueryLength > 50
@@ -591,7 +591,7 @@ CommonSecurityLog
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1070.001</span> Security Log Cleared</h3>
-                    <div class="code-block">SecurityEvent
+                    <div class="arch-diagram">SecurityEvent
 | where TimeGenerated > ago(1d)
 | where EventID == 1102
 | project TimeGenerated, Computer, SubjectUserName, SubjectDomainName
@@ -606,7 +606,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1562.001</span> Security Tool Tampering</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where ProcessCommandLine has_any (
     "Set-MpPreference", "DisableRealtimeMonitoring",
@@ -617,7 +617,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3><span class="mitre-tag">T1036</span> Process Masquerading</h3>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(1d)
 | where FileName in~ ("cmd.exe", "powershell.exe", "svchost.exe", 
                       "lsass.exe", "csrss.exe", "services.exe")
@@ -630,7 +630,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3>Risky Sign-in Detection</h3>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(1d)
 | where RiskLevelDuringSignIn in ("high", "medium")
 | project TimeGenerated, UserPrincipalName, IPAddress, Location,
@@ -641,7 +641,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3>New App Consent Granted</h3>
-                    <div class="code-block">AuditLogs
+                    <div class="arch-diagram">AuditLogs
 | where TimeGenerated > ago(7d)
 | where OperationName == "Consent to application"
 | extend AppName = tostring(TargetResources[0].displayName)
@@ -652,7 +652,7 @@ DeviceProcessEvents
 
                 <div class="usecase-card">
                     <h3>Privileged Role Assignment</h3>
-                    <div class="code-block">AuditLogs
+                    <div class="arch-diagram">AuditLogs
 | where TimeGenerated > ago(1d)
 | where OperationName has "Add member to role"
 | extend RoleName = tostring(TargetResources[0].displayName)
@@ -669,7 +669,7 @@ DeviceProcessEvents
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you correlate Azure AD and endpoint data in Sentinel?</button>
                         <div class="qa-answer">
-                            <div class="code-block">// Join SigninLogs with DeviceProcessEvents
+                            <div class="arch-diagram">// Join SigninLogs with DeviceProcessEvents
 let SuspiciousLogins = SigninLogs
 | where TimeGenerated > ago(1d)
 | where RiskLevelDuringSignIn == "high"

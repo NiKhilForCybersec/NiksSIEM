@@ -260,7 +260,7 @@
                 <!-- Basic Query Structure -->
                 <h2><i class="fas fa-sitemap"></i> Basic Query Structure</h2>
                 <div class="config-section">
-                    <div class="code-block">// Basic KQL query structure
+                    <div class="arch-diagram">// Basic KQL query structure
 TableName
 | where TimeGenerated > ago(24h)
 | where Column == "Value"
@@ -310,7 +310,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">where</span> - Filter rows
                     <span class="op-syntax">| where condition</span>
-                    <div class="code-block">// Equality (case-sensitive)
+                    <div class="arch-diagram">// Equality (case-sensitive)
 | where EventID == 4625
 
 // String equality (case-insensitive)
@@ -342,7 +342,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">summarize</span> - Aggregate data
                     <span class="op-syntax">| summarize aggregation by grouping_columns</span>
-                    <div class="code-block">// Count
+                    <div class="arch-diagram">// Count
 | summarize count()
 | summarize EventCount = count() by Computer
 
@@ -371,7 +371,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">project / project-away</span> - Select or remove columns
                     <span class="op-syntax">| project Column1, Column2, NewName = Expression</span>
-                    <div class="code-block">// Select specific columns
+                    <div class="arch-diagram">// Select specific columns
 | project TimeGenerated, Computer, EventID, Account
 
 // Rename columns
@@ -394,7 +394,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">extend</span> - Add calculated columns
                     <span class="op-syntax">| extend NewColumn = expression</span>
-                    <div class="code-block">// Simple calculation
+                    <div class="arch-diagram">// Simple calculation
 | extend MB = BytesSent / 1048576
 
 // String manipulation
@@ -420,7 +420,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">sort / order</span> - Order results
                     <span class="op-syntax">| sort by Column [asc|desc]</span>
-                    <div class="code-block">// Descending (default for numbers)
+                    <div class="arch-diagram">// Descending (default for numbers)
 | sort by count_ desc
 
 // Ascending
@@ -437,7 +437,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">take / limit</span> - Limit rows returned
                     <span class="op-syntax">| take N</span>
-                    <div class="code-block">// Get first 100 rows
+                    <div class="arch-diagram">// Get first 100 rows
 | take 100
 
 // Often combined with sort for "top N"
@@ -449,7 +449,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">top</span> - Get top N by column
                     <span class="op-syntax">| top N by Column [asc|desc]</span>
-                    <div class="code-block">// Top 10 by count (shortcut for sort + take)
+                    <div class="arch-diagram">// Top 10 by count (shortcut for sort + take)
 | summarize count() by SourceIP
 | top 10 by count_ desc
 
@@ -461,7 +461,7 @@ TableName
                 <div class="op-card">
                     <span class="op-name">join</span> - Combine tables
                     <span class="op-syntax">| join [kind=type] (RightTable) on KeyColumn</span>
-                    <div class="code-block">// Inner join (default)
+                    <div class="arch-diagram">// Inner join (default)
 SigninLogs
 | join (IdentityInfo | project UserPrincipalName, Department) 
     on UserPrincipalName
@@ -486,7 +486,7 @@ TableA
                 <div class="op-card">
                     <span class="op-name">union</span> - Combine multiple tables
                     <span class="op-syntax">union Table1, Table2</span>
-                    <div class="code-block">// Union multiple tables
+                    <div class="arch-diagram">// Union multiple tables
 union SecurityEvent, Syslog, CommonSecurityLog
 
 // With wildcard
@@ -505,7 +505,7 @@ union *
                 <div class="op-card">
                     <span class="op-name">parse</span> - Extract data from strings
                     <span class="op-syntax">| parse Column with * "pattern" ExtractedColumn * "pattern" ...</span>
-                    <div class="code-block">// Extract from structured text
+                    <div class="arch-diagram">// Extract from structured text
 | parse EventData with * 'TargetUserName">' TargetUser '<' *
 
 // Multiple extractions
@@ -521,7 +521,7 @@ union *
                 <!-- String Functions -->
                 <h2><i class="fas fa-font"></i> String Functions</h2>
                 <div class="config-section">
-                    <div class="code-block">// Case conversion
+                    <div class="arch-diagram">// Case conversion
 | extend LowerUser = tolower(UserName)
 | extend UpperUser = toupper(UserName)
 
@@ -557,7 +557,7 @@ union *
                 <!-- DateTime Functions -->
                 <h2><i class="fas fa-clock"></i> DateTime Functions</h2>
                 <div class="config-section">
-                    <div class="code-block">// Time ago
+                    <div class="arch-diagram">// Time ago
 | where TimeGenerated > ago(24h)
 | where TimeGenerated > ago(7d)
 | where TimeGenerated > ago(1h)
@@ -592,7 +592,7 @@ union *
                 <!-- Aggregation Functions -->
                 <h2><i class="fas fa-calculator"></i> Aggregation Functions</h2>
                 <div class="config-section">
-                    <div class="code-block">// Basic counts
+                    <div class="arch-diagram">// Basic counts
 | summarize 
     Total = count(),
     UniqueUsers = dcount(UserName),
@@ -629,7 +629,7 @@ union *
                 <h2><i class="fas fa-shield-alt"></i> Security Query Examples</h2>
                 <div class="config-section">
                     <h4>Failed Sign-ins Analysis</h4>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(24h)
 | where ResultType != 0  // Failed
 | summarize 
@@ -641,7 +641,7 @@ union *
 | sort by FailedAttempts desc</div>
 
                     <h4>Successful Login After Multiple Failures</h4>
-                    <div class="code-block">SigninLogs
+                    <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(1h)
 | summarize 
     Failures = countif(ResultType != 0),
@@ -652,7 +652,7 @@ union *
 | project UserPrincipalName, Failures, Successes, IPs</div>
 
                     <h4>Rare Process Execution</h4>
-                    <div class="code-block">DeviceProcessEvents
+                    <div class="arch-diagram">DeviceProcessEvents
 | where TimeGenerated > ago(7d)
 | summarize ExecutionCount = count() by FileName
 | where ExecutionCount < 5
@@ -663,7 +663,7 @@ union *
 | project TimeGenerated, DeviceName, FileName, ProcessCommandLine</div>
 
                     <h4>Outbound Connections to Rare Destinations</h4>
-                    <div class="code-block">DeviceNetworkEvents
+                    <div class="arch-diagram">DeviceNetworkEvents
 | where TimeGenerated > ago(24h)
 | where RemoteIPType == "Public"
 | summarize 
@@ -674,7 +674,7 @@ union *
 | sort by ConnectionCount asc</div>
 
                     <h4>Data Exfiltration Detection</h4>
-                    <div class="code-block">CommonSecurityLog
+                    <div class="arch-diagram">CommonSecurityLog
 | where TimeGenerated > ago(1h)
 | where DeviceVendor == "Palo Alto Networks"
 | where SentBytes > 10000000  // > 10 MB
@@ -687,7 +687,7 @@ union *
 | project SourceIP, SourceHostName, MB, Destinations</div>
 
                     <h4>Azure AD Privilege Escalation</h4>
-                    <div class="code-block">AuditLogs
+                    <div class="arch-diagram">AuditLogs
 | where TimeGenerated > ago(24h)
 | where OperationName has_any ("Add member to role", "Add eligible member to role")
 | where TargetResources[0].modifiedProperties[1].newValue has_any 
@@ -702,7 +702,7 @@ union *
                 <!-- Let Statements -->
                 <h2><i class="fas fa-box"></i> Let Statements (Variables)</h2>
                 <div class="config-section">
-                    <div class="code-block">// Define a time variable
+                    <div class="arch-diagram">// Define a time variable
 let lookback = 24h;
 SigninLogs
 | where TimeGenerated > ago(lookback)
@@ -787,10 +787,10 @@ SecurityEvent
                         <div class="qa-answer">
                             <ul>
                                 <li><strong>summarize:</strong> Aggregates rows, reducing the result set. Groups rows and computes statistics.
-                                    <div class="code-block">| summarize count() by Computer  // One row per Computer</div>
+                                    <div class="arch-diagram">| summarize count() by Computer  // One row per Computer</div>
                                 </li>
                                 <li><strong>extend:</strong> Adds new columns to each row, keeping all rows.
-                                    <div class="code-block">| extend MB = Bytes / 1048576  // Same row count, new column</div>
+                                    <div class="arch-diagram">| extend MB = Bytes / 1048576  // Same row count, new column</div>
                                 </li>
                             </ul>
                         </div>
@@ -798,7 +798,7 @@ SecurityEvent
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you detect brute force attacks with KQL?</button>
                         <div class="qa-answer">
-                            <div class="code-block">SigninLogs
+                            <div class="arch-diagram">SigninLogs
 | where TimeGenerated > ago(1h)
 | where ResultType != 0  // Failed logins
 | summarize 

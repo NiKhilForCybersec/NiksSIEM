@@ -365,7 +365,7 @@
                 <h2>Endpoint Containment</h2>
                 <h3>Network Isolation</h3>
                 <p>Completely disconnect endpoint from network while maintaining EDR connectivity.</p>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Microsoft Defender for Endpoint
 POST https://api.securitycenter.microsoft.com/api/machines/{id}/isolate
 { "Comment": "Incident #12345 - Active ransomware", "IsolationType": "Full" }
@@ -381,7 +381,7 @@ netsh advfirewall set allprofiles firewallpolicy blockinbound,blockoutbound
 netsh advfirewall firewall add rule name="Allow EDR" dir=out action=allow program="C:\Program Files\EDR\agent.exe"</code></pre>
                 </div>
                 <h3>Process Termination</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Kill malicious process by name
 taskkill /F /IM malware.exe /T
 # Kill by PID
@@ -394,7 +394,7 @@ if ($proc) {
 }</code></pre>
                 </div>
                 <h3>File Quarantine</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># MDE - Stop and Quarantine
 POST /api/machines/{id}/StopAndQuarantineFile
 { "Comment": "Quarantine ransomware", "Sha1": "abc123..." }
@@ -410,7 +410,7 @@ Write-Output "Quarantined: $file -> $quarantine (SHA256: $hash)"</code></pre>
             <section class="content-section">
                 <h2>Network Containment</h2>
                 <h3>Block External IOCs</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Firewall - Block IP
 # Palo Alto
 set address C2-Server ip-netmask 192.0.2.100/32
@@ -425,7 +425,7 @@ netsh advfirewall firewall add rule name="Block C2" dir=out action=block remotei
 dnscmd /RecordAdd sinkhole.local malicious-domain.com A 0.0.0.0</code></pre>
                 </div>
                 <h3>Segment Affected Systems</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># VLAN Quarantine (Cisco)
 interface GigabitEthernet0/1
  description Quarantined-Host
@@ -439,7 +439,7 @@ interface GigabitEthernet0/1
 # Move to restricted VLAN with only AV/patch access</code></pre>
                 </div>
                 <h3>Network Flow Blocking</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Block lateral movement protocols from infected segment
 # SMB (445), RPC (135), WinRM (5985/5986), RDP (3389)
 # Palo Alto - Inter-zone blocking
@@ -457,7 +457,7 @@ access-list QUARANTINE deny ip 10.10.10.0 0.0.0.255 any</code></pre>
             <section class="content-section">
                 <h2>Identity Containment</h2>
                 <h3>Account Disable/Lockout</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Active Directory - Disable Account
 Disable-ADAccount -Identity "compromised_user"
 # Force password change at next logon
@@ -471,7 +471,7 @@ Connect-MgGraph -Scopes "User.ReadWrite.All"
 Revoke-MgUserSignInSession -UserId user@domain.com</code></pre>
                 </div>
                 <h3>Service Account Containment</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Identify services using the account
 Get-WmiObject Win32_Service | Where-Object { $_.StartName -like "*svc_compromised*" }
 # Stop dependent services first, then disable account
@@ -484,7 +484,7 @@ Set-ADAccountPassword -Identity "svc_compromised" -Reset -NewPassword (ConvertTo
 sc.exe config "ServiceName" obj= "domain\svc_new" password= "newpassword"</code></pre>
                 </div>
                 <h3>MFA Reset / Conditional Access</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Reset MFA registration
 Remove-MsolUser -UserPrincipalName user@domain.com -RemoveFromRecycleBin
 # Force MFA re-registration via Azure AD
@@ -497,7 +497,7 @@ Set-MsolUser -UserPrincipalName user@domain.com -StrongAuthenticationMethods @()
             <section class="content-section">
                 <h2>Email Containment</h2>
                 <h3>Purge Malicious Emails</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Microsoft 365 - Content Search and Purge
 New-ComplianceSearch -Name "Malicious Campaign" -ExchangeLocation All `
     -ContentMatchQuery 'subject:"Invoice" AND from:attacker@evil.com AND received>=2024-01-01'
@@ -510,7 +510,7 @@ New-ComplianceSearchAction -SearchName "Malicious Campaign" -Purge -PurgeType Ha
 Get-ComplianceSearchAction -Identity "Malicious Campaign_Purge" | FL</code></pre>
                 </div>
                 <h3>Block Sender/Domain</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Exchange Online - Block Sender
 Set-HostedContentFilterPolicy -Identity Default -BlockedSenders @{Add="attacker@evil.com"}
 # Block Domain
@@ -523,7 +523,7 @@ New-TransportRule -Name "Block Evil Campaign" `
     -IncidentReportContent Sender,Subject,Recipients</code></pre>
                 </div>
                 <h3>Review Mail Rules</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Check for suspicious forwarding rules
 Get-InboxRule -Mailbox user@domain.com | Where-Object { 
     $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo 
@@ -542,7 +542,7 @@ foreach ($mbx in $mailboxes) {
             <section class="content-section">
                 <h2>Cloud Containment</h2>
                 <h3>AWS</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Isolate EC2 Instance - Apply restrictive security group
 aws ec2 modify-instance-attribute \
     --instance-id i-1234567890abcdef0 \
@@ -560,7 +560,7 @@ aws iam list-access-keys --user-name compromised-user | \
 aws ec2 create-snapshot --volume-id vol-1234567890abcdef0 --description "Incident snapshot"</code></pre>
                 </div>
                 <h3>Azure</h3>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code># Isolate VM - Apply NSG blocking all traffic
 $nsg = New-AzNetworkSecurityGroup -ResourceGroupName "RG" -Name "Quarantine-NSG" -Location "eastus"
 $nsg | Add-AzNetworkSecurityRuleConfig -Name "DenyAll" -Priority 100 -Direction Inbound `
@@ -578,7 +578,7 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
             </section>
             <section class="content-section">
                 <h2>Containment Checklist</h2>
-                <div class="code-block">
+                <div class="arch-diagram">
                     <pre><code>## Immediate Actions (First 15 minutes)
 [ ] Assess threat type and severity
 [ ] Determine containment level required
@@ -741,7 +741,7 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
                     </table>
 
                     <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+                    <div class="arch-diagram"># Health Check Queries (adjust syntax for your platform)
 
 # Check system health status
 | filter log_type = "system_health"
@@ -909,7 +909,7 @@ New-AzSnapshot -Snapshot $snapshotConfig -SnapshotName "forensic-snapshot" -Reso
                 <h2><i class="fas fa-bookmark"></i> Quick Reference Card</h2>
                 <div class="config-section">
                     <h4>Essential Queries</h4>
-                    <div class="code-block"># Data volume by source (last 24h)
+                    <div class="arch-diagram"># Data volume by source (last 24h)
 | filter _time > now() - 24h
 | stats sum(bytes) as total_bytes by log_source
 | sort total_bytes desc

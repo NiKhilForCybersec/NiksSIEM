@@ -314,7 +314,7 @@
                     <p>You need real sample logs to build parsing rules. Methods to get them:</p>
                     
                     <h4>Option A: From the Application</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # SSH to application server
 ssh admin@app-server-01
 
@@ -326,14 +326,14 @@ scp admin@app-server-01:/var/log/myapp/application.log ./samples/
                     </div>
 
                     <h4>Option B: From Existing SIEM</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # If logs are already going to another SIEM, export samples
 # Splunk example:
 index=myapp earliest=-1h | head 100 | table _raw
                     </div>
 
                     <h4>Option C: Packet Capture</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # Capture syslog traffic on Broker VM or network tap
 tcpdump -i eth0 port 514 -w syslog_capture.pcap -c 1000
 
@@ -527,7 +527,7 @@ Feb 15 14:30:05 app-server-01 myapp[1234]: USER=jsmith ACTION=access_denied RESO
                     <p>Now configure your application to send logs to the Broker VM:</p>
 
                     <h4>Linux Application (rsyslog)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # Edit rsyslog configuration
 sudo nano /etc/rsyslog.d/50-myapp.conf
 
@@ -549,7 +549,7 @@ sudo systemctl restart rsyslog
                     </div>
 
                     <h4>Linux Application (syslog-ng)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # Edit syslog-ng configuration
 sudo nano /etc/syslog-ng/conf.d/myapp.conf
 
@@ -574,7 +574,7 @@ sudo systemctl restart syslog-ng
                     </div>
 
                     <h4>Windows Application (NXLog)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # NXLog configuration (C:\Program Files\nxlog\conf\nxlog.conf)
 
 <Input myapp_logs>
@@ -595,7 +595,7 @@ sudo systemctl restart syslog-ng
                     </div>
 
                     <h4>Application with Native Syslog Support</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # Many applications have syslog configuration in their config file
 # Example: application.yml
 
@@ -640,7 +640,7 @@ logging:
                         <div style="width: 100%;">
                             <strong>Get Collector URL and Token</strong>
                             <p style="color: #8b949e; margin: 4px 0;">After saving, you'll receive:</p>
-                            <div class="code-block">
+                            <div class="arch-diagram">
 Collector URL: https://api-{tenant}.xsiam.paloaltonetworks.com/logs/v1/event
 Authorization Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                             </div>
@@ -651,7 +651,7 @@ Authorization Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                         <div class="step-num">3</div>
                         <div style="width: 100%;">
                             <strong>Send Logs via HTTP POST</strong>
-                            <div class="code-block">
+                            <div class="arch-diagram">
 # Example: Send logs using curl
 curl -X POST "https://api-{tenant}.xsiam.paloaltonetworks.com/logs/v1/event" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
@@ -665,7 +665,7 @@ curl -X POST "https://api-{tenant}.xsiam.paloaltonetworks.com/logs/v1/event" \
                     </div>
 
                     <h4>Python Script Example</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 import requests
 import json
 from datetime import datetime
@@ -715,7 +715,7 @@ else:
                     <p>First, check if XSIAM is already parsing your logs:</p>
                     <div class="console-path">Investigation → XQL Search</div>
                     
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Query raw data to see what's being parsed
 dataset = custom_myapp_raw
 | limit 10
@@ -784,7 +784,7 @@ dataset = custom_myapp_raw
                     <div class="example-log">{"timestamp":"2024-02-15T14:30:00Z","user":"jsmith","action":"login","src_ip":"10.0.1.50","result":"success"}</div>
                     
                     <p><strong>Parsing Rule (XQL-style):</strong></p>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: MyApp JSON Parser]
 // JSON logs are parsed automatically, just map fields
 alter
@@ -802,7 +802,7 @@ alter
                     <div class="example-log">Feb 15 14:30:00 app-server-01 myapp[1234]: USER=jsmith ACTION=login SRC=10.0.1.50 RESULT=success</div>
                     
                     <p><strong>Parsing Rule (Regex):</strong></p>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: MyApp KV Parser]
 // Extract key-value pairs using regex
 alter
@@ -820,7 +820,7 @@ alter
                     <div class="example-log">2024-02-15T14:30:00|INFO|jsmith|login|10.0.1.50|success</div>
                     
                     <p><strong>Parsing Rule (Split):</strong></p>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: MyApp Delimited Parser]
 // Split by pipe delimiter
 alter _fields = split(_raw_log, "|")
@@ -840,7 +840,7 @@ alter _fields = split(_raw_log, "|")
                     <div class="example-log">2024-02-15 14:30:00 INFO [AuthService] User 'jsmith' logged in from 10.0.1.50 - Session: abc123</div>
                     
                     <p><strong>Parsing Rule (Multiple Regex):</strong></p>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: MyApp Complex Parser]
 // Extract fields using multiple regex patterns
 alter
@@ -890,7 +890,7 @@ alter
                 <div class="config-section">
                     <p>Extend your parsing rule to include XDM mappings:</p>
                     
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: MyApp Parser with XDM Mapping]
 
 // Step 1: Extract raw fields
@@ -980,7 +980,7 @@ alter
                     <div class="console-path">Investigation → XQL Search</div>
                     
                     <h4>Query 1: Basic Data Check</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Check if data exists in your dataset
 dataset = custom_myapp_raw
 | filter _time > ago(1h)
@@ -988,7 +988,7 @@ dataset = custom_myapp_raw
                     </div>
 
                     <h4>Query 2: Check Event Count Over Time</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // See volume trend
 dataset = custom_myapp_raw
 | filter _time > ago(24h)
@@ -997,7 +997,7 @@ dataset = custom_myapp_raw
                     </div>
 
                     <h4>Query 3: Verify Parsing is Working</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Check that fields are being extracted
 dataset = custom_myapp_raw
 | filter _time > ago(1h)
@@ -1038,7 +1038,7 @@ dataset = custom_myapp_raw
                     <div class="console-path">Rules → Correlation Rules → + New Rule</div>
 
                     <h4>Rule 1: Brute Force on MyApp</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Detect 10+ failed logins in 5 minutes
 dataset = custom_myapp_raw
 | filter _time > ago(5m)
@@ -1049,7 +1049,7 @@ dataset = custom_myapp_raw
                     <p style="color: #8b949e;">Settings: Frequency=1min, Severity=High, MITRE=T1110</p>
 
                     <h4>Rule 2: Login from New IP (Using XDM for Cross-Source)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Detect login from IP not seen in last 30 days
 dataset = custom_myapp_raw
 | filter _time > ago(1h)
@@ -1065,7 +1065,7 @@ dataset = custom_myapp_raw
                     </div>
 
                     <h4>Rule 3: Privileged Action Detection</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Detect admin-level actions
 dataset = custom_myapp_raw
 | filter _time > ago(5m)
@@ -1160,7 +1160,7 @@ dataset = custom_myapp_raw
                     <p style="color: #8b949e; margin-top: 8px;">Dataset created: <code>custom_javaauthservice_raw</code></p>
 
                     <h4>Step 3: Source Configuration (rsyslog)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 # /etc/rsyslog.d/60-java-app.conf
 module(load="imfile")
 input(type="imfile"
@@ -1172,7 +1172,7 @@ local1.* @@10.0.1.50:1514
                     </div>
 
                     <h4>Step 4: Parsing Rule</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: Java Auth Service Parser]
 // Extract JSON fields
 alter
@@ -1197,7 +1197,7 @@ alter
                     </div>
 
                     <h4>Step 5: Verification Query</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 dataset = custom_javaauthservice_raw
 | filter _time > ago(1h)
 | fields _time, user_id, client_ip, auth_result, xdm.source.user.username, xdm.event.outcome
@@ -1205,7 +1205,7 @@ dataset = custom_javaauthservice_raw
                     </div>
 
                     <h4>Step 6: Detection Rule</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 // Java Auth Service - Brute Force Detection
 dataset = custom_javaauthservice_raw
 | filter _time > ago(5m)
@@ -1241,7 +1241,7 @@ dataset = custom_javaauthservice_raw
                     <div class="example-log">[{"event_type":"connection","timestamp":"2024-02-15T14:30:00Z","src":"10.0.1.50","dst":"8.8.8.8","port":443,"action":"allow","bytes":1024}]</div>
 
                     <h4>Step 4: Parsing Rule</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 [RULE: Network Appliance Parser]
 alter
     event_type = json_extract(_raw_log, "$.event_type"),
@@ -1290,7 +1290,7 @@ alter
                                 <li><strong>Check vendor/product match:</strong> Data source and parsing rule must have identical Vendor and Product values</li>
                                 <li><strong>Test parsing rule:</strong> Edit rule → Test → Paste actual raw log → Check output</li>
                                 <li><strong>Check raw log format:</strong>
-                                    <div class="code-block" style="margin: 8px 0;">dataset = custom_myapp_raw | fields _raw_log | limit 5</div>
+                                    <div class="arch-diagram" style="margin: 8px 0;">dataset = custom_myapp_raw | fields _raw_log | limit 5</div>
                                     Compare actual format to what parsing rule expects
                                 </li>
                                 <li><strong>Check for variations:</strong> Some events may have different formats - parsing rule needs to handle all</li>

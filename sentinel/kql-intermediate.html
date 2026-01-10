@@ -235,7 +235,7 @@
                 <h2><i class="fas fa-link"></i> Joins Deep Dive</h2>
                 <div class="config-section">
                     <h4>Join Types Explained</h4>
-                    <div class="code-block">KQL Join Types:
+                    <div class="arch-diagram">KQL Join Types:
 
 INNER JOIN (default):
 ├── Returns only matching rows from both tables
@@ -296,7 +296,7 @@ SigninLogs
 ) on UserPrincipalName</div>
 
                     <h4>Join Best Practices</h4>
-                    <div class="code-block">Join Optimization Tips:
+                    <div class="arch-diagram">Join Optimization Tips:
 
 1. REDUCE TABLE SIZE BEFORE JOINING
    // BAD - joins full tables
@@ -331,7 +331,7 @@ SigninLogs
    // This creates cartesian product (rows * rows)</div>
 
                     <h4>Security Join Patterns</h4>
-                    <div class="code-block">// Enrich sign-ins with user risk
+                    <div class="arch-diagram">// Enrich sign-ins with user risk
 SigninLogs
 | where TimeGenerated > ago(24h)
 | where ResultType == 0
@@ -373,7 +373,7 @@ SecurityAlert
                 <h2><i class="fas fa-object-group"></i> Union Operations</h2>
                 <div class="config-section">
                     <h4>Union Syntax</h4>
-                    <div class="code-block">// Basic union - combine multiple tables
+                    <div class="arch-diagram">// Basic union - combine multiple tables
 union SigninLogs, AADNonInteractiveUserSignInLogs
 | where TimeGenerated > ago(1h)
 | where ResultType != 0
@@ -400,7 +400,7 @@ union withsource=TableName *
 | project TimeGenerated, TableName, *</div>
 
                     <h4>Security Union Patterns</h4>
-                    <div class="code-block">// All authentication failures across sources
+                    <div class="arch-diagram">// All authentication failures across sources
 union withsource=Source
     (SigninLogs | where ResultType != 0 | project TimeGenerated, User = UserPrincipalName, IP = IPAddress, Result = ResultType),
     (SecurityEvent | where EventID == 4625 | project TimeGenerated, User = TargetUserName, IP = IpAddress, Result = FailureReason),
@@ -422,7 +422,7 @@ union withsource=TableName *
                 <h2><i class="fas fa-font"></i> String Functions</h2>
                 <div class="config-section">
                     <h4>String Extraction</h4>
-                    <div class="code-block">// Extract with regex - capture groups
+                    <div class="arch-diagram">// Extract with regex - capture groups
 SecurityEvent
 | where EventID == 4688
 | extend ProcessName = extract(@"\\([^\\]+)$", 1, NewProcessName)
@@ -453,7 +453,7 @@ CommonSecurityLog
 | extend ParentFolder = PathParts[-2]</div>
 
                     <h4>String Matching</h4>
-                    <div class="code-block">// Contains vs Has
+                    <div class="arch-diagram">// Contains vs Has
 // contains: substring match (slower, any position)
 // has: whole term match (faster, word boundaries)
 
@@ -482,7 +482,7 @@ CommonSecurityLog
 | where ProcessName == "powershell.exe"   // Case-sensitive</div>
 
                     <h4>String Manipulation</h4>
-                    <div class="code-block">// Concatenation
+                    <div class="arch-diagram">// Concatenation
 | extend FullPath = strcat(FolderPath, "\\", FileName)
 | extend Message = strcat_delim(" - ", Severity, AlertName, Description)
 
@@ -511,7 +511,7 @@ CommonSecurityLog
                 <h2><i class="fas fa-clock"></i> Time Operations</h2>
                 <div class="config-section">
                     <h4>Time Filtering</h4>
-                    <div class="code-block">// Relative time
+                    <div class="arch-diagram">// Relative time
 | where TimeGenerated > ago(24h)
 | where TimeGenerated > ago(7d) and TimeGenerated < ago(1d)
 
@@ -536,7 +536,7 @@ SigninLogs
 | extend LocalTime = datetime_utc_to_local(TimeGenerated, "America/New_York")</div>
 
                     <h4>Time Calculations</h4>
-                    <div class="code-block">// Time differences
+                    <div class="arch-diagram">// Time differences
 SigninLogs
 | summarize 
     FirstLogin = min(TimeGenerated),
@@ -565,7 +565,7 @@ SecurityEvent
 | extend TimeOnly = format_datetime(TimeGenerated, "HH:mm:ss")</div>
 
                     <h4>Time Binning</h4>
-                    <div class="code-block">// Bin for aggregation
+                    <div class="arch-diagram">// Bin for aggregation
 SigninLogs
 | where TimeGenerated > ago(24h)
 | summarize count() by bin(TimeGenerated, 1h)
@@ -593,7 +593,7 @@ SigninLogs
                 <h2><i class="fas fa-calculator"></i> Advanced Aggregations</h2>
                 <div class="config-section">
                     <h4>Statistical Functions</h4>
-                    <div class="code-block">// Basic statistics
+                    <div class="arch-diagram">// Basic statistics
 SigninLogs
 | summarize 
     TotalLogins = count(),
@@ -630,7 +630,7 @@ SecurityEvent
 | where ZScore > 3</div>
 
                     <h4>Collection Functions</h4>
-                    <div class="code-block">// make_set - unique values as array
+                    <div class="arch-diagram">// make_set - unique values as array
 SigninLogs
 | where TimeGenerated > ago(24h)
 | summarize 
@@ -663,7 +663,7 @@ SigninLogs
 | extend SuccessRate = round(100.0 * SuccessfulLogins / TotalLogins, 2)</div>
 
                     <h4>Windowing Functions</h4>
-                    <div class="code-block">// Running totals and averages
+                    <div class="arch-diagram">// Running totals and averages
 SigninLogs
 | where TimeGenerated > ago(7d)
 | summarize DailyLogins = count() by bin(TimeGenerated, 1d)
@@ -691,7 +691,7 @@ SecurityAlert
                 <h2><i class="fas fa-equals"></i> Let Statements</h2>
                 <div class="config-section">
                     <h4>Variables and Subqueries</h4>
-                    <div class="code-block">// Scalar variables
+                    <div class="arch-diagram">// Scalar variables
 let LookbackPeriod = 24h;
 let FailureThreshold = 10;
 let SuspiciousApps = dynamic(["PowerShell", "cmd.exe", "wscript.exe"]);
@@ -727,7 +727,7 @@ let GetUserActivity = (user: string, hours: int) {
 GetUserActivity("user@domain.com", 24)</div>
 
                     <h4>Complex Query Patterns</h4>
-                    <div class="code-block">// Baseline comparison pattern
+                    <div class="arch-diagram">// Baseline comparison pattern
 let BaselinePeriod = 30d;
 let CurrentPeriod = 1d;
 
@@ -762,7 +762,7 @@ Current
                 <h2><i class="fas fa-shield-alt"></i> Security Query Patterns</h2>
                 <div class="config-section">
                     <h4>User Behavior Analysis</h4>
-                    <div class="code-block">// Impossible travel detection
+                    <div class="arch-diagram">// Impossible travel detection
 SigninLogs
 | where TimeGenerated > ago(24h)
 | where ResultType == 0
@@ -810,7 +810,7 @@ SigninLogs
 | project TimeGenerated, UserPrincipalName, IPAddress, Location, AppDisplayName</div>
 
                     <h4>Attack Detection Patterns</h4>
-                    <div class="code-block">// Password spray detection
+                    <div class="arch-diagram">// Password spray detection
 SigninLogs
 | where TimeGenerated > ago(1h)
 | where ResultType in (50126, 50053, 50055)  // Invalid password codes
@@ -874,7 +874,7 @@ SigninLogs
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect impossible travel in KQL?</button>
                         <div class="qa-answer">
-                            <div class="code-block">SigninLogs
+                            <div class="arch-diagram">SigninLogs
 | where ResultType == 0
 | order by UserPrincipalName, TimeGenerated
 | serialize
@@ -891,7 +891,7 @@ SigninLogs
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you find statistical anomalies in KQL?</button>
                         <div class="qa-answer">
                             <p>Use z-score calculation:</p>
-                            <div class="code-block">// Calculate baseline
+                            <div class="arch-diagram">// Calculate baseline
 | summarize Avg = avg(count), Stdev = stdev(count) by Entity
 // Compare current to baseline
 | extend ZScore = (Current - Avg) / Stdev

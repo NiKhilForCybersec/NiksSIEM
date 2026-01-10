@@ -254,7 +254,7 @@
                     <p><strong>Problem:</strong> Your application produces multi-line events (typically 3-4 lines). Each logical event should be ONE event, not multiple separate events.</p>
 
                     <h4>Example: Application Error Log (3-4 lines)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>2025-01-04 10:23:45.123 ERROR [PaymentService]
   Transaction ID: TXN-789456
   Error: Payment gateway timeout after 30s
@@ -262,7 +262,7 @@
                     </div>
 
                     <h4>Example: Windows Event with Description (Multi-line)</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>Jan 04 10:23:45 server01 Application[1234]: Service failed to start
   Service Name: CustomAppService
   Error Code: 0x80070005
@@ -270,7 +270,7 @@
                     </div>
 
                     <h4>Example: Syslog with Continuation</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>Jan 04 10:23:45 firewall01 kernel: [UFW BLOCK] IN=eth0 OUT=
   SRC=192.168.1.100 DST=10.0.0.50 PROTO=TCP
   SPT=54321 DPT=22 LEN=60</pre>
@@ -281,7 +281,7 @@
                     <div class="step-box">
                         <h4>Step 1: Configure Log Collection to Merge Lines</h4>
                         <p>When using Azure Monitor Agent (AMA) for custom logs, configure the DCR to recognize event boundaries:</p>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// In the DCR data source configuration:
 // Events start with timestamp pattern, so break BEFORE new timestamps
 {
@@ -296,7 +296,7 @@
 
                     <div class="step-box">
                         <h4>Step 2: Create Custom Table Schema</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Table: AppLogs_CL
 {
   "columns": [
@@ -314,7 +314,7 @@
 
                     <div class="step-box">
                         <h4>Step 3: DCR Transformation to Parse Multi-Line</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Transformation query in DCR
 source
 | extend RawMessage = RawData
@@ -336,7 +336,7 @@ source
 
                     <div class="step-box">
                         <h4>Step 4: Query Parsed Events</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Find all errors by service
 AppLogs_CL
 | where TimeGenerated > ago(24h)
@@ -354,7 +354,7 @@ AppLogs_CL
                     <div class="tip-box">
                         <strong><i class="fas fa-lightbulb"></i> When Events Are Already Single-Line JSON</strong>
                         <p>If your application can output structured JSON (one JSON object per line), that's the easiest approach - no multi-line handling needed. Example:</p>
-                        <div class="code-block" style="margin-top: 0.5rem;">
+                        <div class="arch-diagram" style="margin-top: 0.5rem;">
 <pre>{"timestamp":"2025-01-04T10:23:45","level":"ERROR","service":"PaymentService","txn_id":"TXN-789456","error":"Timeout","user":"john.doe@company.com"}</pre>
                         </div>
                     </div>
@@ -407,7 +407,7 @@ AppLogs_CL
 
                     <div class="step-box">
                         <h4>Step 2: Configure Extended Retention</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># Set retention for MDE tables
 # Interactive retention: 90 days (can query normally)
 # Total retention: 2 years (archived, can restore)
@@ -434,7 +434,7 @@ done</pre>
                     <div class="step-box">
                         <h4>Step 3: For 7+ Year Compliance - Export to Storage</h4>
                         <p>For very long retention (7+ years for some regulations), export to Azure Storage:</p>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># Create Data Export Rule
 az monitor log-analytics workspace data-export create \
   --resource-group "SOC-RG" \
@@ -498,7 +498,7 @@ az monitor log-analytics workspace data-export create \
                     <p><strong>Situation:</strong> Your microservices produce structured JSON logs. You want to ingest them with all fields parsed.</p>
 
                     <h4>Example JSON Log</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>{
   "timestamp": "2025-01-04T10:23:45.123Z",
   "level": "ERROR",
@@ -524,7 +524,7 @@ az monitor log-analytics workspace data-export create \
 
                     <div class="step-box">
                         <h4>Step 1: Create Custom Table</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Table: MicroserviceLogs_CL
 {
   "columns": [
@@ -547,7 +547,7 @@ az monitor log-analytics workspace data-export create \
 
                     <div class="step-box">
                         <h4>Step 2: DCR Transformation for JSON</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Transformation query
 source
 | extend JsonData = parse_json(RawData)
@@ -569,7 +569,7 @@ source
 
                     <div class="step-box">
                         <h4>Step 3: Send via Logs Ingestion API</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># From your application or log shipper
 curl -X POST "https://&lt;DCE&gt;.ingest.monitor.azure.com/dataCollectionRules/&lt;DCR-ID&gt;/streams/Custom-MicroserviceLogs_CL?api-version=2023-01-01" \
   -H "Authorization: Bearer $TOKEN" \
@@ -580,7 +580,7 @@ curl -X POST "https://&lt;DCE&gt;.ingest.monitor.azure.com/dataCollectionRules/&
 
                     <div class="step-box">
                         <h4>Step 4: Query and Alert</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Find payment failures by error code
 MicroserviceLogs_CL
 | where TimeGenerated > ago(1h)
@@ -606,7 +606,7 @@ MicroserviceLogs_CL
                     <p><strong>Situation:</strong> Legacy systems (ERP, mainframe interfaces) produce XML-formatted logs.</p>
 
                     <h4>Example XML Log</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>&lt;LogEntry&gt;
   &lt;Timestamp&gt;2025-01-04T10:23:45&lt;/Timestamp&gt;
   &lt;Severity&gt;WARNING&lt;/Severity&gt;
@@ -626,7 +626,7 @@ MicroserviceLogs_CL
 
                     <div class="step-box">
                         <h4>DCR Transformation for XML</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Transformation query for XML
 source
 | extend XmlData = parse_xml(RawData)
@@ -651,7 +651,7 @@ source
                     <p><strong>Situation:</strong> Firewalls, IDS/IPS, proxies send logs via Syslog or CEF format.</p>
 
                     <h4>Architecture</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
 │  Firewall   │────▶│  Log Forwarder  │────▶│   Sentinel   │
 │  (Syslog)   │     │  (Linux + AMA)  │     │              │
@@ -666,7 +666,7 @@ source
 
                     <div class="step-box">
                         <h4>Step 1: Deploy Linux Log Forwarder with AMA</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># Deploy Azure Monitor Agent on Linux VM
 az vm extension set \
   --resource-group "SOC-RG" \
@@ -678,7 +678,7 @@ az vm extension set \
 
                     <div class="step-box">
                         <h4>Step 2: Create DCR for Syslog Collection</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>{
   "dataSources": {
     "syslog": [
@@ -707,7 +707,7 @@ az vm extension set \
                     <div class="step-box">
                         <h4>Step 3: Configure Firewall to Send Syslog</h4>
                         <p><strong>Palo Alto:</strong></p>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>Device → Server Profiles → Syslog
   Name: AzureSentinel
   Server: &lt;Log-Forwarder-IP&gt;
@@ -715,7 +715,7 @@ az vm extension set \
   Facility: LOCAL0</pre>
                         </div>
                         <p><strong>Fortinet:</strong></p>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>config log syslogd setting
   set status enable
   set server "&lt;Log-Forwarder-IP&gt;"
@@ -727,7 +727,7 @@ end</pre>
 
                     <div class="step-box">
                         <h4>Step 4: Query Firewall Logs</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// For CEF logs (CommonSecurityLog table)
 CommonSecurityLog
 | where TimeGenerated > ago(1h)
@@ -765,7 +765,7 @@ Syslog
 
                     <div class="step-box">
                         <h4>Option B: Via AWS EventBridge to Azure</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># CloudTrail → EventBridge → API Destination → Logs Ingestion API
 # More real-time than S3 polling</pre>
                         </div>
@@ -774,7 +774,7 @@ Syslog
                     <h4>GCP Logs to Sentinel</h4>
                     <div class="step-box">
                         <h4>Using Pub/Sub Export</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># 1. Create log sink in GCP
 gcloud logging sinks create sentinel-sink \
   pubsub.googleapis.com/projects/PROJECT/topics/sentinel-logs \
@@ -787,7 +787,7 @@ gcloud logging sinks create sentinel-sink \
 
                     <div class="step-box">
                         <h4>Query Multi-Cloud Data</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// Unified cloud admin activity view
 let AzureAdmin = AzureActivity
 | where CategoryValue == "Administrative"
@@ -812,7 +812,7 @@ union AzureAdmin, AWSAdmin
                     <h4>Solution: File-Based Collection</h4>
                     <div class="step-box">
                         <h4>Architecture for Legacy Integration</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>┌──────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌──────────────┐
 │   Mainframe  │────▶│  File Share     │────▶│  Collector VM   │────▶│   Sentinel   │
 │   (Logs)     │     │  (SMB/NFS)      │     │  (AMA + DCR)    │     │              │
@@ -822,7 +822,7 @@ union AzureAdmin, AWSAdmin
 
                     <div class="step-box">
                         <h4>Configure AMA to Monitor File Share</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// DCR for file-based collection
 {
   "dataSources": {
@@ -850,7 +850,7 @@ union AzureAdmin, AWSAdmin
                     <h3><i class="fas fa-balance-scale"></i> Scenario 8: Compliance & Long-Term Retention <span class="difficulty medium">Required</span></h3>
 
                     <h4>Complete Compliance Architecture</h4>
-                    <div class="code-block">
+                    <div class="arch-diagram">
 <pre>┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │                              DATA RETENTION ARCHITECTURE                                 │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
@@ -880,7 +880,7 @@ union AzureAdmin, AWSAdmin
 
                     <div class="step-box">
                         <h4>Setting Up Compliance Export</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># Create storage account for compliance data
 az storage account create \
   --name "compliancelogs" \
@@ -911,7 +911,7 @@ az storage account management-policy create \
 
                     <div class="step-box">
                         <h4>Lifecycle Policy (lifecycle-policy.json)</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>{
   "rules": [
     {
@@ -945,7 +945,7 @@ az storage account management-policy create \
 
                     <div class="step-box">
                         <h4>Strategy 1: Move High-Volume Tables to Basic Tier</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre># Identify high-volume tables
 // Run this query to see ingestion by table
 Usage
@@ -970,7 +970,7 @@ az monitor log-analytics workspace table update \
 
                     <div class="step-box">
                         <h4>Strategy 2: Filter at Ingestion with DCR</h4>
-                        <div class="code-block">
+                        <div class="arch-diagram">
 <pre>// DCR transformation to drop noisy events
 source
 | where not(EventID in (4656, 4658, 4660, 4663))  // Drop verbose object access events

@@ -236,7 +236,7 @@
 
                 <div class="operator-card">
                     <h4 style="color: #58a6ff;">Inner Join with Multiple Keys</h4>
-                    <div class="code-block">// Join sign-in logs with audit logs
+                    <div class="arch-diagram">// Join sign-in logs with audit logs
 SigninLogs
 | where TimeGenerated > ago(24h)
 | where ResultType == 0  // Successful
@@ -251,7 +251,7 @@ SigninLogs
 
                 <div class="operator-card">
                     <h4 style="color: #58a6ff;">Anti-Join (Find Non-Matching)</h4>
-                    <div class="code-block">// Find IPs that authenticated but never appeared before
+                    <div class="arch-diagram">// Find IPs that authenticated but never appeared before
 let known_ips = SigninLogs
 | where TimeGenerated between (ago(30d) .. ago(1d))
 | distinct IPAddress;
@@ -264,7 +264,7 @@ SigninLogs
 
                 <div class="operator-card">
                     <h4 style="color: #58a6ff;">Left Outer Join with Enrichment</h4>
-                    <div class="code-block">// Enrich security events with threat intelligence
+                    <div class="arch-diagram">// Enrich security events with threat intelligence
 SecurityEvent
 | where TimeGenerated > ago(1h)
 | where EventID == 4625
@@ -284,7 +284,7 @@ SecurityEvent
 
                 <div class="config-section">
                     <h3>Dynamic Thresholds with let</h3>
-                    <div class="code-block">// Calculate dynamic baseline and detect anomalies
+                    <div class="arch-diagram">// Calculate dynamic baseline and detect anomalies
 let baseline = SecurityEvent
 | where TimeGenerated between (ago(7d) .. ago(1d))
 | where EventID == 4625
@@ -300,7 +300,7 @@ SecurityEvent
 
                 <div class="config-section">
                     <h3>Reusable Functions with let</h3>
-                    <div class="code-block">// Define reusable function
+                    <div class="arch-diagram">// Define reusable function
 let GetRiskScore = (ip:string) {
     ThreatIntelligenceIndicator
     | where NetworkIP == ip
@@ -316,7 +316,7 @@ SigninLogs
 
                 <div class="config-section">
                     <h3>Materialized Views Pattern</h3>
-                    <div class="code-block">// Materialize intermediate results for reuse
+                    <div class="arch-diagram">// Materialize intermediate results for reuse
 let suspicious_users = materialize(
     SigninLogs
     | where TimeGenerated > ago(24h)
@@ -338,7 +338,7 @@ suspicious_users
 
                 <div class="config-section">
                     <h3>make-series for Trend Analysis</h3>
-                    <div class="code-block">// Create time series with gaps filled
+                    <div class="arch-diagram">// Create time series with gaps filled
 SigninLogs
 | where TimeGenerated > ago(7d)
 | make-series LoginCount=count() default=0 on TimeGenerated step 1h
@@ -351,7 +351,7 @@ SigninLogs
 
                 <div class="config-section">
                     <h3>Series Functions</h3>
-                    <div class="code-block">// Detect spikes using series statistics
+                    <div class="arch-diagram">// Detect spikes using series statistics
 SecurityEvent
 | where TimeGenerated > ago(30d)
 | where EventID in (4624, 4625)
@@ -372,7 +372,7 @@ SecurityEvent
 
                 <div class="config-section">
                     <h3>Complex Parse Patterns</h3>
-                    <div class="code-block">// Parse nested JSON from string field
+                    <div class="arch-diagram">// Parse nested JSON from string field
 AzureDiagnostics
 | extend Properties = parse_json(properties_s)
 | extend CallerIP = tostring(Properties.callerIpAddress)
@@ -394,7 +394,7 @@ SecurityEvent
 
                 <div class="config-section">
                     <h3>Dynamic JSON Parsing</h3>
-                    <div class="code-block">// Parse dynamic JSON and extract nested values
+                    <div class="arch-diagram">// Parse dynamic JSON and extract nested values
 let data = datatable(json_str:string) [
     '{"user":{"name":"john","id":123},"action":"login"}',
     '{"user":{"name":"jane","id":456},"action":"logout"}'
@@ -419,7 +419,7 @@ AuditLogs
 
                 <div class="config-section">
                     <h3>Beacon Detection (C2 Communication)</h3>
-                    <div class="code-block">// Detect regular interval connections (beaconing)
+                    <div class="arch-diagram">// Detect regular interval connections (beaconing)
 CommonSecurityLog
 | where TimeGenerated > ago(24h)
 | where DeviceAction == "allow"
@@ -444,7 +444,7 @@ CommonSecurityLog
 
                 <div class="config-section">
                     <h3>Lateral Movement Detection</h3>
-                    <div class="code-block">// Detect user authenticating to many machines
+                    <div class="arch-diagram">// Detect user authenticating to many machines
 SecurityEvent
 | where TimeGenerated > ago(1h)
 | where EventID == 4624
@@ -476,7 +476,7 @@ SecurityEvent
 
                 <div class="config-section">
                     <h3>Data Exfiltration Detection</h3>
-                    <div class="code-block">// Large outbound data transfers
+                    <div class="arch-diagram">// Large outbound data transfers
 CommonSecurityLog
 | where TimeGenerated > ago(24h)
 | where DeviceAction == "allow"
@@ -500,7 +500,7 @@ CommonSecurityLog
 
                 <div class="config-section">
                     <h3>Optimization Techniques</h3>
-                    <div class="code-block">// BAD: Inefficient query
+                    <div class="arch-diagram">// BAD: Inefficient query
 AzureActivity
 | extend parsed = parse_json(Properties)
 | where parsed.statusCode == "OK"
@@ -736,7 +736,7 @@ SigninLogs
                 <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
                 <div class="config-section">
                     <h4>Common Commands/Queries</h4>
-                    <div class="code-block"># Basic health check query
+                    <div class="arch-diagram"># Basic health check query
 # Adjust syntax for your platform (XQL/SPL/KQL)
 
 # Check data ingestion rate
@@ -918,7 +918,7 @@ SigninLogs
                     </table>
 
                     <h4>Diagnostic Commands and Queries</h4>
-                    <div class="code-block"># Health Check Queries (adjust syntax for your platform)
+                    <div class="arch-diagram"># Health Check Queries (adjust syntax for your platform)
 
 # Check system health status
 | filter log_type = "system_health"

@@ -266,7 +266,7 @@
                     </div>
 
                     <h4>Basic Transaction by Field</h4>
-                    <div class="code-block">// Group all events by session ID
+                    <div class="arch-diagram">// Group all events by session ID
 index=web sourcetype=access_combined
 | transaction session_id
 
@@ -276,7 +276,7 @@ index=web sourcetype=access_combined
 // _raw - combined raw events</div>
 
                     <h4>Transaction with Start/End Conditions</h4>
-                    <div class="code-block">// Group login sessions
+                    <div class="arch-diagram">// Group login sessions
 index=security sourcetype=WinEventLog:Security
 | transaction user startswith="EventCode=4624" endswith="EventCode=4634"
 | table user, duration, eventcount, _time
@@ -287,7 +287,7 @@ index=web
 | where eventcount > 1</div>
 
                     <h4>Transaction Time Controls</h4>
-                    <div class="code-block">// maxspan - maximum total duration
+                    <div class="arch-diagram">// maxspan - maximum total duration
 | transaction user maxspan=30m
 
 // maxpause - maximum gap between events
@@ -297,7 +297,7 @@ index=web
 | transaction session_id maxspan=1h maxpause=10m</div>
 
                     <h4>Security Use Cases</h4>
-                    <div class="code-block">// Track user session activity
+                    <div class="arch-diagram">// Track user session activity
 index=security EventCode IN (4624, 4625, 4634, 4647)
 | transaction user maxspan=8h startswith="EventCode=4624" endswith=(EventCode=4634 OR EventCode=4647)
 | eval session_hours = round(duration/3600, 2)
@@ -322,7 +322,7 @@ index=security EventCode=4663
                     <p>Subsearches run first and pass results to the outer search. Enclosed in square brackets <code>[ ]</code>.</p>
 
                     <h4>Basic Subsearch</h4>
-                    <div class="code-block">// Find all activity from IPs that had failed logins
+                    <div class="arch-diagram">// Find all activity from IPs that had failed logins
 index=firewall src_ip IN 
     [search index=security EventCode=4625 earliest=-1h
     | stats count by src_ip 
@@ -336,7 +336,7 @@ index=firewall src_ip IN
 // 4. Outer search filters firewall logs to those IPs</div>
 
                     <h4>Return Command (More Efficient)</h4>
-                    <div class="code-block">// return command is more efficient for subsearches
+                    <div class="arch-diagram">// return command is more efficient for subsearches
 index=firewall src_ip IN 
     [search index=security EventCode=4625 earliest=-1h
     | stats count by src_ip 
@@ -347,7 +347,7 @@ index=firewall src_ip IN
 // More efficient than fields command for subsearches</div>
 
                     <h4>Format Command for Complex Subsearches</h4>
-                    <div class="code-block">// format creates OR'd search string
+                    <div class="arch-diagram">// format creates OR'd search string
 index=web 
     [search index=threat_intel type=malicious_ip
     | fields ip
@@ -356,7 +356,7 @@ index=web
 // format output: ( ( ip="1.2.3.4" ) OR ( ip="5.6.7.8" ) ... )</div>
 
                     <h4>Subsearch Use Cases</h4>
-                    <div class="code-block">// Find all activity from users who accessed sensitive files
+                    <div class="arch-diagram">// Find all activity from users who accessed sensitive files
 index=endpoint 
     [search index=security EventCode=4663 ObjectName="*sensitive*"
     | dedup user
@@ -394,7 +394,7 @@ index=* host IN
                     </div>
 
                     <h4>Inner Join (Default)</h4>
-                    <div class="code-block">// Only matching records from both searches
+                    <div class="arch-diagram">// Only matching records from both searches
 index=security EventCode=4625
 | stats count as failed_logins by src_ip
 | join src_ip 
@@ -404,7 +404,7 @@ index=security EventCode=4625
 | table src_ip, hostname, owner, failed_logins</div>
 
                     <h4>Left Join</h4>
-                    <div class="code-block">// All records from main search, matching from subsearch
+                    <div class="arch-diagram">// All records from main search, matching from subsearch
 index=security EventCode=4625
 | stats count as failed_logins by src_ip
 | join type=left src_ip 
@@ -413,7 +413,7 @@ index=security EventCode=4625
 | table src_ip, hostname, failed_logins</div>
 
                     <h4>Outer Join</h4>
-                    <div class="code-block">// All records from both searches
+                    <div class="arch-diagram">// All records from both searches
 index=security EventCode=4625
 | stats count by src_ip
 | join type=outer src_ip 
@@ -421,14 +421,14 @@ index=security EventCode=4625
 | table src_ip, count, threat_type</div>
 
                     <h4>Join on Multiple Fields</h4>
-                    <div class="code-block">// Join on src_ip AND user
+                    <div class="arch-diagram">// Join on src_ip AND user
 index=vpn
 | join src_ip, user 
     [search index=security EventCode=4624 
     | fields src_ip, user, workstation]</div>
 
                     <h4>Alternative: stats + where (Often Better)</h4>
-                    <div class="code-block">// Instead of join, combine in single search
+                    <div class="arch-diagram">// Instead of join, combine in single search
 index=security OR index=assets
 | stats 
     values(EventCode) as events,
@@ -443,7 +443,7 @@ index=security OR index=assets
                 <h2><i class="fas fa-table"></i> Advanced Lookups</h2>
                 <div class="config-section">
                     <h4>Lookup Command</h4>
-                    <div class="code-block">// Basic lookup
+                    <div class="arch-diagram">// Basic lookup
 index=firewall
 | lookup geo_ip_lookup ip as src_ip OUTPUT country, city, latitude, longitude
 
@@ -456,7 +456,7 @@ index=security
 | lookup case_insensitive=true user_info.csv username as user OUTPUT department</div>
 
                     <h4>Inputlookup - Search a Lookup Directly</h4>
-                    <div class="code-block">// View entire lookup
+                    <div class="arch-diagram">// View entire lookup
 | inputlookup threat_intel.csv
 
 // Filter lookup contents
@@ -469,7 +469,7 @@ index=security
 | join file_hash [search index=endpoint | fields file_hash, host, file_path]</div>
 
                     <h4>Outputlookup - Save Results to Lookup</h4>
-                    <div class="code-block">// Create/overwrite lookup
+                    <div class="arch-diagram">// Create/overwrite lookup
 index=security EventCode=4625
 | stats count by src_ip
 | where count > 10
@@ -486,7 +486,7 @@ index=assets
 | outputlookup createinapp=true assets_inventory.csv</div>
 
                     <h4>Automatic Lookups</h4>
-                    <div class="code-block">// Configure in transforms.conf and props.conf for automatic enrichment
+                    <div class="arch-diagram">// Configure in transforms.conf and props.conf for automatic enrichment
 // When configured, lookups run automatically on search
 
 // Example: Automatic user department lookup
@@ -499,7 +499,7 @@ index=security EventCode=4624
                 <h2><i class="fas fa-calculator"></i> Advanced Eval Functions</h2>
                 <div class="config-section">
                     <h4>Conditional Logic</h4>
-                    <div class="code-block">// Nested if statements
+                    <div class="arch-diagram">// Nested if statements
 | eval risk_level = if(count > 100, "Critical", 
                     if(count > 50, "High",
                     if(count > 10, "Medium", "Low")))
@@ -519,7 +519,7 @@ index=security EventCode=4624
 | eval clean_user = nullif(user, "N/A")</div>
 
                     <h4>String Manipulation</h4>
-                    <div class="code-block">// Extract domain from email
+                    <div class="arch-diagram">// Extract domain from email
 | eval domain = mvindex(split(email, "@"), 1)
 
 // Extract filename from path
@@ -538,7 +538,7 @@ index=security EventCode=4624
 | eval padded_id = printf("%08d", id)</div>
 
                     <h4>Time Calculations</h4>
-                    <div class="code-block">// Time since event
+                    <div class="arch-diagram">// Time since event
 | eval hours_ago = round((now() - _time) / 3600, 2)
 
 // Business hours check
@@ -555,7 +555,7 @@ index=security EventCode=4624
 | eval gap_seconds = _time - prev_time</div>
 
                     <h4>Network Functions</h4>
-                    <div class="code-block">// CIDR matching
+                    <div class="arch-diagram">// CIDR matching
 | where cidrmatch("10.0.0.0/8", src_ip)
 
 // Check if IP is internal
@@ -574,7 +574,7 @@ index=security EventCode=4624
                 <h2><i class="fas fa-chart-line"></i> Eventstats and Streamstats</h2>
                 <div class="config-section">
                     <h4>Eventstats - Add Aggregations Without Reducing Rows</h4>
-                    <div class="code-block">// Add total to each event
+                    <div class="arch-diagram">// Add total to each event
 index=security EventCode=4625
 | eventstats count as total_failures
 | eval percentage = round(count * 100 / total_failures, 2)
@@ -595,7 +595,7 @@ index=security
     by user</div>
 
                     <h4>Streamstats - Running Statistics</h4>
-                    <div class="code-block">// Running count
+                    <div class="arch-diagram">// Running count
 index=security
 | sort _time
 | streamstats count as running_total
@@ -623,7 +623,7 @@ index=web
 | where requests_per_min > 100</div>
 
                     <h4>Streamstats for Anomaly Detection</h4>
-                    <div class="code-block">// Compare current event to recent baseline
+                    <div class="arch-diagram">// Compare current event to recent baseline
 index=firewall
 | sort _time
 | streamstats avg(bytes) as baseline_avg, stdev(bytes) as baseline_std window=100 current=f
@@ -644,7 +644,7 @@ index=heartbeat
                     <p>Macros are reusable search snippets defined in macros.conf or via Splunk UI.</p>
 
                     <h4>Using Macros</h4>
-                    <div class="code-block">// Macro with no arguments
+                    <div class="arch-diagram">// Macro with no arguments
 `security_index`
 // Expands to: index=security sourcetype=WinEventLog:Security
 
@@ -656,7 +656,7 @@ index=heartbeat
 index=security `exclude_service_accounts` `business_hours_only`</div>
 
                     <h4>Defining Macros (in macros.conf)</h4>
-                    <div class="code-block"># macros.conf
+                    <div class="arch-diagram"># macros.conf
 
 [security_index]
 definition = index=security sourcetype=WinEventLog:Security
@@ -676,7 +676,7 @@ args = field, weight
 definition = eval risk_score = $field$ * $weight$</div>
 
                     <h4>Security Macro Examples</h4>
-                    <div class="code-block"># Useful security macros
+                    <div class="arch-diagram"># Useful security macros
 
 [internal_ip]
 definition = (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("172.16.0.0/12", src_ip) OR cidrmatch("192.168.0.0/16", src_ip))
@@ -699,7 +699,7 @@ definition = process_name IN ("mimikatz.exe", "procdump.exe", "psexec.exe", "wmi
                 <div class="config-section">
                     <p><code>tstats</code> queries indexed fields directly, providing 10-100x performance improvement over regular searches.</p>
 
-                    <div class="code-block">// Basic tstats query
+                    <div class="arch-diagram">// Basic tstats query
 | tstats count where index=security by source, sourcetype
 
 // With time bucketing
@@ -728,7 +728,7 @@ definition = process_name IN ("mimikatz.exe", "procdump.exe", "psexec.exe", "wmi
                 <h2><i class="fas fa-shield-alt"></i> Security Analysis Patterns</h2>
                 <div class="config-section">
                     <h4>Baseline and Anomaly Detection</h4>
-                    <div class="code-block">// Build baseline and detect anomalies
+                    <div class="arch-diagram">// Build baseline and detect anomalies
 index=proxy
 | stats count as daily_requests by user, _time span=1d
 | eventstats avg(daily_requests) as baseline, stdev(daily_requests) as std by user
@@ -736,7 +736,7 @@ index=proxy
 | table _time, user, daily_requests, baseline</div>
 
                     <h4>First-Time Activity Detection</h4>
-                    <div class="code-block">// First time user logged into system
+                    <div class="arch-diagram">// First time user logged into system
 index=security EventCode=4624
 | stats earliest(_time) as first_login by user, ComputerName
 | where first_login > relative_time(now(), "-24h")
@@ -744,7 +744,7 @@ index=security EventCode=4624
 | table user, ComputerName, first_login</div>
 
                     <h4>Peer Group Analysis</h4>
-                    <div class="code-block">// Compare user activity to department peers
+                    <div class="arch-diagram">// Compare user activity to department peers
 index=proxy
 | lookup user_department.csv user OUTPUT department
 | stats count as user_requests by user, department
@@ -754,7 +754,7 @@ index=proxy
 | table user, department, user_requests, dept_avg, deviation_pct</div>
 
                     <h4>Threshold Alerting</h4>
-                    <div class="code-block">// Failed login threshold with context
+                    <div class="arch-diagram">// Failed login threshold with context
 index=security EventCode=4625
 | bin _time span=10m
 | stats count, values(user) as targeted_users, dc(user) as user_count by src_ip, _time
@@ -804,7 +804,7 @@ index=security EventCode=4625
                                 <li>Supports time windows and event windows</li>
                                 <li>Good for: running totals, detecting velocity changes, anomaly detection</li>
                             </ul>
-                            <div class="code-block">// eventstats: same total on all rows
+                            <div class="arch-diagram">// eventstats: same total on all rows
 | eventstats count as total
 
 // streamstats: cumulative count
@@ -821,7 +821,7 @@ index=security EventCode=4625
                                 <li><strong>Use lookups:</strong> If subsearch data is static, save as lookup</li>
                                 <li><strong>Increase limits:</strong> <code>maxout</code>, <code>maxtime</code> in limits.conf</li>
                             </ol>
-                            <div class="code-block">// Slow
+                            <div class="arch-diagram">// Slow
 src_ip IN [search index=threat_intel | fields ip]
 
 // Better

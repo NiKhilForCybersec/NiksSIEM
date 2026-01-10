@@ -183,7 +183,7 @@
                     <p><span class="console-path">security.microsoft.com → Hunting → Advanced hunting</span></p>
 
                     <h4>Advanced Hunting Capabilities</h4>
-                    <div class="code-block">Advanced Hunting Features:
+                    <div class="arch-diagram">Advanced Hunting Features:
 
 CAPABILITIES:
 ├── Query up to 30 days of data
@@ -215,7 +215,7 @@ BEST PRACTICES:
 └── Save successful queries</div>
 
                     <h4>Key Tables</h4>
-                    <div class="code-block">MDE Advanced Hunting Tables:
+                    <div class="arch-diagram">MDE Advanced Hunting Tables:
 
 DEVICE TABLES:
 ├── DeviceInfo
@@ -258,7 +258,7 @@ IDENTITY TABLES (with MDI):
                 <h2><i class="fas fa-cogs"></i> Process Hunting</h2>
                 <div class="config-section">
                     <h4>DeviceProcessEvents</h4>
-                    <div class="code-block">// Basic process execution query
+                    <div class="arch-diagram">// Basic process execution query
 DeviceProcessEvents
 | where Timestamp > ago(24h)
 | where FileName == "powershell.exe"
@@ -283,7 +283,7 @@ DeviceProcessEvents
 // - InitiatingProcessId: Parent PID</div>
 
                     <h4>Suspicious Process Patterns</h4>
-                    <div class="code-block">// PowerShell with encoded commands
+                    <div class="arch-diagram">// PowerShell with encoded commands
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where FileName in~ ("powershell.exe", "pwsh.exe")
@@ -331,7 +331,7 @@ DeviceProcessEvents
                 <h2><i class="fas fa-network-wired"></i> Network Hunting</h2>
                 <div class="config-section">
                     <h4>DeviceNetworkEvents</h4>
-                    <div class="code-block">// External connections by process
+                    <div class="arch-diagram">// External connections by process
 DeviceNetworkEvents
 | where Timestamp > ago(24h)
 | where RemoteIPType == "Public"
@@ -370,7 +370,7 @@ DeviceNetworkEvents
 | order by ConnectionCount desc</div>
 
                     <h4>C2 and Beaconing Detection</h4>
-                    <div class="code-block">// Potential beaconing (regular intervals)
+                    <div class="arch-diagram">// Potential beaconing (regular intervals)
 DeviceNetworkEvents
 | where Timestamp > ago(24h)
 | where RemoteIPType == "Public"
@@ -413,7 +413,7 @@ DeviceNetworkEvents
                 <h2><i class="fas fa-file"></i> File Hunting</h2>
                 <div class="config-section">
                     <h4>DeviceFileEvents</h4>
-                    <div class="code-block">// New executables in sensitive locations
+                    <div class="arch-diagram">// New executables in sensitive locations
 DeviceFileEvents
 | where Timestamp > ago(24h)
 | where ActionType == "FileCreated"
@@ -450,7 +450,7 @@ DeviceFileEvents
           InitiatingProcessFileName</div>
 
                     <h4>Ransomware Indicators</h4>
-                    <div class="code-block">// Mass file modifications (potential ransomware)
+                    <div class="arch-diagram">// Mass file modifications (potential ransomware)
 DeviceFileEvents
 | where Timestamp > ago(1h)
 | where ActionType in ("FileModified", "FileRenamed")
@@ -482,7 +482,7 @@ DeviceProcessEvents
                 <!-- Registry Hunting -->
                 <h2><i class="fas fa-key"></i> Registry Hunting</h2>
                 <div class="config-section">
-                    <div class="code-block">// Persistence via Run keys
+                    <div class="arch-diagram">// Persistence via Run keys
 DeviceRegistryEvents
 | where Timestamp > ago(7d)
 | where ActionType == "RegistryValueSet"
@@ -529,7 +529,7 @@ DeviceRegistryEvents
                 <!-- Identity Hunting -->
                 <h2><i class="fas fa-user-shield"></i> Identity & Logon Hunting</h2>
                 <div class="config-section">
-                    <div class="code-block">// Failed logons followed by success (brute force)
+                    <div class="arch-diagram">// Failed logons followed by success (brute force)
 let FailedLogons = DeviceLogonEvents
 | where Timestamp > ago(24h)
 | where ActionType == "LogonFailed"
@@ -580,7 +580,7 @@ DeviceLogonEvents
                 <h2><i class="fas fa-crosshairs"></i> MITRE ATT&CK Hunting Queries</h2>
                 <div class="config-section">
                     <h4>Execution (TA0002)</h4>
-                    <div class="code-block">// T1059.001 - PowerShell
+                    <div class="arch-diagram">// T1059.001 - PowerShell
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where FileName in~ ("powershell.exe", "pwsh.exe")
@@ -608,7 +608,7 @@ DeviceProcessEvents
 | project Timestamp, DeviceName, AccountName, ProcessCommandLine</div>
 
                     <h4>Persistence (TA0003)</h4>
-                    <div class="code-block">// T1053.005 - Scheduled Tasks
+                    <div class="arch-diagram">// T1053.005 - Scheduled Tasks
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where FileName in~ ("schtasks.exe", "at.exe")
@@ -632,7 +632,7 @@ DeviceRegistryEvents
           InitiatingProcessFileName</div>
 
                     <h4>Credential Access (TA0006)</h4>
-                    <div class="code-block">// T1003.001 - LSASS Memory Dump
+                    <div class="arch-diagram">// T1003.001 - LSASS Memory Dump
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where FileName in~ ("procdump.exe", "procdump64.exe", 
@@ -661,7 +661,7 @@ DeviceProcessEvents
                 <div class="config-section">
                     <p><span class="console-path">security.microsoft.com → Hunting → Custom detection rules</span></p>
 
-                    <div class="code-block">Custom Detection Rule Creation:
+                    <div class="arch-diagram">Custom Detection Rule Creation:
 
 STEPS:
 1. Create and test hunting query
@@ -726,7 +726,7 @@ BEST PRACTICES:
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you detect encoded PowerShell?</button>
                         <div class="qa-answer">
-                            <div class="code-block">DeviceProcessEvents
+                            <div class="arch-diagram">DeviceProcessEvents
 | where FileName in~ ("powershell.exe", "pwsh.exe")
 | where ProcessCommandLine has_any 
         ("-enc", "-encodedcommand", "-e ", "frombase64string")

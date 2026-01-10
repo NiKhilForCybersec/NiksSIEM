@@ -312,7 +312,7 @@
                 <h2><i class="fas fa-code"></i> XQL Query Structure for Correlation Rules</h2>
                 <div class="config-section">
                     <p>Correlation rule queries must return fields that XSIAM can use for alerting:</p>
-                    <div class="code-block">// Basic correlation rule structure
+                    <div class="arch-diagram">// Basic correlation rule structure
 dataset = &lt;dataset_name&gt;
 | filter &lt;conditions&gt;
 | &lt;aggregation or processing&gt;
@@ -345,7 +345,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1110.001</span> Brute Force Authentication Attack</h3>
                     <p><strong>Detection:</strong> Multiple failed logins followed by success from same source</p>
                     <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
-                    <div class="code-block">dataset = xdr_identity_data
+                    <div class="arch-diagram">dataset = xdr_identity_data
 | filter event_type = "authentication"
 | filter auth_result in ("failure", "success")
 | comp 
@@ -376,7 +376,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1048</span> Potential Data Exfiltration</h3>
                     <p><strong>Detection:</strong> Unusually large outbound data transfer to external IP</p>
                     <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
-                    <div class="code-block">dataset = panw_ngfw_traffic_raw
+                    <div class="arch-diagram">dataset = panw_ngfw_traffic_raw
 | filter direction = "outbound"
 | filter dst_ip_public = true
 | comp 
@@ -406,7 +406,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1021.002</span> SMB Lateral Movement</h3>
                     <p><strong>Detection:</strong> Single host connecting to multiple internal hosts via SMB</p>
                     <p><strong>Severity:</strong> <span class="severity-medium">Medium</span></p>
-                    <div class="code-block">dataset = panw_ngfw_traffic_raw
+                    <div class="arch-diagram">dataset = panw_ngfw_traffic_raw
 | filter app = "ms-ds-smb" or dst_port in (445, 139)
 | filter src_ip_private = true and dst_ip_private = true
 | comp 
@@ -434,7 +434,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1078</span> Impossible Travel Detection</h3>
                     <p><strong>Detection:</strong> User authentication from geographically distant locations in short time</p>
                     <p><strong>Severity:</strong> <span class="severity-medium">Medium</span></p>
-                    <div class="code-block">dataset = xdr_identity_data
+                    <div class="arch-diagram">dataset = xdr_identity_data
 | filter event_type = "authentication" and auth_result = "success"
 | sort _time asc
 | comp 
@@ -464,7 +464,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1071</span> Known Malicious Domain Communication</h3>
                     <p><strong>Detection:</strong> DNS query or connection to threat intel flagged domain</p>
                     <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
-                    <div class="code-block">dataset = panw_ngfw_dns_raw
+                    <div class="arch-diagram">dataset = panw_ngfw_dns_raw
 | filter query_type in ("A", "AAAA", "CNAME")
 | join type=inner (
     dataset = threat_intel_indicators
@@ -491,7 +491,7 @@ dataset = &lt;dataset_name&gt;
                     <h3><span class="mitre-tag">T1078.002</span> New Admin Account Created</h3>
                     <p><strong>Detection:</strong> User added to privileged group (Domain Admins, Enterprise Admins)</p>
                     <p><strong>Severity:</strong> <span class="severity-high">High</span></p>
-                    <div class="code-block">dataset = msft_security_events_raw
+                    <div class="arch-diagram">dataset = msft_security_events_raw
 | filter event_id in (4728, 4732, 4756)  // Member added to security group
 | filter target_group_name in (
     "Domain Admins", "Enterprise Admins", "Schema Admins",
@@ -515,7 +515,7 @@ dataset = &lt;dataset_name&gt;
                 <h2><i class="fas fa-calculator"></i> Aggregation Patterns</h2>
                 <div class="config-section">
                     <h4>Threshold-Based Detection</h4>
-                    <div class="code-block">// Count events exceeding threshold
+                    <div class="arch-diagram">// Count events exceeding threshold
 | comp count() as event_count by src_ip over 15m
 | filter event_count >= 100
 
@@ -528,7 +528,7 @@ dataset = &lt;dataset_name&gt;
 | filter unique_dests >= 50</div>
 
                     <h4>Time-Window Correlation</h4>
-                    <div class="code-block">// Events in sequence (A then B)
+                    <div class="arch-diagram">// Events in sequence (A then B)
 | comp 
     event_a_time = minif(_time, event_type = "A"),
     event_b_time = maxif(_time, event_type = "B")
@@ -543,7 +543,7 @@ dataset = &lt;dataset_name&gt;
 | filter timestamp_diff(last_event, first_event, "MINUTE") <= 10</div>
 
                     <h4>Statistical Anomaly Detection</h4>
-                    <div class="code-block">// Baseline comparison (requires historical data)
+                    <div class="arch-diagram">// Baseline comparison (requires historical data)
 | comp avg(event_count) as baseline by src_host over 7d
 | join type=inner (
     // Current activity
@@ -591,7 +591,7 @@ dataset = &lt;dataset_name&gt;
                     </table>
 
                     <h4>Adding Exclusions</h4>
-                    <div class="code-block">// Exclude known service accounts
+                    <div class="arch-diagram">// Exclude known service accounts
 | filter target_user !in ("svc_backup", "svc_monitor", "healthcheck")
 
 // Exclude known scanners
@@ -643,7 +643,7 @@ dataset = &lt;dataset_name&gt;
                 <h2><i class="fas fa-tachometer-alt"></i> Performance Optimization</h2>
                 <div class="config-section">
                     <h4>Query Optimization Tips</h4>
-                    <div class="code-block">// BAD: Filter after aggregation
+                    <div class="arch-diagram">// BAD: Filter after aggregation
 dataset = panw_ngfw_traffic_raw
 | comp sum(bytes) as total by src_ip over 1h
 | filter total > 1000000000
