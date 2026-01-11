@@ -34,7 +34,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
-
 /* LAYOUT */
 .app-container { display: flex; min-height: 100vh; }
 .sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border-color); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100; }
@@ -456,25 +455,229 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
 .phase-badge { display: inline-block; padding: 0.2em 0.5em; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: var(--bg-tertiary); }
 .phase-2, .phase-3, .phase-4 { margin: 1rem 0; }
 
-/* DECISION TREES */
-.decision-tree { padding: 2rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin: 1.5rem 0; }
-.decision-node { background: var(--bg-tertiary); border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.25rem; text-align: center; max-width: 400px; margin: 0 auto; }
-.decision-node.question, .decision-node-question { border-color: var(--accent-blue); background: rgba(88, 166, 255, 0.1); }
-.decision-node.question strong, .decision-node-question strong { color: var(--accent-blue); }
-.decision-node.yes, .yes { border-color: var(--accent-green); background: rgba(63, 185, 80, 0.1); }
-.decision-node.yes strong { color: var(--accent-green); }
-.decision-node.no, .no { border-color: var(--accent-red); background: rgba(248, 81, 73, 0.1); }
-.decision-node.no strong { color: var(--accent-red); }
-.decision-branch { display: flex; justify-content: center; gap: 3rem; margin-top: 0.5rem; }
-.decision-branch > div { display: flex; flex-direction: column; align-items: center; }
-.decision-arrow { color: var(--text-muted); font-size: 1.1rem; padding: 0.5rem 0; font-weight: 600; }
-.decision-box { background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin: 0.5rem 0; }
-.decision-path { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); margin: 0.5rem 0; }
-.decision-path-label { padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
-.decision-path-label.yes { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
-.decision-path-label.no { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
-.decision-path-content { flex: 1; }
-.decision-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+
+/* ============================================
+   DECISION TREES - FIXED v2.0
+   Handles both horizontal and cascading patterns
+   ============================================ */
+
+/* Container */
+.decision-tree {
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin: 1.5rem 0;
+}
+
+.decision-tree h3 {
+    margin: 0 0 1.25rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.decision-tree h3 i {
+    color: var(--accent-blue);
+    margin-right: 0.5rem;
+}
+
+/* Main question node - first node in tree, centered */
+.decision-tree > .decision-node:first-of-type {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--accent-blue);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    max-width: 550px;
+    margin: 0 auto 1rem auto;
+}
+
+/* Generic decision node */
+.decision-node {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.875rem 1rem;
+    text-align: center;
+}
+
+.decision-node i {
+    display: block;
+    color: var(--accent-blue);
+    margin-bottom: 0.35rem;
+}
+
+.decision-node span,
+.decision-node strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.decision-node small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+}
+
+/* Decision branch - horizontal row: [LABEL] [CONTENT] */
+.decision-branch {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+    margin: 0.75rem 0;
+    flex-wrap: wrap;
+}
+
+/* Decision arrow - colored label pill */
+.decision-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+
+/* Arrows with inline background (from HTML) - white text */
+.decision-arrow[style*="background"] {
+    color: white !important;
+    border: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* YES class arrow */
+.decision-arrow.yes {
+    background: var(--accent-green);
+    color: white;
+    border-color: var(--accent-green);
+}
+
+/* NO class arrow */
+.decision-arrow.no {
+    background: var(--accent-red);
+    color: white;
+    border-color: var(--accent-red);
+}
+
+/* Decision outcome - result box with left accent */
+.decision-outcome {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: var(--radius-md);
+    padding: 0.875rem 1rem;
+    text-align: left;
+}
+
+.decision-outcome i {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.35rem;
+}
+
+.decision-outcome strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.decision-outcome small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.decision-outcome code {
+    font-size: 0.75rem;
+    padding: 0.1em 0.3em;
+}
+
+/* Nested branches - full width, indented */
+.decision-branch .decision-branch {
+    width: 100%;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--border-color);
+}
+
+/* Node within a branch - allow it to grow */
+.decision-branch > .decision-node {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    margin: 0;
+}
+
+/* Decision paths (grid pattern for side-by-side) */
+.decision-paths {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.decision-path {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.decision-path-label {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.decision-path-label.yes {
+    background: rgba(63, 185, 80, 0.2);
+    color: var(--accent-green);
+}
+
+.decision-path-label.no {
+    background: rgba(248, 81, 73, 0.2);
+    color: var(--accent-red);
+}
+
+.decision-path-content {
+    flex: 1;
+}
+
+/* Decision box */
+.decision-box {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+/* Legacy support */
+.decision-node.question { border-color: var(--accent-blue); }
+.decision-node.yes { border-color: var(--accent-green); }
+.decision-node.no { border-color: var(--accent-red); }
 
 /* FLOW DIAGRAMS */
 .flow-diagram { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; }
@@ -1366,235 +1569,9 @@ body > .container {
 }
 
 /* ============================================
-   COMPLETE DECISION TREE CSS v4.0
-   Compatible with all modern browsers
+   DECISION TREE RESPONSIVE OVERRIDES
    ============================================ */
 
-/* Container */
-.decision-tree {
-    padding: 1.5rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    margin: 1.5rem 0;
-}
-
-.decision-tree h3 {
-    margin: 0 0 1.25rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 1.1rem;
-    color: var(--text-primary);
-}
-
-.decision-tree h3 i {
-    color: var(--accent-blue);
-    margin-right: 0.5rem;
-}
-
-/* Main question node - first child centered */
-.decision-tree > .decision-node:first-of-type {
-    background: var(--bg-tertiary);
-    border: 2px solid var(--accent-blue);
-    border-radius: var(--radius-md);
-    padding: 1rem 1.5rem;
-    text-align: center;
-    max-width: 600px;
-    margin: 0 auto 1.5rem auto;
-}
-
-.decision-tree > .decision-node:first-of-type i {
-    color: var(--accent-blue);
-    font-size: 1.25rem;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.decision-tree > .decision-node:first-of-type strong {
-    color: var(--text-primary);
-    font-size: 1rem;
-    display: block;
-}
-
-.decision-tree > .decision-node:first-of-type small {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    display: block;
-    margin-top: 0.5rem;
-}
-
-/* Generic decision node */
-.decision-node {
-    background: var(--bg-tertiary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    text-align: center;
-}
-
-.decision-node i {
-    color: var(--text-muted);
-    font-size: 1rem;
-    display: block;
-    margin-bottom: 0.35rem;
-}
-
-.decision-node strong {
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    display: block;
-}
-
-.decision-node small {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    display: block;
-    margin-top: 0.35rem;
-}
-
-/* Decision branch - flexbox row */
-.decision-branch {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin: 0.75rem 0;
-}
-
-/* Allow branches to flow naturally */
-.decision-branch > * {
-    flex-shrink: 0;
-}
-
-.decision-branch > .decision-node,
-.decision-branch > .decision-outcome {
-    flex: 1;
-    min-width: 200px;
-}
-
-/* Decision arrow as colored label */
-.decision-arrow {
-    display: inline-block;
-    min-width: 80px;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-align: center;
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    margin-bottom: 0.5rem;
-}
-
-/* Styles for yes/no classes */
-.decision-arrow.yes {
-    background: rgba(63, 185, 80, 0.15);
-    color: var(--accent-green);
-    border-color: var(--accent-green);
-}
-
-.decision-arrow.no {
-    background: rgba(248, 81, 73, 0.15);
-    color: var(--accent-red);
-    border-color: var(--accent-red);
-}
-
-/* Arrow with inline background (from HTML) - ensure text is visible */
-.decision-arrow[style*="background"] {
-    color: white;
-    border: none;
-}
-
-/* Decision outcome - result box with left accent */
-.decision-outcome {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-left: 4px solid var(--accent-blue);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-}
-
-.decision-outcome i {
-    font-size: 1.1rem;
-    margin-bottom: 0.35rem;
-}
-
-.decision-outcome strong {
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    display: block;
-}
-
-.decision-outcome small {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    line-height: 1.5;
-    display: block;
-    margin-top: 0.35rem;
-}
-
-.decision-outcome code {
-    font-size: 0.75rem;
-    padding: 0.15em 0.35em;
-}
-
-/* Nested branches - stack vertically with indent */
-.decision-branch .decision-branch {
-    width: 100%;
-    margin-left: 1.5rem;
-    flex-basis: 100%;
-}
-
-/* Decision paths (grid pattern) */
-.decision-paths {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.decision-path {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-}
-
-.decision-path-label {
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.decision-path-label.yes {
-    background: rgba(63, 185, 80, 0.2);
-    color: var(--accent-green);
-}
-
-.decision-path-label.no {
-    background: rgba(248, 81, 73, 0.2);
-    color: var(--accent-red);
-}
-
-.decision-path-content {
-    flex: 1;
-}
-
-/* Decision box */
-.decision-box {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
     .decision-tree {
         padding: 1rem;
@@ -1602,24 +1579,34 @@ body > .container {
     
     .decision-branch {
         flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .decision-arrow {
+        align-self: flex-start;
+        min-width: auto;
     }
     
     .decision-branch > .decision-node,
-    .decision-branch > .decision-outcome {
-        min-width: 100%;
+    .decision-outcome {
+        max-width: 100%;
+        min-width: auto;
     }
     
     .decision-branch .decision-branch {
-        margin-left: 1rem;
+        margin-left: 0.5rem;
+        padding-left: 0.75rem;
     }
     
     .decision-tree > .decision-node:first-of-type {
         max-width: 100%;
+        padding: 0.875rem 1rem;
     }
 }
 
 @media print {
     .decision-tree {
         break-inside: avoid;
+        page-break-inside: avoid;
     }
 }
