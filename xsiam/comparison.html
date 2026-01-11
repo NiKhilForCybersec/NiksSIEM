@@ -1048,6 +1048,82 @@ default = enabled</code></pre>
                 </section>
                 <!-- Interview Preparation -->
                 <section class="content-section interview-section" id="interview">
+                    <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                    <div class="qa-section">
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Compare the data ingestion approaches between XSIAM, Sentinel, and Splunk. When would you choose each?</button>
+                            <div class="qa-answer">
+                                <p>Each platform takes a fundamentally different approach to getting data in, and understanding these differences is crucial for architecture decisions. The choice often depends on your existing infrastructure and where your data sources live.</p>
+                                
+                                <p>XSIAM's approach centers on the Broker VM for on-premises collection and native cloud integrations. The strength is simplicity - you deploy Broker VMs to receive syslog/CEF, and everything else is configured in the cloud console. The XDR agent handles endpoint telemetry natively. The limitation is flexibility; you're constrained to Palo Alto's supported methods and can't do complex routing or transformation at the collection layer like you can with Splunk's Heavy Forwarders.</p>
+                                
+                                <p>Sentinel's architecture uses Azure Monitor Agent (AMA) with Data Collection Rules (DCRs). The DCR model is powerful once you understand it - you define what to collect, how to transform it, and where to send it all in one configuration. For Azure-native workloads, ingestion is almost zero-effort with Diagnostic Settings. The complexity comes with hybrid environments where you need Azure Arc to manage on-premises machines and Azure Functions for custom API polling.</p>
+                                
+                                <p>Splunk offers the most flexibility with its tiered forwarder architecture. Universal Forwarders are lightweight agents that send raw data, while Heavy Forwarders can do complex processing, routing, and API polling. This flexibility is both strength and weakness - you can do almost anything, but you also have to manage more infrastructure. For organizations with diverse data sources and complex routing needs, Splunk's approach scales well.</p>
+                                
+                                <p>My recommendation: If you're greenfield and cloud-native, Sentinel's integration with Azure is compelling. If you need an integrated XDR/SIEM/SOAR platform, XSIAM reduces operational complexity. If you have complex on-premises infrastructure and need maximum flexibility, Splunk's mature forwarder ecosystem handles edge cases better than the alternatives.</p>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the differences between XDM, ASIM, and CIM for data normalization. How does this affect detection rule portability?</button>
+                            <div class="qa-answer">
+                                <p>Data normalization is fundamental to effective detection because it lets you write rules that work across multiple data sources. Each platform takes a different approach to when and how normalization happens, which significantly impacts rule development and portability.</p>
+                                
+                                <p>XSIAM's XDM (XDR Data Model) normalizes at ingest time. When data comes in, parsing rules map source-specific fields to standardized XDM fields like xdm.source.ipv4, xdm.target.user.username, etc. Detection rules query XDM fields directly, so a single rule like "failed login from multiple sources" works across Active Directory, Linux auth, and cloud IAM without modification. The trade-off is you need proper parsing rules for each source, and if parsing is wrong, it's wrong permanently in storage.</p>
+                                
+                                <p>Sentinel's ASIM (Advanced Security Information Model) provides both options. You can normalize at ingest using DCR transformations, or use query-time ASIM parsers that normalize data when you search it. The query-time approach is flexible - you can fix parsing issues without re-ingesting data - but it adds query complexity and performance overhead. Most organizations use a hybrid: ingest-time normalization for high-volume sources and query-time parsers for less critical data.</p>
+                                
+                                <p>Splunk's CIM (Common Information Model) is primarily search-time normalization. Technology Add-ons (TAs) define field aliases and calculated fields that map source-specific fields to CIM fields when you search. This means raw data stays raw, and you can update normalization without re-indexing. The downside is every CIM-compliant search needs to run the normalization logic, which can impact performance on large datasets.</p>
+                                
+                                <p>For detection rule portability: XDM rules are the most portable within XSIAM since everything is pre-normalized. Moving rules between platforms requires translation - XQL to KQL to SPL isn't just syntax; the underlying data models differ. ASIM and CIM share some concepts, but XDM's structure is quite different. In practice, expect to rewrite 30-40% of rule logic when migrating between platforms, even after field mapping.</p>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do the SOAR capabilities compare between XSIAM's XSOAR, Sentinel's Logic Apps, and Splunk SOAR?</button>
+                            <div class="qa-answer">
+                                <p>SOAR is where these platforms diverge most significantly. XSIAM has XSOAR built-in, Sentinel leverages Azure Logic Apps, and Splunk has Splunk SOAR (formerly Phantom) as a separate product. Each approach has distinct advantages and limitations.</p>
+                                
+                                <p>XSOAR in XSIAM is the most integrated SOAR experience. Playbooks trigger automatically from incidents, results feed back into the incident timeline, and the War Room provides real-time collaboration. The visual playbook builder supports both drag-and-drop and Python/YAML for complex logic. With 800+ content packs in the Marketplace, most common integrations are available out-of-the-box. The limitation is it's tightly coupled to XSIAM - you can't easily use XSOAR with data from other SIEMs.</p>
+                                
+                                <p>Sentinel uses Azure Logic Apps for automation, which means you get access to the entire Azure ecosystem - 500+ connectors covering both security and business applications. Logic Apps are event-driven and can be triggered by analytics rules, incidents, or external webhooks. The visual designer is intuitive, and you can escalate to Azure Functions for complex Python/C# logic. The downside is Logic Apps weren't designed specifically for security operations, so some security-specific features feel bolted on. Also, each Logic App run has costs that can add up at scale.</p>
+                                
+                                <p>Splunk SOAR is the most mature dedicated SOAR platform. Its lineage as Phantom means it was built specifically for security orchestration. The playbook editor is powerful, Python apps provide unlimited extensibility, and case management is robust. The challenge is it's a separate product that needs integration with Splunk Enterprise - not native like XSOAR to XSIAM. This means additional infrastructure, licensing, and integration maintenance.</p>
+                                
+                                <p>For organizations choosing: If you're on XSIAM, the built-in XSOAR is the obvious choice - it just works. For Sentinel, Logic Apps are sufficient for most use cases, but consider third-party SOAR if you need advanced case management. For Splunk, SOAR is essential for automation but budget for the additional licensing and infrastructure. All three can achieve similar outcomes; the difference is operational complexity and total cost of ownership.</p>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: You're advising a company on SIEM platform selection. What questions would you ask, and how would each platform's strengths align with different answers?</button>
+                            <div class="qa-answer">
+                                <p>Platform selection should be driven by organizational context, not just feature comparisons. I'd start with questions about existing infrastructure, team capabilities, and strategic direction.</p>
+                                
+                                <p>First question: Where does your data live? If heavily Azure-based with M365, Azure AD, and Azure workloads, Sentinel's native integration is compelling - you're literally clicking buttons to enable data collection rather than deploying agents and forwarders. If you have significant on-premises infrastructure or multi-cloud, Splunk's mature collection ecosystem or XSIAM's Broker VM model handles hybrid better. For organizations already invested in Palo Alto firewalls and Cortex XDR, XSIAM consolidates licensing and provides tight integration.</p>
+                                
+                                <p>Second question: What are your team's skills? A team fluent in Python and comfortable managing infrastructure will thrive with Splunk's flexibility. A team stronger in Azure and PowerShell will be productive faster with Sentinel. XSIAM suits teams that want a managed platform with less infrastructure overhead. Training time matters - picking a platform that aligns with existing skills reduces time to value.</p>
+                                
+                                <p>Third question: What's your automation maturity? If you're just starting with SOAR, XSIAM's built-in XSOAR or Sentinel's Logic Apps provide low-friction starting points. If you have complex automation requirements and dedicated SOAR engineers, Splunk SOAR's depth might justify the additional complexity. Consider not just today's needs but where you want to be in 2-3 years.</p>
+                                
+                                <p>Fourth question: What's your budget model? XSIAM licenses by ingestion volume (GB/day). Sentinel charges per GB ingested with tiered pricing and commitment discounts. Splunk has multiple models including workload-based pricing. Each model favors different scenarios - high-volume/low-query environments might favor one platform while low-volume/high-query favors another. Total cost includes licensing, infrastructure, and personnel - don't just compare list prices.</p>
+                            </div>
+                        </div>
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe the process of migrating from one of these platforms to another. What are the major challenges?</button>
+                            <div class="qa-answer">
+                                <p>Platform migrations are among the most complex security projects because you're changing the foundation while keeping detection active. I approach migrations as multi-phase projects spanning 6-18 months depending on environment complexity.</p>
+                                
+                                <p>The first challenge is data source parity. You need to map every data source from the legacy platform to the new one. This sounds straightforward but gets complex quickly. Your legacy Splunk might have custom TAs for internal applications. Your legacy Sentinel might use deprecated connectors. Expect 70% of sources to have direct equivalents, 20% to require custom development, and 10% to need architectural changes. Start this inventory early.</p>
+                                
+                                <p>Detection rule migration is where most organizations underestimate effort. It's not just translating SPL to XQL or KQL - the underlying data models differ, field names change, and logic that worked on one platform may not be valid on another. I've seen organizations try automated translation tools and end up with rules that syntactically work but miss detections or create false positives. Budget for manual review and testing of every high-fidelity rule.</p>
+                                
+                                <p>Operational transition is the most visible challenge. Analysts need training on new interfaces and query languages. Playbooks need recreation. Integrations need reconfiguration. I recommend parallel operation for 30-90 days minimum - run both platforms, compare alert fidelity, let analysts get comfortable. Yes, this means paying for both platforms temporarily, but it's far less costly than a detection gap during cutover.</p>
+                                
+                                <p>The often-overlooked challenge is historical data. Compliance requirements may mandate keeping years of security logs accessible. Your new platform can't query the old platform's storage. Options include: maintaining read-only access to legacy platform, exporting historical data to a data lake queryable by both platforms, or accepting that historical data requires switching contexts. Plan this early because it affects architecture decisions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Quick Reference Summary -->
+                <section class="content-section interview-section">
                     <h2><i class="fas fa-flag-checkered"></i> Quick Reference Summary</h2>
                     <table class="comparison-table">
                         <thead>

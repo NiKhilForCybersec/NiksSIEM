@@ -929,30 +929,67 @@ TOTAL:                          ~1.3 TB/day
 
             <div class="qa-section">
                 <div class="qa-item">
-                    <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: Explain the XSIAM architecture at a high level.</button>
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the XSIAM architecture at a high level. What makes it different from traditional SIEM?</button>
                     <div class="qa-answer">
-                        <p><strong>A:</strong> "XSIAM is a cloud-native security operations platform that combines SIEM, SOAR, ASM, and XDR into a single solution. The architecture has four main layers: (1) Data Collection via Cortex agents, Broker VMs, and cloud connectors; (2) Cortex Data Lake for storage with hot/warm/cold tiers and XDM normalization; (3) Analytics Engine with UEBA, threat intel, correlation rules, and ML models; (4) Response layer with XSOAR automation, playbooks, and response actions. Everything is delivered as SaaS - no infrastructure to manage."</p>
+                        <p>XSIAM represents a convergence of security tools that traditionally required separate products. At its core, it's a cloud-native platform that combines SIEM, SOAR, ASM, and XDR into a single integrated solution. This isn't just bundling - the components share the same data lake, the same correlation engine, and the same incident context.</p>
+                        
+                        <p>The architecture has four conceptual layers. The collection layer handles data ingestion through Cortex XDR agents for endpoints, Broker VMs for on-premises network devices and servers, and cloud connectors for SaaS and IaaS platforms. All data flows into the Cortex Data Lake, which provides unified storage with intelligent tiering - hot storage for active investigation, warm for recent history, cold for compliance retention.</p>
+                        
+                        <p>The analytics layer is where XSIAM differentiates. Traditional SIEMs just correlate logs - XSIAM correlates logs plus endpoint telemetry plus network data plus user behavior plus threat intelligence. The XDM (XDR Data Model) normalizes everything at ingest time, so correlation rules work across all data sources without complex field mappings. Built-in UEBA and ML models detect anomalies that rule-based detection misses.</p>
+                        
+                        <p>The response layer integrates XSOAR directly. When a detection fires, playbooks can automatically enrich, triage, and even respond. The response actions - isolating endpoints, blocking hashes, disabling users - execute through the same agents and connectors that collected the data. This closed loop is what makes XSIAM operationally different from bolt-on SOAR solutions.</p>
                     </div>
                 </div>
 
                 <div class="qa-item">
-                    <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How would you design XSIAM for a company with strict data residency requirements?</button>
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you design XSIAM for a company with strict data residency requirements?</button>
                     <div class="qa-answer">
-                        <p><strong>A:</strong> "XSIAM supports regional data residency with separate tenants per region. For example, EU data stays in EU data centers, US data in US regions. I would deploy region-specific Broker VMs that only forward to the local tenant, configure cloud connectors to pull from regional cloud resources, and use separate XSIAM tenants per jurisdiction. The SOC can access multiple tenants through a federated view, but the underlying data never crosses boundaries. For truly air-gapped requirements, we might need to consider on-prem XSIAM (Cortex XSIAM for Government) instead."</p>
+                        <p>Data residency is increasingly common, especially with GDPR in Europe and various national regulations. XSIAM handles this through regional tenant deployment, but there are nuances to get right.</p>
+                        
+                        <p>For organizations requiring EU data to stay in EU, I'd provision the XSIAM tenant in an EU region - Palo Alto offers regional options including EU, US, and others. All data ingested to that tenant stays in that region. The key is ensuring all collection infrastructure respects boundaries: Broker VMs in EU only forward to EU tenant, cloud connectors pull from EU regions of AWS/Azure, and Cortex agents in EU offices register to the EU tenant.</p>
+                        
+                        <p>Multinational organizations often need multiple tenants - EU tenant for EU operations, US tenant for Americas, APAC tenant for Asia. Each tenant is completely isolated with its own data lake and configuration. The challenge becomes operational: SOC analysts need to monitor multiple tenants, detections and playbooks need replication across tenants, and you lose correlation between regions. XSIAM provides multi-tenant management views, but it's not as seamless as a single global tenant.</p>
+                        
+                        <p>For truly sensitive environments - government, defense, regulated industries - there's Cortex XSIAM for Government which offers FedRAMP compliance and options for even more isolated deployments. I'd evaluate whether standard commercial XSIAM with regional tenants meets requirements, or whether the government offering is necessary based on specific compliance mandates.</p>
                     </div>
                 </div>
 
                 <div class="qa-item">
-                    <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What's the difference between a Broker VM and the Cortex agent?</button>
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between a Broker VM and the Cortex agent? When would you use each?</button>
                     <div class="qa-answer">
-                        <p><strong>A:</strong> "The Cortex XDR agent is installed directly on endpoints (Windows, Mac, Linux) and collects endpoint telemetry - process execution, file operations, network connections, and provides prevention capabilities. The Broker VM is a virtual appliance deployed on-premises that acts as a log collector - it receives syslog, HTTPS, or other protocols from network devices, servers, and applications that can't run an agent, then forwards to XSIAM cloud. Think of agents for endpoints, Broker VMs for everything else that can't have an agent installed."</p>
+                        <p>This is a fundamental architectural distinction. The Cortex XDR agent is an endpoint security agent - it installs on Windows, Mac, or Linux systems and provides both collection and protection. It captures rich endpoint telemetry: process creation with full command lines, file operations, network connections, registry changes, and more. It also provides prevention - blocking malware, preventing exploits, and enforcing policies. The agent communicates directly with XSIAM cloud.</p>
+                        
+                        <p>The Broker VM is completely different - it's a virtual appliance that acts as a log aggregator and forwarder. You deploy it on-premises or in your cloud VPC, and it receives logs from devices that can't run an agent: firewalls, routers, switches, load balancers, Linux servers where you don't want an agent, legacy systems, and third-party security tools. The Broker VM supports syslog (UDP/TCP/TLS), CEF, LEEF, and other protocols. It normalizes and compresses data before forwarding to XSIAM cloud.</p>
+                        
+                        <p>My deployment guidance: Use agents everywhere you can - they provide the richest telemetry and enable response actions. Use Broker VMs for network infrastructure, security appliances, and systems where agents aren't supported or allowed. A typical enterprise has both: agents on endpoints and servers, Broker VMs receiving logs from network devices and specialized systems. For high-availability, I deploy Broker VMs in pairs behind a load balancer so syslog sources can fail over automatically.</p>
                     </div>
                 </div>
 
                 <div class="qa-item">
-                    <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How would you size Broker VMs for a high-volume environment?</button>
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you size Broker VMs for a high-volume environment?</button>
                     <div class="qa-answer">
-                        <p><strong>A:</strong> "Broker VM sizing depends on events per second (EPS). A standard Broker VM with 4 vCPU and 16GB RAM handles about 10,000 EPS. For high-volume environments, I would: (1) Deploy multiple Broker VMs behind a load balancer for HA and throughput; (2) Separate Broker VMs by data type - one for firewalls, one for app logs; (3) Enable compression to reduce bandwidth; (4) Use dedicated Broker VMs for critical/isolated segments like payment networks. For 50,000+ EPS, I'd recommend 8 vCPU, 32GB RAM VMs in an active-active cluster."</p>
+                        <p>Broker VM sizing is fundamentally about events per second (EPS) capacity. The standard deployment guide says a 4 vCPU, 16GB RAM VM handles about 10,000 EPS. But that's a baseline - actual capacity depends on log complexity, parsing requirements, and network conditions.</p>
+                        
+                        <p>For sizing, I start by estimating EPS from each source. Firewalls generate 1,000-10,000 EPS depending on traffic volume. Web proxies can generate 5,000-20,000 EPS. Windows Event Logs from servers might be 100-500 EPS each but you have many servers. I sum these up, add 50% buffer for spikes and growth, then divide by 10,000 to get the number of standard Broker VMs needed.</p>
+                        
+                        <p>For environments exceeding 50,000 EPS, I recommend larger VMs - 8 vCPU, 32GB RAM - which can handle 25,000+ EPS each. I also segment by data type: one set of Broker VMs for high-volume firewall logs, another for lower-volume but critical authentication logs. This prevents a firewall spike from impacting authentication log delivery.</p>
+                        
+                        <p>High availability is essential for production. I deploy Broker VMs in active-active pairs behind a network load balancer. Syslog sources point to the load balancer VIP, which distributes across both Broker VMs. If one fails, the other handles full load while you recover. For geographically distributed environments, I place Broker VMs in each major site to reduce WAN bandwidth and latency.</p>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe how data flows through XSIAM from collection to alerting.</button>
+                    <div class="qa-answer">
+                        <p>Understanding the data flow helps troubleshoot issues and optimize performance. Let me walk through a concrete example - a PowerShell alert triggered from an endpoint.</p>
+                        
+                        <p>It starts at the Cortex XDR agent on the endpoint. The agent monitors process creation through kernel-level hooks. When PowerShell.exe spawns, the agent captures: process name, command line arguments, parent process, user context, and network connections. This telemetry is compressed and sent to XSIAM cloud through an encrypted HTTPS connection.</p>
+                        
+                        <p>At the cloud ingestion layer, the data is received, decompressed, and passes through parsing rules. Since this is native agent data, it's already in XDM format, but parsing rules might extract additional fields from the command line. The normalized data is written to the Cortex Data Lake and indexed for fast search.</p>
+                        
+                        <p>The analytics engine continuously evaluates data against detection rules. A BIOC rule for "encoded PowerShell command" examines the command line field, matches the base64 pattern, and evaluates additional conditions like parent process. When conditions match, an alert is generated with severity, MITRE mapping, and linked evidence.</p>
+                        
+                        <p>If an incident is created (automatically or by rule configuration), XSOAR automation triggers. The configured playbook runs - perhaps decoding the base64, checking file hashes against VirusTotal, looking up the user in Active Directory. Results enrich the incident. If the playbook determines high confidence malicious, it might automatically isolate the endpoint and notify the SOC channel. The analyst then sees a fully enriched incident with context and preliminary verdict, rather than a raw alert requiring manual investigation.</p>
                     </div>
                 </div>
             </div>

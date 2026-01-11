@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Recovery | XSIAM Administration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="../index.html" class="sidebar-brand"><i class="fas fa-shield-alt"></i><span>Nik's SIEM</span></a>
+            <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Platforms</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="../xsiam/index.html" class="sidebar-nav-link active"><span class="platform-dot"></span><span>XSIAM</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Splunk</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../sentinel/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Sentinel</span></a></li>
+                </ul>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Administration</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="rbac-access-control.html" class="sidebar-nav-link"><i class="fas fa-users-cog"></i><span>RBAC & Access</span></a></li>
+                    <li class="sidebar-nav-item"><a href="health-monitoring.html" class="sidebar-nav-link"><i class="fas fa-heartbeat"></i><span>Health Monitoring</span></a></li>
+                    <li class="sidebar-nav-item"><a href="backup-recovery.html" class="sidebar-nav-link active"><i class="fas fa-undo"></i><span>Backup & Recovery</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Backup & Recovery</span>
+                </div>
+
+                <h1><i class="fas fa-undo"></i> Backup & Recovery</h1>
+                <p class="lead">Disaster recovery planning, configuration backup strategies, and business continuity procedures for XSIAM deployments.</p>
+
+                <h2><i class="fas fa-layer-group"></i> Backup Architecture Overview</h2>
+                
+                <div class="info-box" style="border-color: #58a6ff;">
+                    <h4><i class="fas fa-cloud"></i> XSIAM Cloud-Native Architecture</h4>
+                    <p>XSIAM is a cloud-native SaaS platform where Palo Alto Networks manages infrastructure redundancy, data replication, and platform availability. Your responsibility focuses on configuration backup, Broker VM disaster recovery, and operational continuity planning.</p>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-sitemap"></i> Backup Responsibility Model</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SHARED RESPONSIBILITY MODEL                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   PALO ALTO NETWORKS RESPONSIBILITY                                                             │
+│   ══════════════════════════════════                                                            │
+│   ┌───────────────────────────────────────────────────────────────────────────────────────┐    │
+│   │  • Cloud infrastructure redundancy (multi-AZ)                                          │    │
+│   │  • Data lake replication and durability                                                │    │
+│   │  • Platform availability (99.9% SLA)                                                   │    │
+│   │  • Automatic failover and recovery                                                     │    │
+│   │  • Security patching and updates                                                       │    │
+│   └───────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                  │
+│   ─────────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                                  │
+│   CUSTOMER RESPONSIBILITY                                                                        │
+│   ═══════════════════════════                                                                   │
+│   ┌───────────────────────────────────────────────────────────────────────────────────────┐    │
+│   │  • Configuration backup (detection rules, playbooks, dashboards)                       │    │
+│   │  • Broker VM disaster recovery and redundancy                                          │    │
+│   │  • API key and credential management                                                   │    │
+│   │  • Integration configuration documentation                                              │    │
+│   │  • Operational runbooks and procedures                                                 │    │
+│   │  • Business continuity planning                                                        │    │
+│   └───────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> Configuration Backup Strategy</h2>
+                
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Configuration Type</th>
+                            <th>Backup Method</th>
+                            <th>Frequency</th>
+                            <th>Storage Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #3fb950;">Detection Rules (BIOC/IOC)</strong></td>
+                            <td>API Export / Content Pack</td>
+                            <td>Weekly + Before Changes</td>
+                            <td>Git Repository</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #58a6ff;">XSOAR Playbooks</strong></td>
+                            <td>API Export / Content Pack</td>
+                            <td>Weekly + Before Changes</td>
+                            <td>Git Repository</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #a371f7;">Parsing Rules</strong></td>
+                            <td>API Export</td>
+                            <td>Weekly</td>
+                            <td>Git Repository</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #d29922;">Dashboards</strong></td>
+                            <td>API Export / Manual</td>
+                            <td>Monthly</td>
+                            <td>Documentation System</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RBAC Configuration</strong></td>
+                            <td>API Export + Documentation</td>
+                            <td>Quarterly</td>
+                            <td>Configuration Management DB</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Integration Settings</strong></td>
+                            <td>API Export + Screenshots</td>
+                            <td>Monthly</td>
+                            <td>Documentation System</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="config-section">
+                    <h4>Configuration Export via API</h4>
+                    <div class="arch-diagram"># XSIAM Configuration Backup Scripts
+# ═══════════════════════════════════════════════════════════════
+
+## Export Detection Rules (Correlation Rules)
+#!/bin/bash
+# backup-detection-rules.sh
+
+API_KEY="your-api-key"
+API_URL="https://api-[tenant].xdr.us.paloaltonetworks.com"
+BACKUP_DIR="/backup/xsiam/$(date +%Y%m%d)"
+
+mkdir -p $BACKUP_DIR
+
+# Export correlation rules
+curl -s -X POST "$API_URL/public_api/v1/xql/query" \
+  -H "x-xdr-auth-id: 1" \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"request_data":{"query":"config get correlation_rules"}}' \
+  > "$BACKUP_DIR/correlation_rules.json"
+
+# Export IOC rules
+curl -s -X POST "$API_URL/public_api/v1/indicators/get_all" \
+  -H "x-xdr-auth-id: 1" \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  > "$BACKUP_DIR/ioc_rules.json"
+
+echo "Backup completed: $BACKUP_DIR"
+
+# ═══════════════════════════════════════════════════════════════
+
+## Export XSOAR Playbooks
+# Use XSOAR Content Management → Export as content pack
+
+demisto-sdk download -o /backup/xsiam/playbooks/ \
+  -i Playbooks \
+  -i Scripts \
+  -i Integrations
+
+# ═══════════════════════════════════════════════════════════════
+
+## Git-Based Version Control
+# Recommended: Store all exports in Git for versioning
+
+cd /backup/xsiam
+git add .
+git commit -m "Configuration backup $(date +%Y-%m-%d)"
+git push origin main</div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Broker VM Disaster Recovery</h2>
+                
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Critical: Broker VM is On-Premises</h4>
+                    <p>Unlike the cloud platform, Broker VMs run in your infrastructure and require traditional disaster recovery planning including VM backups, redundancy, and failover procedures.</p>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-sync"></i> Broker VM High Availability Architecture</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              BROKER VM HIGH AVAILABILITY                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   PRIMARY SITE (Data Center A)                    SECONDARY SITE (Data Center B)                │
+│   ════════════════════════════                    ══════════════════════════════                │
+│                                                                                                  │
+│   ┌─────────────────────────┐                    ┌─────────────────────────┐                   │
+│   │     Broker VM 1         │                    │     Broker VM 3         │                   │
+│   │     (Primary)           │                    │     (Standby/Active)    │                   │
+│   └───────────┬─────────────┘                    └───────────┬─────────────┘                   │
+│               │                                              │                                  │
+│   ┌───────────┴─────────────┐                    ┌───────────┴─────────────┐                   │
+│   │     Broker VM 2         │                    │     Broker VM 4         │                   │
+│   │     (Secondary)         │                    │     (Standby/Active)    │                   │
+│   └───────────┬─────────────┘                    └───────────┬─────────────┘                   │
+│               │                                              │                                  │
+│               └──────────────────────┬───────────────────────┘                                  │
+│                                      │                                                          │
+│                           ┌──────────┴──────────┐                                              │
+│                           │   Load Balancer     │                                              │
+│                           │   (Syslog VIP)      │                                              │
+│                           └──────────┬──────────┘                                              │
+│                                      │                                                          │
+│                           ┌──────────┴──────────┐                                              │
+│                           │   Log Sources       │                                              │
+│                           │   (Send to VIP)     │                                              │
+│                           └─────────────────────┘                                              │
+│                                                                                                  │
+│   FAILOVER SCENARIOS:                                                                           │
+│   • Single Broker failure → Other Brokers in cluster handle load                               │
+│   • Primary site failure → DNS/Load balancer shifts to secondary site                         │
+│   • Network partition → Each site operates independently, cloud handles dedup                  │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <div class="config-section">
+                    <h4>Broker VM Backup Checklist</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <div style="display: grid; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ VM snapshots scheduled (daily)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Configuration files backed up (/opt/broker/config/)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ SSL certificates backed up</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Registration token documented</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Syslog source configurations documented</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Failover procedure tested quarterly</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-code-branch"></i> Recovery Decision Tree</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>What component has failed?</strong>
+                    </div>
+                    <div class="decision-branch">
+                        <div>
+                            <div class="decision-arrow">↓ XSIAM Cloud Platform</div>
+                            <div class="decision-node" style="background: #1c3a5e; border-color: #58a6ff;">
+                                <strong style="color: #58a6ff;">Palo Alto Responsibility</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Check status.paloaltonetworks.com<br>Open support case<br>Brokers queue data locally</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="decision-arrow">↓ Single Broker VM</div>
+                            <div class="decision-node yes" style="background: #1a4d2e;">
+                                <strong style="color: #3fb950;">Restore from Snapshot</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Restore VM snapshot<br>Or deploy new Broker from image<br>Re-register with cloud</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="decision-arrow">↓ Detection Rules Corrupted</div>
+                            <div class="decision-node" style="background: #3d2a5e; border-color: #a371f7;">
+                                <strong style="color: #a371f7;">Restore from Git</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Import rules from backup<br>API import or manual recreation<br>Validate rule functionality</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="decision-arrow">↓ Full Site Disaster</div>
+                            <div class="decision-node" style="background: #4d1a1a; border-color: #f85149;">
+                                <strong style="color: #f85149;">DR Site Activation</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Activate DR site Brokers<br>Update DNS/routing<br>Verify data flow</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach disaster recovery planning for a cloud SIEM like XSIAM?</button>
+                        <div class="qa-answer">
+                            <p>Cloud SIEM disaster recovery is fundamentally different from on-premises. With XSIAM, Palo Alto Networks handles infrastructure DR - they manage the data lake redundancy, multi-region failover, and platform availability. Your DR planning focuses on the components you control and maintaining operational continuity.</p>
+                            
+                            <p>For configuration, treat everything as code. Detection rules, playbooks, parsing rules - all should be exported regularly and stored in version control. If the platform ever needs configuration restoration (rare, but possible), you can reimport from Git. I typically schedule weekly automated exports and manual exports before any significant changes.</p>
+                            
+                            <p>For Broker VMs, standard VM DR applies. Take regular snapshots, maintain documentation of configuration settings, and design for redundancy. Deploy at least two Brokers per site, and if you have multiple sites, distribute Brokers across them. Configure log sources to send to multiple Brokers or use a load balancer VIP.</p>
+                            
+                            <p>The often-overlooked aspect is operational continuity. What happens if your SOC analysts can't access XSIAM? Have procedures documented for operating in degraded mode - maybe querying logs directly from sources, manual alert triage, or escalation to incident response. Test these procedures periodically.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's your strategy for maintaining detection rule backups?</button>
+                        <div class="qa-answer">
+                            <p>Detection rules are intellectual property - they represent significant investment in understanding your environment and threat landscape. Losing them would be catastrophic, so backup strategy must be robust.</p>
+                            
+                            <p>I use a Git-based approach where all detection content is version controlled. This provides not just backup but also change history, rollback capability, and collaboration features. Weekly automated exports capture the current state, and any manual changes trigger immediate commits. The Git repository becomes the source of truth for detection content.</p>
+                            
+                            <p>For XSIAM specifically, I export via API where possible - correlation rules, IOC rules, and exception lists all have API endpoints. For content that's harder to export programmatically, I maintain documentation with the rule logic in a human-readable format. If worst case happens and I need to recreate from scratch, the documentation guides rebuilding.</p>
+                            
+                            <p>Testing restoration is crucial. Quarterly, I'll import a subset of rules to a test environment or validate that the exported JSON is parseable and complete. Backup without tested restore is just hope, not a strategy.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); }
+            else { sidebar.classList.toggle('collapsed'); mainWrapper.classList.toggle('expanded'); }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

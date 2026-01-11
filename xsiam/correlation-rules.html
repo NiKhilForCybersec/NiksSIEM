@@ -715,64 +715,121 @@ dataset = xdr_data
                     </table>
                 </div>
 
+                <!-- Decision Tree: Correlation Rule Design -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Correlation Rule Design Choices</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>What type of detection are you building?</strong>
+                        <small>Determines threshold and aggregation approach</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #f85149;">Threshold-Based Alert</div>
+                        <div class="decision-outcome" style="border-left-color: #f85149;">
+                            <i class="fas fa-tachometer-alt" style="color: #f85149;"></i>
+                            <strong>Use: comp count() + filter threshold</strong>
+                            <small>Example: <code>| comp count() by user | filter count() > 10</code> | Schedule every 5-15 min</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #d29922;">Sequence Detection</div>
+                        <div class="decision-outcome" style="border-left-color: #d29922;">
+                            <i class="fas fa-list-ol" style="color: #d29922;"></i>
+                            <strong>Use: join with time window</strong>
+                            <small>Join Event A to Event B within timeframe | Example: login → sensitive file access</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #3fb950;">Anomaly from Baseline</div>
+                        <div class="decision-outcome" style="border-left-color: #3fb950;">
+                            <i class="fas fa-chart-line" style="color: #3fb950;"></i>
+                            <strong>Use: baseline subquery + comparison</strong>
+                            <small>Calculate avg/stddev over history, compare to current | Schedule every 30-60 min</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #58a6ff;">First-Time Occurrence</div>
+                        <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                            <i class="fas fa-star" style="color: #58a6ff;"></i>
+                            <strong>Use: leftantijoin against history</strong>
+                            <small>Find events not seen in baseline period | Example: new process on server</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #a371f7;">Cross-Source Correlation</div>
+                        <div class="decision-outcome" style="border-left-color: #a371f7;">
+                            <i class="fas fa-project-diagram" style="color: #a371f7;"></i>
+                            <strong>Use: multi-dataset join on entity</strong>
+                            <small>Join endpoint + network + identity on user/host | Higher confidence detection</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through creating a correlation rule in XSIAM.</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through your end-to-end process for creating a correlation rule in XSIAM.</button>
                         <div class="qa-answer">
-                            <ol>
-                                <li><strong>Define the use case:</strong> What attack/behavior am I detecting? Map to MITRE ATT&CK.</li>
-                                <li><strong>Identify data sources:</strong> Which datasets contain the relevant events?</li>
-                                <li><strong>Write XQL query:</strong> Build query with filters, aggregations, and thresholds</li>
-                                <li><strong>Test manually:</strong> Run in Query Center, validate results are true positives</li>
-                                <li><strong>Configure rule:</strong> Set schedule, time window, severity, entity mapping</li>
-                                <li><strong>Deploy in test mode:</strong> Monitor for false positives before production</li>
-                                <li><strong>Tune and document:</strong> Add exclusions, document detection logic</li>
-                            </ol>
+                            <p>My correlation rule development follows a structured process that ensures the rule is effective, tuned, and documented before it goes into production.</p>
+                            <p>I start with the use case definition. Before writing any XQL, I document what attack or behavior I'm trying to detect and map it to MITRE ATT&CK. This forces me to think clearly about the detection goal and helps with later documentation. For example, "Detect brute force authentication attempts - T1110.001 Password Guessing."</p>
+                            <p>Next, I identify the data sources. I determine which datasets contain the relevant events and verify that data is actually flowing and being parsed correctly. For brute force, I'd look at identity_logs, azure_ad_signin_raw, or whatever authentication source is relevant. I run exploratory queries to understand what the data looks like.</p>
+                            <p>Then I build the XQL query iteratively. I start with basic filters to find the event type I care about, then add aggregation logic (like counting failed logins per user), then threshold filtering. I test each step manually in Query Center to verify results. For the brute force example: <code>dataset = identity_logs | filter outcome = "FAILURE" | filter _time > ago(15m) | comp failed_count = count() by username, source_ip | filter failed_count >= 10</code></p>
+                            <p>After the query logic is solid, I configure the rule settings: schedule interval (how often it runs), time window (how far back it looks), severity, and MITRE mapping. I ensure the time window is at least 1.5x the schedule interval to prevent gaps. I also configure entity mapping so the alert includes host and user information for incident correlation.</p>
+                            <p>I deploy in test mode first—the rule runs but alerts go to a test queue instead of production. I review alerts over a few days to identify false positives and refine exclusions. Common exclusions include service accounts, automated systems, or known scanner IPs.</p>
+                            <p>Finally, I document the rule: what it detects, expected false positive sources, tuning guidance for future maintainers, and the MITRE ATT&CK coverage it provides. Good documentation makes rule maintenance sustainable as the team changes.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between correlation rules and BIOC rules?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What's the difference between correlation rules and BIOC rules, and when would you use each?</button>
                         <div class="qa-answer">
-                            <p><strong>Correlation Rules:</strong></p>
-                            <ul>
-                                <li>Run in cloud on Cortex Data Lake</li>
-                                <li>Scheduled execution (minutes to hours)</li>
-                                <li>Can query ANY data source (firewall, cloud, identity, endpoint)</li>
-                                <li>Good for: cross-source correlation, thresholds, aggregations</li>
-                            </ul>
-                            <p><strong>BIOC Rules:</strong></p>
-                            <ul>
-                                <li>Run on endpoint agents in real-time</li>
-                                <li>Only access endpoint telemetry</li>
-                                <li>Good for: process chains, behavioral patterns, immediate response</li>
-                            </ul>
+                            <p>Correlation rules and BIOC rules are complementary detection mechanisms that run in different places and serve different purposes. Choosing the right one depends on what you're detecting and how fast you need the alert.</p>
+                            <p>BIOC rules run on the endpoint agents themselves in real-time. They have access to rich endpoint context—process trees, parent-child relationships, command-line arguments, file operations, registry changes. Because they run locally, they can detect and respond almost instantly. The limitation is they can only see endpoint data; they don't have visibility into network traffic, cloud logs, or identity events from other sources.</p>
+                            <p>Correlation rules run in the cloud on the Cortex Data Lake on a scheduled basis. They can query any data source—endpoint telemetry, firewall logs, cloud audit logs, identity events, custom data sources. This makes them essential for cross-source correlation like "user authenticated from unusual location AND accessed sensitive files." The trade-off is latency; rules run every few minutes to hours, not in real-time.</p>
+                            <p>My selection criteria: If I'm detecting an endpoint-specific behavior with a known pattern—like suspicious process chains, encoded PowerShell, or file creation in temp directories—I use a BIOC rule for speed. If I need to correlate across sources, apply complex aggregation logic, or use baseline comparisons, I use a correlation rule. Many sophisticated detections use both: a BIOC rule for immediate detection of suspicious execution, and a correlation rule that adds context from network and identity logs for higher-fidelity alerting.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you reduce false positives in correlation rules?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach reducing false positives in correlation rules without creating detection gaps?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>Add exclusions:</strong> Known service accounts, scanner IPs, maintenance windows</li>
-                                <li><strong>Increase thresholds:</strong> Require more events or higher volumes</li>
-                                <li><strong>Add context filters:</strong> Only alert if additional conditions are met</li>
-                                <li><strong>Use grouping:</strong> Aggregate by entity to reduce alert volume</li>
-                                <li><strong>Baseline comparison:</strong> Compare to historical normal behavior</li>
-                                <li><strong>Correlation:</strong> Require multiple indicators before alerting</li>
-                            </ul>
+                            <p>False positive reduction is a balancing act—every exclusion or threshold increase is a potential blind spot. My approach prioritizes visibility into what I'm excluding and why.</p>
+                            <p>First, I analyze the false positives systematically. I query the alerts to understand patterns: Are they coming from specific hosts? Specific users? Specific time windows? If 90% of false positives come from three service accounts, I can exclude those accounts specifically rather than raising the threshold globally.</p>
+                            <p>For threshold-based rules, I prefer data-driven tuning over guessing. Instead of saying "10 failed logins is suspicious," I query historical data to find the 95th or 99th percentile of normal activity. Setting the threshold just above that baseline catches genuine anomalies while filtering normal variance.</p>
+                            <p>I'm careful about over-excluding. Every exclusion should be documented with justification. If I exclude an admin group from a detection, and an attacker compromises an admin account, that's a gap. Where possible, I create separate rules for excluded populations with adjusted thresholds rather than blind exclusions.</p>
+                            <p>For high-noise rules, I sometimes add a confidence scoring approach. Instead of alerting on a single indicator, I require multiple indicators to be present. For example, don't alert on just "connection to rare domain"—alert on "connection to rare domain AND from a process running from temp directory AND during non-business hours." Each additional condition increases confidence and reduces false positives.</p>
+                            <p>I also review exclusions periodically. Business processes change—that scanner IP that was legitimate six months ago might have been decommissioned and reassigned. Annual exclusion reviews catch stale entries that are now creating blind spots.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure correlation rules don't miss events?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure correlation rules don't miss events due to timing issues?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>Time window overlap:</strong> Window should be >= 1.5x schedule interval</li>
-                                <li><strong>Monitor rule health:</strong> Check for execution failures</li>
-                                <li><strong>Test with known-bad data:</strong> Inject test events to verify detection</li>
-                                <li><strong>Review data ingestion:</strong> Ensure source data is flowing</li>
-                                <li><strong>Check query performance:</strong> Slow queries may timeout and miss events</li>
-                            </ul>
+                            <p>Timing configuration is one of the most common sources of detection gaps in correlation rules, and there are several aspects to get right.</p>
+                            <p>The most important rule is: time window must be greater than schedule interval. If a rule runs every 15 minutes but only looks back 15 minutes, there's no overlap, and events at the boundary can be missed or double-counted depending on exact timing. My standard is setting the window to at least 1.5x the schedule interval—a rule running every 15 minutes should look back at least 22-23 minutes.</p>
+                            <p>Data ingestion latency matters too. Logs don't appear instantly in XSIAM—there's collection, parsing, and indexing delay. If your environment has 5-minute average ingestion latency, your time window needs to account for that. A rule looking at "last 10 minutes" might miss events from minutes 6-10 if they're still being processed.</p>
+                            <p>For deduplication, I use query logic that accounts for overlap. If the same event appears in consecutive rule executions, the rule should handle that gracefully—either by using unique event identifiers or by designing the aggregation to be idempotent.</p>
+                            <p>I also monitor rule execution health. XSIAM provides visibility into rule runs—did it complete successfully? How long did it take? Did it timeout? A rule that consistently times out isn't providing reliable coverage. If execution time is approaching the schedule interval, I need to optimize the query or increase the interval.</p>
+                            <p>Finally, I test with known-bad data. During development, I inject test events that should trigger the rule and verify they actually do. This catches timing issues that aren't obvious from just reading the configuration.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you create a correlation rule that detects data exfiltration attempts?</button>
+                        <div class="qa-answer">
+                            <p>Data exfiltration detection requires correlating multiple signals because individual indicators are often too noisy on their own. My approach combines volume-based detection, behavioral indicators, and context enrichment.</p>
+                            <p>For volume-based detection, I look at outbound data transfers that exceed normal thresholds. The query aggregates bytes transferred per user or host per time window and compares to a baseline. Something like: <code>dataset = network_logs | filter direction = "outbound" | comp total_bytes = sum(bytes_out) by source_user | join (baseline subquery) | filter total_bytes > baseline * 3</code>. The baseline comparison is crucial—some users legitimately transfer large amounts of data.</p>
+                            <p>For behavioral indicators, I correlate with suspicious precursor activities. Large data transfer alone is noise, but large data transfer after someone accessed files they've never accessed before, or after staging data to a temp directory, is much higher confidence. The correlation rule joins network volume data with file access patterns from endpoint telemetry.</p>
+                            <p>Destination matters too. Transfer to cloud storage providers (Dropbox, Google Drive, personal OneDrive) is riskier than internal transfers. I maintain a list of known cloud storage domains and weight those connections higher in the detection logic.</p>
+                            <p>Time of day context helps reduce false positives. Backups and legitimate large transfers often happen during scheduled maintenance windows. Exfiltration often happens during off-hours when the attacker thinks they're less likely to be noticed. Including time-based context improves signal quality.</p>
+                            <p>The final rule combines these signals with confidence scoring. An alert might say "User X transferred 500MB to Google Drive (unusual), after accessing HR salary files for the first time (unusual), at 2 AM (unusual)." Any single indicator might be explained; the combination is highly suspicious.</p>
                         </div>
                     </div>
                 </div>

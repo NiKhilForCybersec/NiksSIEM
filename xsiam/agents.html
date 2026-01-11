@@ -78,13 +78,13 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">XSIAM Pages</div>
                 <ul class="sidebar-nav">
-                                                                                                    <li class="sidebar-nav-item">
+                    <li class="sidebar-nav-item">
                         <a href="index.html" class="sidebar-nav-link">
                             <i class="fas fa-home"></i>
                             <span>Overview</span>
                         </a>
                     </li>
-<li class="sidebar-nav-item">
+                    <li class="sidebar-nav-item">
                         <a href="architecture.html" class="sidebar-nav-link">
                             <i class="fas fa-sitemap"></i>
                             <span>Architecture</span>
@@ -198,7 +198,7 @@
                             <span>Platform Comparison</span>
                         </a>
                     </li>
-</ul>
+                </ul>
             </div>
         </div>
     </aside>
@@ -224,6 +224,44 @@
 
                 <h1><i class="fas fa-desktop"></i> Cortex XDR Agent - Complete Configuration Guide</h1>
                 <p class="lead">The Cortex XDR agent is the endpoint sensor that collects telemetry and enables response actions. This guide covers installation, policy configuration, data collection tuning, and troubleshooting with actual console paths and commands.</p>
+
+                <!-- Agent Deployment Decision Tree -->
+                <h2><i class="fas fa-project-diagram"></i> Agent Deployment Decision Tree</h2>
+                <p>Use this decision tree to determine the best deployment method for your environment:</p>
+
+                <div class="decision-tree">
+                    <div class="decision-node" style="background: linear-gradient(135deg, #238636, #2ea043);">
+                        <i class="fas fa-question-circle"></i>
+                        <span>How many endpoints need the agent?</span>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #58a6ff;">1-10 Endpoints</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #3fb950;">
+                            <i class="fas fa-user"></i>
+                            <span>Manual Installation</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Download MSI/PKG directly from XSIAM console</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #d29922;">10-500 Endpoints</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Do you have MDM/SCCM?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Intune/SCCM</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → GPO or Script</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #f85149;">500+ Endpoints</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #58a6ff;">
+                            <i class="fas fa-building"></i>
+                            <span>Phased Enterprise Deployment</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Pilot (100) → Wave 1 (1000) → Full deployment</small>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Agent Overview -->
                 <h2><i class="fas fa-info-circle"></i> What Data Does the Agent Collect?</h2>
@@ -282,6 +320,49 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Data Collection Strategy Decision Tree -->
+                <h2><i class="fas fa-sliders-h"></i> Data Collection Strategy by Endpoint Type</h2>
+                <p>Different endpoint types need different collection profiles. Use this guide to optimize detection vs. performance:</p>
+
+                <div class="decision-tree">
+                    <div class="decision-node" style="background: linear-gradient(135deg, #58a6ff, #1f6feb);">
+                        <i class="fas fa-laptop"></i>
+                        <span>What type of endpoint?</span>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #3fb950;">Standard Workstation</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #3fb950;">
+                            <i class="fas fa-check-double"></i>
+                            <span>Full Collection Profile</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Process + CMD Line + Network + Registry + Files + Scripts</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #d29922;">High-Security (Executives)</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #d29922;">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Maximum Collection Profile</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">All above + Module Loads + DNS Queries</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #58a6ff;">Application Server</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #58a6ff;">
+                            <i class="fas fa-server"></i>
+                            <span>Optimized Server Profile</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Process + CMD Line + Network (exclude Module Loads)</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #f85149;">Database/High-IO Server</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #f85149;">
+                            <i class="fas fa-database"></i>
+                            <span>Minimal Server Profile</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Process + CMD Line + Scripts only (exclude File ops)</small>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Installation Methods -->
@@ -413,6 +494,72 @@ File: cyserver.exe
 <span class="code-comment"># 5. Select "Assigned" deployment method</span>
 
 <span class="code-comment"># For command-line parameters, use MST transform file or startup script instead</span>
+                    </div>
+                </div>
+
+                <!-- Enterprise Deployment Workflow -->
+                <h2><i class="fas fa-rocket"></i> Enterprise Deployment Workflow</h2>
+                <p>For large deployments (500+ endpoints), follow this phased approach to minimize risk:</p>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #58a6ff;">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>Phase 1: Pilot</strong>
+                            <p>Deploy to 50-100 diverse endpoints</p>
+                            <ul style="font-size: 0.85rem; color: #8b949e; margin: 4px 0;">
+                                <li>Mix of workstations and servers</li>
+                                <li>Include IT team endpoints for monitoring</li>
+                                <li>Run for 1-2 weeks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #3fb950;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>Phase 2: Validate</strong>
+                            <p>Verify telemetry and performance</p>
+                            <ul style="font-size: 0.85rem; color: #8b949e; margin: 4px 0;">
+                                <li>Check XQL for data quality</li>
+                                <li>Monitor CPU/memory impact</li>
+                                <li>Tune exclusions if needed</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #d29922;">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>Phase 3: Wave 1</strong>
+                            <p>Expand to 1,000 endpoints</p>
+                            <ul style="font-size: 0.85rem; color: #8b949e; margin: 4px 0;">
+                                <li>Deploy by department/OU</li>
+                                <li>Monitor rollout dashboard</li>
+                                <li>1 week stabilization</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #a371f7;">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>Phase 4: Full Deployment</strong>
+                            <p>Complete enterprise rollout</p>
+                            <ul style="font-size: 0.85rem; color: #8b949e; margin: 4px 0;">
+                                <li>Deploy remaining 80%</li>
+                                <li>Regional waves if global</li>
+                                <li>Final coverage verification</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -735,9 +882,49 @@ AUTH                23
                     </div>
                 </div>
 
-                <!-- Common Issues -->
-                <h2><i class="fas fa-bug"></i> Troubleshooting Common Issues</h2>
-                
+                <!-- Troubleshooting Decision Tree -->
+                <h2><i class="fas fa-bug"></i> Troubleshooting Decision Tree</h2>
+                <p>Use this flowchart to diagnose agent issues:</p>
+
+                <div class="decision-tree">
+                    <div class="decision-node" style="background: linear-gradient(135deg, #f85149, #da3633);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>What's the symptom?</span>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #58a6ff;">Agent Not Appearing in Console</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <span>Check: cytool info shows "Connected"?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Wait 15 min, check Distribution ID</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → Check firewall: *.paloaltonetworks.com:443</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #d29922;">No Data in XQL</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <span>Check: Profile has Data Collection enabled?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Force cytool checkin, wait 10 min</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → Enable collection in profile, reassign</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #a371f7;">High CPU Usage</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <span>Check: Application causing scans?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Add exclusion in profile</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → Disable Module Loads, reduce File ops</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Common Issues Table -->
+                <h3>Common Issues Reference</h3>
                 <div class="styled-table">
                     <table>
                         <thead>
@@ -798,89 +985,90 @@ AUTH                23
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you configure the Cortex XDR agent to collect specific data types?</button>
-                        <div class="qa-answer">
-                            <p><strong>Data collection is controlled via Endpoint Profiles:</strong></p>
-                            <ol>
-                                <li>Navigate to <strong>Settings → Endpoints → Policy Management → Profiles</strong></li>
-                                <li>Create or edit a profile for your OS type</li>
-                                <li>Go to the <strong>Data Collection</strong> section</li>
-                                <li>Enable specific collection types:
-                                    <ul>
-                                        <li><strong>Process Execution</strong> - Essential for all detection</li>
-                                        <li><strong>Command Line Logging</strong> - Critical for seeing what processes actually do</li>
-                                        <li><strong>Network Connections</strong> - For C2 detection</li>
-                                        <li><strong>File Operations</strong> - For ransomware and data exfil detection</li>
-                                        <li><strong>Registry Operations</strong> - For persistence detection (Windows)</li>
-                                        <li><strong>Script Execution</strong> - For PowerShell attack detection</li>
-                                    </ul>
-                                </li>
-                                <li>Assign profile to an Endpoint Group</li>
-                                <li>Endpoints pick up new policy within 5-15 minutes</li>
-                            </ol>
-                            <p><strong>Verification:</strong> Run XQL query filtering by agent_hostname and check event_type distribution</p>
-                        </div>
-                    </div>
-                    <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you deploy Cortex XDR agent to 10,000 Windows endpoints?</button>
                         <div class="qa-answer">
-                            <p><strong>For enterprise deployment, I'd use existing deployment infrastructure:</strong></p>
-                            <p><strong>Option 1: Microsoft Intune (if available)</strong></p>
-                            <ol>
-                                <li>Download MSI from XSIAM console</li>
-                                <li>Create Line-of-business app in Intune</li>
-                                <li>Set command line: <code>DISTRIBUTION_ID="your-id" REBOOT=ReallySuppress</code></li>
-                                <li>Assign to "All Windows devices" group</li>
-                                <li>Monitor deployment status in Intune</li>
-                            </ol>
-                            <p><strong>Option 2: SCCM</strong></p>
-                            <ol>
-                                <li>Create Application with MSI deployment type</li>
-                                <li>Set detection method (cyserver.exe exists)</li>
-                                <li>Deploy to device collection</li>
-                                <li>Use phased deployment for risk management</li>
-                            </ol>
-                            <p><strong>Option 3: GPO (if no MDM/SCCM)</strong></p>
-                            <ol>
-                                <li>Host MSI on network share</li>
-                                <li>Create Software Installation GPO</li>
-                                <li>Link to OU containing target computers</li>
-                            </ol>
-                            <p><strong>Best Practice:</strong> Deploy to pilot group (100-500) first, monitor for issues, then expand to full deployment in waves.</p>
+                            <p>For an enterprise deployment at that scale, I'd take a phased approach using existing infrastructure. First, I'd identify the deployment tool - if the organization has Intune or SCCM, those are the obvious choices. If not, we'd look at GPO or a third-party deployment tool.</p>
+                            
+                            <p>I'd start with a pilot of about 100 endpoints across different departments and endpoint types - some workstations, some laptops, maybe a few servers. This helps catch any compatibility issues early. During pilot, I'd monitor CPU and memory impact, verify telemetry is flowing properly with XQL queries, and check for any application conflicts.</p>
+                            
+                            <p>For the actual deployment, I'd use Intune's line-of-business app deployment with the MSI package from XSIAM console. The key parameters are DISTRIBUTION_ID (ties the agent to your tenant) and REBOOT=ReallySuppress (prevents unwanted reboots). I'd deploy in waves - maybe 1,000 endpoints per wave, with a day or two between waves to catch any issues.</p>
+                            
+                            <p>Throughout the rollout, I'd use XSIAM's deployment dashboard to track coverage and identify any endpoints that failed installation. Common issues include network connectivity (endpoints need to reach *.paloaltonetworks.com:443), conflicting security software, or insufficient disk space. For failed deployments, I'd use SCCM's retry mechanism or create a remediation script collection.</p>
                         </div>
                     </div>
+
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: An endpoint shows as connected but you're not seeing expected telemetry. How do you troubleshoot?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you configure the Cortex XDR agent to collect specific data types, and what's your approach to balancing visibility vs. performance?</button>
                         <div class="qa-answer">
-                            <p><strong>Systematic troubleshooting approach:</strong></p>
-                            <ol>
-                                <li><strong>Verify profile assignment:</strong>
-                                    <ul>
-                                        <li>Check which profile is assigned to the endpoint</li>
-                                        <li>Verify the profile has correct Data Collection settings enabled</li>
-                                    </ul>
-                                </li>
-                                <li><strong>Check local agent status:</strong>
-                                    <div class="arch-diagram" style="margin: 8px 0;">cytool info<br>cytool runtime status</div>
-                                    <p style="color: #8b949e; margin: 4px 0;">Look for "Protected" status and recent policy timestamp</p>
-                                </li>
-                                <li><strong>Force policy refresh:</strong>
-                                    <div class="arch-diagram" style="margin: 8px 0;">cytool checkin</div>
-                                </li>
-                                <li><strong>Verify with XQL:</strong>
-                                    <div class="arch-diagram" style="margin: 8px 0;">dataset = xdr_data | filter agent_hostname = "HOSTNAME" | comp count() by event_type</div>
-                                </li>
-                                <li><strong>Check for specific missing data:</strong>
-                                    <ul>
-                                        <li>Missing command lines → Enable "Command Line Logging" in profile</li>
-                                        <li>Missing network → Enable "Network Connections" collection</li>
-                                        <li>Missing registry → Enable "Registry Operations" (Windows only)</li>
-                                    </ul>
-                                </li>
-                                <li><strong>Review agent logs:</strong>
-                                    <p style="color: #8b949e; margin: 4px 0;">Check C:\ProgramData\Cyvera\Logs\ for errors</p>
-                                </li>
-                            </ol>
+                            <p>Data collection is controlled through Endpoint Profiles under Settings → Endpoints → Policy Management. The key section is "Extended Data Collection" where you toggle different telemetry types. My baseline for any workstation includes Process Execution, Command Line Logging, Network Connections, Registry Operations, and Script Execution. These are non-negotiable because without them, you miss most attack techniques.</p>
+                            
+                            <p>The performance-sensitive settings are Module/Image Loads and DNS Queries. Module loads generate massive volume - we're talking 3-5x more events than process telemetry - because every DLL load creates an event. I typically only enable this for high-security endpoints like executive laptops or jump servers where I want maximum visibility for forensic investigations.</p>
+                            
+                            <p>For servers, especially busy database or application servers, I'd create a separate "Optimized Server" profile. I'd keep Process and Command Line (critical for detecting lateral movement and privilege escalation), keep Network (for C2 detection), but disable File Operations and Module Loads. The trade-off is reduced ransomware visibility, but servers usually have fewer interactive users so the risk is different.</p>
+                            
+                            <p>After deploying profiles, I verify with an XQL query that groups event counts by event_type for a sample of endpoints. If I see zero NETWORK events, I know the collection setting didn't apply - either profile isn't assigned correctly or the endpoint hasn't checked in yet. A quick cytool checkin on the endpoint forces a policy refresh.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: An endpoint shows as connected in the console but you're not seeing expected telemetry. Walk me through your troubleshooting process.</button>
+                        <div class="qa-answer">
+                            <p>First, I'd verify exactly what telemetry is missing versus what's expected. I'd run an XQL query: dataset=xdr_data | filter agent_hostname="HOSTNAME" | comp count() by event_type. This shows me what event types are actually arriving. If I'm seeing PROCESS events but no NETWORK events, that tells me specifically what to investigate.</p>
+                            
+                            <p>Next, I'd check the profile assignment. In the console, I'd look up the endpoint and see which profile is assigned. Then I'd open that profile and verify the Data Collection settings have the expected telemetry types enabled. A common gotcha is having multiple endpoint groups with overlapping rules - the endpoint might be getting a different profile than expected.</p>
+                            
+                            <p>If the profile looks correct, I'd check the endpoint locally. On Windows, I'd run "cytool runtime status" to see what the agent thinks its collection settings are. If there's a mismatch between console and local, I'd force a check-in with "cytool checkin" and wait 10-15 minutes. Sometimes policies just haven't propagated yet.</p>
+                            
+                            <p>For more stubborn issues, I'd check the local agent logs in C:\ProgramData\Cyvera\Logs\. Look for any errors related to data upload or policy parsing. If the endpoint is behind a proxy, verify the proxy settings are configured correctly - some proxies block the large volume of telemetry data even though connectivity checks pass.</p>
+                            
+                            <p>One specific scenario I've seen: command lines are missing. This is usually because Windows itself isn't configured to audit command line arguments. You need either a GPO or local policy setting to enable "Include command line in process creation events" under Audit Policy. The Cortex agent can only collect what Windows provides.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle Cortex XDR agent exclusions, and what's your philosophy on when to add them?</button>
+                        <div class="qa-answer">
+                            <p>Exclusions are a double-edged sword. Every exclusion is a potential blind spot, so I approach them with healthy skepticism. My philosophy is: prove the exclusion is necessary, document why it's needed, review them periodically, and scope them as narrowly as possible.</p>
+                            
+                            <p>The most common legitimate need for exclusions is performance impact from scanning conflicts. If you have another security tool like AV doing real-time scanning, and Cortex is also scanning the same files, you get double scanning overhead. In this case, I'd exclude the other tool's working directories from Cortex scanning, and vice versa.</p>
+                            
+                            <p>For applications that generate tons of file I/O - like databases, dev environments, or backup software - I'd first try the "Optimized Server" profile approach of disabling file telemetry entirely. If that's not acceptable because the endpoint still needs file monitoring, then I'd add path-based exclusions just for those specific application directories.</p>
+                            
+                            <p>When adding exclusions, I always scope them narrowly. Instead of excluding "C:\Program Files\*", I'd exclude "C:\Program Files\SpecificApp\Cache\*". I document each exclusion in our security runbook with the reason, who requested it, and a review date. Every quarter, I audit exclusions to see if they're still needed.</p>
+                            
+                            <p>One thing I never do is exclude based on process name alone without a path. Excluding "backup.exe" would let any malware named "backup.exe" run undetected. Always combine process name with a full path exclusion.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does the Cortex XDR agent compare to other EDR agents you've worked with, and what are its strengths and weaknesses?</button>
+                        <div class="qa-answer">
+                            <p>I've worked with CrowdStrike Falcon, Microsoft Defender for Endpoint, and Carbon Black in addition to Cortex XDR. Each has its strengths. Cortex's biggest advantage is the native integration with XSIAM - the telemetry flows directly into the SIEM/SOAR without any integration work. With other EDRs, you're typically shipping data to a separate SIEM and dealing with format differences, delays, and additional licensing.</p>
+                            
+                            <p>Cortex's behavioral threat protection is solid, comparable to CrowdStrike and MDE. Where it really shines is the response capabilities when combined with XSOAR. You can build automated playbooks that take response actions across endpoints without switching tools. Isolate an endpoint, retrieve files, run scripts - all orchestrated automatically.</p>
+                            
+                            <p>One weakness I've noticed is the initial deployment can be more complex than CrowdStrike. CrowdStrike's sensor is more "drop it in and it works" - Cortex requires more thought about profiles and groups upfront. That's not necessarily bad - it gives you more control - but it means more initial configuration work.</p>
+                            
+                            <p>Performance-wise, Cortex is reasonable but not the lightest. On older hardware or very busy servers, I've had to tune down collection settings more than I would with CrowdStrike. The module load telemetry in particular is heavier than equivalent CrowdStrike data.</p>
+                            
+                            <p>The console UI is decent but can feel slower than CrowdStrike's for quick investigations. However, once you learn XQL, the querying capabilities are actually more powerful than CrowdStrike's Spotlight or MDE's KQL - especially for complex multi-stage attack hunting.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What response actions are available through the Cortex XDR agent, and how do you decide when to use each one?</button>
+                        <div class="qa-answer">
+                            <p>The Cortex agent supports several response actions: Network Isolation, Process Termination, File Quarantine, File Retrieval, Live Terminal, and Script Execution. Each has specific use cases and risk levels.</p>
+                            
+                            <p>Network Isolation is my go-to for confirmed compromises. It cuts the endpoint off from everything except the XSIAM cloud connection, stopping lateral movement and C2 communication immediately. I use this when I have high confidence of active compromise - like confirmed ransomware execution or active C2 beacon. The user loses network access, so there's business impact, but it's the fastest containment option.</p>
+                            
+                            <p>Process Termination is for surgical strikes - kill a specific malicious process without disrupting the whole endpoint. I use this for cryptominers, persistent malware, or attacker tools that I've identified. It's lower impact than isolation since the user can keep working, but the attacker might have other persistence mechanisms I haven't found yet.</p>
+                            
+                            <p>File Quarantine moves a malicious file to a secure vault on the endpoint. Good for malware that hasn't executed yet, or for cleaning up after you've terminated the process. I always quarantine rather than delete because you might need the file for forensics later.</p>
+                            
+                            <p>File Retrieval downloads suspicious files for analysis. I use this before taking any destructive action - grab the malware sample, any dropped files, relevant logs. This feeds your threat intel and helps understand the full scope of compromise.</p>
+                            
+                            <p>Live Terminal and Script Execution are the most powerful but riskiest. They give you full remote shell access. I use these for complex remediation - clearing persistence mechanisms, checking for additional compromise, running forensic tools. These require approval workflows in my environments because the potential for mistakes is high.</p>
                         </div>
                     </div>
                 </div>

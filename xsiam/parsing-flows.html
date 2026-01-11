@@ -77,7 +77,7 @@
             <!-- Current Platform Pages -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">XSIAM Pages</div>
-                                <ul class="sidebar-nav">
+                <ul class="sidebar-nav">
                     <li class="sidebar-nav-item">
                         <a href="index.html" class="sidebar-nav-link">
                             <i class="fas fa-home"></i>
@@ -225,6 +225,67 @@
                 <h1><i class="fas fa-stream"></i> Parsing & XDM Normalization</h1>
                 <p class="lead">Understanding how XSIAM parses raw logs and maps them to the XDM (XSIAM Data Model) is crucial for effective querying and detection engineering. This guide covers the parsing pipeline, XDM field reference, and custom parser creation.</p>
 
+                <!-- Parsing Pipeline Flow -->
+                <h2><i class="fas fa-project-diagram"></i> Data Parsing Pipeline</h2>
+                <p>Understanding how data flows through the parsing pipeline helps troubleshoot issues and optimize detection:</p>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #58a6ff;">
+                            <i class="fas fa-cloud-download-alt"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>1. Ingestion</strong>
+                            <p>Raw logs arrive via API/Syslog/Agent</p>
+                            <small style="color: #8b949e;">Stored in raw dataset (vendor_product_raw)</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #d29922;">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>2. Classification</strong>
+                            <p>XSIAM identifies vendor/product</p>
+                            <small style="color: #8b949e;">Uses log format, headers, source IP</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #3fb950;">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>3. Parsing</strong>
+                            <p>Extract fields using parser rules</p>
+                            <small style="color: #8b949e;">JSON, regex, or custom patterns</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #a371f7;">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>4. XDM Mapping</strong>
+                            <p>Map extracted fields to XDM schema</p>
+                            <small style="color: #8b949e;">src_ip → xdm.source.ipv4</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #f85149;">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>5. Storage</strong>
+                            <p>Indexed for search & analytics</p>
+                            <small style="color: #8b949e;">Both raw + XDM fields available</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- What is XDM -->
                 <h2><i class="fas fa-database"></i> What is XDM (XSIAM Data Model)?</h2>
                 
@@ -253,6 +314,52 @@
                                 <div style="margin-bottom: 8px;"><span style="color: #8b949e;">All sources:</span> <span style="color: #3fb950;">xdm.source.ipv4</span></div>
                             </div>
                             <p style="color: #3fb950; font-size: 0.85rem; text-align: center; margin-top: 8px;">ONE query works everywhere!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- When to Use Raw vs XDM Decision Tree -->
+                <h2><i class="fas fa-code-branch"></i> When to Use Raw vs. XDM Fields</h2>
+                <p>Use this decision tree to choose the right field type for your query:</p>
+
+                <div class="decision-tree">
+                    <div class="decision-node" style="background: linear-gradient(135deg, #58a6ff, #1f6feb);">
+                        <i class="fas fa-question-circle"></i>
+                        <span>What are you trying to do?</span>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #3fb950;">Correlation Rule / Multi-Source Detection</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #3fb950;">
+                            <i class="fas fa-check"></i>
+                            <span>Use XDM Fields</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">xdm.source.ipv4, xdm.event.outcome</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #d29922;">Single-Source Investigation</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Is the field available in XDM?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Use XDM (more portable)</div>
+                            <div class="decision-arrow" style="background: #58a6ff;">No → Use raw field</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #f85149;">Vendor-Specific Field (e.g., Palo Alto rule name)</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #f85149;">
+                            <i class="fas fa-code"></i>
+                            <span>Use Raw Fields</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">rule_name, app_category, threat_name</small>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #a371f7;">Debug/Troubleshoot Parsing</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #a371f7;">
+                            <i class="fas fa-bug"></i>
+                            <span>Use _raw_log field</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">See original unparsed event</small>
                         </div>
                     </div>
                 </div>
@@ -304,16 +411,22 @@
                             <tr>
                                 <td><strong>Observer</strong></td>
                                 <td><code>xdm.observer.*</code></td>
-                                <td>type, name, vendor, product</td>
-                                <td>Device that generated log</td>
+                                <td>vendor, product, version, name</td>
+                                <td>Device that generated the log</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alert</strong></td>
+                                <td><code>xdm.alert.*</code></td>
+                                <td>severity, name, category</td>
+                                <td>Security alert context</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Complete XDM Field Reference -->
-                <h2><i class="fas fa-book"></i> XDM Field Reference (Most Used)</h2>
-                
+                <!-- Field Reference -->
+                <h2><i class="fas fa-list"></i> XDM Field Quick Reference</h2>
+
                 <div class="config-section">
                     <h3>Source Fields (xdm.source.*)</h3>
                     <div style="font-family: monospace; font-size: 0.85rem;">
@@ -343,19 +456,9 @@
                             <span style="color: #8b949e;">Source username</span>
                         </div>
                         <div class="field-mapping">
-                            <span class="field-xdm">xdm.source.user.domain</span>
-                            <span style="color: #8b949e;">→</span>
-                            <span style="color: #8b949e;">Source user domain</span>
-                        </div>
-                        <div class="field-mapping">
                             <span class="field-xdm">xdm.source.process.name</span>
                             <span style="color: #8b949e;">→</span>
                             <span style="color: #8b949e;">Source process name</span>
-                        </div>
-                        <div class="field-mapping">
-                            <span class="field-xdm">xdm.source.process.pid</span>
-                            <span style="color: #8b949e;">→</span>
-                            <span style="color: #8b949e;">Source process ID</span>
                         </div>
                     </div>
                 </div>
@@ -516,6 +619,45 @@ eventType               →  xdm.event.type
                     </div>
                 </div>
 
+                <!-- Parser Troubleshooting Decision Tree -->
+                <h2><i class="fas fa-bug"></i> Troubleshooting Parsing Issues</h2>
+                <p>When data isn't parsing correctly, use this decision tree:</p>
+
+                <div class="decision-tree">
+                    <div class="decision-node" style="background: linear-gradient(135deg, #f85149, #da3633);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>What's the parsing issue?</span>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #58a6ff;">XDM fields are empty</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <span>Check: Data in _raw_log field?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Parser not matching (check vendor/product classification)</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → Data not arriving (check ingestion)</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #d29922;">Wrong data in XDM fields</div>
+                        <div class="decision-node" style="background: #21262d;">
+                            <span>Check: Using correct dataset?</span>
+                        </div>
+                        <div class="decision-branch" style="margin-left: 40px;">
+                            <div class="decision-arrow" style="background: #3fb950;">Yes → Parser mapping error (review custom parser)</div>
+                            <div class="decision-arrow" style="background: #f85149;">No → Switch to correct dataset name</div>
+                        </div>
+                    </div>
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #a371f7;">Partial fields parsed</div>
+                        <div class="decision-node" style="background: #21262d; border: 2px solid #a371f7;">
+                            <i class="fas fa-tools"></i>
+                            <span>Log format variation</span>
+                            <small style="display: block; margin-top: 8px; color: #8b949e;">Create custom parser for missing fields</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Custom Parser Creation -->
                 <h2><i class="fas fa-plus-circle"></i> Creating Custom Parsers</h2>
                 
@@ -575,47 +717,146 @@ xdm.event.outcome = if(status = "OK", "SUCCESS", "FAILURE")
                     </div>
                 </div>
 
+                <!-- Custom Parser Workflow -->
+                <h3><i class="fas fa-tasks"></i> Custom Parser Development Workflow</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #58a6ff;">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>1. Analyze Sample</strong>
+                            <p>Get 5-10 sample raw logs</p>
+                            <small style="color: #8b949e;">Use _raw_log field to see original format</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #3fb950;">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>2. Write Parser</strong>
+                            <p>Create extraction patterns</p>
+                            <small style="color: #8b949e;">Test regex at regex101.com first</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #d29922;">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>3. Map to XDM</strong>
+                            <p>Link extracted fields to XDM</p>
+                            <small style="color: #8b949e;">Use appropriate xdm.* fields</small>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon" style="background: #a371f7;">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="flow-content">
+                            <strong>4. Test & Validate</strong>
+                            <p>Query to verify fields populate</p>
+                            <small style="color: #8b949e;">Check edge cases and variations</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Interview Q&A -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is XDM and why is it important for detection engineering?</button>
                         <div class="qa-answer">
-                            <p><strong>XDM (XSIAM Data Model) is XSIAM's normalization schema that maps all log sources to standard field names.</strong></p>
-                            <p><strong>Why it matters:</strong></p>
-                            <ul>
-                                <li><strong>Write once, detect everywhere:</strong> One correlation rule can detect attacks across firewall, endpoint, cloud, and identity logs</li>
-                                <li><strong>Faster investigations:</strong> No need to remember that Palo Alto uses "src" while Windows uses "IpAddress" - both map to xdm.source.ipv4</li>
-                                <li><strong>Easier onboarding:</strong> New data sources automatically work with existing rules if properly mapped</li>
-                            </ul>
-                            <p><strong>Key XDM categories:</strong></p>
-                            <ul>
-                                <li><code>xdm.source.*</code> - Where it came from (IP, user, process)</li>
-                                <li><code>xdm.target.*</code> - Where it went (IP, port, file)</li>
-                                <li><code>xdm.event.*</code> - What happened (type, outcome)</li>
-                            </ul>
+                            <p>XDM - XSIAM Data Model - is the normalization schema that XSIAM uses to map all incoming log sources to a standard set of field names. It's essentially a common language that lets you write detection rules that work across completely different data sources.</p>
+                            
+                            <p>The practical impact is huge. Without normalization, if I wanted to detect brute force attacks, I'd need separate rules for Palo Alto (which uses "src" for source IP), Windows (which uses "IpAddress"), AWS CloudTrail (which uses "sourceIPAddress"), and every other source. That's a maintenance nightmare - you're duplicating logic everywhere and hoping you don't miss a source.</p>
+                            
+                            <p>With XDM, I write ONE rule using xdm.source.ipv4 for source IP and xdm.event.outcome for success/failure, and it automatically applies to any log source that's been properly mapped. When I onboard a new data source - say, a new cloud provider - my existing detection rules immediately start working on that data without any changes.</p>
+                            
+                            <p>The key XDM categories I use constantly are: xdm.source.* for where something came from, xdm.target.* for where it's going, and xdm.event.* for what happened. Those three cover 80% of detection use cases. The mapping happens automatically during ingestion through XSIAM's parsers, or you can create custom parsers for unsupported sources.</p>
                         </div>
                     </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you create a detection rule that works across multiple log sources?</button>
-                        <div class="qa-answer">
-                            <p><strong>Use XDM normalized fields instead of raw fields:</strong></p>
-                            <div class="arch-diagram" style="margin: 8px 0;">// WRONG - Only works for Palo Alto
-dataset = panw_ngfw_traffic_raw
-| filter src_ip = "10.0.0.5"
 
-// RIGHT - Works for ANY source
-dataset = panw_ngfw_traffic_raw, xdr_data, aws_cloudtrail_raw
-| filter xdm.source.ipv4 = "10.0.0.5"</div>
-                            <p><strong>Key principle:</strong> Always use xdm.* fields in correlation rules. Raw fields (src_ip, sourceIPAddress, etc.) are source-specific and won't match across different log types.</p>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When would you use raw fields versus XDM fields in a query?</button>
+                        <div class="qa-answer">
+                            <p>My general rule is: use XDM fields for anything that might need to work across multiple sources, and use raw fields only when you need vendor-specific information that doesn't have an XDM equivalent.</p>
+                            
+                            <p>For correlation rules and detections, I always use XDM. If I'm building a rule to detect lateral movement, I'll use xdm.source.ipv4 and xdm.target.port rather than the vendor-specific equivalents. That way, whether the traffic is logged by the firewall, the endpoint agent, or a network tap, my rule catches it.</p>
+                            
+                            <p>I use raw fields for three scenarios. First, when I need vendor-specific context that doesn't map to XDM - like Palo Alto's "app" field that tells you the specific application identified, or Windows event IDs for specific event types. Second, during initial investigation when I'm exploring a single data source and want to see all available fields. Third, when troubleshooting parsing issues - I'll look at _raw_log to see the original event format.</p>
+                            
+                            <p>One gotcha I've learned: some fields might exist in both raw and XDM but with different values due to transformation. For example, xdm.event.outcome might normalize "allow"/"deny"/"drop"/"pass" all to "SUCCESS"/"FAILURE". If I need the original granularity, I'd use the raw field. But for detection purposes, the normalized version is usually what I want.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you create a detection rule that works across multiple log sources to detect the same attack?</button>
+                        <div class="qa-answer">
+                            <p>Let me walk through a concrete example - detecting brute force authentication attacks across firewall, Windows, and cloud logs. The key is designing the rule around XDM fields from the start.</p>
+                            
+                            <p>First, I'd identify which XDM fields capture the relevant information across all sources. For brute force, I need: xdm.event.type = "AUTH" to filter to authentication events, xdm.event.outcome = "FAILURE" for failed attempts, xdm.source.ipv4 for the attacking IP, and xdm.target.user.username for the targeted account.</p>
+                            
+                            <p>My XQL query would look like: dataset = panw_ngfw_traffic_raw, microsoft_windows_raw, aws_cloudtrail_raw, then filter on those XDM fields, aggregate by source IP and username, and threshold at 5+ failures. The beauty is I can add new datasets to that query trivially - if we onboard Azure AD logs next month, I just add azure_ad_raw to the dataset list.</p>
+                            
+                            <p>Before deploying, I'd validate that each source actually populates those XDM fields. Sometimes a parser doesn't map everything, so I'd run a quick query on each dataset to confirm the fields have data. If a source doesn't populate xdm.event.type properly, I might need to use a different filter condition or create a custom parser enhancement.</p>
+                            
+                            <p>One nuance: different sources might have different thresholds for what's "normal." A firewall might see thousands of auth events while Windows sees hundreds. I might need to tune the threshold per source or normalize by creating a baseline metric first.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through troubleshooting a scenario where logs are ingesting but XDM fields are empty.</button>
+                        <div class="qa-answer">
+                            <p>This is a common issue I've dealt with multiple times. The systematic approach is to trace the data through the parsing pipeline.</p>
+                            
+                            <p>First, I'd confirm the raw data is actually arriving by querying with minimal filters and looking at the _raw_log field. If I see the raw events but XDM fields are null, that confirms the issue is in parsing, not ingestion. If _raw_log is also empty, the problem is upstream - maybe the data source configuration or Broker VM connectivity.</p>
+                            
+                            <p>Assuming raw data is there, next I'd check how XSIAM classified the logs. Go to Settings → Data Sources and find the data source in question. Look at the assigned parser - is it the correct vendor/product? Sometimes logs get misclassified, especially if they're coming through syslog without proper identification. I've seen Cisco logs get classified as "generic syslog" and miss the Cisco parser entirely.</p>
+                            
+                            <p>If classification is correct, I'd look at the parser rules themselves. Maybe the log format changed - vendors update their log schemas, and sometimes those changes break existing parsers. I'd grab a sample _raw_log event and compare it against what the parser expects. Common issues are: date format changes, field order changes, or new fields appearing that confuse the regex.</p>
+                            
+                            <p>If the default parser just doesn't work for this log variation, I have two options: create a custom parser that handles the specific format, or work with Palo Alto support to get the default parser updated. For a quick fix, custom parser. For long-term sustainability, push for an official update.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach creating a custom parser for a new log source that XSIAM doesn't support out of the box?</button>
+                        <div class="qa-answer">
+                            <p>I've built custom parsers for several internal applications and niche vendors. The process I follow starts with understanding the log format deeply before writing any parsing rules.</p>
+                            
+                            <p>First, I collect 50-100 sample events that represent the full variety of logs this source generates. I'm looking for different event types, error conditions, edge cases. A parser that only works for successful logins but breaks on failed logins isn't useful. I'll save these samples in a test file for validation.</p>
+                            
+                            <p>Next, I identify the log format - is it JSON, CSV, syslog, or some custom format? JSON is easiest because I can use json_extract functions. For unstructured formats, I need regex, which requires more careful testing. I usually prototype my regex patterns at regex101.com first because it gives immediate feedback and explains what each part matches.</p>
+                            
+                            <p>For the XDM mapping, I think about what security value this data provides. If it's authentication logs, I need xdm.source.ipv4, xdm.target.user.username, xdm.event.outcome at minimum. If it's network logs, xdm.source.ipv4, xdm.target.ipv4, xdm.target.port. I always map _time properly because timestamps are critical for investigation timelines.</p>
+                            
+                            <p>After deploying the parser, I validate by running queries that filter on the XDM fields and comparing against the raw data. I spot-check 10-20 events manually to make sure values are mapping correctly. Then I run it for a few days and check for parsing failures - usually there's at least one log variation I didn't anticipate that breaks things.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSIAM's XDM compare to other SIEM normalization approaches like Splunk CIM or Elastic ECS?</button>
+                        <div class="qa-answer">
+                            <p>I've worked with all three, and they're solving the same fundamental problem but with different approaches and trade-offs.</p>
+                            
+                            <p>XDM is tightly integrated with XSIAM's parsing and correlation engine. The normalization happens during ingestion automatically, so by the time data is queryable, it's already mapped. This is great for detection engineering because you don't need to think about it - just use xdm.* fields and they work. The downside is you're dependent on Palo Alto's parsers, and if they don't support a source, you need custom work.</p>
+                            
+                            <p>Splunk CIM (Common Information Model) is more of a convention than enforced structure. You can use CIM-compliant apps and add-ons, but nothing stops you from ignoring CIM entirely. This flexibility is powerful - you can ingest anything - but it means detection rules need more careful design to handle unmapped data. I've seen Splunk environments where half the data follows CIM and half doesn't, making correlation painful.</p>
+                            
+                            <p>Elastic's ECS (Elastic Common Schema) is similar to XDM in philosophy - a standardized schema that data should conform to. The Elastic stack has good tooling (Beats, Logstash) that can normalize on ingest. ECS is very detailed with lots of field options, which can be both powerful and overwhelming.</p>
+                            
+                            <p>The biggest practical difference is vendor support. XDM has excellent coverage for Palo Alto products and solid coverage for major third parties. If you're a Palo Alto shop with NGFW, Cortex XDR, and Prisma Cloud, everything just works together through XDM. If you're integrating lots of diverse sources, you'll need more custom parsing work than you might with Splunk's extensive app ecosystem.</p>
                         </div>
                     </div>
                 </div>
 
                 
-
-                
-                </main>
+            </main>
         </div>
     </div>
     

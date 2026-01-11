@@ -807,8 +807,133 @@
                 <div class="nav-title">XSOAR Automation</div>
             </a>
         </div>
+
+        <!-- Decision Tree: Detection Type Selection -->
+        <div class="decision-tree">
+            <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose the Right Detection Type</h3>
             
+            <div class="decision-node">
+                <i class="fas fa-question-circle"></i>
+                <strong>What type of behavior are you trying to detect?</strong>
+                <small>Identify the primary data source and pattern</small>
+            </div>
+            
+            <div class="decision-branch">
+                <div class="decision-arrow" style="background-color: #58a6ff;">Endpoint Behavior</div>
+                <div class="decision-node">
+                    <i class="fas fa-question-circle"></i>
+                    <strong>Do you know the specific pattern/signature?</strong>
+                    <small>Known malicious behavior vs anomaly from baseline</small>
+                </div>
                 
+                <div class="decision-branch">
+                    <div class="decision-arrow yes">YES - Known Pattern</div>
+                    <div class="decision-outcome" style="border-left-color: #3fb950;">
+                        <i class="fas fa-bullseye" style="color: #3fb950;"></i>
+                        <strong>Use: BIOC Rule</strong>
+                        <small>Process BIOC for execution chains | File BIOC for suspicious paths | Registry BIOC for persistence</small>
+                    </div>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow no">NO - Anomaly Detection</div>
+                    <div class="decision-outcome" style="border-left-color: #a371f7;">
+                        <i class="fas fa-brain" style="color: #a371f7;"></i>
+                        <strong>Use: Analytics BIOC</strong>
+                        <small>ML-based baselining detects deviations from normal behavior without explicit rules</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="decision-branch">
+                <div class="decision-arrow" style="background-color: #d29922;">Cross-Source Correlation</div>
+                <div class="decision-outcome" style="border-left-color: #d29922;">
+                    <i class="fas fa-project-diagram" style="color: #d29922;"></i>
+                    <strong>Use: Correlation Rule (XQL)</strong>
+                    <small>Combine endpoint + network + cloud + identity | Time-window correlation | Custom thresholds</small>
+                </div>
+            </div>
+            
+            <div class="decision-branch">
+                <div class="decision-arrow" style="background-color: #f85149;">User/Entity Behavior</div>
+                <div class="decision-outcome" style="border-left-color: #f85149;">
+                    <i class="fas fa-user-shield" style="color: #f85149;"></i>
+                    <strong>Use: Analytics BIOC (UEBA)</strong>
+                    <small>User behavior analytics | Unusual login locations | Privilege escalation patterns</small>
+                </div>
+            </div>
+            
+            <div class="decision-branch">
+                <div class="decision-arrow" style="background-color: #8b949e;">Network-Only Detection</div>
+                <div class="decision-outcome" style="border-left-color: #8b949e;">
+                    <i class="fas fa-network-wired" style="color: #8b949e;"></i>
+                    <strong>Use: Network BIOC + Correlation Rule</strong>
+                    <small>BIOC for C2 patterns | Correlation for traffic anomalies | Firewall log analysis</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comprehensive Interview Q&A -->
+        <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+        <div class="qa-section">
+            <div class="qa-item">
+                <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the difference between BIOC rules and Analytics BIOC in XSIAM. When would you use each?</button>
+                <div class="qa-answer">
+                    <p>BIOC and Analytics BIOC are complementary detection mechanisms that serve different purposes. Understanding when to use each is crucial for building effective detection coverage.</p>
+                    <p>BIOC (Behavioral Indicators of Compromise) rules are deterministic—they trigger when specific conditions are met. You define the exact behavior you're looking for: a specific process name with certain command-line arguments, file creation in a particular path, or registry modification at a known persistence location. They're excellent for known attack patterns, documented TTPs, and specific IOCs. If I know exactly what malicious behavior looks like, I write a BIOC rule.</p>
+                    <p>Analytics BIOC uses machine learning to establish baselines and detect deviations. Instead of defining "alert when X happens," you're saying "alert when something unusual happens compared to normal." It's powerful for detecting novel threats, insider threats, and attacks that don't match known signatures. The downside is it requires time to learn the environment and can generate false positives if the baseline period includes anomalous activity.</p>
+                    <p>In practice, I use both together. BIOC rules catch known-bad behaviors with high confidence—things like encoded PowerShell commands or Mimikatz execution. Analytics BIOC catches the unknown-unknowns—a user suddenly accessing resources they've never touched, or a process making network connections to a destination never seen before. The combination provides defense in depth for detection.</p>
+                </div>
+            </div>
+            
+            <div class="qa-item">
+                <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through how you would build detection content for a ransomware attack scenario.</button>
+                <div class="qa-answer">
+                    <p>Ransomware detection requires a layered approach because ransomware attacks progress through multiple stages, and we want to catch them as early as possible rather than waiting until encryption begins.</p>
+                    <p>For initial access and execution, I create BIOC rules for common delivery mechanisms: suspicious macro execution from Office applications, script interpreters launched by email clients, or executables running from user Downloads or Temp folders. These might not be ransomware-specific, but they're common initial foothold techniques.</p>
+                    <p>For defense evasion and privilege escalation, I look for shadow copy deletion (vssadmin.exe, wmic, or PowerShell commands targeting shadow copies), disabling of security tools, and process injection behaviors. The shadow copy detection is particularly important because it's a strong ransomware indicator—legitimate software rarely deletes volume shadow copies.</p>
+                    <p>For the encryption stage itself, I use File BIOC rules to detect mass file modifications: high rates of file renames, unusual extension changes, or creation of ransom note files (readme.txt, decrypt_instructions.html patterns). Analytics BIOC can supplement this by detecting file access patterns that deviate from a user's normal behavior.</p>
+                    <p>I also create correlation rules that combine signals across the kill chain. A single shadow copy deletion might be a false positive from IT operations, but shadow copy deletion plus mass file modifications plus network connection to a rare external host is high-confidence ransomware. The correlation rule triggers only when multiple indicators appear within a time window.</p>
+                    <p>Finally, I ensure we have automated response actions tied to high-severity ransomware detections—network isolation of the affected endpoint to prevent lateral spread, even before a human analyst reviews the alert.</p>
+                </div>
+            </div>
+            
+            <div class="qa-item">
+                <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSIAM's detection approach compare to Microsoft Defender for Endpoint and CrowdStrike Falcon?</button>
+                <div class="qa-answer">
+                    <p>All three are leading XDR platforms, but they have different architectural approaches and strengths. Understanding these differences helps when choosing a platform or integrating multiple solutions.</p>
+                    <p>XSIAM/Cortex XDR has the advantage of tight integration with Palo Alto's ecosystem—firewall logs, Prisma Cloud, and GlobalProtect VPN all feed into the same detection engine. The BIOC system provides granular endpoint detection, and the XQL query language is powerful for custom correlation. The unified SIEM+XDR+SOAR approach means detections can immediately trigger automated playbooks without crossing tool boundaries.</p>
+                    <p>Microsoft Defender for Endpoint integrates deeply with the Microsoft ecosystem—Azure AD, Intune, Office 365. If you're a Microsoft shop, the native integration provides excellent coverage for identity-based attacks and cloud security. MDE's detection engine is strong, and the recently expanded Sentinel integration allows correlation across Microsoft security products. The weakness is that non-Microsoft environments require more integration work.</p>
+                    <p>CrowdStrike Falcon is known for its lightweight agent and strong threat intelligence. The Overwatch managed threat hunting service provides 24/7 expert coverage that many organizations can't build in-house. CrowdStrike excels at adversary tracking and provides detailed attribution when available. The platform is agent-centric, so network and cloud coverage typically requires additional products.</p>
+                    <p>For rule creation, XSIAM uses XQL, Sentinel/MDE uses KQL, and CrowdStrike uses a proprietary rule format. The detection logic is conceptually similar, but translating rules between platforms requires understanding each platform's data schema and query capabilities. In practice, organizations often run multiple XDR solutions during migrations or in complex environments, so understanding how detections translate between platforms is valuable.</p>
+                </div>
+            </div>
+            
+            <div class="qa-item">
+                <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach tuning detection rules to reduce false positives without missing real threats?</button>
+                <div class="qa-answer">
+                    <p>Tuning is one of the most important and ongoing tasks in detection engineering. The goal is finding the sweet spot where you catch real attacks without overwhelming analysts with noise. My approach is systematic and data-driven.</p>
+                    <p>First, I establish what's triggering false positives. I query the alerts dataset to understand patterns: which rules fire most frequently, what hosts or users appear repeatedly, and whether there are temporal patterns (like scheduled tasks triggering every night). This data tells me where to focus tuning efforts.</p>
+                    <p>For tuning, I prefer allowlisting over disabling rules. If a rule detecting PowerShell downloads fires for IT admin scripts, I add an exception for the specific admin accounts or source paths rather than disabling the rule entirely. This preserves detection for unexpected contexts while eliminating known-good noise.</p>
+                    <p>I'm careful about over-tuning. Every exclusion is a potential blind spot. If I exclude "admin" users from a detection, and an attacker compromises an admin account, I've created a detection gap. I document every exclusion with justification and periodically review whether exclusions are still needed.</p>
+                    <p>For threshold-based rules, I use historical data to set intelligent thresholds. Instead of guessing "5 failed logins is suspicious," I analyze the environment: what's the 95th percentile of failed logins per user? Setting the threshold slightly above that baseline catches genuine anomalies while avoiding false positives from legitimate lockouts.</p>
+                    <p>Finally, I track tuning effectiveness over time. A rule that generated 100 alerts per day before tuning should be closer to 5-10 after tuning, and those remaining alerts should have a higher true positive rate. If tuning made no difference, I need to rethink the detection logic entirely.</p>
+                </div>
+            </div>
+            
+            <div class="qa-item">
+                <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe the alert-to-incident pipeline in XSIAM. How do alerts get grouped into incidents?</button>
+                <div class="qa-answer">
+                    <p>The alert-to-incident pipeline is where XSIAM's XDR capabilities really shine. The platform automatically correlates related alerts into unified incidents, which dramatically reduces analyst workload and provides better attack context.</p>
+                    <p>When a detection rule triggers, it creates an alert with associated metadata: timestamp, affected entities (host, user, IP), severity, MITRE ATT&CK mapping, and the evidence that triggered the detection. This alert goes into the alerts queue.</p>
+                    <p>XSIAM then applies incident grouping logic to determine if this alert should join an existing incident or create a new one. The default grouping keys are typically based on shared entities—alerts affecting the same host, user, or related to the same process tree often group together. Time windows also matter; alerts within a configured window (often 24-72 hours) are more likely to group.</p>
+                    <p>The incident stitching is intelligent. If I have an alert for suspicious PowerShell execution on Host A, and then an alert for lateral movement from Host A to Host B, XSIAM recognizes the relationship and groups them. The resulting incident shows the attack progression: initial execution → lateral movement, with all evidence from both alerts accessible in one view.</p>
+                    <p>Incident severity is calculated from the highest-severity alert in the group, though analysts can override this. The incident also inherits MITRE ATT&CK mappings from all grouped alerts, giving a visual representation of attack coverage across the kill chain.</p>
+                    <p>For investigation, the incident provides a causality chain view showing how events relate—which process launched which child, which network connections were made, which files were accessed. This context makes triage much faster than investigating individual alerts in isolation.</p>
+                </div>
+            </div>
+        </div>
+            
 
                 
                 </main>

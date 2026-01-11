@@ -629,58 +629,124 @@ No Branch → Close Alert</div>
    └─ No: Continue normal flow</div>
                 </div>
 
+                <!-- Decision Tree: Automation Strategy -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: When to Automate Response Actions</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>What is the confidence level of the detection?</strong>
+                        <small>High confidence = low false positive rate</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">HIGH Confidence (>95%)</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Is the response action reversible?</strong>
+                            <small>Can you undo the action if it's a false positive?</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES - Reversible</div>
+                            <div class="decision-outcome" style="border-left-color: #3fb950;">
+                                <i class="fas fa-robot" style="color: #3fb950;"></i>
+                                <strong>Full Automation OK</strong>
+                                <small>Block IP, quarantine file, disable account → Can be undone if false positive</small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO - Irreversible</div>
+                            <div class="decision-outcome" style="border-left-color: #d29922;">
+                                <i class="fas fa-user-check" style="color: #d29922;"></i>
+                                <strong>Automation with Approval</strong>
+                                <small>Automate preparation, require human approval for execution</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">MEDIUM Confidence (70-95%)</div>
+                        <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                            <i class="fas fa-search-plus" style="color: #58a6ff;"></i>
+                            <strong>Automate Enrichment Only</strong>
+                            <small>Gather context automatically, present to analyst for decision | No automated response</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #f85149;">LOW Confidence (<70%)</div>
+                        <div class="decision-outcome" style="border-left-color: #f85149;">
+                            <i class="fas fa-user" style="color: #f85149;"></i>
+                            <strong>Manual Investigation</strong>
+                            <small>Alert analyst, no automation | Focus on improving detection confidence first</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe a playbook you would build for phishing alerts.</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through designing a playbook for automated phishing response.</button>
                         <div class="qa-answer">
-                            <ol>
-                                <li><strong>Trigger:</strong> New phishing alert from email gateway</li>
-                                <li><strong>Extract indicators:</strong> URLs, attachments, sender info</li>
-                                <li><strong>Enrichment:</strong>
-                                    <ul>
-                                        <li>URL reputation (VirusTotal, URLhaus)</li>
-                                        <li>Attachment hash check</li>
-                                        <li>Sender domain reputation</li>
-                                    </ul>
-                                </li>
-                                <li><strong>Decision:</strong> Based on enrichment scores</li>
-                                <li><strong>Response:</strong>
-                                    <ul>
-                                        <li>If malicious: Block URLs/hashes, remove from mailboxes, notify user</li>
-                                        <li>If suspicious: Escalate to analyst</li>
-                                        <li>If clean: Close with notes</li>
-                                    </ul>
-                                </li>
-                            </ol>
+                            <p>Phishing response is one of the best use cases for SOAR automation because it's high-volume, repetitive, and has clear decision criteria. My playbook design focuses on speed for obvious threats while escalating ambiguous cases.</p>
+                            <p>The playbook triggers on new phishing alerts from the email gateway or user reports. First step is indicator extraction—I parse the email for sender address, URLs, attachment hashes, and any reply-to addresses. This is straightforward automation using regex and the email parsing commands.</p>
+                            <p>Next comes enrichment, which runs in parallel for speed. I send URLs to VirusTotal, URLhaus, and our internal blocklist. Attachment hashes go to VirusTotal and malware sandboxes. Sender domain gets reputation checking and WHOIS lookup. I also check if we've seen this sender or URL before in previous incidents—repeat offenders get flagged.</p>
+                            <p>The decision logic uses a scoring system. Known malicious indicators (blocklisted URL, high VT score, sandbox detonation) trigger automatic response. Medium-confidence results (newly registered domain, suspicious but not blocklisted) escalate to an analyst queue with all the enrichment pre-attached. Clean results can auto-close or send to a low-priority review queue.</p>
+                            <p>For the automated response actions: I remove the email from all recipient mailboxes using the email platform API, block the malicious URLs and domains at the proxy and firewall, add indicators to our internal blocklist, and send an automated notification to affected users explaining the threat and that we've removed the email. If the user clicked a link, I flag that for additional investigation.</p>
+                            <p>The playbook ends with ticket creation and documentation—even automated closures create a record with the enrichment results for future reference and metrics tracking.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle rate limiting in playbooks?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle rate limiting and API quotas in XSOAR playbooks?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>Use sub-playbooks:</strong> Process items in batches</li>
-                                <li><strong>Add delays:</strong> Sleep task between API calls</li>
-                                <li><strong>Check quotas:</strong> Query remaining API quota before batch</li>
-                                <li><strong>Prioritize:</strong> Only enrich high-priority indicators</li>
-                                <li><strong>Cache results:</strong> Store previous lookups, reuse within timeframe</li>
-                                <li><strong>Error handling:</strong> Retry with backoff on rate limit errors</li>
-                            </ul>
+                            <p>Rate limiting is a real operational challenge, especially with threat intelligence APIs that have daily quotas. I've developed several strategies to manage this effectively.</p>
+                            <p>First, I implement caching at the integration level. When I look up an indicator, I store the result with a timestamp. If the same indicator appears again within a defined window (usually 24-72 hours depending on the source), I return the cached result instead of making another API call. This dramatically reduces API usage for repeated indicators like common malware hashes or frequently phished domains.</p>
+                            <p>For batch processing, I use sub-playbooks with controlled throughput. Instead of firing 100 parallel VirusTotal lookups when a big incident comes in, I process them in batches of 10 with a sleep task between batches. This stays within rate limits and prevents the playbook from failing entirely due to quota exhaustion.</p>
+                            <p>I also implement prioritization. Not every indicator needs full enrichment immediately. High-severity alerts get priority API usage, while lower-severity alerts can use cached data or wait in a queue. For really expensive API calls (like sandbox detonation), I only trigger them for genuinely suspicious files, not every attachment.</p>
+                            <p>Error handling is crucial. When an API returns a rate limit error, my playbook catches it, logs the indicator for later retry, and continues with other tasks rather than failing entirely. I have a scheduled job that retries rate-limited lookups during off-peak hours when quotas have reset.</p>
+                            <p>Finally, I monitor API usage proactively. I track daily consumption and alert before we hit quota limits. If we're consistently hitting limits, that's a signal we need to upgrade the API tier or find alternative data sources.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When should automation stop and involve a human?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When should automation stop and escalate to a human analyst?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>High-impact actions:</strong> Host isolation, account disable</li>
-                                <li><strong>Ambiguous results:</strong> Medium confidence scores</li>
-                                <li><strong>VIP assets:</strong> Executive devices, critical servers</li>
-                                <li><strong>Novel threats:</strong> Unknown malware, new TTPs</li>
-                                <li><strong>Business context:</strong> May impact operations</li>
-                                <li><strong>Legal/compliance:</strong> Data handling, evidence preservation</li>
-                            </ul>
-                            <p style="margin-top: 12px;"><strong>Rule:</strong> Automate enrichment aggressively, automate response cautiously.</p>
+                            <p>Knowing when NOT to automate is as important as knowing what to automate. I use several criteria to determine when human judgment is required.</p>
+                            <p>First, impact threshold. Any action that could significantly impact business operations requires human approval—isolating a server, disabling an executive's account, or blocking a domain that might be legitimate. The cost of a false positive here outweighs the speed benefit of automation. I configure these as "semi-automated" actions: the playbook prepares everything and presents it to an analyst with a one-click approval button.</p>
+                            <p>Second, confidence level. If enrichment returns ambiguous results—medium reputation scores, newly registered but not definitively malicious, or conflicting signals from different sources—that goes to a human. Automation is great for clear-cut decisions; humans are better at nuanced judgment.</p>
+                            <p>Third, novelty. When the playbook encounters something it hasn't seen before—a new malware family, an unusual attack pattern, or an indicator type the playbook doesn't handle—it should escalate rather than guess. I include a "catch-all" branch in playbooks that routes unexpected scenarios to analysts.</p>
+                            <p>Fourth, VIP handling. We maintain a list of high-value assets and personnel. Any incident involving these gets automatic escalation regardless of severity. The CEO's laptop showing medium-severity indicators deserves human attention even if the same indicators on a standard workstation would be auto-handled.</p>
+                            <p>Fifth, legal and compliance considerations. Evidence preservation for potential litigation, data handling for privacy regulations, or anything that might need forensic chain of custody should involve humans who understand the legal implications.</p>
+                            <p>The key principle: automate the boring, repetitive, high-confidence work. Escalate anything involving judgment, risk tolerance, or business context that automation can't understand.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you measure the effectiveness of your SOAR playbooks?</button>
+                        <div class="qa-answer">
+                            <p>Measuring SOAR effectiveness requires tracking both efficiency metrics and quality metrics. I focus on several key measurements.</p>
+                            <p>Mean Time to Respond (MTTR) is the primary efficiency metric. I measure the time from alert creation to resolution, comparing automated versus manual handling. A good phishing playbook should resolve obvious threats in minutes, where manual triage might take 30-60 minutes. I track this over time and by playbook to identify optimization opportunities.</p>
+                            <p>Automation rate shows what percentage of alerts are fully handled without human intervention. For high-volume use cases like phishing or endpoint alerts, I target 70-80% full automation. Lower automation rates might indicate the detection is too noisy (false positives requiring manual review) or the playbook logic needs refinement.</p>
+                            <p>False positive and false negative rates measure quality. If automated responses are frequently incorrect—blocking legitimate domains, or failing to catch malicious ones—the playbook needs tuning. I review a sample of automated closures weekly to verify the decisions were correct.</p>
+                            <p>Analyst satisfaction is a qualitative but important metric. Do analysts trust the playbook outputs? Are the escalations appropriately prioritized? Do they have the context they need to make decisions quickly? I gather this feedback through regular check-ins and incorporate it into playbook improvements.</p>
+                            <p>Cost avoidance calculates the value of automation. If a playbook saves 20 minutes per incident and handles 100 incidents per week, that's 33 hours of analyst time saved weekly. Translating that to salary costs justifies SOAR investment and identifies which playbooks deliver the most value.</p>
+                            <p>Finally, I track playbook health metrics: execution success rate, average runtime, error frequency. A playbook that fails 10% of the time due to API issues or bugs isn't reliable, regardless of how good the logic is when it works.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSOAR in XSIAM differ from standalone XSOAR, and what are the advantages?</button>
+                        <div class="qa-answer">
+                            <p>The embedded XSOAR in XSIAM has some key differences from standalone XSOAR deployments, and understanding these helps optimize how you use the platform.</p>
+                            <p>The biggest advantage is native integration with the data layer. In standalone XSOAR, you need integrations to pull data from your SIEM—that's an API call, with latency and potential for failures. In XSIAM, XSOAR has direct access to the Cortex Data Lake. Playbooks can run XQL queries natively to enrich incidents with historical context, find related alerts, or identify affected assets. This is faster and more reliable than external API calls.</p>
+                            <p>Incident data flow is also tighter. When an XSIAM correlation rule or BIOC creates an alert, it automatically flows into an incident that XSOAR can act on. There's no separate incident creation step or data mapping needed. The incident already has the XDM-normalized data, so playbooks can reference standardized fields regardless of the original data source.</p>
+                            <p>Response actions to Cortex XDR are native. Isolating an endpoint, killing a process, or collecting forensic data doesn't require an external integration—it's built into the platform. This is more reliable than API-based integrations and has better error handling.</p>
+                            <p>The trade-off is that XSIAM's XSOAR is more tightly coupled to the Palo Alto ecosystem. Standalone XSOAR is completely vendor-agnostic; you can orchestrate any security stack. XSIAM's XSOAR still supports integrations with third-party tools, but it's optimized for the Palo Alto stack. If you're heavily invested in other vendors' tools, you might find some integrations are better supported in standalone XSOAR.</p>
+                            <p>From a licensing perspective, XSIAM includes XSOAR functionality, so there's no separate XSOAR license to manage. This simplifies procurement and deployment but means your SOAR capabilities are tied to your XSIAM subscription.</p>
                         </div>
                     </div>
                 </div>

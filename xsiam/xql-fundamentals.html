@@ -385,6 +385,139 @@ USER FIELDS:
 └── auth_domain: Domain name</div>
                 </div>
 
+                <!-- Decision Tree: XQL Query Approach -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose Your Query Approach</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>What are you trying to find?</strong>
+                        <small>Determine your investigation goal first</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #58a6ff;">Specific Event/Hash/IP</div>
+                        <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                            <i class="fas fa-search" style="color: #58a6ff;"></i>
+                            <strong>Use: filter + fields</strong>
+                            <small><code>dataset = xdr_data | filter action_file_sha256 = "abc123..." | fields *</code></small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #3fb950;">Pattern/Behavior</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Do you need aggregation (counts, stats)?</strong>
+                            <small>Looking for trends vs individual events</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-outcome" style="border-left-color: #3fb950;">
+                                <i class="fas fa-chart-bar" style="color: #3fb950;"></i>
+                                <strong>Use: filter + comp + sort</strong>
+                                <small><code>| filter ... | comp count() by hostname | sort desc count()</code></small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-outcome" style="border-left-color: #d29922;">
+                                <i class="fas fa-list" style="color: #d29922;"></i>
+                                <strong>Use: filter + fields + sort</strong>
+                                <small><code>| filter ... | fields timestamp, hostname, ... | sort desc timestamp</code></small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #a371f7;">Cross-Dataset Correlation</div>
+                        <div class="decision-outcome" style="border-left-color: #a371f7;">
+                            <i class="fas fa-project-diagram" style="color: #a371f7;"></i>
+                            <strong>Use: join or union</strong>
+                            <small><code>dataset = xdr_data | join (dataset = alerts) on agent_id</code> | See XQL Advanced</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #f85149;">Anomaly/Outlier Detection</div>
+                        <div class="decision-outcome" style="border-left-color: #f85149;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f85149;"></i>
+                            <strong>Use: comp + baseline comparison</strong>
+                            <small>Aggregate normal behavior, filter for deviations | Consider correlation rules for automation</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XQL Query Building Flow -->
+                <h2><i class="fas fa-project-diagram"></i> Query Building Workflow</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step" style="border-left-color: #58a6ff;">
+                        <div class="flow-icon"><i class="fas fa-database"></i></div>
+                        <div class="flow-content">
+                            <h4>1. Choose Dataset</h4>
+                            <ul>
+                                <li><code>dataset = xdr_data</code> for endpoint telemetry</li>
+                                <li><code>dataset = alerts</code> for security alerts</li>
+                                <li><code>dataset = cloud_audit_logs</code> for cloud</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #3fb950;">
+                        <div class="flow-icon"><i class="fas fa-clock"></i></div>
+                        <div class="flow-content">
+                            <h4>2. Set Time Range</h4>
+                            <ul>
+                                <li>Use preset in UI: 1h, 24h, 7d, 30d</li>
+                                <li>Or filter: <code>timestamp > now() - 1d</code></li>
+                                <li>Narrow = faster queries</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #d29922;">
+                        <div class="flow-icon"><i class="fas fa-filter"></i></div>
+                        <div class="flow-content">
+                            <h4>3. Apply Filters</h4>
+                            <ul>
+                                <li>Start broad, then narrow</li>
+                                <li>Use ENUMs: <code>event_type = ENUM.PROCESS</code></li>
+                                <li>Chain with <code>|</code> pipe operator</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #a371f7;">
+                        <div class="flow-icon"><i class="fas fa-columns"></i></div>
+                        <div class="flow-content">
+                            <h4>4. Select/Transform</h4>
+                            <ul>
+                                <li><code>fields</code> to select columns</li>
+                                <li><code>alter</code> to create new fields</li>
+                                <li><code>comp</code> to aggregate</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #f85149;">
+                        <div class="flow-icon"><i class="fas fa-sort-amount-down"></i></div>
+                        <div class="flow-content">
+                            <h4>5. Sort & Limit</h4>
+                            <ul>
+                                <li><code>sort desc timestamp</code> newest first</li>
+                                <li><code>sort desc count()</code> top results</li>
+                                <li><code>limit 100</code> cap output</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Filter Operations -->
                 <h2><i class="fas fa-filter"></i> Filter Operations</h2>
                 <div class="config-section">
@@ -618,46 +751,70 @@ dataset = xdr_data
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What is the basic structure of an XQL query?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through how you would build an XQL query to hunt for suspicious PowerShell activity.</button>
                         <div class="qa-answer">
-                            <div class="arch-diagram">dataset = xdr_data           // Data source
-| filter event_type = ENUM.X   // Conditions
-| fields field1, field2        // Select columns
-| comp count() by field1       // Aggregations
-| sort desc count()            // Ordering
-| limit 100                    // Row limit</div>
+                            <p>I approach PowerShell hunting in layers, starting broad and then narrowing based on what I find. My first query is always to understand the baseline—what PowerShell activity exists in the environment and how much of it there is.</p>
+                            <p>I start with <code>dataset = xdr_data | filter event_type = ENUM.PROCESS | filter action_process_image_name ~contains "powershell" | comp count() by agent_hostname | sort desc count()</code>. This tells me which hosts have the most PowerShell activity. If one host has 10x more than others, that's already interesting.</p>
+                            <p>Next, I look for known bad indicators—encoded commands, download cradles, bypass flags. The query becomes <code>| filter action_process_command_line ~contains "-enc" or action_process_command_line ~contains "downloadstring" or action_process_command_line ~contains "-ep bypass"</code>. I use the tilde operators for case-insensitive matching because attackers vary their casing.</p>
+                            <p>For the results, I select the fields that matter for investigation: <code>| fields timestamp, agent_hostname, actor_effective_username, actor_process_image_name, action_process_command_line</code>. The actor_process_image_name shows me what launched PowerShell—if it's explorer.exe, that's normal; if it's word.exe or wscript.exe, that's suspicious.</p>
+                            <p>Finally, I sort by timestamp descending and limit to a manageable set. If I find something, I pivot on the agent_hostname to see all activity from that host, or on the user to track lateral movement.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you filter for PowerShell with encoded commands?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XQL compare to SPL (Splunk) and KQL (Microsoft)? What are the key differences?</button>
                         <div class="qa-answer">
-                            <div class="arch-diagram">dataset = xdr_data
-| filter event_type = ENUM.PROCESS
-| filter action_process_image_name ~contains "powershell"
-| filter action_process_command_line ~contains "-enc"
-| fields timestamp, agent_hostname, action_process_command_line</div>
+                            <p>The three languages share a lot of conceptual overlap since they're all designed for security log analysis, but each has its quirks. If you know one, you can learn the others quickly, but the syntax differences can trip you up.</p>
+                            <p>The data source declaration is different: XQL uses <code>dataset = xdr_data</code>, Splunk uses <code>index=main</code>, and KQL just starts with the table name like <code>SecurityEvent</code>. XQL and KQL both use pipe operators to chain operations, which feels natural coming from Unix. Splunk does too, but it also supports implicit piping which can be confusing.</p>
+                            <p>Filtering syntax varies: XQL has <code>filter field = value</code>, KQL has <code>where field == value</code>, and Splunk has <code>search field=value</code> or <code>where field="value"</code>. The operators for string matching are different too—XQL uses <code>~contains</code>, KQL uses <code>has</code> or <code>contains</code>, and Splunk uses wildcards or the <code>like</code> function.</p>
+                            <p>Aggregation is where I see the most confusion. XQL uses <code>comp count() by field</code>, KQL uses <code>summarize count() by field</code>, and Splunk uses <code>stats count by field</code>. All conceptually identical, but the keywords are different.</p>
+                            <p>The biggest practical difference is in the underlying data model. XQL is optimized for XDR telemetry with strongly-typed ENUM fields for event types. KQL works with Log Analytics tables that can have varying schemas. Splunk is the most flexible—it can handle almost any data but requires more configuration. When I switch between platforms, I spend the first few minutes re-learning the syntax, but the hunting methodology stays the same.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: What are the key datasets in XSIAM?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the key datasets in XSIAM and when would you use each one?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>xdr_data:</strong> Primary endpoint telemetry (process, network, file)</li>
-                                <li><strong>alerts:</strong> All security alerts</li>
-                                <li><strong>incidents:</strong> Correlated incidents</li>
-                                <li><strong>endpoints:</strong> Endpoint inventory</li>
-                                <li><strong>cloud_audit_logs:</strong> Cloud provider logs</li>
-                            </ul>
+                            <p>XSIAM organizes data into purpose-specific datasets, and knowing which to query saves a lot of time. The main ones I work with daily are xdr_data, alerts, incidents, and endpoints.</p>
+                            <p><code>xdr_data</code> is the workhorse—it contains endpoint telemetry including process execution, network connections, file events, registry changes, and module loads. When I'm threat hunting or investigating how an attack progressed, this is where I start. The event_type field uses ENUMs like ENUM.PROCESS, ENUM.NETWORK, ENUM.FILE to filter down to specific activity types.</p>
+                            <p><code>alerts</code> contains all security alerts from detection rules, including both built-in and custom rules. I query this when I want to see alert trends, find alerts associated with a specific host or user, or check if a particular indicator triggered any detections. It's also useful for measuring detection coverage.</p>
+                            <p><code>incidents</code> is for correlated incidents that group related alerts. When I'm doing incident response, I query this to understand the full scope—which hosts were involved, what alerts are connected, and the incident timeline. The correlation often reveals connections I wouldn't see by looking at individual alerts.</p>
+                            <p><code>endpoints</code> is the asset inventory—I use it to look up endpoint details, check agent versions, or identify endpoints in specific groups. It's essential for scoping investigations: "Show me all the endpoints in the Finance department" becomes a join between endpoints and xdr_data.</p>
+                            <p>For network and cloud data, there are datasets like <code>panw_ngfw_traffic</code> for firewall logs and <code>cloud_audit_logs</code> for cloud provider activity. Custom data sources you onboard get their own datasets following the pattern vendor_product_raw.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb"></i> Q: How do you aggregate data in XQL?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the difference between filter and comp in XQL. When do you use each?</button>
                         <div class="qa-answer">
-                            <div class="arch-diagram">// Use comp with aggregation functions
-| comp count() by field_name
-| comp sum(bytes), avg(bytes) by hostname
-| comp unique_values = count_distinct(ip) by user</div>
-                            <p>Functions: count(), count_distinct(), sum(), avg(), min(), max(), values()</p>
+                            <p>This is fundamental to XQL query structure. <code>filter</code> reduces rows based on conditions—it's like a WHERE clause in SQL. <code>comp</code> performs aggregation and grouping—it's like GROUP BY with aggregate functions. They serve completely different purposes but work together in most queries.</p>
+                            <p><code>filter</code> comes early in the query to narrow down the data before processing. Each filter condition reduces the result set. You can chain multiple filters, and they're evaluated in order. For example, <code>| filter event_type = ENUM.PROCESS | filter action_process_image_name ~contains "powershell"</code> first gets all process events, then filters to just PowerShell.</p>
+                            <p><code>comp</code> comes after filtering when you want to aggregate data. It groups rows and calculates statistics. Common functions include count(), count_distinct(), sum(), avg(), min(), max(), and values(). The "by" clause specifies grouping. For example, <code>| comp connection_count = count() by agent_hostname, action_remote_ip</code> gives me connection counts per host per destination.</p>
+                            <p>You can also filter after comp to work with aggregated results. The query <code>| comp count() by hostname | filter count() > 100</code> first counts events per host, then shows only hosts with more than 100 events. This is a common pattern for finding outliers.</p>
+                            <p>The order matters: filter first to reduce data, then comp to aggregate, then optionally filter again on the aggregated values, then sort and limit for the final output.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you detect processes running from unusual locations using XQL?</button>
+                        <div class="qa-answer">
+                            <p>This is a classic threat hunting technique because attackers often drop malware in writable directories that aren't typical execution paths. My approach combines path filtering with aggregation to find anomalies.</p>
+                            <p>First, I define what "unusual" means. Common suspicious locations include temp directories, user Downloads, ProgramData, Recycle Bin, and anywhere in the user profile that isn't the standard AppData folders. The query starts with: <code>dataset = xdr_data | filter event_type = ENUM.PROCESS | filter action_process_image_path ~contains "\\Temp\\" or action_process_image_path ~contains "\\Downloads\\" or action_process_image_path ~contains "\\ProgramData\\" or action_process_image_path ~contains "\\Users\\Public\\"</code></p>
+                            <p>Then I aggregate to see patterns: <code>| comp execution_count = count(), unique_hosts = count_distinct(agent_hostname) by action_process_image_name, action_process_image_path</code>. This tells me which processes from unusual locations are running and how widespread they are. A process on one host might be a targeted attack; the same process on 50 hosts is probably legitimate software installed badly.</p>
+                            <p>I also look at the parent process to understand context: <code>| fields timestamp, agent_hostname, actor_process_image_name, action_process_image_name, action_process_image_path, action_process_command_line</code>. If explorer.exe launched something from Downloads, a user probably double-clicked it. If cmd.exe or powershell.exe launched something from Temp, that's more suspicious.</p>
+                            <p>For production rules, I'd add exclusions for known-good software that legitimately runs from these paths—installers, updaters, some IT management tools. But for initial hunting, I keep it broad and triage manually.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are common mistakes you see people make with XQL queries, and how do you avoid them?</button>
+                        <div class="qa-answer">
+                            <p>I've seen—and made—quite a few XQL mistakes over time. The most common ones are around query efficiency, field selection, and operator misuse.</p>
+                            <p>The biggest performance mistake is not filtering early enough. People will run <code>dataset = xdr_data | fields timestamp, hostname | filter event_type = ENUM.PROCESS</code> instead of filtering first. Always put your filters as early as possible—it dramatically reduces the data the query engine has to process. The correct order is dataset, then filter, then everything else.</p>
+                            <p>Another common mistake is forgetting that string comparisons are case-sensitive by default. <code>filter action_process_image_name = "PowerShell.exe"</code> won't match "powershell.exe". Use the tilde operators: <code>~=</code> for case-insensitive equals, <code>~contains</code> for case-insensitive contains. This catches attacker attempts at case obfuscation.</p>
+                            <p>People often misuse the time range. Running a query over 30 days when you only need 24 hours wastes resources and makes results harder to analyze. Be deliberate about your time window—start narrow and expand if needed.</p>
+                            <p>With comp aggregations, a common error is forgetting that comp changes the result structure. After <code>comp count() by hostname</code>, you can't reference original fields like action_process_image_name anymore—only hostname and the count. If you need both raw data and aggregations, you might need two separate queries or use subqueries.</p>
+                            <p>Finally, not using ENUM values for event_type is a subtle bug. Writing <code>filter event_type = "PROCESS"</code> (string) instead of <code>filter event_type = ENUM.PROCESS</code> might work in some contexts but fail in others. Always use the proper ENUM syntax for type safety.</p>
                         </div>
                     </div>
                 </div>

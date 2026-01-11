@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Guide | XSIAM Architecture</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="../index.html" class="sidebar-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span>Nik's SIEM</span>
+            </a>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Platforms</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="../xsiam/index.html" class="sidebar-nav-link active" data-platform="xsiam"><span class="platform-dot"></span><span>XSIAM</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link" data-platform="splunk"><span class="platform-dot"></span><span>Splunk</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../sentinel/index.html" class="sidebar-nav-link" data-platform="sentinel"><span class="platform-dot"></span><span>Sentinel</span></a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Architecture & Planning</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="capacity-planning.html" class="sidebar-nav-link"><i class="fas fa-calculator"></i><span>Capacity Planning</span></a></li>
+                    <li class="sidebar-nav-item"><a href="network-requirements.html" class="sidebar-nav-link"><i class="fas fa-network-wired"></i><span>Network Requirements</span></a></li>
+                    <li class="sidebar-nav-item"><a href="multi-tenant.html" class="sidebar-nav-link"><i class="fas fa-building"></i><span>Multi-Tenant</span></a></li>
+                    <li class="sidebar-nav-item"><a href="data-residency.html" class="sidebar-nav-link"><i class="fas fa-map-marked-alt"></i><span>Data Residency</span></a></li>
+                    <li class="sidebar-nav-item"><a href="migration-guide.html" class="sidebar-nav-link active"><i class="fas fa-exchange-alt"></i><span>Migration Guide</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()" title="Open menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <span class="separator">/</span>
+                    <a href="index.html">XSIAM</a>
+                    <span class="separator">/</span>
+                    <span class="current">Migration Guide</span>
+                </div>
+
+                <h1><i class="fas fa-exchange-alt"></i> SIEM Migration Guide</h1>
+                <p class="lead">Comprehensive guide for migrating from legacy SIEM platforms (Splunk, QRadar, ArcSight, Sentinel) to XSIAM, including planning, execution, and validation strategies.</p>
+
+                <!-- Migration Overview -->
+                <h2><i class="fas fa-road"></i> Migration Framework</h2>
+                
+                <div class="info-box" style="border-color: #58a6ff;">
+                    <h4><i class="fas fa-info-circle"></i> Migration Philosophy</h4>
+                    <p>SIEM migration is not a lift-and-shift exercise. It's an opportunity to rationalize data sources, modernize detections, and improve security operations. Plan for 6-12 months for enterprise migrations, with parallel running to ensure no detection gaps.</p>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Migration Phases</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+                        <div class="flow-step" style="background: #1c3a5e; border-color: #58a6ff;">
+                            <div class="flow-icon"><i class="fas fa-clipboard-list"></i></div>
+                            <div class="flow-content">
+                                <strong>Phase 1: Discovery</strong>
+                                <ul>
+                                    <li>Inventory current state</li>
+                                    <li>Document data sources</li>
+                                    <li>Catalog detection rules</li>
+                                    <li>2-4 weeks</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background: #3d2a5e; border-color: #a371f7;">
+                            <div class="flow-icon"><i class="fas fa-drafting-compass"></i></div>
+                            <div class="flow-content">
+                                <strong>Phase 2: Design</strong>
+                                <ul>
+                                    <li>Architecture planning</li>
+                                    <li>Rule translation strategy</li>
+                                    <li>Data mapping</li>
+                                    <li>2-4 weeks</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background: #4d3a0d; border-color: #d29922;">
+                            <div class="flow-icon"><i class="fas fa-flask"></i></div>
+                            <div class="flow-content">
+                                <strong>Phase 3: Build & Test</strong>
+                                <ul>
+                                    <li>Configure XSIAM</li>
+                                    <li>Onboard data sources</li>
+                                    <li>Migrate detections</li>
+                                    <li>8-16 weeks</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background: #1a4d2e; border-color: #3fb950;">
+                            <div class="flow-icon"><i class="fas fa-balance-scale"></i></div>
+                            <div class="flow-content">
+                                <strong>Phase 4: Parallel Run</strong>
+                                <ul>
+                                    <li>Both systems active</li>
+                                    <li>Compare detections</li>
+                                    <li>Tune and validate</li>
+                                    <li>4-8 weeks</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background: #4d1a1a; border-color: #f85149;">
+                            <div class="flow-icon"><i class="fas fa-rocket"></i></div>
+                            <div class="flow-content">
+                                <strong>Phase 5: Cutover</strong>
+                                <ul>
+                                    <li>Switch primary</li>
+                                    <li>Decommission legacy</li>
+                                    <li>Knowledge transfer</li>
+                                    <li>2-4 weeks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Platform Specific -->
+                <h2><i class="fas fa-random"></i> Platform-Specific Migration</h2>
+                
+                <h3><i class="fas fa-chart-bar" style="color: #65ba43;"></i> From Splunk</h3>
+                <div class="config-section">
+                    <div class="arch-diagram"># Splunk to XSIAM Migration Mapping
+# ═══════════════════════════════════════════════════════════════
+
+## Data Collection
+┌────────────────────────────────────────────────────────────────┐
+│ Splunk Component          │ XSIAM Equivalent                   │
+├────────────────────────────────────────────────────────────────┤
+│ Universal Forwarder       │ Cortex XDR Agent (endpoints)       │
+│ Heavy Forwarder           │ Broker VM                          │
+│ HTTP Event Collector      │ HTTP Collector (Broker VM)         │
+│ Syslog Input              │ Syslog Collector (Broker VM)       │
+│ Scripted Inputs           │ Custom HTTP Ingestion              │
+│ DB Connect                │ API-based collection               │
+└────────────────────────────────────────────────────────────────┘
+
+## Query Language
+┌────────────────────────────────────────────────────────────────┐
+│ SPL Concept               │ XQL Equivalent                     │
+├────────────────────────────────────────────────────────────────┤
+│ index=                    │ dataset =                          │
+│ sourcetype=               │ filter _vendor, _product           │
+│ | where                   │ | filter                           │
+│ | stats count by          │ | comp count() by                  │
+│ | table                   │ | fields                           │
+│ | eval                    │ | alter                            │
+│ | rex                     │ | alter ... = regextract()         │
+│ | lookup                  │ | join (with reference dataset)    │
+│ | transaction             │ | window / causality chain         │
+└────────────────────────────────────────────────────────────────┘
+
+## Example Translation
+# SPL:
+index=windows EventCode=4625 
+| stats count by src_ip, user 
+| where count > 10
+
+# XQL:
+dataset = xdr_data 
+| filter event_id = 4625 
+| comp count() as attempts by src_ip, user 
+| filter attempts > 10</div>
+                </div>
+
+                <h3><i class="fas fa-satellite-dish" style="color: #0066cc;"></i> From QRadar</h3>
+                <div class="config-section">
+                    <div class="arch-diagram"># QRadar to XSIAM Migration Mapping
+# ═══════════════════════════════════════════════════════════════
+
+## Architecture Mapping
+┌────────────────────────────────────────────────────────────────┐
+│ QRadar Component          │ XSIAM Equivalent                   │
+├────────────────────────────────────────────────────────────────┤
+│ Event Collector           │ Broker VM                          │
+│ Flow Collector            │ Broker VM + NetFlow parsing        │
+│ WinCollect                │ Cortex XDR Agent                   │
+│ Log Source Extensions     │ Parsing Rules / Custom Parsers     │
+│ Reference Sets            │ Reference Datasets                 │
+│ Custom Rules              │ Correlation Rules                  │
+│ Building Blocks           │ XQL Functions / Reusable Queries   │
+└────────────────────────────────────────────────────────────────┘
+
+## AQL to XQL Mapping
+┌────────────────────────────────────────────────────────────────┐
+│ AQL                       │ XQL                                │
+├────────────────────────────────────────────────────────────────┤
+│ SELECT                    │ | fields                           │
+│ FROM events               │ dataset = xdr_data                 │
+│ WHERE                     │ | filter                           │
+│ GROUP BY                  │ | comp ... by                      │
+│ ORDER BY                  │ | sort                             │
+│ START, STOP               │ | filter _time between             │
+│ INOFFENSE                 │ Incident context                   │
+└────────────────────────────────────────────────────────────────┘
+
+## DSM to Parser Migration
+# QRadar DSMs define parsing - XSIAM uses XDM schema
+# Most common log sources have built-in parsing
+# Custom DSMs require custom parsing rules</div>
+                </div>
+
+                <h3><i class="fas fa-cloud" style="color: #0078d4;"></i> From Microsoft Sentinel</h3>
+                <div class="config-section">
+                    <div class="arch-diagram"># Sentinel to XSIAM Migration Mapping
+# ═══════════════════════════════════════════════════════════════
+
+## Component Mapping
+┌────────────────────────────────────────────────────────────────┐
+│ Sentinel Component        │ XSIAM Equivalent                   │
+├────────────────────────────────────────────────────────────────┤
+│ Data Connectors           │ Integrations + Broker VM           │
+│ Log Analytics Agent       │ Cortex XDR Agent                   │
+│ Azure Monitor Agent       │ Cloud API Collection               │
+│ Analytics Rules           │ Correlation Rules                  │
+│ Hunting Queries           │ Saved XQL Queries                  │
+│ Workbooks                 │ Dashboards                         │
+│ Playbooks (Logic Apps)    │ XSOAR Playbooks                    │
+│ Watchlists                │ Reference Datasets                 │
+│ UEBA                      │ Identity Analytics                 │
+└────────────────────────────────────────────────────────────────┘
+
+## KQL to XQL Mapping
+┌────────────────────────────────────────────────────────────────┐
+│ KQL                       │ XQL                                │
+├────────────────────────────────────────────────────────────────┤
+│ TableName                 │ dataset = table_name               │
+│ | where                   │ | filter                           │
+│ | summarize count() by    │ | comp count() by                  │
+│ | extend                  │ | alter                            │
+│ | project                 │ | fields                           │
+│ | join                    │ | join                             │
+│ | union                   │ | union                            │
+│ | parse                   │ | alter ... = regextract()         │
+│ ago(1h)                   │ now() - 1h                         │
+└────────────────────────────────────────────────────────────────┘
+
+## Example Translation
+# KQL:
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts = count() by TargetAccount, IpAddress
+| where FailedAttempts > 10
+
+# XQL:
+dataset = xdr_data
+| filter event_id = 4625
+| comp FailedAttempts = count() by target_user, src_ip
+| filter FailedAttempts > 10</div>
+                </div>
+
+                <!-- Detection Migration -->
+                <h2><i class="fas fa-shield-virus"></i> Detection Rule Migration</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>For Each Legacy Detection Rule</strong>
+                        <div style="color: #8b949e; font-size: 0.85rem;">Evaluate migration approach</div>
+                    </div>
+                    <div class="decision-arrow">↓</div>
+                    <div class="decision-node question">
+                        <strong>Does XSIAM have built-in detection for this threat?</strong>
+                    </div>
+                    <div class="decision-branch">
+                        <div>
+                            <div class="decision-arrow">↓ YES</div>
+                            <div class="decision-node yes" style="background: #1a4d2e;">
+                                <strong style="color: #3fb950;">Use Built-in Detection</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Enable OOTB rule<br>Tune thresholds if needed<br>Document mapping</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="decision-arrow">↓ NO</div>
+                            <div class="decision-node question">
+                                <strong>Is the detection still relevant?</strong>
+                                <div style="color: #8b949e; font-size: 0.85rem;">Current threat landscape, false positive rate</div>
+                            </div>
+                            <div class="decision-branch">
+                                <div>
+                                    <div class="decision-arrow">↓ NO (Obsolete)</div>
+                                    <div class="decision-node" style="background: #21262d; border-color: #8b949e;">
+                                        <strong>Retire Detection</strong>
+                                        <div style="color: #8b949e; font-size: 0.85rem;">Document decision<br>Don't migrate noise</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="decision-arrow">↓ YES (Still Needed)</div>
+                                    <div class="decision-node question">
+                                        <strong>Does required data exist in XSIAM?</strong>
+                                    </div>
+                                    <div class="decision-branch">
+                                        <div>
+                                            <div class="decision-arrow">↓ YES</div>
+                                            <div class="decision-node" style="background: #1c3a5e; border-color: #58a6ff;">
+                                                <strong style="color: #58a6ff;">Translate Detection</strong>
+                                                <div style="color: #8b949e; font-size: 0.85rem;">Convert to XQL<br>Create correlation rule<br>Test thoroughly</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="decision-arrow">↓ NO</div>
+                                            <div class="decision-node" style="background: #4d3a0d; border-color: #d29922;">
+                                                <strong style="color: #d29922;">Onboard Data First</strong>
+                                                <div style="color: #8b949e; font-size: 0.85rem;">Add missing data source<br>Then translate detection</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Migration Checklist -->
+                <h2><i class="fas fa-tasks"></i> Migration Checklist</h2>
+                
+                <div class="config-section">
+                    <h4>Phase 1: Discovery Checklist</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <div style="display: grid; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Complete data source inventory with EPS and retention</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Export all detection rules with logic documentation</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Document custom parsers and field extractions</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ List all integrations (ticketing, SOAR, enrichment)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Identify critical dashboards and reports</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Document user roles and access requirements</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <h4>Phase 3: Build Checklist</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <div style="display: grid; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ XSIAM tenant provisioned and configured</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Network connectivity established (firewall rules)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Broker VMs deployed and tested</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Critical data sources onboarded and validated</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Priority detection rules migrated and tested</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ SOAR integration configured</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <h4>Phase 4: Parallel Run Checklist</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <div style="display: grid; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Both systems receiving same data sources</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Daily comparison of alert volumes</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Gap analysis for detections only firing in legacy</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ SOC analysts trained on XSIAM</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ Stakeholder sign-off on parity</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interview Questions -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through how you would plan a migration from Splunk to XSIAM.</button>
+                        <div class="qa-answer">
+                            <p>A Splunk to XSIAM migration is a significant undertaking that typically takes 6-12 months for enterprise environments. My approach focuses on thorough discovery, phased execution, and extensive validation before cutover.</p>
+                            
+                            <p>The discovery phase is critical - you can't migrate what you don't understand. I'd start by inventorying all data sources: what's feeding Splunk, at what volume, and what value does each provide? Export the list of indexes with retention settings and daily ingest volumes. Many organizations find they're ingesting data that nobody uses - this is an opportunity to rationalize. Next, catalog all saved searches, alerts, and dashboards. Identify which are actively used versus orphaned. For detection rules specifically, document the logic, what threat they detect, and their false positive rates.</p>
+                            
+                            <p>The design phase maps Splunk concepts to XSIAM equivalents. Heavy Forwarders become Broker VMs. Universal Forwarders on endpoints are replaced by Cortex XDR agents - which provide richer telemetry than UF ever did. SPL queries need translation to XQL. I'd prioritize critical use cases: which detections must work from day one? Which data sources are non-negotiable? Build the migration sequence around these priorities.</p>
+                            
+                            <p>For the build phase, I start with infrastructure: Broker VMs deployed and connected, network rules in place, XSIAM tenant configured. Then data sources, starting with the highest-priority ones. Don't try to onboard everything at once - validate each source is parsing correctly before moving to the next. Detection migration follows data - you can't test a rule until its data is flowing.</p>
+                            
+                            <p>Parallel running is where you prove parity. Both systems receive the same data, both run their detection rules, and you compare outputs. Any alert firing in Splunk but not XSIAM is a gap to investigate. Run parallel for at least 4 weeks, ideally through a month-end to catch any monthly patterns. Only after stakeholders are confident in parity do you plan the cutover.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle detection rule translation between platforms?</button>
+                        <div class="qa-answer">
+                            <p>Detection rule translation is more than just converting query syntax - it's an opportunity to improve your detection coverage. My approach treats each rule as a detection requirement rather than just code to translate.</p>
+                            
+                            <p>First, understand what the rule is actually detecting. Don't just mechanically translate SPL to XQL. What's the threat? What behavior indicates compromise? Sometimes legacy rules were written to work around platform limitations or data availability issues that don't exist in XSIAM. Understanding the intent lets you implement the detection properly in the new platform.</p>
+                            
+                            <p>Second, check for built-in coverage. XSIAM includes extensive out-of-box detection from Palo Alto's threat research. Many common threats like credential dumping, lateral movement techniques, or malware behaviors already have tuned detections. Using built-in rules means you get ongoing updates as threats evolve. For these cases, I map the legacy rule to the equivalent XSIAM detection rather than recreating it from scratch.</p>
+                            
+                            <p>For rules that need translation, I work through the query logic systematically. Map the data sources - does XSIAM have the equivalent fields in XDM schema? Map the operators - SPL eval functions to XQL alter, stats commands to comp. Test with real data to validate the translation produces equivalent results. Common gotchas include timestamp handling, field naming differences, and aggregation behavior.</p>
+                            
+                            <p>Finally, validate every translated rule. Don't just test that it runs without error - confirm it detects the intended behavior. Use test data or controlled attack simulations. Compare alert output between old and new platforms during parallel running. Document the mapping for audit purposes: "Legacy rule X is now covered by XSIAM correlation rule Y."</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the biggest risks in a SIEM migration and how do you mitigate them?</button>
+                        <div class="qa-answer">
+                            <p>SIEM migration has several significant risks, but with proper planning they're all manageable. The key is identifying them early and building mitigation into the project plan.</p>
+                            
+                            <p>Detection gaps are the most dangerous risk - threats that would have been detected by the old platform but aren't detected by the new one. Mitigation is extensive parallel running with systematic gap analysis. Every alert that fires in legacy but not in XSIAM during parallel needs investigation. Don't cut over until you understand and accept any remaining gaps. Also engage red team or pen testers to validate detection capability in both platforms.</p>
+                            
+                            <p>Data loss or incomplete ingestion is another major risk. A data source that stops sending, or logs that parse incorrectly, means blind spots. Mitigate by validating each data source during onboarding - compare event counts between platforms, spot-check that parsing extracts expected fields. Build health monitoring from day one that alerts on ingestion anomalies. Keep the legacy platform running until you're confident in XSIAM data completeness.</p>
+                            
+                            <p>Timeline slippage affects every migration. Discovery takes longer than expected, data sources have undocumented dependencies, detection translation reveals complexity. Mitigate by building realistic timelines with buffer, breaking work into phases with go/no-go decision points, and being willing to adjust scope rather than rushing. A delayed but successful migration beats a fast but broken one.</p>
+                            
+                            <p>User adoption risk is often underestimated. Analysts comfortable with the old platform resist the new one. Mitigate with early training, involvement in the migration project, and clear communication about benefits. Having analysts help validate detections builds familiarity. Create side-by-side guides showing how to do common tasks in both platforms. The parallel running period is also training time.</p>
+                            
+                            <p>Finally, stakeholder expectation management. Executives may expect immediate improvements or cost savings that take time to realize. Set realistic expectations about the transition period, parallel running costs, and time to full maturity. Document success criteria upfront so there's clear agreement on what "done" looks like.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                mainWrapper.classList.toggle('expanded');
+            }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

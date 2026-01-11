@@ -762,8 +762,146 @@
                 </a>
             </div>
         </section>
-            
+
+        <!-- Decision Tree: Advanced XQL Technique Selection -->
+        <section class="content-section">
+            <div class="decision-tree">
+                <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose the Right Advanced Technique</h3>
                 
+                <div class="decision-node">
+                    <i class="fas fa-question-circle"></i>
+                    <strong>What is your analysis goal?</strong>
+                    <small>Determine what you're trying to achieve</small>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow" style="background-color: #58a6ff;">Enrich with External Data</div>
+                    <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                        <i class="fas fa-plus-circle" style="color: #58a6ff;"></i>
+                        <strong>Use: JOIN</strong>
+                        <small><code>| join type=left (...) as enrichment enrichment.key = primary.key</code> | Adds fields from another dataset</small>
+                    </div>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow" style="background-color: #3fb950;">Filter Against a List</div>
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>Is the list static or dynamic?</strong>
+                        <small>Known values vs. query-generated list</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">Static List</div>
+                        <div class="decision-outcome" style="border-left-color: #3fb950;">
+                            <i class="fas fa-list" style="color: #3fb950;"></i>
+                            <strong>Use: IN operator</strong>
+                            <small><code>| filter field in ("val1", "val2", "val3")</code></small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">Dynamic List</div>
+                        <div class="decision-outcome" style="border-left-color: #d29922;">
+                            <i class="fas fa-code-branch" style="color: #d29922;"></i>
+                            <strong>Use: Subquery with IN</strong>
+                            <small><code>| filter field in (dataset = ... | comp values(field))</code></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow" style="background-color: #a371f7;">Compare to Baseline</div>
+                    <div class="decision-outcome" style="border-left-color: #a371f7;">
+                        <i class="fas fa-chart-line" style="color: #a371f7;"></i>
+                        <strong>Use: Join + Baseline Subquery</strong>
+                        <small>Calculate baseline in subquery, join to current data, filter on deviation | See "Dynamic Threshold" pattern</small>
+                    </div>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow" style="background-color: #f85149;">Sequence Detection</div>
+                    <div class="decision-outcome" style="border-left-color: #f85149;">
+                        <i class="fas fa-sort-amount-down" style="color: #f85149;"></i>
+                        <strong>Use: Window Functions + Self-Join</strong>
+                        <small>Use prev(), timestamp arithmetic, or correlation rules with time windows</small>
+                    </div>
+                </div>
+                
+                <div class="decision-branch">
+                    <div class="decision-arrow" style="background-color: #8b949e;">Combine Multiple Sources</div>
+                    <div class="decision-outcome" style="border-left-color: #8b949e;">
+                        <i class="fas fa-object-ungroup" style="color: #8b949e;"></i>
+                        <strong>Use: UNION</strong>
+                        <small><code>dataset = ds1 | union (dataset = ds2)</code> | Stacks rows from multiple datasets</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Comprehensive Interview Q&A -->
+        <section class="content-section">
+            <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+            <div class="qa-section">
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through how you would build a correlation rule that detects lateral movement using XQL.</button>
+                    <div class="qa-answer">
+                        <p>Detecting lateral movement requires correlating activity across multiple hosts over time, which is exactly what XSIAM's correlation rules are designed for. My approach combines authentication events, process execution, and network connections.</p>
+                        <p>First, I identify the data sources I need. For lateral movement, I'm looking at authentication events showing where a user logged in, process events showing what they executed (especially remote tools like PsExec, WMI, or PowerShell remoting), and network connections showing RDP, SMB, or WinRM traffic between internal hosts.</p>
+                        <p>The correlation rule structure uses a join to connect authentication success on a target host with suspicious process execution shortly after. Something like: <code>dataset = xdr_data | filter event_type = ENUM.PROCESS | filter action_process_image_name in ("psexec.exe", "wmiprvse.exe") | join type = inner (dataset = identity_logs | filter event_outcome = "SUCCESS" | filter _time > ago(15m)) as auth auth.target_host = agent_hostname and auth.username = actor_effective_username</code></p>
+                        <p>The key tuning elements are the time window (I usually start with 15 minutes between authentication and process execution), the list of suspicious processes, and exclusions for legitimate admin activity. I test against historical data to baseline what's normal—IT admins using tools like SCCM will trigger this, so I need exclusions or a separate allowlist of admin accounts and source IPs.</p>
+                        <p>For production, I add context fields like source host, target host, username, and the specific process that executed. I also set the MITRE ATT&CK mapping to T1021 (Remote Services) and configure the severity based on whether the source is a known admin jump host or an unexpected workstation.</p>
+                    </div>
+                </div>
+                
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the difference between joins and subqueries in XQL. When would you use each?</button>
+                    <div class="qa-answer">
+                        <p>This is a fundamental design choice that affects both query structure and performance. The key difference is what you get in your output and how the query engine processes the data.</p>
+                        <p>Joins combine rows from two datasets based on matching keys and give you fields from both datasets in the output. Use joins when you need to enrich your primary data with additional context—like adding user details to process events, or adding threat intel context to network connections. The result is a wider row with columns from both sources. Join types (inner, left, right, full) control which rows appear when matches aren't found.</p>
+                        <p>Subqueries, particularly with IN or NOT IN operators, are for filtering. The subquery generates a list of values, and the main query uses that list to include or exclude rows. You don't get fields from the subquery in your output—it's purely a filter mechanism. Use subqueries for things like "show me activity from hosts that had critical alerts" or "find processes not in our approved baseline."</p>
+                        <p>From a performance perspective, subqueries with IN are often faster for simple filtering because the query engine can optimize them as lookups. Joins are more expensive because they need to match and combine every qualifying row. For large datasets, I always dedup the secondary dataset before joining to prevent Cartesian explosion.</p>
+                        <p>The practical rule I follow: if I need columns from the secondary dataset in my output, use a join. If I just need to filter based on whether something exists in another dataset, use a subquery.</p>
+                    </div>
+                </div>
+                
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you build a dynamic baseline detection that alerts when user activity exceeds their normal pattern?</button>
+                    <div class="qa-answer">
+                        <p>Dynamic baselines are powerful for detecting anomalies without hardcoding thresholds. The pattern involves calculating a baseline from historical data and comparing current activity against it, usually with a multiplier to account for normal variance.</p>
+                        <p>The query structure has two parts: a baseline subquery and a current activity comparison. For example, to detect users with unusually high login activity: <code>dataset = identity_logs | filter _time > ago(1h) | comp current_count = count() by username | join type = inner (dataset = identity_logs | filter _time > ago(7d) and _time < ago(1h) | comp total = count() by username | alter avg_hourly = total / (6*24)) as baseline baseline.username = username | alter threshold = baseline.avg_hourly * 3 | filter current_count > threshold</code></p>
+                        <p>The critical design decisions are: the baseline period (I typically use 7-30 days), the comparison window (hourly or daily depending on the use case), and the multiplier (3x is common, but tune based on your environment). I also exclude the current window from the baseline to avoid self-comparison.</p>
+                        <p>Edge cases to handle: new users without baseline (I add a minimum threshold fallback), seasonal variations (weekend vs weekday patterns), and users with very low baselines where small absolute increases trigger alerts. For sophisticated implementations, I use standard deviation instead of simple multipliers—flag anything more than 2 standard deviations above the mean.</p>
+                        <p>In production correlation rules, I include both the absolute count and the threshold in the alert fields so analysts can see not just "user had anomalous activity" but "user had 150 logins vs their normal 20/hour threshold."</p>
+                    </div>
+                </div>
+                
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you optimize XQL queries for performance when dealing with large datasets?</button>
+                    <div class="qa-answer">
+                        <p>Performance optimization in XQL follows some universal principles plus some XSIAM-specific techniques. The biggest gains come from reducing data early and being smart about expensive operations.</p>
+                        <p>First principle: filter early and filter aggressively. Put your most selective filters first—time range, then event type, then specific field conditions. The query engine processes filters in order, so <code>filter event_type = ENUM.PROCESS | filter _time > ago(1h) | filter action_process_image_name contains "powershell"</code> is worse than <code>filter _time > ago(1h) | filter event_type = ENUM.PROCESS | filter action_process_image_name contains "powershell"</code> because time range eliminates more data faster.</p>
+                        <p>Second principle: select only the fields you need before expensive operations. Running <code>fields hostname, username, process_name</code> before a join dramatically reduces memory usage because you're not carrying all columns through the operation.</p>
+                        <p>Third principle: dedup before joins. If you're joining against a reference table, make sure the secondary dataset doesn't have duplicate keys. A join against 1000 rows with 10 duplicates per key becomes 10,000 result rows instead of 1000. Use <code>dedup join_key</code> in your subquery.</p>
+                        <p>Fourth principle: use contains instead of regex when possible. Regex operations are expensive; simple string matching is fast. If you're just looking for a substring, <code>~contains</code> is much cheaper than <code>~matches</code>.</p>
+                        <p>For complex queries, I develop iteratively: start with a narrow time window and limit 100, verify the logic works, then expand the time range and remove the limit. This prevents long-running queries during development and helps identify which stage of the query is slowest.</p>
+                    </div>
+                </div>
+                
+                <div class="qa-item">
+                    <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe how you would convert a Splunk or KQL detection rule to XQL.</button>
+                    <div class="qa-answer">
+                        <p>Converting detection rules between query languages is something I do regularly, and there's a systematic approach that works well. The key is understanding the logical intent of the rule, not just translating syntax line by line.</p>
+                        <p>I start by identifying the core components: What data source is it querying? What conditions define the detection? What aggregation or correlation is involved? What fields appear in the output? Once I understand these, I can map them to XQL equivalents.</p>
+                        <p>For syntax translation, I keep a mental mapping: Splunk's <code>index=</code> becomes <code>dataset =</code>. KQL's <code>where</code> and Splunk's <code>search</code> become <code>filter</code>. Splunk's <code>stats count by field</code> and KQL's <code>summarize count() by field</code> become <code>comp count() by field</code>. String matching differs: Splunk uses wildcards like <code>field=*powershell*</code>, KQL uses <code>has</code> or <code>contains</code>, XQL uses <code>~contains</code>.</p>
+                        <p>The trickiest part is usually field names. Splunk and KQL might use <code>src_ip</code> while XSIAM uses <code>action_remote_ip</code> or <code>xdm.source.ipv4</code>. I run exploratory queries to find the equivalent fields in XSIAM's schema, or check the XDM documentation.</p>
+                        <p>After converting, I always test against historical data where I know the rule should have triggered. If the Splunk rule would have caught a specific incident last month, I verify the XQL version catches it too. If results differ, I compare field values to find schema mismatches or logic errors.</p>
+                        <p>One common gotcha: time functions differ between platforms. Splunk uses <code>earliest=-1h</code>, KQL uses <code>ago(1h)</code>, XQL uses <code>_time > ago(1h)</code> or <code>timestamp > subtract_time(current_time(), "1h")</code>. Getting time handling wrong is a frequent source of conversion bugs.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+            
 
                 <!-- Real-World Use Cases -->
                 </main>

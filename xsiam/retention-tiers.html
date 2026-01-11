@@ -278,6 +278,189 @@
                         </tbody>
                     </table>
                 </section>
+                
+                <!-- Decision Tree: Choosing Storage Tier -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose the Right Storage Tier</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>Does this data power detection/correlation rules?</strong>
+                        <small>Analytics rules, correlation searches, real-time alerts</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">YES</div>
+                        <div class="decision-outcome" style="border-left-color: #3fb950;">
+                            <i class="fas fa-fire" style="color: #f85149;"></i>
+                            <strong>Analytics / Hot Tier Required</strong>
+                            <small>Sentinel: Analytics Logs | Splunk: Hot/Warm | XSIAM: Online Storage | Detection rules require fast access</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">NO</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Is this data queried daily for investigations?</strong>
+                            <small>SOC analysts actively searching this data</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                                <i class="fas fa-search" style="color: #58a6ff;"></i>
+                                <strong>Analytics / Warm Tier Recommended</strong>
+                                <small>Fast queries needed for investigation workflow | Consider 30-90 day retention</small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-node">
+                                <i class="fas fa-question-circle"></i>
+                                <strong>Is this data needed for occasional forensics?</strong>
+                                <small>Incident response, root cause analysis, threat hunting</small>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow yes">YES</div>
+                                <div class="decision-outcome" style="border-left-color: #d29922;">
+                                    <i class="fas fa-archive" style="color: #d29922;"></i>
+                                    <strong>Basic / Cold Tier</strong>
+                                    <small>Sentinel: Basic Logs | Splunk: Cold Path | XSIAM: Archive | Slower queries acceptable</small>
+                                </div>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow no">NO</div>
+                                <div class="decision-node">
+                                    <i class="fas fa-question-circle"></i>
+                                    <strong>Is there a compliance/legal requirement to retain?</strong>
+                                    <small>PCI, SOX, HIPAA, legal hold, audit requirements</small>
+                                </div>
+                                
+                                <div class="decision-branch">
+                                    <div class="decision-arrow yes">YES</div>
+                                    <div class="decision-outcome" style="border-left-color: #a371f7;">
+                                        <i class="fas fa-gavel" style="color: #a371f7;"></i>
+                                        <strong>Auxiliary / Archive / Export</strong>
+                                        <small>Sentinel: Auxiliary | Splunk: Frozen/S3 | XSIAM: Data Lake Export | Cheapest long-term storage</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="decision-branch">
+                                    <div class="decision-arrow no">NO</div>
+                                    <div class="decision-node">
+                                        <i class="fas fa-question-circle"></i>
+                                        <strong>Does this data have any security value?</strong>
+                                        <small>Could it be useful for future unknown threats?</small>
+                                    </div>
+                                    
+                                    <div class="decision-branch">
+                                        <div class="decision-arrow yes">MAYBE</div>
+                                        <div class="decision-outcome" style="border-left-color: #d29922;">
+                                            <i class="fas fa-filter" style="color: #d29922;"></i>
+                                            <strong>Filter at Ingestion</strong>
+                                            <small>Reduce volume by filtering to security-relevant events only | Keep summary data</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="decision-branch">
+                                        <div class="decision-arrow no">NO</div>
+                                        <div class="decision-outcome" style="border-left-color: #f85149;">
+                                            <i class="fas fa-trash-alt" style="color: #f85149;"></i>
+                                            <strong>Don't Collect</strong>
+                                            <small>Why are we ingesting this? Remove the data source or filter at collection</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Lifecycle Flow Diagram -->
+                <h2><i class="fas fa-project-diagram"></i> Data Lifecycle Flow</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step" style="border-left-color: #f85149;">
+                        <div class="flow-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <div class="flow-content">
+                            <h4>Ingestion</h4>
+                            <ul>
+                                <li>Data arrives from sources</li>
+                                <li>Parsing and normalization applied</li>
+                                <li>Routed to appropriate tier based on config</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #f85149;">
+                        <div class="flow-icon"><i class="fas fa-fire-alt"></i></div>
+                        <div class="flow-content">
+                            <h4>Hot / Analytics Tier</h4>
+                            <ul>
+                                <li>Real-time detection rules execute</li>
+                                <li>Fastest query performance</li>
+                                <li>Typically 30-90 days retention</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #d29922;">
+                        <div class="flow-icon"><i class="fas fa-temperature-low"></i></div>
+                        <div class="flow-content">
+                            <h4>Warm / Basic Tier</h4>
+                            <ul>
+                                <li>Aged out of hot based on policy</li>
+                                <li>Still searchable, slightly slower</li>
+                                <li>Lower cost storage</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #58a6ff;">
+                        <div class="flow-icon"><i class="fas fa-snowflake"></i></div>
+                        <div class="flow-content">
+                            <h4>Cold / Archive Tier</h4>
+                            <ul>
+                                <li>Searchable with delay (restore required)</li>
+                                <li>Significantly cheaper storage</li>
+                                <li>Forensic and compliance access</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #a371f7;">
+                        <div class="flow-icon"><i class="fas fa-archive"></i></div>
+                        <div class="flow-content">
+                            <h4>Frozen / Long-term Archive</h4>
+                            <ul>
+                                <li>Exported to object storage (S3, Blob)</li>
+                                <li>Cheapest possible retention</li>
+                                <li>Hours to restore for queries</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #8b949e;">
+                        <div class="flow-icon"><i class="fas fa-trash"></i></div>
+                        <div class="flow-content">
+                            <h4>Deletion / Expiry</h4>
+                            <ul>
+                                <li>Retention period exceeded</li>
+                                <li>Data permanently removed</li>
+                                <li>Ensure compliance before deletion</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- ==================== MICROSOFT SENTINEL ==================== -->
                 <section class="content-section platform-section platform-sentinel">
                     <h2><i class="fas fa-shield-alt" style="color: #0078d4;"></i> Microsoft Sentinel Retention Tiers</h2>
@@ -869,8 +1052,78 @@ Content Pack: Applied automatically</code></pre>
                     </div>
                 </section>
                 <!-- Interview Section -->
-                <section class="content-section interview-section" >
-                    </main>
+                <section class="content-section interview-section">
+                    <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                    <div class="qa-section">
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach data retention strategy for a SIEM deployment? Walk me through your decision process.</button>
+                            <div class="qa-answer">
+                                <p>My approach to retention strategy starts with understanding the operational and compliance requirements, then optimizing for cost without sacrificing security capability. I work through a structured process that considers data value, query patterns, and budget constraints.</p>
+                                <p>First, I categorize data sources by their security value and query frequency. High-value data that powers detection rules—like authentication events, endpoint telemetry, and firewall logs—needs to be in the hot/analytics tier for real-time correlation. This is non-negotiable because detection rules require fast access. I typically keep security-critical data in the analytics tier for 90-180 days depending on the organization's investigation practices.</p>
+                                <p>Next, I identify the high-volume, lower-value data that can move to cheaper tiers. Things like verbose network flow data, container logs, or debug-level application logs often fall into this category. These might only be needed for forensic investigation after an incident is identified, so they can live in basic or cold storage where queries are slower but storage is cheaper. I've seen organizations reduce their SIEM costs by 40-50% just by properly tiering their data.</p>
+                                <p>Compliance requirements drive the longest retention periods. If we need to keep audit logs for 7 years for SOX or PCI, that data goes to archive or auxiliary tiers where it's cheap to store but expensive to query. The key is ensuring we can restore and search it if needed for an audit or legal matter, even if it takes hours to retrieve.</p>
+                                <p>Finally, I build the technical implementation—configuring index retention policies in Splunk, table plans in Sentinel, or dataset settings in XSIAM. I also set up monitoring for data volumes and costs so we can adjust the strategy as the environment evolves.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Compare the storage tier models between Sentinel, Splunk, and XSIAM. What are the key differences?</button>
+                            <div class="qa-answer">
+                                <p>Each platform has a different philosophy on storage tiers, which reflects their architectural origins and pricing models.</p>
+                                <p>Microsoft Sentinel uses table-level tiers with Analytics, Basic, and the new Auxiliary logs. Analytics is full-featured with rule support and fast queries. Basic is about 80% cheaper on ingestion but limits you to 8-day lookback and no analytics rules—it's basically for compliance data you rarely search. Auxiliary, coming in 2025, will be even cheaper for massive volumes. Sentinel's model is simple but somewhat inflexible—you pick a tier per table, and changing it affects all data in that table.</p>
+                                <p>Splunk uses the classic hot/warm/cold/frozen bucket model, which is more granular but operationally complex. Data automatically ages through tiers based on time and volume thresholds you configure in indexes.conf. The advantage is fine-grained control—you can have different policies per index. The complexity is that you need to manage storage paths, monitor bucket counts, and plan capacity carefully. SmartStore in cloud deployments simplifies this by automatically tiering to object storage.</p>
+                                <p>XSIAM takes a cloud-native approach with Online storage and Archive. It's the simplest model operationally—you set retention per dataset and the platform handles the rest. The trade-off is less granularity compared to Splunk. XSIAM also has Data Lake Export for customers who want to own their data long-term in Snowflake or Databricks, which is unique among the three.</p>
+                                <p>When I'm advising organizations, I consider their operational maturity. Splunk offers the most control but requires the most expertise. Sentinel is in the middle with a balance of features and simplicity. XSIAM is the most hands-off but also the least customizable. The right choice depends on the team's capabilities and how much time they want to spend on data management versus security operations.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: You're asked to reduce SIEM costs by 30% without losing critical detection capability. How do you approach this?</button>
+                            <div class="qa-answer">
+                                <p>This is a common ask, and it requires a data-driven approach. I start by analyzing what we're actually ingesting, how much it costs, and what value it provides. You'd be surprised how often organizations are collecting data they never query.</p>
+                                <p>First, I pull volume reports by data source. In Splunk that's the License Usage Report, in Sentinel it's the Usage blade, in XSIAM it's the Data Usage dashboard. I sort by volume to find the biggest contributors—this is where the money is. Typically, a few sources account for 60-70% of the total volume.</p>
+                                <p>Next, I assess each high-volume source against three criteria: Is it used in detection rules? Is it queried regularly for investigations? Is it required for compliance? If a source fails all three, we can consider dropping it entirely. If it passes the compliance check but not the others, we move it to a cheaper tier.</p>
+                                <p>For sources we keep, I look at filtering opportunities. Network flow logs are a classic example—do we need every internal-to-internal connection, or can we filter to only internet-facing traffic and blocked connections? Windows Security logs often have verbose audit categories enabled that nobody uses—Event IDs in the 4600s and 4700s for object access logging can generate massive volume with limited security value.</p>
+                                <p>I also examine whether we're over-retaining. If we're keeping network logs for 90 days in the analytics tier but only query them for the last 7 days, we can reduce online retention and archive older data. The storage cost difference between tiers can be 5-10x.</p>
+                                <p>The key is getting stakeholder buy-in before making changes. I document the proposed changes, the expected savings, and any capability impact. I also recommend starting with one change at a time and measuring the impact before proceeding to the next.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What happens when you need to query archived or frozen data? Walk me through the process.</button>
+                            <div class="qa-answer">
+                                <p>Querying archived data is fundamentally different from hot data—it's designed for rare, targeted access rather than exploratory searches. The process varies by platform, but the concept is similar: you need to restore or rehydrate the data before querying.</p>
+                                <p>In Splunk with frozen data, you use the "thaw" process. You identify the time range you need, locate the frozen bucket files (usually in your coldToFrozenDir path or S3 for SmartStore), and copy them to the thawedPath for your index. Then you restart Splunk or run a command to rebuild the bucket. The data becomes searchable but only in that thawed location. It's manual and time-consuming—I've seen restores take hours for large time ranges.</p>
+                                <p>Sentinel uses Search Jobs for archived data. You go to the Logs blade, click "Search jobs," and submit an asynchronous query that runs against archived tables. The job can take minutes to hours depending on data volume and query complexity. Results are delivered to a new table you can then query normally. It's more user-friendly than Splunk's approach but still much slower than interactive queries.</p>
+                                <p>XSIAM's archive restore is similar in concept—you submit a restore request for a dataset and time range, wait for it to complete (usually minutes, not hours), and then the data is temporarily available for querying in the online tier. Palo Alto has invested in making this faster than traditional SIEM archive access.</p>
+                                <p>The practical implication is that you need to plan ahead for forensic investigations. If an incident might need archived data, start the restore immediately—don't wait until you've exhausted online data and then discover you need another 4 hours for the archive query. I also recommend documenting the restore process and practicing it during tabletop exercises so the team isn't figuring it out during a real incident.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle compliance requirements that mandate multi-year retention when your SIEM is expensive to store data long-term?</button>
+                            <div class="qa-answer">
+                                <p>This is where you need to think beyond the SIEM as the sole storage solution. SIEMs are optimized for security analytics, not long-term archival storage, and trying to use them for 7-year compliance retention gets expensive fast.</p>
+                                <p>My recommended approach is to use the SIEM for operational retention—typically 90 days to 1 year depending on the data type—and then export to cheaper long-term storage for compliance. For Splunk, this means configuring coldToFrozenDir to archive to S3 or Azure Blob with appropriate lifecycle policies. For Sentinel, you can use Data Export Rules to continuously stream data to a storage account. XSIAM has native Data Lake Export to Snowflake, Databricks, or your own storage.</p>
+                                <p>The key is maintaining searchability for compliance audits even with archived data. I configure the archive storage with a structure that makes it possible to find specific time ranges and data types—typically partitioned by date and source. I also document the archive location, retention policies, and restore procedures so that when an auditor asks for data from 3 years ago, we can retrieve it.</p>
+                                <p>For regulatory frameworks like PCI, SOX, or HIPAA, I work with the compliance team to understand exactly what data needs to be retained and for how long. Often the requirement is for audit logs and authentication events, not necessarily every piece of telemetry the SIEM collects. By scoping the compliance requirement precisely, we can minimize what needs expensive long-term retention.</p>
+                                <p>I also recommend testing the archive and restore process annually. I've seen organizations discover during an audit that their 5-year-old archive isn't actually readable because the format changed or the restore procedure wasn't documented. A yearly fire drill where you restore and query archived data catches these issues before they become problems.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="qa-item">
+                            <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain Splunk bucket mechanics—what triggers data to roll from hot to warm to cold?</button>
+                            <div class="qa-answer">
+                                <p>Splunk's bucket lifecycle is driven by a combination of size, time, and count thresholds that you configure per index. Understanding these mechanics is essential for capacity planning and troubleshooting.</p>
+                                <p>Hot buckets are actively receiving data. They roll to warm when any of these conditions are met: the bucket size exceeds maxDataSize (default is "auto" which means about 750MB), the bucket age exceeds maxHotSpanSecs (default 7776000 seconds or 90 days), or Splunk restarts. There's also maxHotBuckets which limits how many hot buckets can exist simultaneously per index—if you hit this limit, the oldest hot bucket rolls to warm.</p>
+                                <p>Warm buckets are read-only and stay on primary storage. They roll to cold when the number of warm buckets exceeds maxWarmDBCount (default 300). This is a count threshold, not time-based, which can be counterintuitive. It means a high-volume index will roll to cold faster than a low-volume one, even if the data is the same age.</p>
+                                <p>Cold buckets stay until either frozenTimePeriodInSecs is reached (the age of the data) or the cold path volume fills up. At that point, buckets either get deleted (if coldToFrozenDir isn't set) or archived to the frozen path. In SmartStore deployments, the cold tier effectively lives in object storage with local caching, which changes the mechanics somewhat.</p>
+                                <p>When I'm troubleshooting retention issues—like data disappearing earlier than expected—I check these settings in indexes.conf and compare to the actual bucket inventory using dbinspect or the monitoring console. Common issues include misconfigured volume limits, unexpected bucket counts from burst ingestion, or coldToFrozenDir not being set when people assumed data would be archived.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </main>
         </div>
     </div>
     

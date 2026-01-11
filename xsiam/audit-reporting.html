@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit & Reporting | XSIAM Compliance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="../index.html" class="sidebar-brand"><i class="fas fa-shield-alt"></i><span>Nik's SIEM</span></a>
+            <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Platforms</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="../xsiam/index.html" class="sidebar-nav-link active"><span class="platform-dot"></span><span>XSIAM</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Splunk</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../sentinel/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Sentinel</span></a></li>
+                </ul>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Compliance & Governance</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="compliance-frameworks.html" class="sidebar-nav-link"><i class="fas fa-clipboard-check"></i><span>Compliance Frameworks</span></a></li>
+                    <li class="sidebar-nav-item"><a href="audit-reporting.html" class="sidebar-nav-link active"><i class="fas fa-file-alt"></i><span>Audit & Reporting</span></a></li>
+                    <li class="sidebar-nav-item"><a href="data-privacy.html" class="sidebar-nav-link"><i class="fas fa-user-shield"></i><span>Data Privacy</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Audit & Reporting</span>
+                </div>
+
+                <h1><i class="fas fa-file-alt"></i> Audit & Reporting</h1>
+                <p class="lead">Comprehensive guide to XSIAM audit trails, compliance reporting, evidence collection for auditors, and scheduled report automation.</p>
+
+                <h2><i class="fas fa-clipboard-list"></i> Audit Trail Capabilities</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-history"></i> XSIAM Audit Log Categories</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    AUDIT LOG SOURCES                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   USER ACTIVITY                      CONFIGURATION CHANGES              SYSTEM EVENTS           │
+│   ═════════════                      ═════════════════════              ═════════════           │
+│                                                                                                  │
+│   • Login/logout events              • Rule create/modify/delete        • Data ingestion        │
+│   • Query execution                  • Dashboard changes                • Agent connect/disc    │
+│   • Alert triage actions             • Integration updates              • Broker VM health      │
+│   • Incident handling                • RBAC modifications               • Platform updates      │
+│   • Report generation                • API key creation                 • Service restarts      │
+│   • Export/download                  • Exclusion list updates           • Capacity events       │
+│                                                                                                  │
+│   ─────────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                                  │
+│   RETENTION: 90 days searchable, 1 year archived (configurable)                                 │
+│   FORMAT: Structured JSON with timestamp, user, action, target, result                          │
+│   ACCESS: Instance Admin or Audit role required                                                 │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Audit Log Queries</h2>
+                
+                <div class="config-section">
+                    <h4>Common Audit Queries for Compliance</h4>
+                    <div class="arch-diagram"># User Login Activity Report
+# ═══════════════════════════════════════════════════════════════
+
+dataset = audit_log
+| filter event_type = "USER_LOGIN"
+| filter _time > now() - 30d
+| comp count() as login_count,
+        min(_time) as first_login,
+        max(_time) as last_login
+  by user_email, source_ip
+| sort last_login desc
+
+# ═══════════════════════════════════════════════════════════════
+
+# Failed Login Attempts (Security Event)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = audit_log
+| filter event_type = "USER_LOGIN_FAILED"
+| filter _time > now() - 7d
+| comp count() as failed_attempts by user_email, source_ip
+| filter failed_attempts > 3
+| sort failed_attempts desc
+
+# ═══════════════════════════════════════════════════════════════
+
+# Configuration Changes (Change Management Evidence)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = audit_log
+| filter event_type in ("RULE_CREATED", "RULE_MODIFIED", "RULE_DELETED",
+                         "INTEGRATION_MODIFIED", "EXCLUSION_CREATED")
+| filter _time > now() - 30d
+| fields _time, user_email, event_type, target_name, change_details
+| sort _time desc
+
+# ═══════════════════════════════════════════════════════════════
+
+# Alert Handling Activity (SLA Compliance)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = audit_log
+| filter event_type in ("ALERT_ASSIGNED", "ALERT_RESOLVED", "ALERT_ESCALATED")
+| filter _time > now() - 7d
+| comp count() as actions by user_email, event_type
+| sort actions desc
+
+# ═══════════════════════════════════════════════════════════════
+
+# Data Export Events (Data Governance)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = audit_log
+| filter event_type in ("QUERY_EXPORT", "REPORT_DOWNLOAD", "INCIDENT_EXPORT")
+| filter _time > now() - 30d
+| fields _time, user_email, event_type, export_size, export_format
+| sort _time desc</div>
+                </div>
+
+                <h2><i class="fas fa-chart-bar"></i> Compliance Report Templates</h2>
+                
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Report Type</th>
+                            <th>Frequency</th>
+                            <th>Audience</th>
+                            <th>Key Metrics</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #3fb950;">Daily Security Summary</strong></td>
+                            <td>Daily</td>
+                            <td>SOC Management</td>
+                            <td>Alert volume, critical incidents, SLA compliance</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #58a6ff;">Weekly Operations Review</strong></td>
+                            <td>Weekly</td>
+                            <td>IT Leadership</td>
+                            <td>MTTD/MTTR trends, top threat categories, coverage</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #a371f7;">Monthly Compliance Report</strong></td>
+                            <td>Monthly</td>
+                            <td>Compliance/Audit</td>
+                            <td>Control effectiveness, policy violations, exceptions</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #d29922;">Quarterly Executive Brief</strong></td>
+                            <td>Quarterly</td>
+                            <td>C-Suite/Board</td>
+                            <td>Risk posture, major incidents, investment ROI</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #f85149;">Annual Audit Package</strong></td>
+                            <td>Annual</td>
+                            <td>External Auditors</td>
+                            <td>Complete evidence package per framework</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-gavel"></i> Audit Evidence Collection</h2>
+                
+                <div class="config-section">
+                    <h4>PCI-DSS Audit Evidence Package</h4>
+                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                        <h5 style="color: #3fb950; margin-top: 0;">Requirement 10: Logging & Monitoring</h5>
+                        <div style="display: grid; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.2.1 - Screenshot of data sources showing all CDE systems</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.2.2 - Query results showing user access to cardholder data</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.4.1 - Daily review procedure documentation</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.4.2 - Alert review logs showing daily analyst activity</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.5.1 - Retention configuration screenshot (1 year)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #c9d1d9;">
+                                <input type="checkbox" style="width: 18px; height: 18px;">
+                                <span>☐ 10.7 - Detection rules list with last modification dates</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-clock"></i> Scheduled Report Automation</h2>
+                
+                <div class="config-section">
+                    <h4>Report Scheduling via API</h4>
+                    <div class="arch-diagram"># Schedule Automated Compliance Report
+# ═══════════════════════════════════════════════════════════════
+
+import requests
+import json
+
+XSIAM_URL = "https://your-tenant.xdr.us.paloaltonetworks.com"
+API_KEY = "your-api-key"
+
+# Create scheduled report
+report_config = {
+    "name": "Monthly PCI Compliance Report",
+    "description": "Automated monthly report for PCI-DSS Req 10",
+    "schedule": {
+        "frequency": "monthly",
+        "day_of_month": 1,
+        "time": "06:00",
+        "timezone": "America/New_York"
+    },
+    "query": """
+        dataset = xdr_alert_raw
+        | filter _time > now() - 30d
+        | comp count() as alert_count by severity, status
+        | sort severity
+    """,
+    "format": "pdf",
+    "recipients": [
+        "compliance@company.com",
+        "ciso@company.com"
+    ],
+    "include_charts": True
+}
+
+response = requests.post(
+    f"{XSIAM_URL}/public_api/v1/reports/scheduled",
+    headers={
+        "Authorization": API_KEY,
+        "Content-Type": "application/json"
+    },
+    json=report_config
+)
+
+print(f"Report scheduled: {response.json()}")
+
+# ═══════════════════════════════════════════════════════════════</div>
+                </div>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prepare for an external audit using XSIAM?</button>
+                        <div class="qa-answer">
+                            <p>Preparing for an external audit requires understanding what the auditors need to see and having evidence readily available. I approach this systematically based on the audit framework.</p>
+                            
+                            <p>First, I review the audit scope and identify which XSIAM capabilities map to which controls. For PCI-DSS, that's primarily Requirement 10 (logging) and 11 (monitoring). For SOC 2, it's the Security trust criteria. I create a control-to-evidence mapping document that lists each control and the specific XSIAM artifacts that demonstrate compliance.</p>
+                            
+                            <p>For each control, I prepare the evidence in advance. This includes screenshots of configurations, exports of detection rules, sample query results showing the system is working, and documented procedures. Auditors want to see not just that controls exist, but that they're operating effectively - so I include metrics like alert volumes and response times.</p>
+                            
+                            <p>I also prepare for walkthroughs. Auditors will want to see the system in action - log in, show data ingestion, demonstrate alert triage, run a query. I practice these demonstrations and have test scenarios ready that don't expose sensitive production data but show realistic workflows.</p>
+                            
+                            <p>Finally, I maintain an audit-ready posture year-round rather than scrambling before audits. Scheduled reports run monthly to capture evidence continuously. Configuration changes are documented in change management. This way, when audit time comes, I'm compiling existing evidence rather than generating it from scratch.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What reports would you create for executive vs. technical audiences?</button>
+                        <div class="qa-answer">
+                            <p>Executive and technical reports serve fundamentally different purposes, so the content and presentation differ significantly.</p>
+                            
+                            <p>For executives, I focus on business impact and risk posture. The report fits on one page with clear red/yellow/green status indicators. Key metrics include: number of security incidents (trending up or down?), mean time to detect and respond (are we getting faster?), comparison to industry benchmarks, and any critical incidents that required executive attention. I avoid technical jargon and focus on outcomes. Executives want to know "are we secure?" not "how does the correlation engine work?"</p>
+                            
+                            <p>For technical audiences like SOC managers or security architects, reports are detailed and actionable. They include: alert volumes by source and severity, false positive rates by rule (which need tuning?), analyst productivity metrics, detection coverage against MITRE ATT&CK, and specific recommendations for improvement. These reports might be 10-20 pages with charts, tables, and drill-down data.</p>
+                            
+                            <p>I also create role-specific reports. Compliance officers get audit-focused reports mapped to control frameworks. IT operations gets reports on integration health and data pipeline status. Development teams might get application-specific security reports if we're monitoring their systems.</p>
+                            
+                            <p>The key principle is matching the report to what that audience needs to make decisions. Executives make strategic decisions, so they need strategic information. Analysts make tactical decisions, so they need operational data.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); }
+            else { sidebar.classList.toggle('collapsed'); mainWrapper.classList.toggle('expanded'); }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

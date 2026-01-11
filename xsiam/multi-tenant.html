@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tenant Architecture | XSIAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="../index.html" class="sidebar-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span>Nik's SIEM</span>
+            </a>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Platforms</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="../xsiam/index.html" class="sidebar-nav-link active"><span class="platform-dot"></span><span>XSIAM</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Splunk</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../sentinel/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Sentinel</span></a></li>
+                    <li class="sidebar-nav-item"><a href="../mde/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Defender</span></a></li>
+                </ul>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Architecture</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="architecture.html" class="sidebar-nav-link"><i class="fas fa-sitemap"></i><span>Architecture</span></a></li>
+                    <li class="sidebar-nav-item"><a href="capacity-planning.html" class="sidebar-nav-link"><i class="fas fa-calculator"></i><span>Capacity Planning</span></a></li>
+                    <li class="sidebar-nav-item"><a href="network-requirements.html" class="sidebar-nav-link"><i class="fas fa-network-wired"></i><span>Network Requirements</span></a></li>
+                    <li class="sidebar-nav-item"><a href="multi-tenant.html" class="sidebar-nav-link active"><i class="fas fa-building"></i><span>Multi-Tenant</span></a></li>
+                    <li class="sidebar-nav-item"><a href="data-residency.html" class="sidebar-nav-link"><i class="fas fa-map-marked-alt"></i><span>Data Residency</span></a></li>
+                    <li class="sidebar-nav-item"><a href="migration-guide.html" class="sidebar-nav-link"><i class="fas fa-exchange-alt"></i><span>Migration Guide</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Multi-Tenant Architecture</span>
+                </div>
+
+                <h1><i class="fas fa-building"></i> Multi-Tenant Architecture</h1>
+                <p class="lead">Comprehensive guide to XSIAM multi-tenancy for MSSPs, enterprise subsidiaries, and complex organizational structures requiring data isolation and centralized management.</p>
+
+                <h2><i class="fas fa-sitemap"></i> Multi-Tenancy Models</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-layer-group"></i> XSIAM Multi-Tenant Architecture Options</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MULTI-TENANCY DEPLOYMENT MODELS                                     │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   MODEL 1: SINGLE TENANT WITH PERMISSION GROUPS (Enterprise)                                    │
+│   ═══════════════════════════════════════════════════════════                                   │
+│                                                                                                  │
+│   ┌─────────────────────────────────────────────────────────────────────┐                       │
+│   │                        SINGLE XSIAM TENANT                           │                       │
+│   │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐     │                       │
+│   │  │ Permission Grp  │  │ Permission Grp  │  │ Permission Grp  │     │                       │
+│   │  │ "Business Unit A"│  │ "Business Unit B"│  │ "Global SOC"   │     │                       │
+│   │  │ (Filtered view) │  │ (Filtered view) │  │ (Full access)  │     │                       │
+│   │  └─────────────────┘  └─────────────────┘  └─────────────────┘     │                       │
+│   │                                                                      │                       │
+│   │  ✓ Shared detection rules      ✓ Central administration             │                       │
+│   │  ✓ Single license pool         ✓ Cross-BU correlation               │                       │
+│   └─────────────────────────────────────────────────────────────────────┘                       │
+│                                                                                                  │
+│   MODEL 2: SEPARATE TENANTS WITH MANAGEMENT HUB (MSSP/Enterprise)                               │
+│   ═══════════════════════════════════════════════════════════════════                           │
+│                                                                                                  │
+│                         ┌─────────────────────────┐                                             │
+│                         │   MANAGEMENT HUB        │                                             │
+│                         │   (Central visibility)  │                                             │
+│                         └───────────┬─────────────┘                                             │
+│                    ┌────────────────┼────────────────┐                                          │
+│                    │                │                │                                          │
+│                    ▼                ▼                ▼                                          │
+│   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                                │
+│   │   TENANT A      │  │   TENANT B      │  │   TENANT C      │                                │
+│   │   (Customer 1)  │  │   (Customer 2)  │  │   (Customer 3)  │                                │
+│   │                 │  │                 │  │                 │                                │
+│   │ • Isolated data │  │ • Isolated data │  │ • Isolated data │                                │
+│   │ • Own rules     │  │ • Own rules     │  │ • Own rules     │                                │
+│   │ • Own users     │  │ • Own users     │  │ • Own users     │                                │
+│   └─────────────────┘  └─────────────────┘  └─────────────────┘                                │
+│                                                                                                  │
+│   ✓ Complete data isolation        ✓ Per-customer licensing                                    │
+│   ✓ Regulatory compliance          ✓ Customer self-service option                              │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h2><i class="fas fa-code-branch"></i> Model Selection Decision Tree</h2>
+                
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>What is your primary use case?</strong>
+                    </div>
+                    <div class="decision-branch">
+                        <div>
+                            <div class="decision-arrow">↓ MSSP (Multiple Customers)</div>
+                            <div class="decision-node question">
+                                <strong>Do customers require complete data isolation?</strong>
+                            </div>
+                            <div class="decision-branch">
+                                <div>
+                                    <div class="decision-arrow">↓ YES (Regulated)</div>
+                                    <div class="decision-node yes" style="background: #1a4d2e;">
+                                        <strong style="color: #3fb950;">Separate Tenants</strong>
+                                        <div style="color: #8b949e; font-size: 0.85rem;">Complete isolation, separate contracts<br>Management Hub for central view</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="decision-arrow">↓ NO (SMB Customers)</div>
+                                    <div class="decision-node" style="background: #1c3a5e; border-color: #58a6ff;">
+                                        <strong style="color: #58a6ff;">Single Tenant + Permission Groups</strong>
+                                        <div style="color: #8b949e; font-size: 0.85rem;">Cost-effective, shared infrastructure<br>Logical isolation via RBAC</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="decision-arrow">↓ Enterprise (Internal BUs)</div>
+                            <div class="decision-node question">
+                                <strong>Are business units in different regions with data sovereignty?</strong>
+                            </div>
+                            <div class="decision-branch">
+                                <div>
+                                    <div class="decision-arrow">↓ YES</div>
+                                    <div class="decision-node" style="background: #3d2a5e; border-color: #a371f7;">
+                                        <strong style="color: #a371f7;">Regional Tenants</strong>
+                                        <div style="color: #8b949e; font-size: 0.85rem;">EU tenant, US tenant, APAC tenant<br>Hub for global correlation</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="decision-arrow">↓ NO</div>
+                                    <div class="decision-node yes" style="background: #1a4d2e;">
+                                        <strong style="color: #3fb950;">Single Tenant + Permission Groups</strong>
+                                        <div style="color: #8b949e; font-size: 0.85rem;">Simplest management<br>Best cross-BU detection</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-users-cog"></i> Permission Group Architecture</h2>
+                
+                <div class="config-section">
+                    <h4>Enterprise Multi-BU Configuration</h4>
+                    <div class="arch-diagram"># Permission Group Configuration for Multi-BU Enterprise
+# ═══════════════════════════════════════════════════════════════
+
+## Business Unit: Finance
+Permission Group Name: "Finance-SOC"
+Endpoint Filter:       endpoint_group = "Finance" OR hostname CONTAINS "FIN-"
+Alert Filter:          source_department = "Finance"
+Dashboard Access:      Finance-Operations, Finance-Executive
+User Assignment:       finance-analysts@company.com (IdP Group)
+
+## Business Unit: Manufacturing  
+Permission Group Name: "Manufacturing-SOC"
+Endpoint Filter:       endpoint_group = "Manufacturing" OR hostname CONTAINS "MFG-"
+Alert Filter:          source_department = "Manufacturing"
+Dashboard Access:      Manufacturing-Operations, OT-Security
+User Assignment:       mfg-analysts@company.com (IdP Group)
+
+## Business Unit: Corporate IT
+Permission Group Name: "Corporate-SOC"
+Endpoint Filter:       endpoint_group = "Corporate" OR hostname CONTAINS "CORP-"
+Alert Filter:          source_department = "Corporate"
+Dashboard Access:      Corporate-Operations
+User Assignment:       corp-analysts@company.com (IdP Group)
+
+## Global SOC (Full Access)
+Permission Group Name: "Global-SOC"
+Endpoint Filter:       (none - all endpoints)
+Alert Filter:          (none - all alerts)
+Dashboard Access:      ALL
+User Assignment:       global-soc@company.com (IdP Group)
+
+# ═══════════════════════════════════════════════════════════════
+# Cross-BU Detection Note:
+# Detection rules run against ALL data, providing cross-BU
+# correlation. Results are filtered to users based on their
+# permission group - they only see alerts for their BU unless
+# assigned to Global-SOC.
+# ═══════════════════════════════════════════════════════════════</div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> MSSP Multi-Tenant Best Practices</h2>
+                
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Requirement</th>
+                            <th>Implementation</th>
+                            <th>Considerations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Data Isolation</strong></td>
+                            <td>Separate tenants per customer</td>
+                            <td>No cross-customer data leakage possible</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Billing Separation</strong></td>
+                            <td>Per-tenant licensing</td>
+                            <td>Clear cost attribution per customer</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Customer Self-Service</strong></td>
+                            <td>Customer admin accounts per tenant</td>
+                            <td>Limited admin role for customers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Centralized Monitoring</strong></td>
+                            <td>Management Hub + API aggregation</td>
+                            <td>MSSP NOC dashboard across tenants</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Standardized Detection</strong></td>
+                            <td>Content pack deployment to all tenants</td>
+                            <td>Version control for rule consistency</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Custom Rules</strong></td>
+                            <td>Per-tenant customization</td>
+                            <td>Document customer-specific logic</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you design multi-tenancy for an MSSP with 50 customers?</button>
+                        <div class="qa-answer">
+                            <p>For an MSSP with 50 customers, I'd recommend separate tenants for most customers with a centralized management approach. The key considerations are data isolation, operational efficiency, and scalability.</p>
+                            
+                            <p>First, I'd segment customers by requirements. Large enterprise customers or those in regulated industries (healthcare, finance) absolutely need their own tenants - complete data isolation is non-negotiable. Smaller SMB customers might be grouped into shared tenants with permission group isolation if they're comfortable with logical rather than physical separation and cost is a factor.</p>
+                            
+                            <p>For the management layer, I'd implement a "single pane of glass" approach using XSIAM's Management Hub combined with custom API integrations. The MSSP SOC needs to see alerts across all tenants, track SLAs, and manage escalations without logging into 50 different consoles. Build dashboards that aggregate key metrics from all tenants and filter by customer for drill-down.</p>
+                            
+                            <p>Standardization is critical at scale. Create content packs with your standard detection rules, playbooks, and dashboards. Deploy these across all tenants consistently. Use version control and change management - when you update a detection rule, you need to propagate it to all tenants systematically, not ad-hoc.</p>
+                            
+                            <p>For customer-specific customizations, maintain documentation of what's unique per customer. Some customers will have custom rules for their specific applications or compliance requirements. Track these so they don't get overwritten during standard content updates.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When would you choose permission groups over separate tenants?</button>
+                        <div class="qa-answer">
+                            <p>Permission groups within a single tenant make sense when you need logical separation but benefit from shared infrastructure and cross-domain detection. The trade-off is between isolation strength and operational simplicity.</p>
+                            
+                            <p>I'd choose permission groups for internal enterprise scenarios - business units within the same company that need to see only their data but don't have regulatory requirements for complete isolation. A global company might have Americas, EMEA, and APAC teams that primarily work their regional alerts, but you still want detection rules that can correlate an attack spanning regions. Permission groups give you that - the rules see all data, users see filtered results.</p>
+                            
+                            <p>I'd also use permission groups for cost-sensitive MSSP scenarios with SMB customers who don't require strict isolation. Running 50 separate tenants is operationally expensive; consolidating into a few shared tenants with careful permission group design can reduce management overhead significantly.</p>
+                            
+                            <p>I'd avoid permission groups when there's any regulatory requirement for data isolation (GDPR, HIPAA, financial regulations), when customers are competitors who shouldn't share any infrastructure, when licensing models require per-customer metering that's easier with separate tenants, or when customers want self-service administration capabilities that require their own tenant.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                mainWrapper.classList.toggle('expanded');
+            }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

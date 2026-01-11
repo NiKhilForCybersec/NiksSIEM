@@ -560,41 +560,231 @@ malware-c2.evil.com,DOMAIN,HIGH,2024-12-31,APT29 C2 domain
                     </div>
                 </div>
 
+                <!-- IOC Match Response Decision Tree -->
+                <h2><i class="fas fa-route"></i> IOC Match Response Decision Tree</h2>
+                <div class="decision-tree">
+                    <div class="decision-node" style="border-color: #58a6ff;">
+                        <h4>IOC Match Alert Received</h4>
+                        <small>Threat intel indicator matched in your environment</small>
+                    </div>
+                    <div class="decision-arrow">▼</div>
+                    <div class="decision-node">
+                        <h4>What is the IOC type and confidence level?</h4>
+                        <small>Check feed source and severity rating</small>
+                    </div>
+                    <div class="decision-branches">
+                        <div class="decision-branch" style="border-color: #f85149;">
+                            <span class="branch-label">High-confidence (Premium feed, Critical severity)</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>Was the connection successful/file executed?</h4>
+                                <small>Check if threat was blocked or allowed</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes - Allowed</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #da3633 0%, #f85149 100%);">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Immediate Investigation</strong>
+                                        <small>Full scope analysis, check for compromise indicators, consider isolation</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No - Blocked</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #f0883e 0%, #d29922 100%);">
+                                        <i class="fas fa-search"></i>
+                                        <strong>Quick Validation</strong>
+                                        <small>Verify block, check for retry attempts, document and close</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="decision-branch" style="border-color: #d29922;">
+                            <span class="branch-label">Medium-confidence (Community feed, Medium severity)</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>Is there corroborating evidence?</h4>
+                                <small>Other alerts, suspicious behavior, multiple IOC hits</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes - Additional indicators</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #f0883e 0%, #d29922 100%);">
+                                        <i class="fas fa-search-plus"></i>
+                                        <strong>Full Investigation</strong>
+                                        <small>Treat as potential compromise, expand scope</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No - Isolated match</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <strong>Enrichment Check</strong>
+                                        <small>Verify IOC in VirusTotal/OTX, check if shared infrastructure, likely FP</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feed Selection Decision Tree -->
+                <h2><i class="fas fa-rss"></i> Threat Intel Feed Selection</h2>
+                <div class="decision-tree">
+                    <div class="decision-node" style="border-color: #58a6ff;">
+                        <h4>Selecting Threat Intel Feeds</h4>
+                        <small>Choose feeds based on your organization's needs</small>
+                    </div>
+                    <div class="decision-arrow">▼</div>
+                    <div class="decision-node">
+                        <h4>What is your primary threat concern?</h4>
+                        <small>Focus on most relevant threat types</small>
+                    </div>
+                    <div class="decision-branches">
+                        <div class="decision-branch" style="border-color: #8b5cf6;">
+                            <span class="branch-label">APT/Nation-state</span>
+                            <div class="decision-outcome" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+                                <i class="fas fa-user-secret"></i>
+                                <strong>Premium Feeds</strong>
+                                <small>Recorded Future, CrowdStrike Falcon X, Mandiant - high cost, curated APT intel</small>
+                            </div>
+                        </div>
+                        <div class="decision-branch" style="border-color: #f0883e;">
+                            <span class="branch-label">Commodity malware/Botnets</span>
+                            <div class="decision-outcome" style="background: linear-gradient(135deg, #f0883e 0%, #d29922 100%);">
+                                <i class="fas fa-virus"></i>
+                                <strong>Free Community Feeds</strong>
+                                <small>Abuse.ch (URLhaus, Feodo), AlienVault OTX - high volume, good malware coverage</small>
+                            </div>
+                        </div>
+                        <div class="decision-branch" style="border-color: #238636;">
+                            <span class="branch-label">Industry-specific threats</span>
+                            <div class="decision-outcome" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                                <i class="fas fa-industry"></i>
+                                <strong>ISAC/Sector Feeds</strong>
+                                <small>FS-ISAC (financial), H-ISAC (healthcare), MISP communities - sector-focused intel</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TI Integration Workflow -->
+                <h2><i class="fas fa-shoe-prints"></i> Threat Intel Integration Workflow</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step" style="border-left-color: #58a6ff;">
+                        <div class="flow-icon"><i class="fas fa-rss"></i></div>
+                        <div class="flow-content">
+                            <h4>1. Feed Onboarding</h4>
+                            <ul>
+                                <li>Evaluate feed quality and false positive rates</li>
+                                <li>Configure TAXII/STIX/API connection</li>
+                                <li>Set appropriate polling intervals</li>
+                                <li>Map indicator types and severity levels</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #8b5cf6;">
+                        <div class="flow-icon"><i class="fas fa-filter"></i></div>
+                        <div class="flow-content">
+                            <h4>2. IOC Filtering & Rules</h4>
+                            <ul>
+                                <li>Create IOC matching rules by type and severity</li>
+                                <li>Configure alerting thresholds</li>
+                                <li>Set up automated playbook triggers</li>
+                                <li>Define exclusion lists for known-good indicators</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #f0883e;">
+                        <div class="flow-icon"><i class="fas fa-sync-alt"></i></div>
+                        <div class="flow-content">
+                            <h4>3. Operationalization</h4>
+                            <ul>
+                                <li>Monitor IOC match alerts in alert queue</li>
+                                <li>Investigate and validate matches</li>
+                                <li>Feed false positives back to exclusion lists</li>
+                                <li>Track feed performance metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #238636;">
+                        <div class="flow-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="flow-content">
+                            <h4>4. Continuous Improvement</h4>
+                            <ul>
+                                <li>Review feed FP rates monthly</li>
+                                <li>Disable or deprioritize low-quality feeds</li>
+                                <li>Add new feeds based on threat landscape</li>
+                                <li>Tune IOC rules based on operational feedback</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Interview Q&A -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you integrate external threat intelligence feeds into XSIAM?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through how you would set up and operationalize threat intelligence in a new XSIAM deployment.</button>
                         <div class="qa-answer">
-                            <p><strong>Step-by-step process:</strong></p>
-                            <ol>
-                                <li><strong>Navigate:</strong> Threat Intel → Feeds → + Add Feed</li>
-                                <li><strong>Select feed type:</strong> TAXII, STIX, CSV URL, or vendor-specific API</li>
-                                <li><strong>Configure connection:</strong> Enter URL, API key, polling interval</li>
-                                <li><strong>Map fields:</strong> Ensure indicator types and severity are mapped correctly</li>
-                                <li><strong>Test and save:</strong> Verify connectivity, then enable the feed</li>
-                                <li><strong>Create IOC rules:</strong> Define what happens when indicators match (alert, playbook, block)</li>
-                            </ol>
-                            <p><strong>Example:</strong> For AlienVault OTX, I'd use TAXII feed type, enter their discovery URL, add my API key, set 1-hour polling, and create a rule to generate High severity alerts on matches.</p>
+                            <p>Setting up threat intel in XSIAM requires a phased approach that balances coverage with alert fatigue. I start with the built-in Unit 42 feed since it's already integrated and curated by Palo Alto's research team. This gives immediate coverage with minimal configuration - just verify it's enabled and create IOC rules for the actions you want on matches.</p>
+                            
+                            <p>Next, I add free community feeds selectively. Abuse.ch feeds like URLhaus and Feodo Tracker are excellent for commodity malware with low false positive rates. I configure these as TAXII or CSV URL feeds with hourly polling. For AlienVault OTX, I'm more careful - it's community-sourced so I set it to only alert on High severity indicators and require correlation with other signals before creating incidents.</p>
+                            
+                            <p>The key operational decision is what action to take on matches. I create tiered IOC rules: Critical severity IOCs from premium feeds trigger immediate alerts and can auto-run enrichment playbooks. Medium severity gets alerts but lower priority. Low severity I often just log without alerting - it's useful for hunting but would create too much noise in the alert queue. I also set up a weekly review dashboard showing matches per feed, false positive rates, and any missed detections from incident reviews.</p>
+                            
+                            <p>After 30 days, I audit the results. Which feeds generated the most false positives? Which IOC types were most useful? This data drives optimization - I've disabled feeds that had 80%+ FP rates and added sector-specific ISAC feeds when they proved valuable. Threat intel is only useful if analysts trust it, so maintaining quality is essential.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle false positives from threat intelligence feeds?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle false positives from threat intelligence feeds without creating security gaps?</button>
                         <div class="qa-answer">
-                            <p><strong>False positive management strategies:</strong></p>
-                            <ol>
-                                <li><strong>Use severity filtering:</strong> Only alert on High/Critical IOCs, not Low/Medium</li>
-                                <li><strong>Whitelist legitimate indicators:</strong> Threat Intel → Indicators → Select → Add to Exclusion List</li>
-                                <li><strong>Evaluate feed quality:</strong> Track FP rate per feed, disable low-quality feeds</li>
-                                <li><strong>Require correlation:</strong> Don't alert on IOC match alone - require additional context (e.g., IOC match + suspicious process)</li>
-                                <li><strong>Set expiration dates:</strong> Old IOCs become stale - ensure feeds include expiration or set default TTL</li>
-                            </ol>
-                            <p><strong>XQL for analysis:</strong></p>
-                            <div class="arch-diagram" style="margin: 8px 0;">dataset = threat_intel_matches
-| filter _time > ago(30d)
-| comp total = count(), fp = countif(resolution = "FALSE_POSITIVE") by feed_name
-| alter fp_rate = round(fp / total * 100, 1)
-| sort desc fp_rate</div>
+                            <p>False positive management in threat intel is a delicate balance. The temptation is to whitelist aggressively when you're drowning in alerts, but overly broad exclusions can blind you to real threats. My approach is to be surgical with exclusions and track everything.</p>
+                            
+                            <p>When I see a false positive, I first determine why it's triggering. If a legitimate CDN IP is flagged, I don't just whitelist that IP - I investigate why it's in the feed. Sometimes IPs get flagged because they hosted malware temporarily. If the threat is no longer present and it's shared infrastructure like Cloudflare or AWS, I add it to exclusions with a note explaining the reasoning and the feed that flagged it.</p>
+                            
+                            <p>I prefer tuning at the rule level rather than blanket exclusions. Instead of excluding all matches from a noisy feed, I create IOC rules that only alert when there's corroborating evidence - like an IOC match plus a suspicious process spawn, or IOC match plus data exfiltration behavior. This keeps the detection active but raises the threshold for alerting.</p>
+                            
+                            <p>For tracking, I maintain metrics on exclusions: how many, when created, by whom, for what reason. I review these quarterly - sometimes I find exclusions for IPs that have changed hands and are now hosting threats again. The exclusion list should be a living document, not a dumping ground. I also track FP rates per feed using XQL: if a feed consistently shows 50%+ false positives, it might be time to deprioritize or remove it entirely.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Explain the difference between IOC-based detection and behavioral detection. When would you use each?</button>
+                        <div class="qa-answer">
+                            <p>IOC-based detection is reactive - you're looking for known-bad indicators that someone else has already identified from a previous attack. Behavioral detection is proactive - you're looking for suspicious patterns that could indicate an attack, even if you've never seen that specific malware or infrastructure before. Both are essential, but they serve different purposes.</p>
+                            
+                            <p>IOCs are great for catching commodity threats and known attacker infrastructure. If an attacker uses the same C2 server across multiple campaigns, IOC feeds will catch it. The limitation is that sophisticated attackers rotate infrastructure constantly - a C2 domain might only be active for hours before they move to a new one. By the time it's in a feed, the attack might be over. IOCs also can't catch zero-days or custom malware with unique hashes.</p>
+                            
+                            <p>Behavioral detection catches the attack techniques regardless of the specific indicators. PowerShell downloading and executing content from the internet is suspicious whether the URL is in a feed or not. Credential dumping from LSASS is malicious whether the tool is Mimikatz or a custom variant. This is why MITRE ATT&CK-aligned behavioral rules are so valuable - they detect the technique, not the tool.</p>
+                            
+                            <p>In practice, I use both in layers. IOC matching catches the known threats cheaply and quickly - it's basically free detection. Behavioral rules catch the sophisticated threats that evade IOC feeds. When building a detection strategy, I make sure I have behavioral coverage for critical attack techniques like credential access, lateral movement, and data exfiltration, then layer IOC feeds on top for additional coverage. The ideal alert correlates both: "This host connected to a known C2 IP AND exhibited credential dumping behavior" is much higher confidence than either signal alone.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you use threat intelligence proactively for threat hunting rather than just reactive detection?</button>
+                        <div class="qa-answer">
+                            <p>Most organizations use threat intel passively - they load IOCs and wait for matches. Proactive threat hunting with TI means using intelligence to guide where you look, not just what you look for. This requires thinking about TI as context rather than just indicators.</p>
+                            
+                            <p>I start with threat reports, not just IOC lists. When Unit 42 or Mandiant publishes a report on a new campaign, I read the full TTPs, not just the IOC appendix. If they describe the attacker using scheduled tasks for persistence with a specific naming pattern, I'll hunt for that pattern in my environment even without a specific hash to look for. This behavioral approach catches variants the report might not have covered.</p>
+                            
+                            <p>Another technique is infrastructure hunting. Attackers often register domains with similar patterns or use the same registrars and hosting providers. If I get an IOC for one C2 domain, I'll use passive DNS and certificate transparency logs to find related domains that might not be in feeds yet. XSIAM's threat intel module can be enriched with this discovered infrastructure before it shows up in commercial feeds.</p>
+                            
+                            <p>I also use threat intel to prioritize hunting hypotheses. If reports indicate my industry sector is being targeted by a specific APT group, I'll prioritize hunting for their known techniques. If ransomware groups are exploiting a new vulnerability, I'll hunt for exploitation attempts even before patches are available. The key mindset shift is treating TI as a guide for investigation rather than just a blocklist - it tells you what adversaries are capable of, not just what specific indicators they've used in the past.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Compare threat intel integration in XSIAM vs Sentinel vs Splunk. What are the strengths and limitations of each?</button>
+                        <div class="qa-answer">
+                            <p>Each platform handles threat intel differently, and understanding these differences is crucial for effective integration. XSIAM has native TI management built into the platform - feeds, IOC matching, and response actions are all integrated. The Unit 42 feed is included and correlates across all data sources automatically. The limitation is flexibility; you're somewhat constrained to Palo Alto's approach and supported feed formats.</p>
+                            
+                            <p>Sentinel's approach centers on Microsoft's threat intel and the TI Data Connector framework. The Microsoft Defender Threat Intelligence feed is excellent if you're in the Microsoft ecosystem. For external feeds, you typically ingest via the TI Indicators API or connect threat intelligence platforms like MISP. Sentinel's strength is the tight integration with Microsoft 365 Defender - IOC matches can trigger automatic response across email, endpoint, and identity. The challenge is that external feed integration requires more configuration and often Logic Apps for automation.</p>
+                            
+                            <p>Splunk is the most flexible but also the most manual. Enterprise Security has threat intel framework with support for various feed formats, and you can use apps like MISP42Splunk for community platforms. Splunk's lookup tables make IOC matching performant even at scale. The downside is that you're building more yourself - response actions require separate integrations with your EDR, firewall, etc. There's no built-in "block this hash" button like XSIAM has.</p>
+                            
+                            <p>For organizations choosing between them: XSIAM is best if you want integrated TI with minimal configuration. Sentinel excels if you're Microsoft-centric and want native Defender integration. Splunk wins if you need maximum flexibility and have the engineering resources to build custom integrations. I've worked with all three, and the key is matching the platform to your team's capabilities and existing infrastructure.</p>
                         </div>
                     </div>
                 </div>

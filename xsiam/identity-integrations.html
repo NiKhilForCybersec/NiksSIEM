@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Integrations | XSIAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand"><i class="fas fa-shield-alt"></i><span>Nik's SIEM</span></a>
+                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Integrations</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="cloud-integrations.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud</span></a></li>
+                        <li class="sidebar-nav-item"><a href="identity-integrations.html" class="sidebar-nav-link active"><i class="fas fa-id-card"></i><span>Identity</span></a></li>
+                        <li class="sidebar-nav-item"><a href="custom-integrations.html" class="sidebar-nav-link"><i class="fas fa-puzzle-piece"></i><span>Custom</span></a></li>
+                        <li class="sidebar-nav-item"><a href="marketplace.html" class="sidebar-nav-link"><i class="fas fa-store"></i><span>Marketplace</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Identity Integrations</span>
+                </div>
+
+                <h1><i class="fas fa-id-card"></i> Identity Integrations</h1>
+                <p class="lead">Integrating XSIAM with identity providers including Okta, Azure AD/Entra ID, Ping Identity, and Active Directory for comprehensive identity threat detection.</p>
+
+                <h2><i class="fas fa-users"></i> Identity Data Sources</h2>
+                
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Log Types</th>
+                            <th>Detection Use Cases</th>
+                            <th>Integration Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #00297A;">Okta</strong></td>
+                            <td>System Log, User Events</td>
+                            <td>Brute force, impossible travel, MFA bypass</td>
+                            <td>API (Log Streaming)</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #0078D4;">Azure AD/Entra ID</strong></td>
+                            <td>Sign-in, Audit, Risk</td>
+                            <td>Risky sign-ins, privilege escalation</td>
+                            <td>Event Hub / Graph API</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #B4202E;">Ping Identity</strong></td>
+                            <td>Authentication, Audit</td>
+                            <td>Authentication anomalies, policy violations</td>
+                            <td>Webhook / Syslog</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #00A4EF;">Active Directory</strong></td>
+                            <td>Security Events (4624, 4625, etc.)</td>
+                            <td>Kerberoasting, pass-the-hash, DCSync</td>
+                            <td>XDR Agent / WEC</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #EB5424;">CyberArk</strong></td>
+                            <td>Privileged Session Logs</td>
+                            <td>Privileged access abuse</td>
+                            <td>Syslog / API</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-cog"></i> Okta Integration</h2>
+                
+                <div class="config-section">
+                    <h4>Okta Log Streaming Setup</h4>
+                    <div class="arch-diagram"># Okta Integration Configuration
+# ═══════════════════════════════════════════════════════════════
+
+## Step 1: Create API Token in Okta
+# Security → API → Tokens → Create Token
+# Name: XSIAM-Integration
+# Copy token value (shown once)
+
+## Step 2: Configure Log Streaming (Preferred)
+# Reports → System Log → Settings → Log Streaming
+# Destination: AWS EventBridge or HTTP Endpoint
+# For HTTP: Use XSIAM webhook URL
+
+## Step 3: Alternative - API Polling
+# Configure in XSIAM:
+OKTA_DOMAIN = "your-org.okta.com"
+API_TOKEN = "00abc..."
+
+# XSIAM polls /api/v1/logs endpoint
+# Rate limit: 1000 requests/minute
+
+## Key Fields Mapped to XDM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Okta Field          │ XDM Field
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+actor.displayName   │ xdm.source.user.username
+client.ipAddress    │ xdm.source.ip
+outcome.result      │ xdm.event.outcome
+eventType           │ xdm.event.type
+target[].type       │ xdm.target.resource.type
+
+# ═══════════════════════════════════════════════════════════════</div>
+                </div>
+
+                <h2><i class="fab fa-microsoft"></i> Azure AD/Entra ID Integration</h2>
+                
+                <div class="config-section">
+                    <h4>Entra ID Log Types</h4>
+                    <div class="arch-diagram"># Azure AD / Entra ID Log Categories
+# ═══════════════════════════════════════════════════════════════
+
+## Sign-in Logs (Most Critical)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Interactive sign-ins
+• Non-interactive sign-ins
+• Service principal sign-ins
+• Managed identity sign-ins
+• Risk detection events
+
+Key Fields:
+- userPrincipalName
+- ipAddress
+- location (city, country)
+- riskLevel, riskState
+- conditionalAccessStatus
+- authenticationDetails
+
+## Audit Logs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Directory changes
+• Application changes
+• Group membership changes
+• Role assignments
+• Policy modifications
+
+## Identity Protection Logs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Risk detections
+• Risky users
+• Risky sign-ins
+• Risk remediation events
+
+# ═══════════════════════════════════════════════════════════════</div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Identity Threat Detection Queries</h2>
+                
+                <div class="config-section">
+                    <h4>Common Identity Detections</h4>
+                    <div class="arch-diagram"># Brute Force Detection (Okta)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = okta_raw
+| filter outcome_result = "FAILURE"
+| filter eventType = "user.session.start"
+| filter _time > now() - 1h
+| comp count() as failed_logins by actor_alternateId, client_ipAddress
+| filter failed_logins > 10
+
+# ═══════════════════════════════════════════════════════════════
+
+# Impossible Travel (Azure AD)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = azure_ad_signin_raw
+| filter status_errorCode = 0  // Successful logins only
+| sort _time asc
+| alter prev_time = prev(_time) by userPrincipalName
+| alter prev_location = prev(location_city) by userPrincipalName
+| alter time_diff_hours = timestamp_diff(_time, prev_time, "HOUR")
+| filter time_diff_hours < 2 AND location_city != prev_location
+| fields _time, userPrincipalName, location_city, prev_location, ipAddress
+
+# ═══════════════════════════════════════════════════════════════
+
+# MFA Fatigue Attack (Multiple MFA Prompts)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = okta_raw
+| filter eventType = "user.authentication.auth_via_mfa"
+| filter _time > now() - 15m
+| comp count() as mfa_attempts by actor_alternateId
+| filter mfa_attempts > 5
+
+# ═══════════════════════════════════════════════════════════════
+
+# Privileged Role Assignment (Azure AD)
+# ═══════════════════════════════════════════════════════════════
+
+dataset = azure_ad_audit_raw
+| filter operationName = "Add member to role"
+| filter targetResources contains "Global Administrator" OR
+         targetResources contains "Privileged Role"
+| fields _time, initiatedBy_user_userPrincipalName, 
+         targetResources, result</div>
+                </div>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What identity-based threats should XSIAM detect, and how?</button>
+                        <div class="qa-answer">
+                            <p>Identity is the new perimeter, so identity-based threat detection is critical. I focus on several key threat categories that XSIAM can detect through identity provider integration.</p>
+                            
+                            <p><strong>Credential attacks</strong> include brute force, password spraying, and credential stuffing. Detection involves monitoring failed authentication attempts and correlating across time windows and source IPs. XSIAM can aggregate failed logins and alert when thresholds are exceeded.</p>
+                            
+                            <p><strong>Account compromise indicators</strong> include impossible travel (logins from geographically distant locations in short timeframes), unusual login times, new device/location combinations, and anomalous application access patterns. XSIAM's correlation rules can track user baselines and detect deviations.</p>
+                            
+                            <p><strong>MFA bypass techniques</strong> include MFA fatigue attacks (repeated push notifications until user approves), SIM swapping indicators, and session token theft. Detection requires monitoring MFA event patterns and success/failure ratios.</p>
+                            
+                            <p><strong>Privilege escalation</strong> involves monitoring role assignments, group membership changes, and access policy modifications. Any addition to privileged roles should generate alerts for review.</p>
+                            
+                            <p><strong>Identity infrastructure attacks</strong> in Active Directory environments include Kerberoasting, DCSync, and Golden Ticket attacks. These require Windows Security Event monitoring (4769, 4662) combined with behavioral analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); }
+            else { sidebar.classList.toggle('collapsed'); mainWrapper.classList.toggle('expanded'); }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

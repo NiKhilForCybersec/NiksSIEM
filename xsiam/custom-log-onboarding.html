@@ -237,6 +237,102 @@
                     </ul>
                 </div>
 
+                <!-- End-to-End Onboarding Workflow -->
+                <h2><i class="fas fa-project-diagram"></i> Complete Onboarding Workflow</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step" style="border-left-color: #58a6ff;">
+                        <div class="flow-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 1: Planning</h4>
+                            <ul>
+                                <li>Gather sample logs (10-20 events)</li>
+                                <li>Document log format (JSON/syslog/custom)</li>
+                                <li>Identify security-relevant fields</li>
+                                <li>Estimate daily volume (EPS × 86,400)</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #d29922;">
+                        <div class="flow-icon"><i class="fas fa-route"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 2: Choose Method</h4>
+                            <ul>
+                                <li><strong>Syslog:</strong> On-prem → Broker VM</li>
+                                <li><strong>HTTP:</strong> Cloud/API → HTTP Collector</li>
+                                <li><strong>Cloud:</strong> AWS/Azure → Cloud Collector</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #3fb950;">
+                        <div class="flow-icon"><i class="fas fa-plug"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 3: Configure Source</h4>
+                            <ul>
+                                <li>Create data source in XSIAM</li>
+                                <li>Set Vendor and Product names</li>
+                                <li>Configure source device to send logs</li>
+                                <li>Verify connectivity</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #a371f7;">
+                        <div class="flow-icon"><i class="fas fa-code"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 4: Create Parser</h4>
+                            <ul>
+                                <li>Build extraction logic (JSON/regex/split)</li>
+                                <li>Test with sample logs</li>
+                                <li>Extract all relevant fields</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #f0883e;">
+                        <div class="flow-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 5: XDM Mapping</h4>
+                            <ul>
+                                <li>Map custom fields to xdm.* schema</li>
+                                <li>Enable cross-source correlation</li>
+                                <li>Use standard field names</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #3fb950;">
+                        <div class="flow-icon"><i class="fas fa-check-double"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 6: Verify</h4>
+                            <ul>
+                                <li>Query dataset to confirm data</li>
+                                <li>Check field extraction</li>
+                                <li>Validate XDM mapping</li>
+                            </ul>
+                        </div>
+                        <div class="flow-arrow"></div>
+                    </div>
+                    
+                    <div class="flow-step" style="border-left-color: #f85149;">
+                        <div class="flow-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="flow-content">
+                            <h4>Phase 7: Detection Rules</h4>
+                            <ul>
+                                <li>Create correlation rules on dataset</li>
+                                <li>Build dashboards for visibility</li>
+                                <li>Set up alerts and response actions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- TABLE OF CONTENTS -->
                 <div class="config-section">
                     <h3><i class="fas fa-list"></i> Table of Contents</h3>
@@ -375,31 +471,182 @@ Feb 15 14:30:05 app-server-01 myapp[1234]: USER=jsmith ACTION=access_denied RESO
                     <p style="color: #f85149;">✗ Unstructured logs need complex regex - consider asking dev team to improve logging</p>
                 </div>
 
+                <!-- Decision Tree: Parsing Approach Selection -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Select Parsing Approach</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>What is the log format?</strong>
+                        <small>Examine sample logs to identify structure</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">JSON Format</div>
+                        <div class="decision-outcome" style="border-left-color: #3fb950;">
+                            <i class="fas fa-check-circle" style="color: #3fb950;"></i>
+                            <strong>Use json_extract()</strong>
+                            <small>Easiest method: <code>json_extract(_raw_log, "$.field_name")</code> | Handles nested objects with $.parent.child</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #58a6ff;">Key-Value Pairs</div>
+                        <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                            <i class="fas fa-equals" style="color: #58a6ff;"></i>
+                            <strong>Use regex with named groups</strong>
+                            <small>Pattern: <code>USER=(?P&lt;user&gt;\S+)</code> | Works for consistent key=value formats</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background-color: #d29922;">Delimited (CSV/Pipe)</div>
+                        <div class="decision-outcome" style="border-left-color: #d29922;">
+                            <i class="fas fa-columns" style="color: #d29922;"></i>
+                            <strong>Use split() function</strong>
+                            <small>Pattern: <code>split(_raw_log, "|")</code> then <code>arrayindex()</code> for each position</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">Unstructured Text</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Are there consistent patterns?</strong>
+                            <small>Look for repeated structures across log samples</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-outcome" style="border-left-color: #a371f7;">
+                                <i class="fas fa-code" style="color: #a371f7;"></i>
+                                <strong>Build complex regex</strong>
+                                <small>Use capture groups for each field | Test extensively with variations</small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-outcome" style="border-left-color: #f85149;">
+                                <i class="fas fa-exclamation-triangle" style="color: #f85149;"></i>
+                                <strong>Request log format improvement</strong>
+                                <small>Work with dev team to add structured logging (JSON) | Use generic extraction as fallback</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- PHASE 2: CHOOSE INGESTION METHOD -->
                 <div class="phase-header" id="phase2">
                     <span class="phase-num">PHASE 2</span>
                     <span style="font-size: 1.2rem; font-weight: 600;">Choose Ingestion Method</span>
                 </div>
 
-                <div class="decision-box">
-                    <h3><i class="fas fa-question-circle" style="color: #d29922;"></i> Decision Tree: Which Ingestion Method?</h3>
+                <!-- Visual Decision Tree: Ingestion Method Selection -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose Ingestion Method</h3>
                     
-                    <div style="margin: 16px 0; padding: 16px; background: #0d1117; border-radius: 8px;">
-                        <p><strong>Q1: Can the source send syslog (TCP/UDP port 514)?</strong></p>
-                        <p style="margin-left: 20px;">→ YES: <strong>Use Broker VM Syslog</strong> (most common)</p>
-                        <p style="margin-left: 20px;">→ NO: Continue to Q2</p>
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>Is the source an on-premises device/server?</strong>
+                        <small>Network equipment, Linux/Windows servers, on-prem applications</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">YES</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Can the source send syslog (TCP/UDP 514)?</strong>
+                            <small>Most enterprise devices support syslog natively</small>
+                        </div>
                         
-                        <p style="margin-top: 16px;"><strong>Q2: Can the source send HTTP/HTTPS POST requests?</strong></p>
-                        <p style="margin-left: 20px;">→ YES: <strong>Use HTTP Collector</strong></p>
-                        <p style="margin-left: 20px;">→ NO: Continue to Q3</p>
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-outcome" style="border-left-color: #3fb950;">
+                                <i class="fas fa-check-circle" style="color: #3fb950;"></i>
+                                <strong>Use Broker VM Syslog</strong>
+                                <small>Settings → Data Sources → Syslog Collector | Most common method for on-prem sources</small>
+                            </div>
+                        </div>
                         
-                        <p style="margin-top: 16px;"><strong>Q3: Does XSIAM have a native Cloud Collector for this source?</strong></p>
-                        <p style="margin-left: 20px;">→ YES: <strong>Use Cloud Collector</strong> (check Settings → Data Sources → Cloud Collectors)</p>
-                        <p style="margin-left: 20px;">→ NO: Continue to Q4</p>
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-outcome" style="border-left-color: #d29922;">
+                                <i class="fas fa-wrench" style="color: #d29922;"></i>
+                                <strong>Deploy Log Forwarder</strong>
+                                <small>Use NXLog, Filebeat, or rsyslog to collect and forward logs</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">NO - Cloud/SaaS Source</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Is there a native Cloud Collector for this source?</strong>
+                            <small>Check Settings → Data Sources → Cloud Collectors for AWS, Azure, O365, etc.</small>
+                        </div>
                         
-                        <p style="margin-top: 16px;"><strong>Q4: Can you write a script to pull logs from the source API?</strong></p>
-                        <p style="margin-left: 20px;">→ YES: <strong>Use Custom Integration + HTTP Collector</strong></p>
-                        <p style="margin-left: 20px;">→ NO: <strong>Contact Palo Alto PS or request feature</strong></p>
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-outcome" style="border-left-color: #3fb950;">
+                                <i class="fas fa-cloud" style="color: #3fb950;"></i>
+                                <strong>Use Cloud Collector</strong>
+                                <small>Pre-built integrations with automatic parsing and XDM mapping</small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-node">
+                                <i class="fas fa-question-circle"></i>
+                                <strong>Can the source send HTTP webhooks?</strong>
+                                <small>Native webhook/HTTP POST capability</small>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow yes">YES</div>
+                                <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                                    <i class="fas fa-link" style="color: #58a6ff;"></i>
+                                    <strong>Use HTTP Collector</strong>
+                                    <small>Settings → Data Sources → HTTP Collector | Configure webhook URL in source</small>
+                                </div>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow no">NO</div>
+                                <div class="decision-outcome" style="border-left-color: #a371f7;">
+                                    <i class="fas fa-code" style="color: #a371f7;"></i>
+                                    <strong>Build Custom Integration</strong>
+                                    <small>Write script to pull from source API → Push to HTTP Collector</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Reference: Ingestion Method by Source Type -->
+                <h3>Quick Reference: Source Type → Ingestion Method</h3>
+                <div class="grid-2col">
+                    <div class="concept-card">
+                        <div class="concept-icon" style="background: linear-gradient(135deg, #3fb950, #238636);"><i class="fas fa-server"></i></div>
+                        <h4>On-Premises Sources</h4>
+                        <ul style="color: #8b949e; font-size: 0.9rem;">
+                            <li><strong>Network equipment:</strong> Broker VM Syslog</li>
+                            <li><strong>Linux servers:</strong> rsyslog → Broker VM</li>
+                            <li><strong>Windows servers:</strong> NXLog → Broker VM</li>
+                            <li><strong>Security appliances:</strong> Broker VM Syslog</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <div class="concept-icon" style="background: linear-gradient(135deg, #58a6ff, #1f6feb);"><i class="fas fa-cloud"></i></div>
+                        <h4>Cloud & SaaS Sources</h4>
+                        <ul style="color: #8b949e; font-size: 0.9rem;">
+                            <li><strong>AWS:</strong> Cloud Collector (S3, CloudTrail)</li>
+                            <li><strong>Azure:</strong> Cloud Collector (Event Hub)</li>
+                            <li><strong>Custom SaaS:</strong> HTTP Collector + API polling</li>
+                            <li><strong>Webhook-enabled:</strong> HTTP Collector</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -708,6 +955,62 @@ else:
                 <div class="info-box" style="border-color: #d29922;">
                     <h4><i class="fas fa-info-circle"></i> What is Parsing?</h4>
                     <p><strong>Parsing</strong> extracts structured fields from raw log text. Without parsing, you only have a blob of text. With parsing, you have searchable fields like <code>user</code>, <code>src_ip</code>, <code>action</code>.</p>
+                </div>
+
+                <!-- Decision Tree: Parsing Approach by Log Format -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Choose Parsing Approach</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>What is the log format?</strong>
+                        <small>Examine sample logs to identify structure</small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">JSON Format</div>
+                        <div class="decision-outcome" style="border-left-color: #3fb950;">
+                            <i class="fas fa-check-circle" style="color: #3fb950;"></i>
+                            <strong>Use json_extract() Functions</strong>
+                            <small>Easiest to parse | json_extract(_raw_log, "$.fieldname")</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">Key-Value Pairs</div>
+                        <div class="decision-outcome" style="border-left-color: #d29922;">
+                            <i class="fas fa-code" style="color: #d29922;"></i>
+                            <strong>Use regextract() Functions</strong>
+                            <small>e.g., "KEY=value" format | regextract(_raw_log, "KEY=(\S+)")</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #58a6ff; color: #0d1117;">Delimited (CSV/Pipe)</div>
+                        <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                            <i class="fas fa-columns" style="color: #58a6ff;"></i>
+                            <strong>Use split() + arrayindex()</strong>
+                            <small>e.g., "val1|val2|val3" | split(_raw_log, "|") then arrayindex()</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #a371f7; color: #0d1117;">CEF/LEEF</div>
+                        <div class="decision-outcome" style="border-left-color: #a371f7;">
+                            <i class="fas fa-shield-alt" style="color: #a371f7;"></i>
+                            <strong>Use Built-in CEF/LEEF Parsing</strong>
+                            <small>XSIAM has native CEF/LEEF support | Set log format in data source</small>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow" style="background: #f85149; color: #0d1117;">Unstructured Text</div>
+                        <div class="decision-outcome" style="border-left-color: #f85149;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f85149;"></i>
+                            <strong>Use Complex Regex Patterns</strong>
+                            <small>Most difficult | Consider asking dev team to improve log format</small>
+                        </div>
+                    </div>
                 </div>
 
                 <h3>4.1 Check If Parsing is Needed</h3>
@@ -1080,6 +1383,107 @@ dataset = custom_myapp_raw
                     <span style="font-size: 1.2rem; font-weight: 600;">Troubleshooting</span>
                 </div>
 
+                <!-- Troubleshooting Decision Tree -->
+                <div class="decision-tree">
+                    <h3><i class="fas fa-sitemap"></i> Decision Tree: Troubleshoot Custom Log Issues</h3>
+                    
+                    <div class="decision-node">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>Are you seeing ANY data in XQL queries?</strong>
+                        <small>Query: <code>dataset = custom_yourapp_raw | limit 5</code></small>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow no">NO DATA</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Is the Broker VM receiving logs?</strong>
+                            <small>Check: <code>tcpdump -i eth0 port 514</code> on Broker VM</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO</div>
+                            <div class="decision-outcome" style="border-left-color: #f85149;">
+                                <i class="fas fa-network-wired" style="color: #f85149;"></i>
+                                <strong>Network/Source Issue</strong>
+                                <small>Check: Source is sending logs | Firewall allows traffic | Correct Broker IP/port configured</small>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES</div>
+                            <div class="decision-node">
+                                <i class="fas fa-question-circle"></i>
+                                <strong>Is there a Data Source configured?</strong>
+                                <small>Settings → Data Sources → Check for your source</small>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow no">NO</div>
+                                <div class="decision-outcome" style="border-left-color: #d29922;">
+                                    <i class="fas fa-cog" style="color: #d29922;"></i>
+                                    <strong>Create Data Source</strong>
+                                    <small>Settings → Data Sources → + Add → Configure Vendor/Product</small>
+                                </div>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow yes">YES</div>
+                                <div class="decision-outcome" style="border-left-color: #58a6ff;">
+                                    <i class="fas fa-search" style="color: #58a6ff;"></i>
+                                    <strong>Check Dataset Name</strong>
+                                    <small>Dataset format: <code>custom_{vendor}_{product}_raw</code> | Verify exact spelling in query</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="decision-branch">
+                        <div class="decision-arrow yes">DATA EXISTS</div>
+                        <div class="decision-node">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Are custom fields being extracted?</strong>
+                            <small>Check if fields beyond _raw_log are populated</small>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow no">NO - Only _raw_log</div>
+                            <div class="decision-node">
+                                <i class="fas fa-question-circle"></i>
+                                <strong>Does a parsing rule exist?</strong>
+                                <small>Settings → Parsing Rules → Search by vendor/product</small>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow no">NO</div>
+                                <div class="decision-outcome" style="border-left-color: #d29922;">
+                                    <i class="fas fa-code" style="color: #d29922;"></i>
+                                    <strong>Create Parsing Rule</strong>
+                                    <small>Settings → Parsing Rules → + New Rule → Match Vendor/Product to Data Source</small>
+                                </div>
+                            </div>
+                            
+                            <div class="decision-branch">
+                                <div class="decision-arrow yes">YES</div>
+                                <div class="decision-outcome" style="border-left-color: #a371f7;">
+                                    <i class="fas fa-bug" style="color: #a371f7;"></i>
+                                    <strong>Debug Parsing Rule</strong>
+                                    <small>Verify: Vendor/Product match exactly | Rule enabled | Test with actual raw log | Check regex/extraction syntax</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="decision-branch">
+                            <div class="decision-arrow yes">YES - Partial</div>
+                            <div class="decision-outcome" style="border-left-color: #3fb950;">
+                                <i class="fas fa-wrench" style="color: #3fb950;"></i>
+                                <strong>Refine Parsing Rule</strong>
+                                <small>Log format variations exist | Add conditional parsing | Handle edge cases in extraction logic</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <h3>Common Issues and Solutions</h3>
 
                 <div class="troubleshoot-item">
@@ -1265,38 +1669,62 @@ alter
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through onboarding a custom log source into XSIAM.</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through onboarding a custom log source that isn't natively supported by XSIAM.</button>
                         <div class="qa-answer">
-                            <p><strong>Complete process:</strong></p>
-                            <ol>
-                                <li><strong>Planning:</strong> Gather sample logs, understand format, identify security-relevant fields</li>
-                                <li><strong>Choose ingestion method:</strong> Syslog (Broker VM) for on-prem, HTTP Collector for cloud/API sources</li>
-                                <li><strong>Create data source:</strong> Settings → Data Sources → Add → Configure Vendor/Product</li>
-                                <li><strong>Configure source:</strong> Point application to Broker VM (syslog) or configure webhook (HTTP)</li>
-                                <li><strong>Create parsing rule:</strong> Settings → Parsing Rules → Build extraction logic (JSON, regex, etc.)</li>
-                                <li><strong>Add XDM mapping:</strong> Map custom fields to xdm.* for cross-source correlation</li>
-                                <li><strong>Verify:</strong> Run XQL queries to confirm data and parsing</li>
-                                <li><strong>Create detections:</strong> Build correlation rules on the new dataset</li>
-                            </ol>
-                            <p><strong>Key tip:</strong> Dataset name follows pattern <code>{vendor}_{product}_raw</code> - this is what you query in XQL.</p>
+                            <p>I've onboarded numerous custom sources, so I've developed a reliable process. First, I always start with discovery—I'll schedule time with the application team to understand what the log source is, get sample logs (at least 10-20 events covering different scenarios), and document expected volume. This planning phase prevents a lot of rework later.</p>
+                            <p>For the technical implementation, I choose the ingestion method based on where the source lives. On-prem sources typically go through a Broker VM using syslog—I configure the Data Source in XSIAM with a descriptive name and set the Vendor to "Custom" and Product to something meaningful like "InternalCRM". For cloud or API-based sources, I use the HTTP Collector and either configure webhooks or build a small script to poll and push data.</p>
+                            <p>Once data starts flowing, I build the parsing rule. I always test in the XSIAM parsing rule editor using actual raw logs, not just the samples—real logs often have variations. For JSON logs, I use json_extract() which is straightforward. For syslog with key-value pairs, I write regex with named capture groups. The critical step is XDM mapping—I map fields like username to xdm.source.user.username and IP addresses to xdm.source.ipv4 so they correlate with other data sources.</p>
+                            <p>Finally, I verify by running XQL queries to confirm data arrives, fields parse correctly, and XDM fields populate. Then I create initial detection rules tailored to that source—for an auth service, that might be brute force detection or login from unusual locations. The whole process typically takes 2-4 hours for a well-structured source, longer if the log format is messy.</p>
                         </div>
                     </div>
+                    
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: You're seeing logs in XSIAM but fields aren't being parsed. How do you troubleshoot?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: You're seeing logs in XSIAM but the custom fields aren't being extracted—only _raw_log is populated. How do you troubleshoot?</button>
                         <div class="qa-answer">
-                            <p><strong>Systematic troubleshooting:</strong></p>
-                            <ol>
-                                <li><strong>Verify parsing rule exists:</strong> Settings → Parsing Rules → Search for your vendor/product</li>
-                                <li><strong>Check vendor/product match:</strong> Data source and parsing rule must have identical Vendor and Product values</li>
-                                <li><strong>Test parsing rule:</strong> Edit rule → Test → Paste actual raw log → Check output</li>
-                                <li><strong>Check raw log format:</strong>
-                                    <div class="arch-diagram" style="margin: 8px 0;">dataset = custom_myapp_raw | fields _raw_log | limit 5</div>
-                                    Compare actual format to what parsing rule expects
-                                </li>
-                                <li><strong>Check for variations:</strong> Some events may have different formats - parsing rule needs to handle all</li>
-                                <li><strong>Verify rule is enabled:</strong> Disabled rules don't process logs</li>
-                            </ol>
-                            <p><strong>Remember:</strong> Parsing only applies to NEW logs after rule creation. Existing logs aren't re-parsed.</p>
+                            <p>This is one of the most common issues I encounter with custom sources, and it's usually one of three things. My first check is always whether a parsing rule actually exists—I go to Settings → Parsing Rules and search for the vendor and product name. People often create the data source but forget the parsing rule, or create it for the wrong vendor/product combination.</p>
+                            <p>If the parsing rule exists, I verify that the Vendor and Product values match exactly between the Data Source and the Parsing Rule. This is case-sensitive and has to be identical—I've seen "custom" vs "Custom" cause issues. Then I check if the rule is actually enabled; disabled rules won't process anything.</p>
+                            <p>If those are all correct, I edit the parsing rule and use the built-in test feature. I paste an actual raw log from the dataset (not my original samples) and see if extraction works. Often the issue is that the real logs have slight format variations from the samples I used—maybe extra fields, different timestamp formats, or escape characters. When I find the discrepancy, I adjust my regex or json_extract statements to handle the actual data.</p>
+                            <p>One important thing to remember: parsing only applies to new logs after the rule is created or modified. Existing logs in the dataset won't be re-parsed. So after fixing a parsing rule, I wait for new events and then query to verify the fix worked.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you decide between using the Broker VM syslog approach versus the HTTP Collector for a custom source?</button>
+                        <div class="qa-answer">
+                            <p>The decision really comes down to where the source lives and what capabilities it has. For on-premises sources—network equipment, Linux servers, Windows servers, security appliances—Broker VM with syslog is almost always my go-to. It's reliable, well-understood, and most enterprise devices support syslog natively. I configure the device to send to the Broker VM's IP on port 514 (or a custom port like 1514 if I need separation), and the Broker handles batching and uploading to XSIAM.</p>
+                            <p>HTTP Collector makes sense when syslog isn't an option or isn't practical. Cloud-native applications, SaaS platforms, and modern APIs often prefer HTTP webhooks over syslog. If an application can natively push JSON via HTTP POST, the HTTP Collector is cleaner—no intermediate infrastructure needed. I also use it for custom integrations where I write a small Python script to pull from an API and push to XSIAM.</p>
+                            <p>There are also hybrid scenarios. Sometimes an on-prem application can't send syslog but has good log files. In that case, I deploy a log shipper like rsyslog or Filebeat on the server, have it tail the log file, and forward to the Broker VM. The Broker still handles the XSIAM connectivity, but I'm using a local agent to handle the file-to-syslog conversion.</p>
+                            <p>One practical consideration: Broker VM gives you more control over buffering and retry logic if network connectivity to the cloud is unreliable. HTTP Collector expects the source to handle retries, which not all applications do well.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Why is XDM mapping important when onboarding custom sources, and how do you approach it?</button>
+                        <div class="qa-answer">
+                            <p>XDM mapping is really the key that unlocks the value of having data in XSIAM. Without XDM, each data source lives in isolation—my custom auth logs have "user_id" and my firewall has "src_user" and my cloud logs have "userPrincipalName". They're all referring to the same concept, but correlation rules can't see that relationship.</p>
+                            <p>When I map user_id to xdm.source.user.username across all sources, I can write a single correlation rule that detects an attacker moving across systems—failed VPN login followed by successful cloud authentication followed by suspicious file access. That cross-source detection is impossible without normalized fields. It's the same reason we standardize on frameworks like MITRE ATT&CK for threat detection—common language enables common detection.</p>
+                            <p>My approach to XDM mapping starts with identifying the security-relevant fields in the custom source. Usernames, IP addresses, hostnames, actions, and outcomes are always priorities. I map them to the most semantically correct XDM field—if it's the user performing an action, that's xdm.source.user.username; if it's the target of an action, it might be xdm.target.user.username. For IP addresses, I consider whether it's the source of traffic (xdm.source.ipv4) or destination (xdm.target.ipv4).</p>
+                            <p>I also make sure to set xdm.event.type and xdm.event.outcome when possible. Event type like "AUTH" or "NETWORK" helps in filtering across datasets, and outcome values of "SUCCESS" or "FAILURE" are critical for security detection logic. The XDM schema is extensive, so I keep the documentation handy and don't try to map everything—just the fields that matter for detection and investigation.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: A developer team wants to onboard logs from a new application. What information do you need from them, and what guidance do you give?</button>
+                        <div class="qa-answer">
+                            <p>I've worked with a lot of dev teams on this, and getting the right information upfront saves everyone time. My standard request list includes: sample logs covering normal operations and error conditions (at least 20 events), documentation of what each field means, expected volume (events per second or per day), the transport mechanism they can support (syslog, HTTP, file-based), and the security use cases they care about—what threats or behaviors should we detect?</p>
+                            <p>For guidance, the biggest value-add I can provide is log format recommendations. If they're still designing the logging, I strongly advocate for JSON with consistent field names. I'll send them examples of well-structured logs that are easy to parse and include all the context needed for security investigation—timestamp in ISO 8601, user identifiers, source IPs, action performed, result status, and any relevant resource or target information. Structured logs with consistent schemas reduce our parsing effort from hours to minutes.</p>
+                            <p>I also discuss security-relevant events with them. Developers often log everything or nothing from a security perspective. I help them identify what we actually need: authentication events (success and failure), authorization decisions, configuration changes, data access to sensitive resources, and error conditions that might indicate attacks. We don't need every debug message, but we do need the security-meaningful events.</p>
+                            <p>Finally, I set expectations on timeline and process. I explain that I'll create a test data source first, validate everything works with sample data, then we'll do a phased rollout. I ask them to send a small volume initially so we can verify parsing before ramping up. This prevents the scenario where thousands of unparsed events pile up because of a format mismatch we could have caught early.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you handle a situation where the custom log source has multiple log formats or variations?</button>
+                        <div class="qa-answer">
+                            <p>This is actually quite common with real-world applications. A single application might have different log formats for authentication events versus error messages versus transaction logs. My approach depends on how different the formats are and whether they should be separate datasets or unified.</p>
+                            <p>If the formats are fundamentally different—like JSON for one event type and syslog for another—I often create separate data sources with separate parsing rules. This keeps the parsing logic clean and makes troubleshooting easier. The datasets might be custom_myapp_auth_raw and custom_myapp_errors_raw. I can still correlate them in detection rules using XDM fields.</p>
+                            <p>If the variations are minor—same general structure but optional fields or slightly different key names—I handle it within a single parsing rule using conditional logic. In XSIAM parsing rules, I use coalesce() to handle fields that might have different names, and I structure my extraction to handle missing fields gracefully. For example, json_extract might return null for a field that doesn't exist in every event, and I just leave that XDM field unmapped rather than failing the parse.</p>
+                            <p>The testing phase is critical with variable formats. I make sure to test the parsing rule against every variation I've seen in the samples, and I run validation queries after go-live to identify any events that aren't parsing correctly. A query like <code>dataset = custom_myapp_raw | filter isnull(xdm.source.user.username)</code> helps me find events where expected fields are missing, which usually indicates a format variation I didn't account for.</p>
                         </div>
                     </div>
                 </div>

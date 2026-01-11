@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Privacy | XSIAM Compliance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand"><i class="fas fa-shield-alt"></i><span>Nik's SIEM</span></a>
+                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Compliance</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="compliance-frameworks.html" class="sidebar-nav-link"><i class="fas fa-clipboard-check"></i><span>Frameworks</span></a></li>
+                        <li class="sidebar-nav-item"><a href="audit-reporting.html" class="sidebar-nav-link"><i class="fas fa-file-alt"></i><span>Audit & Reporting</span></a></li>
+                        <li class="sidebar-nav-item"><a href="data-privacy.html" class="sidebar-nav-link active"><i class="fas fa-user-shield"></i><span>Data Privacy</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            
+            <main class="main-content">
+                <div class="breadcrumb">
+                    <a href="../index.html">Home</a><span class="separator">/</span>
+                    <a href="index.html">XSIAM</a><span class="separator">/</span>
+                    <span class="current">Data Privacy</span>
+                </div>
+
+                <h1><i class="fas fa-user-shield"></i> Data Privacy</h1>
+                <p class="lead">Managing personal data in security logs, implementing data masking, handling subject access requests, and balancing security visibility with privacy requirements.</p>
+
+                <h2><i class="fas fa-database"></i> Personal Data in Security Logs</h2>
+                
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Privacy Considerations</h4>
+                    <p>Security logs inherently contain personal data - usernames, IP addresses, email addresses, device identifiers. Under GDPR and similar regulations, this is personal data subject to data protection requirements including purpose limitation, data minimization, and subject rights.</p>
+                </div>
+
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Data Category</th>
+                            <th>Examples in XSIAM</th>
+                            <th>Privacy Classification</th>
+                            <th>Handling Approach</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #f85149;">Direct Identifiers</strong></td>
+                            <td>Username, email, employee ID</td>
+                            <td style="color: #f85149;">Personal Data</td>
+                            <td>Mask in reports, retain for investigation</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #d29922;">Network Identifiers</strong></td>
+                            <td>IP address, MAC address</td>
+                            <td style="color: #d29922;">Personal (EU)</td>
+                            <td>Context-dependent masking</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #a371f7;">Device Identifiers</strong></td>
+                            <td>Hostname, device serial</td>
+                            <td style="color: #a371f7;">Indirect Personal</td>
+                            <td>Pseudonymize where possible</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #58a6ff;">Behavioral Data</strong></td>
+                            <td>Access patterns, locations</td>
+                            <td style="color: #58a6ff;">Profiling Data</td>
+                            <td>Document legitimate interest basis</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #3fb950;">Content Data</strong></td>
+                            <td>File names, URLs accessed</td>
+                            <td style="color: #3fb950;">Potentially Sensitive</td>
+                            <td>Minimize collection, strict access</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-mask"></i> Data Masking Techniques</h2>
+                
+                <div class="config-section">
+                    <h4>Field-Level Masking in XQL</h4>
+                    <div class="arch-diagram"># Data Masking Examples for Privacy
+# ═══════════════════════════════════════════════════════════════
+
+# Mask email addresses (show domain only)
+dataset = xdr_alert_raw
+| alter masked_email = concat("***@", 
+    arrayindex(split(user_email, "@"), 1))
+| fields _time, masked_email, alert_name
+
+# ═══════════════════════════════════════════════════════════════
+
+# Partial IP masking (hide last octet)
+dataset = panw_ngfw_traffic_raw
+| alter masked_ip = concat(
+    arrayindex(split(src_ip, "."), 0), ".",
+    arrayindex(split(src_ip, "."), 1), ".",
+    arrayindex(split(src_ip, "."), 2), ".xxx")
+| fields _time, masked_ip, action
+
+# ═══════════════════════════════════════════════════════════════
+
+# Hash usernames for pseudonymization
+dataset = audit_log
+| alter pseudonymized_user = sha256(user_email)
+| fields _time, pseudonymized_user, event_type
+
+# ═══════════════════════════════════════════════════════════════
+
+# Role-based unmasking (privileged users see full data)
+# Implement via RBAC - different views for different roles
+# Standard Analyst: Masked view
+# Privacy Officer: Full access for subject requests
+# Incident Responder: Full access for active investigations</div>
+                </div>
+
+                <h2><i class="fas fa-user-check"></i> Data Subject Rights</h2>
+                
+                <div class="flow-diagram">
+                    <div class="flow-diagram-title"><i class="fas fa-project-diagram"></i> Subject Access Request (SAR) Workflow</div>
+<pre style="color: #8b949e; font-size: 0.8rem; line-height: 1.6; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              DATA SUBJECT ACCESS REQUEST PROCESS                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│   │  Receive    │    │  Verify     │    │  Search     │    │  Review &   │    │  Deliver    │  │
+│   │  Request    │ → │  Identity   │ → │  XSIAM      │ → │  Redact     │ → │  Response   │  │
+│   │             │    │             │    │             │    │             │    │             │  │
+│   │ Via Privacy │    │ Confirm     │    │ Query logs  │    │ Remove 3rd  │    │ Within 30   │  │
+│   │ team        │    │ requester   │    │ for subject │    │ party data  │    │ days        │  │
+│   └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                                                                  │
+│   XQL Query for SAR:                                                                            │
+│   ═══════════════════════════════════════════════════════════════════════════════════════════   │
+│                                                                                                  │
+│   dataset in (xdr_data, audit_log, microsoft_windows_raw)                                       │
+│   | filter user_email = "subject@company.com" OR                                                │
+│   |        username contains "subject" OR                                                       │
+│   |        src_ip = "subject.assigned.ip"                                                       │
+│   | filter _time >= "2024-01-01" AND _time <= "2024-12-31"                                     │
+│   | fields _time, dataset_name, user_email, action, target                                      │
+│   | sort _time                                                                                  │
+│                                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h2><i class="fas fa-eraser"></i> Data Deletion (Right to Erasure)</h2>
+                
+                <div class="info-box" style="border-color: #d29922;">
+                    <h4><i class="fas fa-info-circle"></i> Deletion Considerations</h4>
+                    <p>The right to erasure under GDPR is not absolute. Security logs may be retained when necessary for legal claims, compliance obligations, or legitimate security interests. Document your retention justification and deletion procedures clearly.</p>
+                </div>
+
+                <div class="config-section">
+                    <h4>Deletion Request Decision Tree</h4>
+                    <div class="arch-diagram"># Right to Erasure Assessment
+# ═══════════════════════════════════════════════════════════════
+
+STEP 1: Verify request validity
+├── Is requester identity confirmed? → If NO, request verification
+├── Is data actually present? → If NO, confirm to requester
+└── Is request within scope? → If NO, explain limitations
+
+STEP 2: Check exemptions
+├── Active investigation involving subject?
+│   → Defer deletion until investigation complete
+├── Legal hold or litigation?
+│   → Do not delete, document legal hold
+├── Compliance retention requirement?
+│   → Retain minimum required, document basis
+└── Critical security evidence?
+│   → Document legitimate interest, retain minimum
+
+STEP 3: If no exemptions apply
+├── Identify all data locations
+│   ├── Hot storage (searchable logs)
+│   ├── Warm storage (archived)
+│   └── Cold storage (backup)
+├── Execute deletion across all tiers
+├── Verify deletion complete
+└── Confirm to requester within 30 days
+
+# ═══════════════════════════════════════════════════════════════
+# Note: XSIAM as SaaS - work with Palo Alto Networks support
+# for deletion requests as customer cannot directly purge data
+# ═══════════════════════════════════════════════════════════════</div>
+                </div>
+
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you balance security monitoring with employee privacy?</button>
+                        <div class="qa-answer">
+                            <p>This is one of the core tensions in security operations - you need visibility to detect threats, but employees have legitimate privacy expectations. The key is proportionality and transparency.</p>
+                            
+                            <p>For proportionality, I apply the principle of minimum necessary access. Security teams don't need to see the content of employee emails to detect malware - they need metadata. They don't need to track every website visited - they need to detect connections to known malicious sites. Design monitoring to capture what's security-relevant, not everything possible.</p>
+                            
+                            <p>For transparency, ensure employees know they're being monitored. Privacy policies should clearly state that corporate systems are monitored for security purposes. In some jurisdictions, explicit consent or works council agreements are required before monitoring. This isn't just legal compliance - it's respectful of employees as people.</p>
+                            
+                            <p>Implement role-based access to sensitive data. Not everyone in security needs to see usernames. Tier 1 analysts might work with anonymized data; only senior investigators get access to identified data for confirmed incidents. This reduces privacy exposure while maintaining security capability.</p>
+                            
+                            <p>Document your legal basis. Under GDPR, you're likely relying on "legitimate interest" for security monitoring. You need to conduct and document a balancing test showing that security interests outweigh privacy impacts given the safeguards you've implemented.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you handle a data subject access request in the context of SIEM data?</button>
+                        <div class="qa-answer">
+                            <p>Subject access requests for SIEM data are complex because security logs contain both the subject's data and potentially sensitive information about security controls and other individuals. I handle these carefully.</p>
+                            
+                            <p>First, verify the requester's identity. Before providing any data, confirm that the person making the request is actually the data subject. This might involve verifying through HR or requiring identity documentation. Providing someone else's security logs would be a serious breach.</p>
+                            
+                            <p>Next, scope the search. Query XSIAM for all logs containing the subject's identifiers - username, email, employee ID, known IP addresses, device names. This might span multiple data sources: authentication logs, endpoint telemetry, email metadata, network traffic.</p>
+                            
+                            <p>Before providing the export, review and redact. Remove information about other individuals - if the subject's login triggered an alert that also mentions another employee, redact the other employee's details. Remove information that would reveal security control details that could enable the subject to evade detection in the future.</p>
+                            
+                            <p>Provide the response within the required timeframe (30 days under GDPR). Include a clear explanation of what data you hold, how it's processed, and retention periods. If you're withholding anything based on exemptions, explain that you've applied exemptions without revealing what was withheld.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth <= 768) { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); }
+            else { sidebar.classList.toggle('collapsed'); mainWrapper.classList.toggle('expanded'); }
+        }
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

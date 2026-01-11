@@ -266,6 +266,82 @@
                     <p><span class="console-path">XSIAM → Incident Response → Alerts</span></p>
                 </div>
 
+                <!-- Alert Triage Decision Tree -->
+                <h2><i class="fas fa-route"></i> Alert Triage Decision Tree</h2>
+                <div class="decision-tree">
+                    <div class="decision-node" style="border-color: #58a6ff;">
+                        <h4>New Alert Received</h4>
+                        <small>Start your triage process</small>
+                    </div>
+                    <div class="decision-arrow">▼</div>
+                    <div class="decision-node">
+                        <h4>Is this a known false positive pattern?</h4>
+                        <small>Check for existing exclusions or documented FP patterns</small>
+                    </div>
+                    <div class="decision-branches">
+                        <div class="decision-branch yes">
+                            <span class="branch-label">Yes - Matches known FP</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node" style="border-color: #f0883e;">
+                                <h4>Is there an existing exclusion?</h4>
+                                <small>Check exclusion list for this pattern</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                                        <i class="fas fa-check"></i>
+                                        <strong>Close as False Positive</strong>
+                                        <small>Document and reference exclusion ID</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #f0883e 0%, #d29922 100%);">
+                                        <i class="fas fa-ban"></i>
+                                        <strong>Create Exclusion First</strong>
+                                        <small>Then close as FP with exclusion reference</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="decision-branch no">
+                            <span class="branch-label">No - Needs investigation</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>What is the alert severity?</h4>
+                                <small>Check severity and asset criticality</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch" style="border-color: #f85149;">
+                                    <span class="branch-label">Critical/High + Critical Asset</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #da3633 0%, #f85149 100%);">
+                                        <i class="fas fa-bolt"></i>
+                                        <strong>Immediate Investigation</strong>
+                                        <small>Claim alert, full causality analysis, consider isolation</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch" style="border-color: #d29922;">
+                                    <span class="branch-label">Medium + Any Asset</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #d29922 0%, #f0883e 100%);">
+                                        <i class="fas fa-search"></i>
+                                        <strong>Standard Investigation</strong>
+                                        <small>Claim alert, review causality chain, pivot as needed</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch" style="border-color: #58a6ff;">
+                                    <span class="branch-label">Low/Info</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%);">
+                                        <i class="fas fa-eye"></i>
+                                        <strong>Quick Review</strong>
+                                        <small>Verify context, check for patterns, close or escalate</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Alert Lifecycle -->
                 <h2><i class="fas fa-sync-alt"></i> Alert Lifecycle</h2>
                 <div class="config-section">
@@ -354,6 +430,74 @@ Specific Source:
                         <li><strong>Bulk Link:</strong> Link alerts to existing incident</li>
                         <li><strong>Bulk Exclude:</strong> Add exclusions for FP patterns</li>
                     </ul>
+                </div>
+
+                <!-- Investigation Depth Decision Tree -->
+                <h2><i class="fas fa-search-plus"></i> Investigation Depth Decision Tree</h2>
+                <div class="decision-tree">
+                    <div class="decision-node" style="border-color: #58a6ff;">
+                        <h4>Alert Claimed for Investigation</h4>
+                        <small>Determine how deep to investigate</small>
+                    </div>
+                    <div class="decision-arrow">▼</div>
+                    <div class="decision-node">
+                        <h4>Does the causality chain show clear malicious origin?</h4>
+                        <small>Email attachment → Office macro → PowerShell = Clear attack chain</small>
+                    </div>
+                    <div class="decision-branches">
+                        <div class="decision-branch yes">
+                            <span class="branch-label">Yes - Clear attack chain</span>
+                            <div class="decision-outcome" style="background: linear-gradient(135deg, #da3633 0%, #f85149 100%);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Full Deep Dive</strong>
+                                <small>Isolate if active, full timeline, search for lateral movement, create incident</small>
+                            </div>
+                        </div>
+                        <div class="decision-branch no">
+                            <span class="branch-label">No - Unclear origin</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>Are there related alerts on this host/user?</h4>
+                                <small>Check for alert clustering indicating broader compromise</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes - Multiple alerts</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #da3633 0%, #f85149 100%);">
+                                        <i class="fas fa-link"></i>
+                                        <strong>Correlated Investigation</strong>
+                                        <small>Link alerts, investigate as potential incident, check timeline across all</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No - Isolated alert</span>
+                                    <div class="decision-arrow">▼</div>
+                                    <div class="decision-node">
+                                        <h4>Is the behavior explainable by legitimate activity?</h4>
+                                        <small>IT admin tool, deployment script, security scan</small>
+                                    </div>
+                                    <div class="decision-branches">
+                                        <div class="decision-branch yes">
+                                            <span class="branch-label">Yes - Legitimate</span>
+                                            <div class="decision-outcome" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                                                <i class="fas fa-check"></i>
+                                                <strong>Close as FP</strong>
+                                                <small>Document reasoning, consider exclusion if recurring</small>
+                                            </div>
+                                        </div>
+                                        <div class="decision-branch no">
+                                            <span class="branch-label">No - Unexplained</span>
+                                            <div class="decision-outcome" style="background: linear-gradient(135deg, #d29922 0%, #f0883e 100%);">
+                                                <i class="fas fa-search"></i>
+                                                <strong>Extended Investigation</strong>
+                                                <small>Contact user/IT, review 7-day history, check IOCs, escalate if unresolved</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Alert Details -->
@@ -571,6 +715,74 @@ Alert Details → Host → Actions → Collect Investigation Package
 Wait for collection → Download package</div>
                 </div>
 
+                <!-- Response Action Decision Tree -->
+                <h2><i class="fas fa-bolt"></i> Response Action Decision Tree</h2>
+                <div class="decision-tree">
+                    <div class="decision-node" style="border-color: #f85149;">
+                        <h4>Confirmed Malicious Activity</h4>
+                        <small>Investigation confirmed true positive - determine response</small>
+                    </div>
+                    <div class="decision-arrow">▼</div>
+                    <div class="decision-node">
+                        <h4>Is the threat actively executing or communicating?</h4>
+                        <small>Check for running processes, active C2 connections</small>
+                    </div>
+                    <div class="decision-branches">
+                        <div class="decision-branch yes">
+                            <span class="branch-label">Yes - Active threat</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>Is this a critical business asset?</h4>
+                                <small>Domain controller, financial system, critical server</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes - Critical asset</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+                                        <i class="fas fa-phone-alt"></i>
+                                        <strong>Escalate Immediately</strong>
+                                        <small>Contact IR lead, kill process if safe, prepare for isolation with business approval</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No - Standard asset</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #da3633 0%, #f85149 100%);">
+                                        <i class="fas fa-network-wired"></i>
+                                        <strong>Isolate + Kill Process</strong>
+                                        <small>Network isolate, terminate malicious process, collect investigation package</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="decision-branch no">
+                            <span class="branch-label">No - Inactive/Past activity</span>
+                            <div class="decision-arrow">▼</div>
+                            <div class="decision-node">
+                                <h4>Was data exfiltrated or persistence established?</h4>
+                                <small>Check for scheduled tasks, services, registry modifications</small>
+                            </div>
+                            <div class="decision-branches">
+                                <div class="decision-branch yes">
+                                    <span class="branch-label">Yes - Persistence found</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #d29922 0%, #f0883e 100%);">
+                                        <i class="fas fa-broom"></i>
+                                        <strong>Remediation Required</strong>
+                                        <small>Run remediation script, quarantine files, block hashes, verify cleanup</small>
+                                    </div>
+                                </div>
+                                <div class="decision-branch no">
+                                    <span class="branch-label">No - Contained</span>
+                                    <div class="decision-outcome" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <strong>Document + Block</strong>
+                                        <small>Add hash to blocklist, document incident, close as TP</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Alert Resolution -->
                 <h2><i class="fas fa-check-circle"></i> Alert Resolution</h2>
                 <div class="config-section">
@@ -741,44 +953,135 @@ dataset = xdr_alerts
 | comp avg(close_time_hours) as avg_close_hours by alert_name</div>
                 </div>
 
+                <!-- Alert Investigation Workflow -->
+                <h2><i class="fas fa-shoe-prints"></i> Alert Investigation Workflow</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step" style="border-left-color: #58a6ff;">
+                        <div class="flow-icon"><i class="fas fa-bell"></i></div>
+                        <div class="flow-content">
+                            <h4>1. Initial Assessment</h4>
+                            <ul>
+                                <li>Review alert summary and severity</li>
+                                <li>Check MITRE ATT&CK mapping</li>
+                                <li>Identify affected host, user, and process</li>
+                                <li>Note alert source and detection rule</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #8b5cf6;">
+                        <div class="flow-icon"><i class="fas fa-project-diagram"></i></div>
+                        <div class="flow-content">
+                            <h4>2. Causality Analysis</h4>
+                            <ul>
+                                <li>Examine process tree from CGO to alert</li>
+                                <li>Identify attack vector (email, web, USB)</li>
+                                <li>Check parent process legitimacy</li>
+                                <li>Look for suspicious child processes</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #f0883e;">
+                        <div class="flow-icon"><i class="fas fa-search"></i></div>
+                        <div class="flow-content">
+                            <h4>3. Scope Determination</h4>
+                            <ul>
+                                <li>Search for same IOCs across environment</li>
+                                <li>Check for related alerts on same host/user</li>
+                                <li>Review network connections and destinations</li>
+                                <li>Identify any lateral movement indicators</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">▼</div>
+                    <div class="flow-step" style="border-left-color: #da3633;">
+                        <div class="flow-icon"><i class="fas fa-gavel"></i></div>
+                        <div class="flow-content">
+                            <h4>4. Verdict & Response</h4>
+                            <ul>
+                                <li>Make TP/FP determination with evidence</li>
+                                <li>Execute containment if malicious</li>
+                                <li>Create exclusion if false positive</li>
+                                <li>Document findings and close alert</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Interview Questions -->
                 <h2><i class="fas fa-comments"></i> Interview Questions</h2>
                 <div class="qa-section">
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you prioritize alerts in XSIAM?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk me through your alert prioritization strategy when you have a queue of 50+ alerts waiting.</button>
                         <div class="qa-answer">
-                            <ol>
-                                <li><strong>Severity:</strong> Critical and High first</li>
-                                <li><strong>Asset criticality:</strong> Servers before workstations</li>
-                                <li><strong>Alert source:</strong> High-fidelity sources first</li>
-                                <li><strong>Related activity:</strong> Multiple alerts on same host</li>
-                                <li><strong>Time sensitivity:</strong> Active threats over old alerts</li>
-                            </ol>
+                            <p>When I face a large alert queue, I use a multi-factor prioritization approach rather than just sorting by severity. First, I filter for any alerts on critical assets - domain controllers, financial systems, or servers hosting sensitive data. An informational alert on a DC might be more important than a high severity alert on a random workstation.</p>
+                            
+                            <p>Next, I look for clustering. If I see 5 alerts on the same host within an hour, that jumps to the top regardless of individual severities - it often indicates an active compromise. I use XQL to quickly identify these patterns: <code>dataset = xdr_alerts | filter insert_timestamp >= now() - 1h | comp count() by agent_hostname | filter count > 3</code>.</p>
+                            
+                            <p>I also weight alert sources differently. A BIOC detection for ransomware behavior gets immediate attention. A correlation rule alert from a tuned custom rule gets priority over a generic analytics alert that I know has high false positive rates. I maintain mental notes on which detection rules are high-fidelity in our environment.</p>
+                            
+                            <p>Finally, I check timestamps. An alert from 3 days ago is likely no longer an active threat - either the damage is done or it was benign. But something from the last 15 minutes might be actively executing. I handle recent critical alerts first, then sweep up older ones in batches where I can often identify common false positive patterns and close them in bulk.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Walk through investigating a PowerShell alert.</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe your process for investigating a suspicious PowerShell execution alert.</button>
                         <div class="qa-answer">
-                            <ol>
-                                <li><strong>Check command line:</strong> Is it encoded? What does it do?</li>
-                                <li><strong>Review parent process:</strong> How was PowerShell launched?</li>
-                                <li><strong>Check user context:</strong> Expected for this user?</li>
-                                <li><strong>Network connections:</strong> Any external communication?</li>
-                                <li><strong>File operations:</strong> Did it drop any files?</li>
-                                <li><strong>Historical:</strong> First time on this host/network?</li>
-                            </ol>
+                            <p>PowerShell alerts require methodical investigation because PowerShell is used legitimately everywhere, but it's also the most common attack tool. I start with the command line itself - if it's encoded with -EncodedCommand or -enc, I decode it immediately using CyberChef or PowerShell. The decoded content tells me instantly whether this is malicious - downloading from a sketchy URL, disabling security features, or creating persistence is an immediate red flag.</p>
+                            
+                            <p>The causality chain is critical. I trace back: what launched PowerShell? If it's explorer.exe → outlook.exe → WINWORD.EXE → cmd.exe → powershell.exe, that's a classic macro-based attack. If it's services.exe → sccm-agent.exe → powershell.exe, that's likely legitimate SCCM activity. The parent process context determines 80% of my verdict.</p>
+                            
+                            <p>I check network activity from that PowerShell process. Any external connections? What ports? Connections to known C2 infrastructure, Pastebin, Discord, or random cloud IPs are concerning. I'll run the IP through threat intel and check if other hosts have connected to the same destination. I also look at what files PowerShell created, modified, or accessed - dropping executables in temp folders or modifying startup locations indicates persistence.</p>
+                            
+                            <p>Finally, I ask: is this the first time we've seen this pattern? If this exact command runs daily across 50 machines at 2 AM, it's probably a scheduled maintenance script. If it's a one-off on a single machine during business hours, that's suspicious. I use XQL to check historical occurrence: <code>dataset = xdr_data | filter actor_process_image_name = "powershell.exe" and action_process_command_line contains "[snippet]" | comp count() by agent_hostname</code>.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you reduce false positives?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach false positive reduction without creating security gaps?</button>
                         <div class="qa-answer">
-                            <ul>
-                                <li><strong>Document patterns:</strong> Track FP root causes</li>
-                                <li><strong>Create specific exclusions:</strong> Target the exact FP scenario</li>
-                                <li><strong>Tune detection rules:</strong> Add conditions to reduce noise</li>
-                                <li><strong>Whitelist known-good:</strong> Applications, paths, signers</li>
-                                <li><strong>Regular review:</strong> Audit high-FP rules monthly</li>
-                            </ul>
+                            <p>False positive management is a balance - too many FPs and analysts miss real threats in the noise, but overly broad exclusions create blind spots attackers can exploit. My approach centers on specificity and documentation. When I create an exclusion, I make it as narrow as possible. Instead of excluding all PowerShell from a server, I exclude PowerShell when the parent is the specific management tool, running as SYSTEM, with a specific command line pattern.</p>
+                            
+                            <p>I always document the reasoning. Every exclusion references a ticket number, explains what legitimate activity it covers, and who approved it. This creates an audit trail and helps when we review exclusions quarterly. I've caught outdated exclusions this way - software that was decommissioned months ago but the exclusion remained, creating an unnecessary gap.</p>
+                            
+                            <p>For high-volume false positives, I prefer tuning the detection rule itself rather than creating exclusions. If our backup software triggers 50 alerts daily, I work with the detection engineering team to add conditions to the rule - checking for the backup software's process name or specific file paths. This keeps the detection active for the same behavior from unexpected sources while eliminating the known-good noise.</p>
+                            
+                            <p>I also track metrics. I maintain a spreadsheet of exclusions created each month and their scope. If I see exclusion count growing faster than our environment, that's a sign we're being too aggressive. I aim for exclusions to be temporary where possible - tied to a specific project or time period, with expiration dates that force re-evaluation.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: When do you decide to isolate an endpoint, and what's your process?</button>
+                        <div class="qa-answer">
+                            <p>Isolation is one of the most impactful response actions - it can stop an active attack but also disrupt business operations. I isolate when I have confirmed malicious activity with ongoing risk: active C2 communication, ransomware encryption starting, or clear lateral movement attempts. The key word is "active" - if the threat already executed and stopped days ago, isolation doesn't help and just frustrates the user.</p>
+                            
+                            <p>Before isolating, I quickly assess the asset. For a standard workstation, I can isolate immediately if the threat is confirmed. For critical servers - domain controllers, database servers, production systems - I escalate first. Even 30 seconds of isolation on a DC can cause cascading authentication failures. I'll call the on-call lead and IT operations simultaneously: "I have confirmed ransomware activity on DC02, recommending immediate isolation, need approval." During that call, I'm preparing the isolation action so I can execute the moment I get approval.</p>
+                            
+                            <p>My isolation workflow: First, I terminate the malicious process if I can identify it clearly - this buys time. Then I initiate network isolation through XSIAM. I immediately start an investigation package collection because isolation doesn't prevent local evidence collection. While that runs, I block any malicious hashes I've identified to prevent re-execution. I document the isolation time and reason in the incident ticket.</p>
+                            
+                            <p>I also communicate. Nothing frustrates users more than their laptop suddenly losing network without explanation. I coordinate with the help desk so they can inform the user that security is handling an issue, their machine is isolated for protection, and someone will contact them shortly. This prevents panicked calls that slow down the investigation.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you document alert investigations, and why is documentation important?</button>
+                        <div class="qa-answer">
+                            <p>Documentation is the difference between a mature SOC and chaos. I document every investigation, even quick false positives, because that documentation serves multiple purposes. First, it creates institutional knowledge - when I'm on vacation and a colleague sees the same alert, they can find my notes and close it confidently rather than spending 30 minutes re-investigating.</p>
+                            
+                            <p>My documentation structure is consistent: Initial Assessment (what triggered, severity, affected entities), Investigation Steps (what I checked, what I found), Verdict (TP/FP/Other with reasoning), and Actions Taken (exclusions created, containment performed, tickets opened). For true positives, I add a Timeline section showing the attack progression and an IOCs section listing hashes, IPs, domains, and file paths for future hunting.</p>
+                            
+                            <p>I keep notes in the alert resolution field for quick reference, but detailed investigations go into our ticketing system with screenshots. Screenshots are crucial - a screenshot of the causality chain or the decoded PowerShell command is worth a thousand words. When management asks "how do we know this was malicious?" I can pull up the ticket and show them the evidence.</p>
+                            
+                            <p>Good documentation also helps with metrics and improvement. At month end, I can query closed alerts and identify patterns: Which rules generate the most FPs? Which asset types are most targeted? What attack vectors are trending? This informs our detection tuning, training priorities, and security investments. Without documentation, we're just firefighting with no strategic visibility.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Compare alert handling between XSIAM, Sentinel, and Splunk. How does your approach differ?</button>
+                        <div class="qa-answer">
+                            <p>The fundamental investigation methodology is the same across platforms, but the tooling and workflow differ significantly. In XSIAM, I have the huge advantage of the causality chain - the process tree is automatically built and visualized. In Splunk, I have to construct that tree manually by querying process creation events and correlating by process GUID. Sentinel falls somewhere in between with its investigation graph, though it requires Defender for Endpoint data to be really useful.</p>
+                            
+                            <p>Response actions are where XSIAM shines. From the same alert view, I can isolate endpoints, kill processes, collect investigation packages, and block hashes. In Splunk, those are separate tools - I'd need to pivot to CrowdStrike or Carbon Black for endpoint actions. Sentinel with MDE integration gets close, but the workflow still involves more clicks and context switches.</p>
+                            
+                            <p>For alert triage and queue management, I actually prefer Splunk's flexibility. The search-based approach lets me build exactly the view I want with complex filters and custom fields. XSIAM's alert queue is more structured, which is great for junior analysts but can feel limiting when I want to do something unusual. Sentinel's incident queue is decent but can get cluttered when you have high alert volume.</p>
+                            
+                            <p>Documentation differs too. XSIAM has built-in resolution notes, Sentinel uses incident comments and tasks, and Splunk typically relies on integration with ServiceNow or similar. For correlation and clustering, Sentinel's automatic incident grouping is actually really good - it does some of the work I'd do manually in XSIAM or Splunk. Each platform has strengths; the key is adapting your workflow to leverage what each does best.</p>
                         </div>
                     </div>
                 </div>

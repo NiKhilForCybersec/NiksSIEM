@@ -590,69 +590,65 @@
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How does XSIAM change day-to-day SOC operations compared to traditional tools?</button>
                         <div class="qa-answer">
-                            <p><strong>The fundamental change is consolidation and automation:</strong></p>
-                            <p><strong>Traditional SOC workflow:</strong></p>
-                            <ol>
-                                <li>Alert comes into SIEM → Open SIEM console</li>
-                                <li>Need endpoint context → Switch to EDR console</li>
-                                <li>Need threat intel → Check TI platform</li>
-                                <li>Need to respond → Open another tool</li>
-                                <li>Manual documentation across systems</li>
-                            </ol>
-                            <p><strong>XSIAM workflow:</strong></p>
-                            <ol>
-                                <li>Alert comes in → Already correlated with endpoint + network + TI</li>
-                                <li>Investigation in same console → Causality view shows full chain</li>
-                                <li>Response actions available immediately → Isolate, block, disable</li>
-                                <li>Playbook triggers automatically → Enrichment done before analyst sees it</li>
-                                <li>Everything documented in incident timeline</li>
-                            </ol>
-                            <p><strong>Practical impact:</strong> What used to take 45 minutes across 4 tools now takes 15 minutes in one console. Analysts handle more incidents with less fatigue.</p>
+                            <p>The fundamental shift with XSIAM is consolidation. In a traditional SOC, analysts constantly context-switch between tools - SIEM for logs, EDR for endpoint data, TI platform for reputation, ticketing for documentation. Each switch breaks focus and adds time. I've timed analysts spending 60% of investigation time just navigating between consoles and copy-pasting IOCs.</p>
+                            
+                            <p>XSIAM collapses this into a single platform. When an alert fires, the analyst sees the detection, the causality chain from the endpoint, network connections, threat intel matches, and related alerts - all in one view. The response actions are right there too. Need to isolate the host? Click. Need to block the hash? Click. No switching to a different console, no waiting for it to load, no re-authenticating.</p>
+                            
+                            <p>The SOAR integration changes the workflow fundamentally. In traditional SOCs, automation is bolted on - playbooks run in a separate tool and results need to be correlated manually. In XSIAM, playbooks trigger automatically on incident creation and their results enrich the incident directly. By the time an analyst opens an incident, the IOCs are already checked against VirusTotal, the user is already looked up in AD, and the preliminary verdict is suggested.</p>
+                            
+                            <p>The practical impact is dramatic. I've seen investigations drop from 45 minutes to 15 minutes for the same alert type. Analysts can handle 2-3x the volume without burning out because they're doing actual analysis rather than data gathering. The flip side is that XSIAM requires more upfront investment in playbooks and detection rules to realize these gains - out of the box, it's just potential.</p>
                         </div>
                     </div>
                     <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What metrics would you track to measure SOC effectiveness?</button>
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What metrics would you track to measure SOC effectiveness, and how would you calculate them in XSIAM?</button>
                         <div class="qa-answer">
-                            <p><strong>I focus on metrics that answer three questions:</strong></p>
-                            <p><strong>1. Are we detecting threats?</strong></p>
-                            <ul>
-                                <li>MTTD (Mean Time to Detect) - How long until we see a threat</li>
-                                <li>Detection coverage - % of MITRE techniques we can detect</li>
-                                <li>True positive rate - Are alerts catching real threats</li>
-                            </ul>
-                            <p><strong>2. Are we responding effectively?</strong></p>
-                            <ul>
-                                <li>MTTA (Mean Time to Acknowledge) - How fast analysts pick up alerts</li>
-                                <li>MTTR (Mean Time to Respond) - How fast we contain confirmed threats</li>
-                                <li>Escalation accuracy - Are we escalating the right things</li>
-                            </ul>
-                            <p><strong>3. Is the SOC sustainable?</strong></p>
-                            <ul>
-                                <li>Alerts per analyst per day - Is workload manageable?</li>
-                                <li>Automation rate - What % is handled by playbooks?</li>
-                                <li>Analyst turnover - Are people burning out?</li>
-                            </ul>
+                            <p>I structure SOC metrics around the incident lifecycle - detect, triage, investigate, respond, close. Each phase has key metrics that tell you whether you're improving or degrading.</p>
+                            
+                            <p>For detection, I track Mean Time to Detect (MTTD) - the gap between when malicious activity starts and when we alert on it. This is tricky to calculate because you often only know the "start" time after investigation. In XSIAM, I approximate it using <code>timestamp_diff(alert_creation_time, first_event_time, "MINUTE")</code> from the causality chain. I also track detection coverage against MITRE ATT&CK - which techniques do we have rules for, and which have blind spots?</p>
+                            
+                            <p>For response, MTTA (Mean Time to Acknowledge) measures how quickly analysts pick up alerts: <code>timestamp_diff(first_analyst_action, alert_creation, "MINUTE")</code>. MTTR (Mean Time to Respond/Resolve) measures end-to-end time: <code>timestamp_diff(resolution_time, creation_time, "HOUR")</code>. I break these down by severity - critical incidents should have tighter SLAs than informational ones.</p>
+                            
+                            <p>For operational health, I track alert-to-analyst ratio (are we drowning?), false positive rate by rule (which detections need tuning?), and automation rate (what percentage of incidents had playbooks run?). These inform staffing decisions and engineering priorities. I build dashboards with these metrics in XSIAM and review them weekly with the team - trends matter more than absolute numbers because every environment is different.</p>
                         </div>
                     </div>
                     <div class="qa-item">
                         <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How would you structure a SOC team for a 10,000-employee company using XSIAM?</button>
                         <div class="qa-answer">
-                            <p><strong>For 10,000 employees with XSIAM, I'd recommend:</strong></p>
-                            <p><strong>Core SOC Team (24/7 operations):</strong></p>
-                            <ul>
-                                <li><strong>Tier 1:</strong> 8-10 analysts (2-3 per shift)</li>
-                                <li><strong>Tier 2:</strong> 4-5 senior analysts (1-2 per shift)</li>
-                                <li><strong>Shift leads:</strong> 3 (one per shift)</li>
-                            </ul>
-                            <p><strong>Specialized Roles (business hours):</strong></p>
-                            <ul>
-                                <li><strong>Threat Hunter:</strong> 1-2 FTEs for proactive hunting</li>
-                                <li><strong>Detection Engineer:</strong> 1-2 FTEs for rule development</li>
-                                <li><strong>SOAR Engineer:</strong> 1 FTE for playbook development</li>
-                                <li><strong>SOC Manager:</strong> 1 FTE for team leadership</li>
-                            </ul>
-                            <p><strong>Total: ~20-22 FTEs</strong></p>
-                            <p><strong>Why this works with XSIAM:</strong> Traditional SOC would need 30-35 people for same coverage. XSIAM automation handles 50-60% of alert triage, reducing Tier 1 requirements significantly.</p>
+                            <p>Staffing a SOC is fundamentally about coverage and depth. For 10,000 employees, you're looking at a mid-size enterprise with significant complexity but not Fortune 100 scale. My approach balances 24/7 coverage for operations with business-hours depth for engineering.</p>
+                            
+                            <p>For 24/7 operations, I use a 3-shift model with overlap during shift changes. Each shift needs enough Tier 1 analysts to handle typical alert volume plus buffer for spikes. With XSIAM automation handling 50-60% of triage, I'd staff lighter than traditional SOCs - about 2-3 Tier 1 per shift instead of 4-5. That's roughly 8-10 Tier 1 FTEs accounting for PTO and sick time. Tier 2 analysts handle escalations and complex investigations - 1-2 per shift, so 4-5 FTEs total. Each shift needs a lead for coordination and escalations to management.</p>
+                            
+                            <p>Beyond operations, you need specialized roles during business hours. Detection engineers develop and tune correlation rules - without them, your detection coverage stagnates. SOAR engineers build and maintain playbooks - they're the force multipliers that make automation work. Threat hunters do proactive investigation rather than reactive response - they find the threats that slip past automated detection. For a company this size, 1-2 FTEs each for detection engineering, SOAR, and hunting is appropriate.</p>
+                            
+                            <p>Total comes to roughly 20-22 FTEs. A traditional SOC without XSIAM's automation would need 30-35 for the same coverage. The savings come from reduced Tier 1 requirements because playbooks handle routine enrichment and triage. The investment goes into higher-skilled specialized roles that improve the platform over time.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: Describe how you would handle the transition from a traditional SIEM to XSIAM without disrupting SOC operations.</button>
+                        <div class="qa-answer">
+                            <p>SIEM migrations are notoriously risky - I've seen organizations go dark for weeks when they try to cut over too quickly. My approach is parallel operation with phased transition, taking 6-12 months depending on complexity.</p>
+                            
+                            <p>Phase one is foundation - deploy XSIAM in parallel, ingesting the same data sources as your existing SIEM. Don't alert from XSIAM yet; just verify data is flowing correctly and parsers are working. This takes 1-2 months. During this time, train the team on XQL and the XSIAM interface. People fear what they don't understand, and analyst buy-in is critical for success.</p>
+                            
+                            <p>Phase two is detection migration. Convert your high-fidelity detection rules from the legacy SIEM to XSIAM correlation rules. Start with the rules that generate actual incidents, not the ones that just create noise. Run them in XSIAM but continue responding in the legacy platform. Compare alert fidelity - does XSIAM catch the same things? Are there false positives or negatives? This validation phase takes 2-3 months and catches conversion errors before they impact operations.</p>
+                            
+                            <p>Phase three is operational transition. Start with a subset of alert types - maybe phishing alerts only. Analysts work those in XSIAM while continuing to use the legacy SIEM for everything else. Expand incrementally as confidence builds. This takes 2-4 months depending on how many alert types you have. Throughout, maintain the legacy SIEM as fallback - if XSIAM has issues, you can route alerts back temporarily.</p>
+                            
+                            <p>Phase four is decommission. Once all operational work is in XSIAM and you've run parallel for a stability period (usually 30-60 days), retire the legacy SIEM. Keep data accessible for historical investigations per your retention requirements, but stop active monitoring. The whole process takes 6-12 months, but you never have a gap in detection coverage.</p>
+                        </div>
+                    </div>
+                    <div class="qa-item">
+                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the most important processes to have documented for enterprise SOC operations?</button>
+                        <div class="qa-answer">
+                            <p>Documentation is the difference between a SOC that scales and one where knowledge walks out the door with every departure. I prioritize documentation that enables consistency, reduces training time, and supports incident response under pressure.</p>
+                            
+                            <p>Playbooks are the foundation - not XSOAR playbooks, but human procedural playbooks. For each major alert type, document: what the alert means, what context to gather, decision criteria for true positive versus false positive, escalation triggers, and response actions. These should be detailed enough that a new analyst can handle the alert type independently after reading the playbook. I review and update these quarterly based on lessons learned.</p>
+                            
+                            <p>Escalation procedures need to be crystal clear. Who gets called for a ransomware incident at 3 AM? What's the threshold for engaging incident response versus handling internally? How do we notify executives? Document the decision tree, contact information, and communication templates. During a real incident, nobody should be figuring out process - they should be following documented procedures.</p>
+                            
+                            <p>Technical documentation covers the platform itself. What data sources are ingested and what fields are available? How are correlation rules structured? What playbooks exist and what do they do? Architecture diagrams showing data flow. This enables detection engineers and SOAR developers to work effectively without reverse-engineering the environment.</p>
+                            
+                            <p>Finally, operational documentation covers the SOC itself. Shift schedules and handoff procedures. Quality assurance process for incident reviews. Metrics reporting cadence. On-call rotation and responsibilities. This organizational documentation ensures the SOC runs consistently regardless of who's working that day. I store all documentation in a wiki or knowledge base that's accessible from the SOC console - if analysts have to leave their workspace to find documentation, they won't use it.</p>
                         </div>
                     </div>
                 </div>
