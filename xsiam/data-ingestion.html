@@ -6,6 +6,434 @@
     <title>Data Ingestion | XSIAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/main.css">
+
+    <style>
+        /* Decision Tree Styles */
+        .decision-tree {
+            padding: 25px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            margin: 20px 0;
+        }
+        .decision-node {
+            background: #21262d;
+            border: 2px solid #30363d;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 10px auto;
+            max-width: 450px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .decision-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .decision-node h4 {
+            color: #e6edf3;
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .decision-node p, .decision-node small {
+            color: #8b949e;
+            font-size: 12px;
+            margin: 0;
+        }
+        .decision-arrow {
+            text-align: center;
+            color: #58a6ff;
+            font-size: 20px;
+            margin: 8px 0;
+        }
+        .decision-branches {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .decision-branch {
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 180px;
+            max-width: 280px;
+            background: rgba(33, 38, 45, 0.5);
+        }
+        .decision-branch.yes { border-color: #238636; }
+        .decision-branch.no { border-color: #f85149; }
+        .branch-label {
+            display: block;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .decision-outcome {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        .decision-outcome i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .decision-outcome strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .decision-outcome small {
+            opacity: 0.9;
+            font-size: 11px;
+        }
+
+        /* Flow Diagram Styles */
+        .flow-diagram {
+            padding: 25px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            margin: 20px 0;
+        }
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            background: #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 12px 0;
+            border-left: 4px solid #58a6ff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .flow-step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .flow-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(88, 166, 255, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #58a6ff;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+        .flow-content h4 {
+            margin: 0 0 10px 0;
+            color: #e6edf3;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .flow-content ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #8b949e;
+        }
+        .flow-content li {
+            margin: 6px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .flow-arrow {
+            text-align: center;
+            color: #58a6ff;
+            font-size: 20px;
+            margin: 8px 0;
+        }
+
+        /* Pipeline Styles */
+        .pipeline-container {
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .pipeline-stage {
+            margin-bottom: 20px;
+        }
+        .pipeline-stage .stage-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .pipeline-stage h4 {
+            color: #e6edf3;
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        .pipeline-stage p {
+            color: #8b949e;
+            font-size: 13px;
+            margin: 0 0 5px 0;
+        }
+        .pipeline-stage small {
+            color: #6e7681;
+            font-size: 12px;
+        }
+        .pipeline-arrow {
+            text-align: left;
+            color: #8b949e;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        /* Strategy Grid Styles */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 15px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .endpoint-type {
+            background: #21262d;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: #e6edf3;
+            font-size: 13px;
+        }
+        .collection-profile {
+            background: #21262d;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #58a6ff;
+        }
+        .collection-profile h4 {
+            color: #e6edf3;
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        .collection-profile p {
+            color: #8b949e;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        /* Enterprise Gap Cards */
+        .enterprise-gap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .gap-card {
+            background: #21262d;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .gap-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .gap-card h4 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #e6edf3;
+        }
+        .gap-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .gap-card li {
+            margin: 10px 0;
+            color: #8b949e;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .gap-card li strong {
+            color: #e6edf3;
+        }
+        .gap-critical { border-left: 4px solid #f85149; }
+        .gap-warning { border-left: 4px solid #d29922; }
+        .gap-info { border-left: 4px solid #58a6ff; }
+        .gap-best-practice { border-left: 4px solid #238636; }
+
+        /* Quick Reference Cards */
+        .quick-ref-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .quick-ref-card {
+            background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .quick-ref-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .quick-ref-card h4 {
+            color: #58a6ff;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quick-ref-card p {
+            color: #8b949e;
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Enhanced Q&A Styling */
+        .qa-section {
+            margin: 20px 0;
+        }
+        .qa-item {
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+        .qa-question {
+            width: 100%;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+            border: none;
+            color: #e6edf3;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+        .qa-question:hover {
+            background: linear-gradient(135deg, #30363d 0%, #21262d 100%);
+        }
+        .qa-question i {
+            color: #d29922;
+            font-size: 18px;
+        }
+        .qa-answer {
+            padding: 20px;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            display: none;
+        }
+        .qa-answer p {
+            color: #8b949e;
+            line-height: 1.7;
+            margin: 0 0 15px 0;
+            font-size: 14px;
+        }
+        .qa-answer p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Info Cards */
+        .info-card {
+            background: #21262d;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+            margin: 15px 0;
+        }
+        .info-card.critical { border-left: 4px solid #f85149; }
+        .info-card.warning { border-left: 4px solid #d29922; }
+        .info-card.info { border-left: 4px solid #58a6ff; }
+        .info-card.success { border-left: 4px solid #238636; }
+
+        /* Config Sections */
+        .config-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .config-section h3 {
+            color: #58a6ff;
+            margin: 0 0 15px 0;
+            font-size: 16px;
+        }
+
+        /* Comparison Tables */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #21262d;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        .comparison-table th {
+            background: #161b22;
+            color: #e6edf3;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .comparison-table td {
+            color: #8b949e;
+            font-size: 13px;
+        }
+
+        /* Architecture Diagrams */
+        .arch-diagram {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #8b949e;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        /* Grid Layouts */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+
 </head>
 <body>
     <div class="app-container">
@@ -534,7 +962,7 @@
                 </table>
 
                 <div class="tip-box" style="margin-top: 16px;">
-                    <div class="tip-box-title"><i class="fas fa-lightbulb"></i> Volume Formula</div>
+                    <div class="tip-box-title"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Volume Formula</div>
                     <p><code>Daily GB = (EPS × 86,400 × Avg Event KB) ÷ 1,000,000</code></p>
                     <p style="margin-top: 8px;">Example: 1,000 EPS × 86,400 sec × 1 KB = 86.4 GB/day</p>
                 </div>
