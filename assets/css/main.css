@@ -28,7 +28,12 @@
     --radius-md: 10px;
     --radius-lg: 14px;
     --transition-fast: 0.15s ease;
+    --shadow-sm: 0 2px 6px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+    --glow-blue: 0 0 20px rgba(88, 166, 255, 0.3);
+    --glow-green: 0 0 20px rgba(63, 185, 80, 0.3);
+    --glow-purple: 0 0 20px rgba(163, 113, 247, 0.3);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -457,41 +462,63 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
 
 
 /* ============================================
-   DECISION TREES - FIXED v2.0
-   Handles both horizontal and cascading patterns
+   DECISION TREES - ENHANCED v3.0
+   Grid layout, gradient pills, hover effects
    ============================================ */
 
-/* Container */
 .decision-tree {
-    padding: 1.5rem;
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.95) 100%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
+    padding: 2rem;
     margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.decision-tree::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(88, 166, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(163, 113, 247, 0.03) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .decision-tree h3 {
-    margin: 0 0 1.25rem 0;
-    padding-bottom: 0.75rem;
+    position: relative;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
     font-size: 1.1rem;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .decision-tree h3 i {
-    color: var(--accent-blue);
-    margin-right: 0.5rem;
+    color: var(--accent-purple);
+    font-size: 1.2rem;
 }
 
-/* Main question node - first node in tree, centered */
+/* Main question node - first node, centered with glow */
 .decision-tree > .decision-node:first-of-type {
-    background: var(--bg-tertiary);
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(88, 166, 255, 0.05));
     border: 2px solid var(--accent-blue);
     border-radius: var(--radius-md);
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 2rem;
     text-align: center;
-    max-width: 550px;
-    margin: 0 auto 1rem auto;
+    max-width: 650px;
+    margin: 0 auto 1.5rem auto;
+    box-shadow: var(--glow-blue), var(--shadow-sm);
+    position: relative;
+}
+
+.decision-tree > .decision-node:first-of-type strong {
+    font-size: 1.05rem;
+    color: var(--text-primary);
 }
 
 /* Generic decision node */
@@ -499,14 +526,22 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     background: var(--bg-tertiary);
     border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 0.875rem 1rem;
+    padding: 1rem 1.25rem;
     text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.decision-node:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .decision-node i {
     display: block;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
     color: var(--accent-blue);
-    margin-bottom: 0.35rem;
 }
 
 .decision-node span,
@@ -515,92 +550,169 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     color: var(--text-primary);
     font-size: 0.95rem;
     font-weight: 600;
+    line-height: 1.4;
 }
 
-.decision-node small {
+.decision-node small,
+.decision-node div[style*="color: #8b949e"] {
     display: block;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    margin-top: 0.35rem;
+    color: var(--text-muted) !important;
+    font-size: 0.8rem !important;
+    margin-top: 0.4rem;
+    line-height: 1.4;
 }
 
-/* Decision branch - horizontal row: [LABEL] [CONTENT] */
+/* Node variants */
+.decision-node.question {
+    border-color: var(--accent-blue);
+    background: rgba(88, 166, 255, 0.08);
+}
+
+.decision-node.yes,
+.decision-node[style*="background: #1a4d2e"],
+.decision-node.decision-node-success {
+    border-color: var(--accent-green) !important;
+    background: rgba(63, 185, 80, 0.12) !important;
+    box-shadow: var(--glow-green);
+}
+
+.decision-node.no,
+.decision-node[style*="background: #4d1a1a"],
+.decision-node.decision-node-danger {
+    border-color: var(--accent-red) !important;
+    background: rgba(248, 81, 73, 0.12) !important;
+}
+
+/* Decision branch - CSS Grid for side-by-side layout */
 .decision-branch {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 1rem;
-    margin: 0.75rem 0;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin: 1.25rem 0;
+    padding-top: 1.25rem;
+    position: relative;
 }
 
-/* Decision arrow - colored label pill */
+/* Vertical connector from parent */
+.decision-branch::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 1.25rem;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent-blue), var(--border-color));
+    border-radius: 2px;
+}
+
+.decision-branch > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+}
+
+/* Nested branches */
+.decision-branch .decision-branch {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    margin-top: 1rem;
+    gap: 1rem;
+}
+
+.decision-branch .decision-branch::before {
+    height: 1rem;
+}
+
+/* Decision arrow - gradient pill style */
 .decision-arrow {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 100px;
-    padding: 0.6rem 1rem;
-    border-radius: var(--radius-md);
+    min-width: 120px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
     background: var(--bg-elevated);
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    flex-shrink: 0;
-    line-height: 1.3;
+    border: 2px solid var(--border-color);
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
 }
 
-/* Arrows with inline background (from HTML) - white text */
+.decision-arrow:hover {
+    transform: scale(1.02);
+}
+
+/* Arrow connector line */
+.decision-arrow::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 12px;
+    background: var(--border-color);
+}
+
+/* YES arrow - green gradient */
+.decision-arrow.yes {
+    background: linear-gradient(135deg, #2ea043, #238636);
+    color: white;
+    border-color: var(--accent-green);
+    box-shadow: 0 2px 8px rgba(63, 185, 80, 0.35);
+}
+
+/* NO arrow - red gradient */
+.decision-arrow.no {
+    background: linear-gradient(135deg, #da3633, #b62324);
+    color: white;
+    border-color: var(--accent-red);
+    box-shadow: 0 2px 8px rgba(248, 81, 73, 0.35);
+}
+
+/* Arrows with inline backgrounds */
 .decision-arrow[style*="background"] {
     color: white !important;
-    border: none;
+    border: none !important;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* YES class arrow */
-.decision-arrow.yes {
-    background: var(--accent-green);
-    color: white;
-    border-color: var(--accent-green);
-}
-
-/* NO class arrow */
-.decision-arrow.no {
-    background: var(--accent-red);
-    color: white;
-    border-color: var(--accent-red);
-}
-
-/* Decision outcome - result box with left accent */
+/* Decision outcome - result box */
 .decision-outcome {
-    flex: 1;
-    min-width: 200px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-left: 4px solid var(--accent-blue);
     border-radius: var(--radius-md);
-    padding: 0.875rem 1rem;
+    padding: 1rem 1.25rem;
     text-align: left;
+    min-width: 200px;
+    width: 100%;
 }
 
 .decision-outcome i {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
     display: block;
-    font-size: 1.1rem;
-    margin-bottom: 0.35rem;
 }
 
 .decision-outcome strong {
     display: block;
     color: var(--text-primary);
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
 }
 
 .decision-outcome small {
     display: block;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: 0.8rem;
     line-height: 1.5;
 }
@@ -610,23 +722,13 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     padding: 0.1em 0.3em;
 }
 
-/* Nested branches - full width, indented */
-.decision-branch .decision-branch {
-    width: 100%;
-    margin-left: 1rem;
-    padding-left: 1rem;
-    border-left: 2px solid var(--border-color);
-}
-
-/* Node within a branch - allow it to grow */
+/* Node within a branch */
 .decision-branch > .decision-node {
-    flex: 1;
-    min-width: 200px;
-    max-width: 400px;
-    margin: 0;
+    width: 100%;
+    max-width: 350px;
 }
 
-/* Decision paths (grid pattern for side-by-side) */
+/* Decision paths grid */
 .decision-paths {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -665,7 +767,6 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     flex: 1;
 }
 
-/* Decision box */
 .decision-box {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
@@ -674,26 +775,271 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     margin: 0.5rem 0;
 }
 
-/* Legacy support */
-.decision-node.question { border-color: var(--accent-blue); }
-.decision-node.yes { border-color: var(--accent-green); }
-.decision-node.no { border-color: var(--accent-red); }
+/* ============================================
+   FLOW DIAGRAMS & PIPELINES - ENHANCED v3.0
+   ============================================ */
 
-/* FLOW DIAGRAMS */
-.flow-diagram { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; }
-.flow-diagram-title { text-align: center; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem; font-size: 1.1rem; }
-.flow-row { display: flex; align-items: center; justify-content: flex-start; gap: 0.75rem; margin: 0.75rem 0; flex-wrap: wrap; }
-.flow-row.centered { justify-content: center; }
-.flow-box { background: var(--bg-tertiary); border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 0.875rem 1.25rem; text-align: center; min-width: 140px; transition: all var(--transition-fast); }
-.flow-box:hover { transform: translateY(-2px); }
+.flow-diagram {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.95) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.flow-diagram::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 10% 90%, rgba(63, 185, 80, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 90% 10%, rgba(88, 166, 255, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.flow-diagram-title {
+    position: relative;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.flow-diagram-title i {
+    color: var(--accent-blue);
+}
+
+/* Flow step - vertical card with icon */
+.flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.flow-step:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+    border-left-color: var(--accent-purple);
+}
+
+.flow-step:last-child {
+    margin-bottom: 0;
+}
+
+/* Flow step colored borders */
+.flow-step[style*="border-left-color: #58a6ff"] { border-left-color: var(--accent-blue) !important; }
+.flow-step[style*="border-left-color: #d29922"] { border-left-color: var(--accent-orange) !important; }
+.flow-step[style*="border-left-color: #3fb950"] { border-left-color: var(--accent-green) !important; }
+.flow-step[style*="border-left-color: #a371f7"] { border-left-color: var(--accent-purple) !important; }
+.flow-step[style*="border-left-color: #f85149"] { border-left-color: var(--accent-red) !important; }
+.flow-step[style*="border-left-color: #f0883e"] { border-left-color: #f0883e !important; }
+
+.flow-step .flow-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-blue), #388bfd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.flow-step .flow-content {
+    flex: 1;
+}
+
+.flow-step .flow-content h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.flow-step .flow-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.flow-step .flow-content ul {
+    margin: 0.5rem 0 0 1.25rem;
+    padding: 0;
+}
+
+.flow-step .flow-content ul li {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.flow-step .flow-arrow {
+    display: none;
+}
+
+/* Connector between flow steps */
+.flow-step::after {
+    content: '';
+    position: absolute;
+    left: 24px;
+    bottom: -1rem;
+    width: 3px;
+    height: calc(1rem + 2px);
+    background: linear-gradient(180deg, var(--border-color), var(--accent-blue));
+    border-radius: 2px;
+}
+
+.flow-step:last-child::after {
+    display: none;
+}
+
+/* Flow row - horizontal layout */
+.flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.flow-row.centered {
+    justify-content: center;
+}
+
+/* Flow boxes */
+.flow-box {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 140px;
+    transition: all 0.2s ease;
+}
+
+.flow-box:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
 .flow-box.primary { border-color: var(--accent-blue); background: rgba(88, 166, 255, 0.1); }
 .flow-box.success { border-color: var(--accent-green); background: rgba(63, 185, 80, 0.1); }
 .flow-box.warning { border-color: var(--accent-orange); background: rgba(210, 153, 34, 0.1); }
 .flow-box.danger { border-color: var(--accent-red); background: rgba(248, 81, 73, 0.1); }
 .flow-box.purple { border-color: var(--accent-purple); background: rgba(163, 113, 247, 0.1); }
+
 .flow-box-title { font-weight: 600; color: var(--text-primary); font-size: 0.9rem; }
 .flow-box-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
-.flow-arrow { color: var(--text-muted); font-size: 1.25rem; flex-shrink: 0; }
+
+.flow-arrow,
+.flow-row > .flow-arrow {
+    color: var(--accent-blue);
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+}
+
+/* Vertical Pipeline - Timeline Style */
+.vertical-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin: 1.5rem 0;
+}
+
+.pipeline-stage {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.pipeline-stage::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 56px;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
+    border-radius: 2px;
+}
+
+.pipeline-stage:last-child::before {
+    display: none;
+}
+
+.pipeline-stage:last-child {
+    padding-bottom: 0;
+}
+
+.pipeline-number {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: white;
+    z-index: 1;
+    box-shadow: var(--shadow-md);
+}
+
+.pipeline-number i {
+    font-size: 1.2rem;
+}
+
+.pipeline-number.blue { background: linear-gradient(135deg, #58a6ff, #388bfd); }
+.pipeline-number.orange { background: linear-gradient(135deg, #d29922, #b58105); }
+.pipeline-number.green { background: linear-gradient(135deg, #3fb950, #2ea043); }
+.pipeline-number.purple { background: linear-gradient(135deg, #a371f7, #8957e5); }
+.pipeline-number.red { background: linear-gradient(135deg, #f85149, #da3633); }
+.pipeline-number.cyan { background: linear-gradient(135deg, #39c5cf, #2da8b0); }
+
+.pipeline-content {
+    flex: 1;
+    padding-top: 0.5rem;
+}
+
+.pipeline-content h4 {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.pipeline-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem 0;
+}
 
 /* DIAGRAMS */
 .diagram-box { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin: 1rem 0; }
@@ -928,7 +1274,7 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
 /* RESPONSIVE */
 @media (max-width: 1024px) {
     .main-content { padding: 1.5rem 1.5rem 3rem; }
-    .decision-branch { gap: 2rem; }
+    .decision-branch { grid-template-columns: 1fr 1fr; }
     .scenario-columns { grid-template-columns: 1fr; }
 }
 
@@ -944,12 +1290,15 @@ span.phase-header { display: inline-block; color: var(--accent-blue); font-size:
     .arch-diagram { font-size: 0.75rem; padding: 0.75rem; }
     table { font-size: 0.8rem; }
     th, td { padding: 0.5rem 0.6rem; }
-    .decision-tree { padding: 1rem; }
-    .decision-branch { flex-direction: column; gap: 0; }
+    .decision-tree { padding: 1.25rem; }
+    .decision-branch { grid-template-columns: 1fr; gap: 1rem; }
+    .decision-branch::before { display: none; }
+    .decision-tree > .decision-node:first-of-type { padding: 1rem 1.25rem; max-width: 100%; }
     .decision-node { max-width: 100%; }
     .decision-paths { grid-template-columns: 1fr; }
+    .flow-diagram { padding: 1.25rem; }
     .flow-row { flex-direction: column; align-items: stretch; }
-    .flow-arrow { transform: rotate(90deg); padding: 0.25rem; }
+    .flow-row > .flow-arrow { transform: rotate(90deg); align-self: center; }
     div.phase-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     .scenario-metrics { justify-content: center; }
     .scenario-columns { grid-template-columns: 1fr; }
@@ -1565,49 +1914,6 @@ body > .container {
     }
     .detection-pipeline .pipeline-arrow {
         transform: rotate(90deg);
-    }
-}
-
-/* ============================================
-   DECISION TREE RESPONSIVE OVERRIDES
-   ============================================ */
-
-@media (max-width: 768px) {
-    .decision-tree {
-        padding: 1rem;
-    }
-    
-    .decision-branch {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .decision-arrow {
-        align-self: flex-start;
-        min-width: auto;
-    }
-    
-    .decision-branch > .decision-node,
-    .decision-outcome {
-        max-width: 100%;
-        min-width: auto;
-    }
-    
-    .decision-branch .decision-branch {
-        margin-left: 0.5rem;
-        padding-left: 0.75rem;
-    }
-    
-    .decision-tree > .decision-node:first-of-type {
-        max-width: 100%;
-        padding: 0.875rem 1rem;
-    }
-}
-
-@media print {
-    .decision-tree {
-        break-inside: avoid;
-        page-break-inside: avoid;
     }
 }
 
