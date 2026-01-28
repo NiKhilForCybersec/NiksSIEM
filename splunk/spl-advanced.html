@@ -91,12 +91,14 @@
                 </ul>
             </div>
             
-            <!-- Security Use Cases -->
+                        <!-- Security Use Cases -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Security Use Cases</div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-nav-item"><a href="security-usecases.html" class="sidebar-nav-link"><i class="fas fa-crosshairs"></i><span>Detection Use Cases</span></a></li>
                     <li class="sidebar-nav-item"><a href="enterprise-scenarios.html" class="sidebar-nav-link"><i class="fas fa-building"></i><span>Enterprise Scenarios</span></a></li>
+                    <li class="sidebar-nav-item"><a href="retail-security.html" class="sidebar-nav-link"><i class="fas fa-shopping-cart"></i><span>Retail Security</span></a></li>
+                    <li class="sidebar-nav-item"><a href="sap-security.html" class="sidebar-nav-link"><i class="fas fa-industry"></i><span>SAP Security</span></a></li>
                 </ul>
             </div>
             
@@ -133,7 +135,20 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Deployment</div>
                 <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud Basics</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud-mastery.html" class="sidebar-nav-link"><i class="fas fa-cloud-upload-alt"></i><span>Cloud Mastery</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Certification Prep -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Certification Prep</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i><span>Lab Exercises</span></a></li>
                 </ul>
             </div>
         </div>
@@ -934,6 +949,436 @@ OPERATIONALIZATION
 □ Alerting thresholds baselined
 □ Known false positive patterns documented
 □ Runbook exists for each alert generated
+                    </div>
+                </div>
+
+                <!-- METRICS COMMANDS -->
+                <h2><i class="fas fa-chart-area"></i> Metrics Commands (mcollect, mstats)</h2>
+                <div class="config-section">
+                    <p>Metrics are high-performance numeric time-series data. Essential for monitoring at Sobeys scale (10,000+ POS terminals).</p>
+                    
+                    <div class="info-box info-box-info">
+                        <h4><i class="fas fa-store"></i> Sobeys Metrics Use Cases</h4>
+                        <ul>
+                            <li><strong>POS Transaction Volume:</strong> Real-time TPS per store/region</li>
+                            <li><strong>Network Throughput:</strong> Bandwidth usage at each location</li>
+                            <li><strong>System Health:</strong> CPU, memory, disk across infrastructure</li>
+                            <li><strong>Fraud Scores:</strong> Aggregated risk metrics by store</li>
+                        </ul>
+                    </div>
+
+                    <div class="arch-diagram">
+                        <div class="code-header"><i class="fas fa-code"></i> mcollect - Write Metrics to Index</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Convert events to metrics for long-term trending</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:transaction earliest=-1h
+| <span style="color: #f97583;">stats</span> count as transaction_count, sum(amount) as total_sales by store_id
+| <span style="color: #f97583;">mcollect</span> index=pos_metrics 
+    <span style="color: #a5d6ff;">metric_name</span>=pos.transactions 
+    store_id
+
+<span style="color: #8b949e;">// Collect system metrics from infrastructure</span>
+<span style="color: #79c0ff;">index</span>=_internal <span style="color: #79c0ff;">sourcetype</span>=splunkd component=Metrics group=per_index_thruput
+| <span style="color: #f97583;">stats</span> avg(kb) as avg_kb by series
+| <span style="color: #f97583;">mcollect</span> index=metrics_summary 
+    <span style="color: #a5d6ff;">metric_name</span>=indexer.throughput.kb 
+    series
+
+<span style="color: #8b949e;">// Scheduled search to continuously collect fraud metrics</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions risk_score>=50 earliest=-5m
+| <span style="color: #f97583;">stats</span> 
+    count as high_risk_txns,
+    avg(risk_score) as avg_risk_score,
+    max(risk_score) as max_risk_score
+    by store_id, region
+| <span style="color: #f97583;">mcollect</span> index=fraud_metrics 
+    <span style="color: #a5d6ff;">metric_name</span>=fraud.risk 
+    store_id, region
+</pre>
+                    </div>
+
+                    <div class="arch-diagram">
+                        <div class="code-header"><i class="fas fa-code"></i> mstats - Query Metrics (Fast!)</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Query metrics - 10-100x faster than regular search</span>
+| <span style="color: #f97583;">mstats</span> avg(pos.transactions.transaction_count) as avg_txns
+    WHERE index=pos_metrics 
+    BY store_id
+    span=1h
+
+<span style="color: #8b949e;">// Compare current to historical baseline</span>
+| <span style="color: #f97583;">mstats</span> 
+    avg(pos.transactions.transaction_count) as current_avg,
+    prestats=true
+    WHERE index=pos_metrics earliest=-1h
+    BY store_id
+| <span style="color: #f97583;">append</span> 
+    [| <span style="color: #f97583;">mstats</span> avg(pos.transactions.transaction_count) as baseline_avg
+       WHERE index=pos_metrics earliest=-7d@d latest=-6d@d
+       BY store_id]
+| <span style="color: #f97583;">stats</span> first(current_avg) as current, first(baseline_avg) as baseline by store_id
+| <span style="color: #f97583;">eval</span> deviation_pct = round((current - baseline) / baseline * 100, 2)
+| <span style="color: #f97583;">where</span> abs(deviation_pct) > 20
+
+<span style="color: #8b949e;">// Real-time fraud monitoring dashboard</span>
+| <span style="color: #f97583;">mstats</span> 
+    latest(fraud.risk.high_risk_txns) as high_risk,
+    latest(fraud.risk.avg_risk_score) as avg_risk,
+    latest(fraud.risk.max_risk_score) as max_risk
+    WHERE index=fraud_metrics
+    BY store_id, region
+    span=5m
+| <span style="color: #f97583;">where</span> high_risk > 5 OR max_risk > 90
+</pre>
+                    </div>
+
+                    <div class="styled-table">
+                        <table>
+                            <thead>
+                                <tr><th>Command</th><th>Purpose</th><th>Performance</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>mcollect</code></td><td>Write search results as metrics</td><td>Creates compact time-series data</td></tr>
+                                <tr><td><code>mstats</code></td><td>Query metrics indexes</td><td>10-100x faster than regular search</td></tr>
+                                <tr><td><code>mpreview</code></td><td>Preview metric data structure</td><td>Use for debugging metrics</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MACHINE LEARNING COMMANDS -->
+                <h2><i class="fas fa-brain"></i> Machine Learning Commands (predict, anomalydetection)</h2>
+                <div class="config-section">
+                    <p>Built-in ML commands for anomaly detection without external tools. Essential for detecting novel threats and fraud patterns.</p>
+
+                    <div class="arch-diagram">
+                        <div class="code-header"><i class="fas fa-code"></i> predict - Time Series Forecasting</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Predict expected transaction volume (detect anomalies)</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:transaction earliest=-30d
+| <span style="color: #f97583;">timechart</span> span=1h count as transactions
+| <span style="color: #f97583;">predict</span> transactions as predicted_transactions algorithm=LLP5 holdback=0 future_timespan=24
+| <span style="color: #f97583;">eval</span> lower_bound = predicted_transactions - (predicted_transactions * 0.20)
+| <span style="color: #f97583;">eval</span> upper_bound = predicted_transactions + (predicted_transactions * 0.20)
+| <span style="color: #f97583;">eval</span> is_anomaly = if(transactions < lower_bound OR transactions > upper_bound, 1, 0)
+| <span style="color: #f97583;">where</span> is_anomaly=1
+
+<span style="color: #8b949e;">// Predict network bandwidth - detect exfiltration</span>
+<span style="color: #79c0ff;">index</span>=network sourcetype=pan:traffic earliest=-7d
+| <span style="color: #f97583;">timechart</span> span=1h sum(bytes_out) as outbound_bytes
+| <span style="color: #f97583;">predict</span> outbound_bytes as expected_bytes algorithm=LLP5
+| <span style="color: #f97583;">eval</span> deviation = outbound_bytes - expected_bytes
+| <span style="color: #f97583;">eval</span> deviation_pct = round(deviation / expected_bytes * 100, 2)
+| <span style="color: #f97583;">where</span> deviation_pct > 50
+
+<span style="color: #8b949e;">// Predict fraud alerts by store (capacity planning)</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions risk_score>=70 earliest=-90d
+| <span style="color: #f97583;">timechart</span> span=1d count as daily_alerts by store_id
+| <span style="color: #f97583;">predict</span> daily_alerts as predicted_alerts algorithm=LLP5 future_timespan=7
+</pre>
+                    </div>
+
+                    <div class="arch-diagram">
+                        <div class="code-header"><i class="fas fa-code"></i> anomalydetection - Statistical Anomaly Detection</div>
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Detect anomalous user behavior (login patterns)</span>
+<span style="color: #79c0ff;">index</span>=security sourcetype=WinEventLog:Security EventCode=4624 earliest=-7d
+| <span style="color: #f97583;">bin</span> _time span=1h
+| <span style="color: #f97583;">stats</span> count as login_count by _time, user
+| <span style="color: #f97583;">anomalydetection</span> login_count by user action=annotate
+| <span style="color: #f97583;">where</span> isnotnull(probable_cause)
+| <span style="color: #f97583;">table</span> _time, user, login_count, probable_cause, severity
+
+<span style="color: #8b949e;">// Detect anomalous POS activity per cashier</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:transaction earliest=-30d
+| <span style="color: #f97583;">bin</span> _time span=1d
+| <span style="color: #f97583;">stats</span> 
+    count as txn_count,
+    sum(eval(if(transaction_type="VOID",1,0))) as void_count,
+    sum(eval(if(transaction_type="RETURN",1,0))) as return_count
+    by _time, cashier_id, store_id
+| <span style="color: #f97583;">eval</span> void_rate = void_count / txn_count * 100
+| <span style="color: #f97583;">anomalydetection</span> void_rate by store_id action=annotate
+| <span style="color: #f97583;">where</span> isnotnull(probable_cause)
+| <span style="color: #f97583;">table</span> _time, store_id, cashier_id, void_rate, probable_cause, severity
+
+<span style="color: #8b949e;">// Detect network traffic anomalies</span>
+<span style="color: #79c0ff;">index</span>=network sourcetype=pan:traffic dest_zone="external" earliest=-7d
+| <span style="color: #f97583;">bin</span> _time span=1h
+| <span style="color: #f97583;">stats</span> sum(bytes) as total_bytes, dc(dest_ip) as unique_dests by _time, src_ip
+| <span style="color: #f97583;">anomalydetection</span> total_bytes unique_dests by src_ip action=annotate pthresh=0.01
+| <span style="color: #f97583;">where</span> isnotnull(probable_cause)
+</pre>
+                    </div>
+
+                    <div class="info-box info-box-tip">
+                        <h4>ML Algorithm Selection</h4>
+                        <table class="compact-table">
+                            <tr><td><code>LLP</code></td><td>Local Level Prediction - good for trending data</td></tr>
+                            <tr><td><code>LLP5</code></td><td>LLP with 5-period seasonality</td></tr>
+                            <tr><td><code>LLT</code></td><td>Local Level Trend - for data with clear trend</td></tr>
+                            <tr><td><code>LLTS</code></td><td>LLT with seasonality</td></tr>
+                            <tr><td><code>pthresh</code></td><td>Probability threshold (lower = more sensitive)</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ADDITIONAL MISSING COMMANDS -->
+                <h2><i class="fas fa-tools"></i> Additional Essential Commands</h2>
+                <div class="config-section">
+                    <h3>filldown - Fill Null Values from Previous Row</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Fill gaps in time series data</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:transaction earliest=-24h
+| <span style="color: #f97583;">timechart</span> span=1h count as transactions by store_id
+| <span style="color: #f97583;">filldown</span> transactions
+<span style="color: #8b949e;">// Hours with no transactions now show previous value instead of null</span>
+
+<span style="color: #8b949e;">// Track session state changes (only log changes)</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:session
+| <span style="color: #f97583;">sort</span> _time
+| <span style="color: #f97583;">filldown</span> session_state, cashier_id
+| <span style="color: #f97583;">eval</span> state_changed = if(session_state != prev_state, 1, 0)
+</pre>
+                    </div>
+
+                    <h3>appendpipe - Append Aggregated Results</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Add total row to results</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions sourcetype=sobeys:pos:transaction earliest=-24h
+| <span style="color: #f97583;">stats</span> sum(amount) as total_sales, count as transactions by store_id
+| <span style="color: #f97583;">appendpipe</span> [| <span style="color: #f97583;">stats</span> sum(total_sales) as total_sales, sum(transactions) as transactions 
+              | <span style="color: #f97583;">eval</span> store_id="TOTAL"]
+| <span style="color: #f97583;">sort</span> store_id
+
+<span style="color: #8b949e;">// Add summary statistics to each row</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions risk_score>=50 earliest=-7d
+| <span style="color: #f97583;">stats</span> count as high_risk_txns by store_id
+| <span style="color: #f97583;">appendpipe</span> [| <span style="color: #f97583;">stats</span> avg(high_risk_txns) as avg_all_stores 
+              | <span style="color: #f97583;">eval</span> store_id="__STATS__"]
+| <span style="color: #f97583;">eventstats</span> first(eval(if(store_id="__STATS__", avg_all_stores, null()))) as benchmark
+| <span style="color: #f97583;">where</span> store_id!="__STATS__"
+| <span style="color: #f97583;">eval</span> vs_benchmark = round((high_risk_txns - benchmark) / benchmark * 100, 1) . "%"
+</pre>
+                    </div>
+
+                    <h3>untable - Reverse Pivot (Wide to Long)</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Convert wide format to long format for charting</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions earliest=-7d
+| <span style="color: #f97583;">stats</span> 
+    sum(eval(if(region="Atlantic",amount,0))) as Atlantic,
+    sum(eval(if(region="Quebec",amount,0))) as Quebec,
+    sum(eval(if(region="Ontario",amount,0))) as Ontario,
+    sum(eval(if(region="West",amount,0))) as West
+    by date_mday
+| <span style="color: #f97583;">untable</span> date_mday, region, sales
+<span style="color: #8b949e;">// Now each row is: date_mday, region, sales - perfect for charting</span>
+
+<span style="color: #8b949e;">// Reverse a stats pivot for further analysis</span>
+<span style="color: #79c0ff;">index</span>=security EventCode=4625 earliest=-24h
+| <span style="color: #f97583;">chart</span> count over src_ip by dest
+| <span style="color: #f97583;">untable</span> src_ip, dest, attempts
+| <span style="color: #f97583;">where</span> attempts > 0
+| <span style="color: #f97583;">sort</span> -attempts
+</pre>
+                    </div>
+
+                    <h3>geostats - Geographic Aggregation</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Map failed logins by geographic location</span>
+<span style="color: #79c0ff;">index</span>=security EventCode=4625 earliest=-24h
+| <span style="color: #f97583;">iplocation</span> src_ip
+| <span style="color: #f97583;">geostats</span> latfield=lat longfield=lon count by Country
+<span style="color: #8b949e;">// Use with Choropleth map visualization</span>
+
+<span style="color: #8b949e;">// Show Sobeys store activity on map</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions earliest=-24h
+| <span style="color: #f97583;">lookup</span> store_locations.csv store_id OUTPUT lat, lon, city
+| <span style="color: #f97583;">geostats</span> latfield=lat longfield=lon 
+    sum(amount) as total_sales, 
+    count as transactions,
+    dc(cashier_id) as active_cashiers
+    by store_id
+
+<span style="color: #8b949e;">// Cluster nearby threat sources</span>
+<span style="color: #79c0ff;">index</span>=threat_intel earliest=-7d
+| <span style="color: #f97583;">iplocation</span> indicator_ip
+| <span style="color: #f97583;">geostats</span> globallimit=100 latfield=lat longfield=lon 
+    dc(indicator_ip) as unique_threats,
+    values(threat_type) as threat_types
+</pre>
+                    </div>
+
+                    <h3>outputcsv / outputlookup - Export Results</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Export to CSV file (saved in $SPLUNK_HOME/var/run/splunk/csv/)</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions risk_score>=70 earliest=-7d
+| <span style="color: #f97583;">stats</span> count as high_risk_txns, sum(amount) as total_value by store_id, cashier_id
+| <span style="color: #f97583;">sort</span> -high_risk_txns
+| <span style="color: #f97583;">outputcsv</span> weekly_fraud_report.csv
+
+<span style="color: #8b949e;">// Update lookup table (useful for watchlists)</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions risk_score>=80 earliest=-24h
+| <span style="color: #f97583;">stats</span> count as risk_events, max(risk_score) as max_risk, latest(_time) as last_seen by cashier_id
+| <span style="color: #f97583;">eval</span> watchlist_reason = "High risk score: " . max_risk
+| <span style="color: #f97583;">outputlookup</span> append=true employee_watchlist.csv
+
+<span style="color: #8b949e;">// Create/update threat intelligence lookup</span>
+<span style="color: #79c0ff;">index</span>=security EventCode=4625 earliest=-24h
+| <span style="color: #f97583;">stats</span> count as failed_attempts by src_ip
+| <span style="color: #f97583;">where</span> failed_attempts > 100
+| <span style="color: #f97583;">eval</span> threat_category="Brute Force", added_date=strftime(now(), "%Y-%m-%d")
+| <span style="color: #f97583;">outputlookup</span> append=true createinapp=true blocked_ips.csv
+</pre>
+                    </div>
+                </div>
+
+                <!-- SOBEYS-SPECIFIC ADVANCED SCENARIOS -->
+                <h2><i class="fas fa-store"></i> Sobeys Enterprise Advanced Scenarios</h2>
+                <div class="config-section">
+                    <h3>Scenario 1: Cross-Store Fraud Ring Detection</h3>
+                    <p>Detect organized retail crime by correlating returns across multiple stores.</p>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Multi-store return fraud ring detection</span>
+<span style="color: #79c0ff;">index</span>=pos_transactions transaction_type="RETURN" receipt_present="NO" earliest=-30d
+
+<span style="color: #8b949e;">// Step 1: Aggregate returns by individual</span>
+| <span style="color: #f97583;">stats</span> 
+    count as return_count,
+    sum(amount) as total_returned,
+    dc(store_id) as stores_hit,
+    values(store_id) as store_list,
+    dc(category) as categories,
+    earliest(_time) as first_return,
+    latest(_time) as last_return
+    by id_number, id_type
+
+<span style="color: #8b949e;">// Step 2: Flag suspicious patterns</span>
+| <span style="color: #f97583;">where</span> stores_hit >= 3 AND return_count >= 5
+
+<span style="color: #8b949e;">// Step 3: Calculate days active and velocity</span>
+| <span style="color: #f97583;">eval</span> days_active = round((last_return - first_return) / 86400, 1)
+| <span style="color: #f97583;">eval</span> returns_per_day = round(return_count / max(days_active, 1), 2)
+
+<span style="color: #8b949e;">// Step 4: Calculate ORC risk score</span>
+| <span style="color: #f97583;">eval</span> orc_score = case(
+    stores_hit >= 10, 100,
+    stores_hit >= 5 AND total_returned > 2000, 95,
+    stores_hit >= 5, 90,
+    stores_hit >= 3 AND returns_per_day > 2, 85,
+    stores_hit >= 3 AND total_returned > 1000, 80,
+    1=1, 70
+)
+
+<span style="color: #8b949e;">// Step 5: Find linked individuals (same address/phone)</span>
+| <span style="color: #f97583;">join</span> type=left id_number
+    [<span style="color: #f97583;">search</span> <span style="color: #79c0ff;">index</span>=pos_transactions transaction_type="RETURN"
+     | <span style="color: #f97583;">dedup</span> id_number, address
+     | <span style="color: #f97583;">stats</span> values(id_number) as linked_ids by address
+     | <span style="color: #f97583;">where</span> mvcount(linked_ids) > 1
+     | <span style="color: #f97583;">mvexpand</span> linked_ids
+     | <span style="color: #f97583;">rename</span> linked_ids as id_number
+     | <span style="color: #f97583;">stats</span> values(address) as shared_address by id_number]
+
+| <span style="color: #f97583;">eval</span> is_linked = if(isnotnull(shared_address), "YES - POSSIBLE RING", "NO")
+| <span style="color: #f97583;">sort</span> -orc_score
+| <span style="color: #f97583;">table</span> id_number, id_type, return_count, total_returned, stores_hit, store_list, 
+        days_active, returns_per_day, orc_score, is_linked, shared_address
+</pre>
+                    </div>
+
+                    <h3>Scenario 2: SAP + POS Correlation for Receiving Fraud</h3>
+                    <p>Correlate SAP receiving documents with POS inventory adjustments to detect vendor fraud.</p>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// Detect receiving shortages that correlate with inventory adjustments</span>
+
+<span style="color: #8b949e;">// Step 1: Get SAP receiving documents</span>
+<span style="color: #79c0ff;">index</span>=sap_security sourcetype=sap:mm:receiving earliest=-30d
+| <span style="color: #f97583;">eval</span> expected_qty = ordered_qty
+| <span style="color: #f97583;">eval</span> received_qty = actual_qty
+| <span style="color: #f97583;">eval</span> shortage = expected_qty - received_qty
+| <span style="color: #f97583;">where</span> shortage > 0
+| <span style="color: #f97583;">stats</span> 
+    sum(shortage) as total_shortage,
+    sum(shortage * unit_cost) as shortage_value,
+    count as shortage_incidents
+    by store_id, vendor_id, material_group
+
+<span style="color: #8b949e;">// Step 2: Join with POS inventory adjustments</span>
+| <span style="color: #f97583;">join</span> type=left store_id, material_group
+    [<span style="color: #f97583;">search</span> <span style="color: #79c0ff;">index</span>=inventory sourcetype=sobeys:inventory:adjust 
+            adjustment_type="RECEIVING_SHORT" earliest=-30d
+     | <span style="color: #f97583;">lookup</span> category_mapping.csv category_id OUTPUT material_group
+     | <span style="color: #f97583;">stats</span> 
+         sum(quantity) as pos_adjustments,
+         sum(adjustment_value) as pos_adjustment_value
+         by store_id, material_group]
+
+<span style="color: #8b949e;">// Step 3: Calculate discrepancy (SAP vs POS)</span>
+| <span style="color: #f97583;">eval</span> discrepancy = total_shortage - coalesce(pos_adjustments, 0)
+| <span style="color: #f97583;">eval</span> discrepancy_pct = round(discrepancy / total_shortage * 100, 2)
+
+<span style="color: #8b949e;">// Step 4: Flag suspicious patterns (shortage in SAP not reflected in POS)</span>
+| <span style="color: #f97583;">where</span> discrepancy_pct > 20 OR discrepancy > 100
+| <span style="color: #f97583;">eval</span> risk_indicator = case(
+    discrepancy_pct > 50, "HIGH - Possible collusion",
+    discrepancy_pct > 30, "MEDIUM - Investigate vendor",
+    1=1, "LOW - Monitor"
+)
+| <span style="color: #f97583;">sort</span> -shortage_value
+| <span style="color: #f97583;">table</span> store_id, vendor_id, material_group, total_shortage, shortage_value,
+        pos_adjustments, discrepancy, discrepancy_pct, risk_indicator
+</pre>
+                    </div>
+
+                    <h3>Scenario 3: Real-Time PCI Cardholder Data Access Monitoring</h3>
+                    <div class="arch-diagram">
+<pre style="color: #f0f6fc; background: #0d1117; padding: 16px; border-radius: 8px; overflow-x: auto;">
+<span style="color: #8b949e;">// PCI-DSS 10.2.1 - Monitor all access to cardholder data</span>
+<span style="color: #79c0ff;">index</span>=pci_audit sourcetype IN ("sobeys:pos:card_access", "sobeys:pharmacy:card_lookup") earliest=-24h
+
+<span style="color: #8b949e;">// Aggregate by user and access type</span>
+| <span style="color: #f97583;">stats</span>
+    count as access_count,
+    dc(card_token) as unique_cards_accessed,
+    values(access_reason) as access_reasons,
+    earliest(_time) as first_access,
+    latest(_time) as last_access
+    by user, access_type, store_id
+
+<span style="color: #8b949e;">// Join with identity data for context</span>
+| <span style="color: #f97583;">lookup</span> identity_lookup_expanded identity as user 
+    OUTPUT priority as user_priority, bunit, category as user_category, watchlist
+
+<span style="color: #8b949e;">// Calculate access velocity</span>
+| <span style="color: #f97583;">eval</span> access_duration_hours = (last_access - first_access) / 3600
+| <span style="color: #f97583;">eval</span> access_per_hour = round(access_count / max(access_duration_hours, 0.1), 2)
+
+<span style="color: #8b949e;">// Flag anomalies</span>
+| <span style="color: #f97583;">eval</span> risk_indicators = mvappend(
+    if(unique_cards_accessed > 50, "HIGH_CARD_ACCESS_VOLUME", null()),
+    if(access_per_hour > 20, "HIGH_ACCESS_VELOCITY", null()),
+    if(watchlist="true", "USER_ON_WATCHLIST", null()),
+    if(user_category="service_account" AND access_type="manual_lookup", "SERVICE_ACCT_MANUAL_ACCESS", null())
+)
+| <span style="color: #f97583;">where</span> isnotnull(risk_indicators)
+| <span style="color: #f97583;">eval</span> risk_score = case(
+    mvcount(risk_indicators) >= 3, 95,
+    mvcount(risk_indicators) >= 2, 80,
+    1=1, 65
+)
+| <span style="color: #f97583;">sort</span> -risk_score
+| <span style="color: #f97583;">table</span> user, user_priority, store_id, access_type, access_count, unique_cards_accessed, 
+        access_per_hour, risk_indicators, risk_score
+</pre>
                     </div>
                 </div>
 

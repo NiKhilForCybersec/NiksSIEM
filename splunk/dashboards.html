@@ -91,12 +91,14 @@
                 </ul>
             </div>
             
-            <!-- Security Use Cases -->
+                        <!-- Security Use Cases -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Security Use Cases</div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-nav-item"><a href="security-usecases.html" class="sidebar-nav-link"><i class="fas fa-crosshairs"></i><span>Detection Use Cases</span></a></li>
                     <li class="sidebar-nav-item"><a href="enterprise-scenarios.html" class="sidebar-nav-link"><i class="fas fa-building"></i><span>Enterprise Scenarios</span></a></li>
+                    <li class="sidebar-nav-item"><a href="retail-security.html" class="sidebar-nav-link"><i class="fas fa-shopping-cart"></i><span>Retail Security</span></a></li>
+                    <li class="sidebar-nav-item"><a href="sap-security.html" class="sidebar-nav-link"><i class="fas fa-industry"></i><span>SAP Security</span></a></li>
                 </ul>
             </div>
             
@@ -133,7 +135,20 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Deployment</div>
                 <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud Basics</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud-mastery.html" class="sidebar-nav-link"><i class="fas fa-cloud-upload-alt"></i><span>Cloud Mastery</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Certification Prep -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Certification Prep</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i><span>Lab Exercises</span></a></li>
                 </ul>
             </div>
         </div>
@@ -247,6 +262,620 @@
 
                 <!-- SOC Dashboard Examples -->
                 <h2><i class="fas fa-shield-alt"></i> SOC Dashboard Examples</h2>
+
+                <div class="info-box info-box-info">
+                    <h4><i class="fas fa-store"></i> Sobeys Dashboard Strategy</h4>
+                    <p>For a retail enterprise with 1,500+ stores, dashboards should be organized by:</p>
+                    <ul>
+                        <li><strong>Executive:</strong> Enterprise-wide KPIs, compliance status, risk posture</li>
+                        <li><strong>Regional:</strong> Atlantic, Quebec, Ontario, West performance comparison</li>
+                        <li><strong>Operational:</strong> SOC analyst triage, real-time alerts</li>
+                        <li><strong>Loss Prevention:</strong> Fraud detection, shrinkage monitoring</li>
+                    </ul>
+                </div>
+
+                <!-- COMPLETE DASHBOARD XML EXAMPLE 1 -->
+                <div class="config-section">
+                    <h3>Complete Dashboard XML: SOC Security Overview</h3>
+                    <p>Production-ready Simple XML dashboard for SOC operations:</p>
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">soc_security_overview.xml</span>
+                        </div>
+                        <pre><code>&lt;dashboard version="1.1" theme="dark"&gt;
+  &lt;label&gt;SOC Security Overview - Sobeys Enterprise&lt;/label&gt;
+  &lt;description&gt;Real-time security monitoring across 1,500+ retail locations&lt;/description&gt;
+  
+  &lt;!-- Global Time Picker --&gt;
+  &lt;fieldset submitButton="false"&gt;
+    &lt;input type="time" token="time_range" searchWhenChanged="true"&gt;
+      &lt;label&gt;Time Range&lt;/label&gt;
+      &lt;default&gt;
+        &lt;earliest&gt;-24h@h&lt;/earliest&gt;
+        &lt;latest&gt;now&lt;/latest&gt;
+      &lt;/default&gt;
+    &lt;/input&gt;
+    &lt;input type="dropdown" token="region" searchWhenChanged="true"&gt;
+      &lt;label&gt;Region&lt;/label&gt;
+      &lt;choice value="*"&gt;All Regions&lt;/choice&gt;
+      &lt;choice value="Atlantic"&gt;Atlantic&lt;/choice&gt;
+      &lt;choice value="Quebec"&gt;Quebec&lt;/choice&gt;
+      &lt;choice value="Ontario"&gt;Ontario&lt;/choice&gt;
+      &lt;choice value="West"&gt;West&lt;/choice&gt;
+      &lt;default&gt;*&lt;/default&gt;
+    &lt;/input&gt;
+    &lt;input type="dropdown" token="urgency" searchWhenChanged="true"&gt;
+      &lt;label&gt;Severity&lt;/label&gt;
+      &lt;choice value="*"&gt;All&lt;/choice&gt;
+      &lt;choice value="critical"&gt;Critical&lt;/choice&gt;
+      &lt;choice value="high"&gt;High&lt;/choice&gt;
+      &lt;choice value="medium"&gt;Medium&lt;/choice&gt;
+      &lt;choice value="low"&gt;Low&lt;/choice&gt;
+      &lt;default&gt;*&lt;/default&gt;
+    &lt;/input&gt;
+  &lt;/fieldset&gt;
+
+  &lt;!-- Row 1: Key Metrics --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Critical Alerts&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable urgency="critical" earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region
+| search region=$region$
+| stats count&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+          &lt;refresh&gt;60s&lt;/refresh&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="drilldown"&gt;all&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[0,5]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+        &lt;drilldown&gt;
+          &lt;link target="_blank"&gt;/app/SplunkEnterpriseSecuritySuite/incident_review?urgency=critical&lt;/link&gt;
+        &lt;/drilldown&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;High Priority Alerts&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable urgency="high" earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region
+| search region=$region$
+| stats count&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+          &lt;refresh&gt;60s&lt;/refresh&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xf1813f"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[0,20]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Stores Affected&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable urgency IN ("critical","high") earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region
+| search region=$region$
+| stats dc(store_id) as affected_stores&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[0,50]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+        &lt;option name="unit"&gt;stores&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;MTTR (Hours)&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable status="closed" earliest=-7d
+| eval resolution_time = (status_time - create_time) / 3600
+| stats avg(resolution_time) as mttr
+| eval mttr = round(mttr, 1)&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[2,8]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+        &lt;option name="unit"&gt;hrs&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 2: Trends --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Alert Trend by Severity&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable earliest=$time_range.earliest$ latest=$time_range.latest$ urgency=$urgency$
+| lookup store_info.csv store_id OUTPUT region
+| search region=$region$
+| timechart span=1h count by urgency&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;area&lt;/option&gt;
+        &lt;option name="charting.chart.stackMode"&gt;stacked&lt;/option&gt;
+        &lt;option name="charting.legend.placement"&gt;bottom&lt;/option&gt;
+        &lt;option name="charting.fieldColors"&gt;{"critical":"#dc4e41","high":"#f1813f","medium":"#f8be34","low":"#53a051"}&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Top Alert Types&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable earliest=$time_range.earliest$ latest=$time_range.latest$ urgency=$urgency$
+| lookup store_info.csv store_id OUTPUT region
+| search region=$region$
+| stats count by rule_name
+| sort -count
+| head 10&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;bar&lt;/option&gt;
+        &lt;option name="charting.drilldown"&gt;all&lt;/option&gt;
+        &lt;drilldown&gt;
+          &lt;link target="_blank"&gt;search?q=index=notable rule_name="$click.value$"&lt;/link&gt;
+        &lt;/drilldown&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 3: Regional Breakdown --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Alerts by Region&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable earliest=$time_range.earliest$ latest=$time_range.latest$ urgency=$urgency$
+| lookup store_info.csv store_id OUTPUT region
+| stats count by region
+| sort -count&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;pie&lt;/option&gt;
+        &lt;option name="charting.drilldown"&gt;all&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Top Affected Stores&lt;/title&gt;
+      &lt;table&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable earliest=$time_range.earliest$ latest=$time_range.latest$ urgency=$urgency$
+| lookup store_info.csv store_id OUTPUT store_name, region, city
+| search region=$region$
+| stats count as alerts, dc(rule_name) as alert_types, values(urgency) as severities by store_id, store_name, city, region
+| sort -alerts
+| head 15
+| table store_id, store_name, city, region, alerts, alert_types, severities&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="drilldown"&gt;row&lt;/option&gt;
+        &lt;option name="count"&gt;15&lt;/option&gt;
+        &lt;format type="color" field="alerts"&gt;
+          &lt;colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#53A051"&gt;&lt;/colorPalette&gt;
+          &lt;scale type="minMidMax" midType="percentile" midValue="50"&gt;&lt;/scale&gt;
+        &lt;/format&gt;
+        &lt;drilldown&gt;
+          &lt;link target="_blank"&gt;search?q=index=notable store_id="$row.store_id$"&lt;/link&gt;
+        &lt;/drilldown&gt;
+      &lt;/table&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 4: Investigation Queue --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Open Notable Events - Investigation Queue&lt;/title&gt;
+      &lt;table&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=notable status IN ("new","in progress") earliest=$time_range.earliest$ latest=$time_range.latest$ urgency=$urgency$
+| lookup store_info.csv store_id OUTPUT store_name, region
+| search region=$region$
+| eval age_hours = round((now() - _time) / 3600, 1)
+| table _time, urgency, rule_name, store_id, store_name, region, owner, status, age_hours
+| sort -urgency, -age_hours
+| head 25&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="drilldown"&gt;row&lt;/option&gt;
+        &lt;option name="count"&gt;25&lt;/option&gt;
+        &lt;format type="color" field="urgency"&gt;
+          &lt;colorPalette type="map"&gt;{"critical":#DC4E41,"high":#F1813F,"medium":#F8BE34,"low":#53A051}&lt;/colorPalette&gt;
+        &lt;/format&gt;
+        &lt;format type="color" field="age_hours"&gt;
+          &lt;colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"&gt;&lt;/colorPalette&gt;
+          &lt;scale type="minMidMax" minValue="0" maxValue="24"&gt;&lt;/scale&gt;
+        &lt;/format&gt;
+      &lt;/table&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+&lt;/dashboard&gt;</code></pre>
+                    </div>
+                </div>
+
+                <!-- COMPLETE DASHBOARD XML EXAMPLE 2 -->
+                <div class="config-section">
+                    <h3>Complete Dashboard XML: Sobeys Loss Prevention</h3>
+                    <p>Executive dashboard for Loss Prevention team:</p>
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">loss_prevention_executive.xml</span>
+                        </div>
+                        <pre><code>&lt;form version="1.1" theme="dark"&gt;
+  &lt;label&gt;Loss Prevention Executive Dashboard&lt;/label&gt;
+  &lt;description&gt;Fraud detection and shrinkage monitoring - Sobeys Enterprise&lt;/description&gt;
+  
+  &lt;fieldset submitButton="true" autoRun="true"&gt;
+    &lt;input type="time" token="time_range"&gt;
+      &lt;label&gt;Time Range&lt;/label&gt;
+      &lt;default&gt;
+        &lt;earliest&gt;-7d@d&lt;/earliest&gt;
+        &lt;latest&gt;now&lt;/latest&gt;
+      &lt;/default&gt;
+    &lt;/input&gt;
+    &lt;input type="dropdown" token="region"&gt;
+      &lt;label&gt;Region&lt;/label&gt;
+      &lt;choice value="*"&gt;All Regions&lt;/choice&gt;
+      &lt;fieldForLabel&gt;region&lt;/fieldForLabel&gt;
+      &lt;fieldForValue&gt;region&lt;/fieldForValue&gt;
+      &lt;search&gt;
+        &lt;query&gt;| inputlookup store_info.csv | stats count by region | fields region&lt;/query&gt;
+      &lt;/search&gt;
+      &lt;default&gt;*&lt;/default&gt;
+    &lt;/input&gt;
+    &lt;input type="dropdown" token="brand"&gt;
+      &lt;label&gt;Brand&lt;/label&gt;
+      &lt;choice value="*"&gt;All Brands&lt;/choice&gt;
+      &lt;choice value="Sobeys"&gt;Sobeys&lt;/choice&gt;
+      &lt;choice value="Safeway"&gt;Safeway&lt;/choice&gt;
+      &lt;choice value="FreshCo"&gt;FreshCo&lt;/choice&gt;
+      &lt;choice value="Foodland"&gt;Foodland&lt;/choice&gt;
+      &lt;choice value="IGA"&gt;IGA&lt;/choice&gt;
+      &lt;default&gt;*&lt;/default&gt;
+    &lt;/input&gt;
+  &lt;/fieldset&gt;
+
+  &lt;!-- Row 1: KPIs --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;High-Risk Transactions&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions risk_score&gt;=70 earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand
+| search region=$region$ brand=$brand$
+| stats count&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[100,500]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+        &lt;option name="trendDisplayMode"&gt;percent&lt;/option&gt;
+        &lt;option name="trendInterval"&gt;-7d&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Total Till Variance&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions sourcetype=sobeys:pos:till_count earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand
+| search region=$region$ brand=$brand$
+| eval variance = actual_amount - expected_amount
+| stats sum(variance) as total_variance
+| eval display = "$" + tostring(round(abs(total_variance), 2), "commas")
+| eval color = if(total_variance &lt; 0, "red", "green")&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0xdc4e41","0xf8be34","0x53a051"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[-10000,-1000]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+        &lt;option name="numberPrecision"&gt;0.00&lt;/option&gt;
+        &lt;option name="unit"&gt;$&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;ORC Suspects Identified&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions transaction_type="RETURN" receipt_present="NO" earliest=-30d
+| stats dc(store_id) as stores, sum(amount) as total by id_number
+| where stores &gt;= 3 AND total &gt; 500
+| stats count as orc_suspects&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[5,15]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Employees on Watchlist&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| inputlookup employee_watchlist.csv
+| where status="ACTIVE"
+| lookup store_info.csv store_id OUTPUT region, brand
+| search region=$region$ brand=$brand$
+| stats count&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xf1813f"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[10,30]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 2: Fraud Trends --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Fraud Indicators by Type (Trend)&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions risk_score&gt;=50 earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand
+| search region=$region$ brand=$brand$
+| eval fraud_type = case(
+    transaction_type="VOID" AND payment_method="CASH", "Post-Tender Void",
+    transaction_type="RETURN" AND receipt_present="NO", "No-Receipt Return",
+    discount_amount &gt; 20, "Excessive Discount",
+    override_used="YES", "Override Abuse",
+    1=1, "Other"
+)
+| timechart span=1d count by fraud_type&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;line&lt;/option&gt;
+        &lt;option name="charting.legend.placement"&gt;bottom&lt;/option&gt;
+        &lt;option name="charting.chart.nullValueMode"&gt;zero&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Exception Rate by Store Type&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand, store_type
+| search region=$region$ brand=$brand$
+| stats count(eval(risk_score&gt;=70)) as exceptions, count as total by store_type
+| eval exception_rate = round(exceptions / total * 100, 3)
+| fields store_type, exception_rate&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;bar&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 3: High Risk Employees --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Highest Risk Employees&lt;/title&gt;
+      &lt;table&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand, store_name
+| search region=$region$ brand=$brand$
+| stats 
+    sum(risk_score) as total_risk,
+    count as total_transactions,
+    sum(eval(if(transaction_type="VOID",1,0))) as voids,
+    sum(eval(if(transaction_type="RETURN" AND receipt_present="NO",1,0))) as no_receipt_returns,
+    sum(eval(if(override_used="YES",1,0))) as overrides
+    by cashier_id, store_id, store_name
+| eval void_rate = round(voids / total_transactions * 100, 2)
+| eval avg_risk = round(total_risk / total_transactions, 1)
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name, hire_date
+| eval tenure_days = round((now() - strptime(hire_date, "%Y-%m-%d")) / 86400)
+| sort -total_risk
+| head 20
+| table store_name, cashier_id, employee_name, tenure_days, total_transactions, voids, void_rate, no_receipt_returns, overrides, total_risk, avg_risk&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="drilldown"&gt;row&lt;/option&gt;
+        &lt;option name="count"&gt;20&lt;/option&gt;
+        &lt;format type="color" field="total_risk"&gt;
+          &lt;colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#FFFFFF"&gt;&lt;/colorPalette&gt;
+          &lt;scale type="minMidMax" midType="percentile" midValue="50"&gt;&lt;/scale&gt;
+        &lt;/format&gt;
+        &lt;format type="color" field="void_rate"&gt;
+          &lt;colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"&gt;&lt;/colorPalette&gt;
+          &lt;scale type="minMidMax" minValue="0" maxValue="5"&gt;&lt;/scale&gt;
+        &lt;/format&gt;
+        &lt;drilldown&gt;
+          &lt;link target="_blank"&gt;search?q=index=pos_transactions cashier_id="$row.cashier_id$" | table _time, transaction_type, amount, risk_score&lt;/link&gt;
+        &lt;/drilldown&gt;
+      &lt;/table&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;!-- Row 4: Regional Comparison --&gt;
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Exception Rate by Region&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region
+| stats count(eval(risk_score&gt;=70)) as exceptions, count as total by region
+| eval exception_rate = round(exceptions / total * 10000, 2)
+| fields region, exception_rate&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;pie&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Shrinkage by Category (Top 10)&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=inventory sourcetype=sobeys:inventory:adjust 
+    adjustment_type IN ("DAMAGE","WRITEOFF","SHRINK") 
+    earliest=$time_range.earliest$ latest=$time_range.latest$
+| lookup store_info.csv store_id OUTPUT region, brand
+| search region=$region$ brand=$brand$
+| lookup category_info.csv category_id OUTPUT category_name, avg_unit_value
+| eval shrinkage_value = quantity * avg_unit_value
+| stats sum(shrinkage_value) as total_shrinkage by category_name
+| sort -total_shrinkage
+| head 10&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;bar&lt;/option&gt;
+        &lt;option name="charting.chart.showDataLabels"&gt;all&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+&lt;/form&gt;</code></pre>
+                    </div>
+                </div>
+
+                <!-- COMPLETE DASHBOARD XML EXAMPLE 3 -->
+                <div class="config-section">
+                    <h3>Complete Dashboard XML: Authentication Monitoring</h3>
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">authentication_dashboard.xml</span>
+                        </div>
+                        <pre><code>&lt;dashboard version="1.1" theme="dark"&gt;
+  &lt;label&gt;Authentication Monitoring - Sobeys Enterprise&lt;/label&gt;
+  &lt;description&gt;User authentication across all systems&lt;/description&gt;
+
+  &lt;fieldset submitButton="false"&gt;
+    &lt;input type="time" token="time_range" searchWhenChanged="true"&gt;
+      &lt;label&gt;Time Range&lt;/label&gt;
+      &lt;default&gt;
+        &lt;earliest&gt;-24h@h&lt;/earliest&gt;
+        &lt;latest&gt;now&lt;/latest&gt;
+      &lt;/default&gt;
+    &lt;/input&gt;
+    &lt;input type="text" token="user_filter" searchWhenChanged="true"&gt;
+      &lt;label&gt;User (wildcards allowed)&lt;/label&gt;
+      &lt;default&gt;*&lt;/default&gt;
+    &lt;/input&gt;
+  &lt;/fieldset&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Failed Logins (24h)&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats count FROM datamodel=Authentication.Failed_Authentication 
+  WHERE Authentication.user="*$user_filter$*" 
+  BY _time span=1h
+| stats sum(count) as total_failed&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[100,500]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Successful Logins&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats count FROM datamodel=Authentication.Successful_Authentication 
+  WHERE Authentication.user="*$user_filter$*"&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="useColors"&gt;0&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Unique Users&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats dc(Authentication.user) as unique_users 
+  FROM datamodel=Authentication 
+  WHERE Authentication.user="*$user_filter$*"&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Unique Sources&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats dc(Authentication.src) as unique_sources 
+  FROM datamodel=Authentication 
+  WHERE Authentication.user="*$user_filter$*"&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Authentication Activity Over Time&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats count FROM datamodel=Authentication 
+  WHERE Authentication.user="*$user_filter$*" 
+  BY _time, Authentication.action span=1h
+| timechart span=1h sum(count) by Authentication.action&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;area&lt;/option&gt;
+        &lt;option name="charting.chart.stackMode"&gt;stacked&lt;/option&gt;
+        &lt;option name="charting.legend.placement"&gt;bottom&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Failed Login Sources (Map)&lt;/title&gt;
+      &lt;map&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats count FROM datamodel=Authentication.Failed_Authentication 
+  WHERE Authentication.user="*$user_filter$*" 
+  BY Authentication.src
+| iplocation Authentication.src
+| geostats count by Country latfield=lat longfield=lon&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+        &lt;option name="mapping.type"&gt;marker&lt;/option&gt;
+      &lt;/map&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Users with Most Failed Logins&lt;/title&gt;
+      &lt;table&gt;
+        &lt;search&gt;
+          &lt;query&gt;| tstats count FROM datamodel=Authentication.Failed_Authentication 
+  WHERE Authentication.user="*$user_filter$*" 
+  BY Authentication.user, Authentication.src, Authentication.app
+| sort -count
+| head 20
+| rename Authentication.user as User, Authentication.src as Source, Authentication.app as Application, count as "Failed Attempts"&lt;/query&gt;
+          &lt;earliest&gt;$time_range.earliest$&lt;/earliest&gt;
+          &lt;latest&gt;$time_range.latest$&lt;/latest&gt;
+        &lt;/search&gt;
+        &lt;option name="drilldown"&gt;row&lt;/option&gt;
+        &lt;option name="count"&gt;20&lt;/option&gt;
+        &lt;format type="color" field="Failed Attempts"&gt;
+          &lt;colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"&gt;&lt;/colorPalette&gt;
+          &lt;scale type="minMidMax" minValue="0" maxValue="50"&gt;&lt;/scale&gt;
+        &lt;/format&gt;
+        &lt;drilldown&gt;
+          &lt;link target="_blank"&gt;search?q=| tstats count FROM datamodel=Authentication WHERE Authentication.user="$row.User$" BY _time, Authentication.action span=1h&lt;/link&gt;
+        &lt;/drilldown&gt;
+      &lt;/table&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+&lt;/dashboard&gt;</code></pre>
+                    </div>
+                </div>
 
                 <div class="config-section">
                     <h3>Security Overview Dashboard</h3>

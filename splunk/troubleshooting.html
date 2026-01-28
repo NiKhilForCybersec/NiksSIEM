@@ -91,12 +91,14 @@
                 </ul>
             </div>
             
-            <!-- Security Use Cases -->
+                        <!-- Security Use Cases -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Security Use Cases</div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-nav-item"><a href="security-usecases.html" class="sidebar-nav-link"><i class="fas fa-crosshairs"></i><span>Detection Use Cases</span></a></li>
                     <li class="sidebar-nav-item"><a href="enterprise-scenarios.html" class="sidebar-nav-link"><i class="fas fa-building"></i><span>Enterprise Scenarios</span></a></li>
+                    <li class="sidebar-nav-item"><a href="retail-security.html" class="sidebar-nav-link"><i class="fas fa-shopping-cart"></i><span>Retail Security</span></a></li>
+                    <li class="sidebar-nav-item"><a href="sap-security.html" class="sidebar-nav-link"><i class="fas fa-industry"></i><span>SAP Security</span></a></li>
                 </ul>
             </div>
             
@@ -133,7 +135,20 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Deployment</div>
                 <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud Basics</span></a></li>
+                    <li class="sidebar-nav-item"><a href="splunk-cloud-mastery.html" class="sidebar-nav-link"><i class="fas fa-cloud-upload-alt"></i><span>Cloud Mastery</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Certification Prep -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Certification Prep</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
+                    <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i><span>Lab Exercises</span></a></li>
                 </ul>
             </div>
         </div>
@@ -552,6 +567,523 @@ $SPLUNK_HOME/bin/splunk reload deploy-server</div>
                                 <li><strong>Splunk Support engagement:</strong> Know when to escalate vs self-solve</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+
+                <!-- SOBEYS-SPECIFIC TROUBLESHOOTING RUNBOOKS -->
+                <h2><i class="fas fa-store"></i> Sobeys Enterprise Troubleshooting Runbooks</h2>
+                <div class="config-section">
+                    <p>Production troubleshooting scenarios for Sobeys' 1,500+ store retail environment.</p>
+
+                    <h3>Runbook 1: POS Data Not Appearing from Store</h3>
+                    <div class="arch-diagram">
+SCENARIO: Store manager reports POS data missing from dashboards
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: IDENTIFY SCOPE
+───────────────────────────────────────────────────────────────────────────────
+` Check if data was ever received from this store `
+| metadata type=sourcetypes index=pos_transactions 
+| where sourcetype="sobeys:pos:transaction"
+| search source="*STR-0001*"
+
+` Check last event time for the store `
+index=pos_transactions store_id="STR-0001" 
+| stats latest(_time) as last_event, count as events_last_24h
+| eval hours_since_data = round((now() - last_event) / 3600, 1)
+
+` Compare to peer stores in same region `
+index=pos_transactions earliest=-4h
+| stats count by store_id
+| eventstats avg(count) as region_avg
+| eval deviation = round((count - region_avg) / region_avg * 100, 1)
+| sort deviation
+
+STEP 2: CHECK FORWARDER CONNECTIVITY
+───────────────────────────────────────────────────────────────────────────────
+` On indexer: Check for incoming connections from store `
+index=_internal sourcetype=splunkd component=TcpInputProc 
+  host="*STR-0001*" OR host="pos-str0001*"
+| stats count by host, sourceIp
+| sort -count
+
+` Check for connection errors `
+index=_internal sourcetype=splunkd component=TcpInputProc 
+  "connection" ("refused" OR "reset" OR "timeout")
+  host="*STR-0001*"
+| table _time, host, message
+
+` On UF (if accessible): Check forwarding status `
+./splunk list forward-server
+./splunk btool outputs list --debug
+
+STEP 3: CHECK PARSING AT HEAVY FORWARDER (if used)
+───────────────────────────────────────────────────────────────────────────────
+` Check HF parsing metrics `
+index=_internal host="hf-*" sourcetype=splunkd 
+  group=per_sourcetype_thruput series="sobeys:pos:transaction"
+| timechart span=1h sum(kb) as kb_ingested by host
+
+` Look for parsing errors `
+index=_internal host="hf-*" sourcetype=splunkd 
+  component=LineBreakingProcessor OR component=DateParser
+  (ERROR OR WARN)
+  source="*STR-0001*"
+| table _time, host, component, message
+
+STEP 4: CHECK HEC (if POS uses HEC)
+───────────────────────────────────────────────────────────────────────────────
+` Check HEC events `
+index=_internal sourcetype=splunkd component=HttpInputDataHandler
+| stats count by status
+| sort -count
+
+` Check for HEC errors `
+index=_internal sourcetype=splunkd component=HttpInputDataHandler
+  status!=200
+| stats count by status, message
+| sort -count
+
+` Check HEC token validity `
+index=_internal sourcetype=splunkd component=HttpInputDataHandler
+  "authentication failed" OR "invalid token"
+| table _time, sourceIp, message
+
+STEP 5: NETWORK ISSUES
+───────────────────────────────────────────────────────────────────────────────
+Common network issues at retail stores:
+□ Store network outage (check with NOC)
+□ Firewall blocking outbound 9997/8088 (HEC)
+□ MPLS/VPN tunnel down
+□ DNS resolution failure
+□ MTU issues causing packet fragmentation
+
+Test connectivity:
+telnet indexer.sobeys.com 9997
+curl -k https://hec.sobeys.com:8088/services/collector/health
+
+RESOLUTION OPTIONS:
+───────────────────────────────────────────────────────────────────────────────
+1. If forwarder issue → Restart UF service on store POS controller
+2. If network issue → Escalate to Network team with store ID
+3. If parsing issue → Check props.conf/transforms.conf on HF
+4. If HEC issue → Verify token, check HEC health
+5. If still missing → Historical backfill may be needed
+                    </div>
+
+                    <h3>Runbook 2: Splunk Search Performance Degradation</h3>
+                    <div class="arch-diagram">
+SCENARIO: Analysts report searches taking 10x longer than normal
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: IDENTIFY IMPACT
+───────────────────────────────────────────────────────────────────────────────
+` Check search queue status `
+index=_internal sourcetype=scheduler status=*
+| stats count by status
+
+` Check current running searches `
+| rest /services/search/jobs
+| where dispatchState="RUNNING"
+| eval runtime_min = round(runDuration/60, 1)
+| table label, search, user, runtime_min
+| sort -runtime_min
+
+` Check resource utilization on search heads `
+index=_introspection sourcetype=splunk_resource_usage component=Hostwide
+| stats latest(data.cpu_user_pct) as cpu, latest(data.mem_used) as mem_gb by host
+| eval mem_gb = round(mem_gb/1024/1024/1024, 1)
+
+STEP 2: IDENTIFY HEAVY SEARCHES
+───────────────────────────────────────────────────────────────────────────────
+` Find searches consuming most resources `
+index=_audit action=search info=completed
+| stats 
+    avg(total_run_time) as avg_runtime,
+    max(total_run_time) as max_runtime,
+    sum(scan_count) as total_events_scanned,
+    count as executions
+    by savedsearch_name, user
+| where avg_runtime > 60
+| sort -avg_runtime
+
+` Find searches with bad patterns `
+index=_audit action=search info=completed search="*"
+| rex field=search "index=(?<searched_index>\S+)"
+| where searched_index="*" OR isnull(searched_index)
+| stats count by user, search
+| sort -count
+
+` Check scheduled search load `
+index=_internal sourcetype=scheduler savedsearch_name=* status=*
+| stats count by savedsearch_name, status
+| sort -count
+
+STEP 3: CHECK INDEXER CLUSTER HEALTH
+───────────────────────────────────────────────────────────────────────────────
+` Check indexer peer status `
+| rest /services/cluster/master/peers splunk_server=cluster_master
+| table title, status, site, is_searchable, search_state_counter
+
+` Check for bucket replication issues `
+index=_internal sourcetype=splunkd component=CMPeer
+| stats count by action, status
+| sort -count
+
+` Check for hot bucket roll issues `
+index=_internal sourcetype=splunkd component=HotDBManager
+| where log_level="ERROR" OR log_level="WARN"
+| stats count by message
+| sort -count
+
+STEP 4: WORKLOAD MANAGEMENT CHECK
+───────────────────────────────────────────────────────────────────────────────
+` Check workload pool utilization `
+| rest /services/workloads/pools
+| table title, cpu_weight, mem_weight, default_category, ingest_pool
+
+` Check if searches are being queued `
+index=_internal sourcetype=scheduler status="deferred"
+| stats count by savedsearch_name
+| sort -count
+
+REMEDIATION:
+───────────────────────────────────────────────────────────────────────────────
+IMMEDIATE:
+□ Kill long-running ad-hoc searches (| rest /services/search/jobs | ... | kill)
+□ Disable heavy correlation searches temporarily
+□ Contact users running bad searches
+
+SHORT-TERM:
+□ Add search quotas to limit concurrent searches
+□ Optimize top offending searches
+□ Enable workload management if not already
+□ Consider search head clustering if single SH
+
+LONG-TERM:
+□ Mandatory search training for analysts
+□ Search review process for saved searches
+□ Performance SLAs for scheduled searches
+□ Summary indexing for repeated queries
+                    </div>
+
+                    <h3>Runbook 3: License Warning/Violation</h3>
+                    <div class="arch-diagram">
+SCENARIO: License warning email received, 85% daily capacity used
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: IDENTIFY SOURCE OF INCREASE
+───────────────────────────────────────────────────────────────────────────────
+` Daily license usage trend `
+index=_internal source=*license_usage.log type=Usage
+| timechart span=1d sum(b) as bytes
+| eval GB = round(bytes/1024/1024/1024, 2)
+| table _time, GB
+
+` Usage by index (find the culprit) `
+index=_internal source=*license_usage.log type=Usage earliest=-24h
+| stats sum(b) as bytes by idx
+| eval GB = round(bytes/1024/1024/1024, 2)
+| sort -GB
+
+` Usage by sourcetype within index `
+index=_internal source=*license_usage.log type=Usage earliest=-24h
+| stats sum(b) as bytes by idx, st
+| eval GB = round(bytes/1024/1024/1024, 2)
+| sort -GB
+| head 20
+
+` Usage by host (find specific source) `
+index=_internal source=*license_usage.log type=Usage earliest=-24h idx="pos_transactions"
+| stats sum(b) as bytes by h
+| eval GB = round(bytes/1024/1024/1024, 2)
+| sort -GB
+| head 20
+
+STEP 2: IDENTIFY ROOT CAUSE
+───────────────────────────────────────────────────────────────────────────────
+Common causes at Sobeys:
+□ New store rollout (legitimate increase)
+□ Debug logging enabled on POS systems
+□ Historical data backfill
+□ Verbose error logging from application issue
+□ Duplicate data collection paths
+□ Firewall log verbosity increased
+
+` Check for recent changes `
+index=_audit action=edit (object_type="props" OR object_type="inputs")
+| table _time, user, object_type, object_name, action
+
+` Check for new data sources `
+| metadata type=sourcetypes index=* 
+| eval first_seen = strftime(firstTime, "%Y-%m-%d")
+| where firstTime > relative_time(now(), "-7d")
+| table sourcetype, totalCount, first_seen
+
+STEP 3: IMMEDIATE REMEDIATION
+───────────────────────────────────────────────────────────────────────────────
+OPTION A: Filter at Forwarder
+───────────────────────────────────────────────────────────────────────────────
+# inputs.conf - reduce verbose logging
+[monitor:///var/log/pos/debug.log]
+blacklist = (DEBUG|TRACE)
+
+# props.conf - drop events at parse time  
+[sobeys:pos:transaction]
+TRANSFORMS-drop = drop_debug_events
+
+# transforms.conf
+[drop_debug_events]
+REGEX = ^DEBUG|^TRACE
+DEST_KEY = queue
+FORMAT = nullQueue
+
+OPTION B: Index-Time Filtering (ingest actions for Cloud)
+───────────────────────────────────────────────────────────────────────────────
+Ingest Actions → Create Rule:
+- Filter: sourcetype=sobeys:pos:debug
+- Action: Drop events
+- Or: Route to lower-retention index
+
+OPTION C: Temporary Disable
+───────────────────────────────────────────────────────────────────────────────
+# Temporarily disable verbose source
+[monitor:///var/log/pos/debug.log]
+disabled = true
+
+SOBEYS LICENSE ALLOCATION (example):
+───────────────────────────────────────────────────────────────────────────────
+Total License: 500 GB/day
+• POS Transactions: 200 GB (40%)
+• Network/Firewall: 100 GB (20%)
+• Windows Events: 80 GB (16%)
+• Cloud (O365/AWS): 50 GB (10%)
+• SAP: 30 GB (6%)
+• Misc: 40 GB (8%)
+                    </div>
+
+                    <h3>Runbook 4: Forwarder Deployment Issue</h3>
+                    <div class="arch-diagram">
+SCENARIO: 50 new UFs deployed but not checking in
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: VERIFY DEPLOYMENT SERVER
+───────────────────────────────────────────────────────────────────────────────
+` Check deployment server status `
+| rest /services/deployment/server/clients
+| stats count as total_clients, 
+        count(eval(match(hostname, "POS.*"))) as pos_clients
+
+` Check server class membership `
+| rest /services/deployment/server/serverclasses
+| table title, filterType, whitelist, blacklist
+
+` Check client check-in status `
+| rest /services/deployment/server/clients
+| eval last_checkin = strftime(strptime(lastPhoneHomeTime, "%a %b %d %H:%M:%S %Y"), "%Y-%m-%d %H:%M")
+| eval hours_since = round((now() - strptime(lastPhoneHomeTime, "%a %b %d %H:%M:%S %Y")) / 3600, 1)
+| where hours_since > 1
+| table hostname, ip, hours_since, applications
+| sort -hours_since
+
+STEP 2: CHECK FOR COMMON DEPLOYMENT ISSUES
+───────────────────────────────────────────────────────────────────────────────
+On new forwarders (via SSH/remote):
+
+# Check splunk is running
+systemctl status SplunkForwarder
+
+# Check deployment client config
+./splunk show deploy-poll
+
+# Check for deployment errors
+cat $SPLUNK_HOME/var/log/splunk/splunkd.log | grep -i "deploy"
+
+# Verify DNS resolution
+nslookup deployment-server.sobeys.com
+
+# Test connectivity
+telnet deployment-server.sobeys.com 8089
+
+STEP 3: SERVERCLASS CONFIGURATION ISSUES
+───────────────────────────────────────────────────────────────────────────────
+# serverclass.conf example for Sobeys
+[global]
+repositoryLocation = $SPLUNK_HOME/etc/deployment-apps
+
+[serverClass:Sobeys_POS_Stores]
+whitelist.0 = pos-*
+whitelist.1 = POS-*
+
+[serverClass:Sobeys_POS_Stores:app:Splunk_TA_POS]
+restartSplunkd = true
+
+[serverClass:Sobeys_POS_Stores:app:Sobeys_POS_Inputs]
+restartSplunkd = true
+
+COMMON ISSUES:
+───────────────────────────────────────────────────────────────────────────────
+□ Hostname doesn't match whitelist pattern
+□ deploymentclient.conf has wrong server URI
+□ Firewall blocking 8089 outbound
+□ DNS not resolving deployment server
+□ Certificate mismatch (if using SSL)
+□ Deployment server overloaded (check resource usage)
+
+REMEDIATION:
+───────────────────────────────────────────────────────────────────────────────
+1. Fix hostname pattern matching in serverclass.conf
+2. Push correct deploymentclient.conf via imaging/provisioning
+3. Whitelist 8089 in store firewall rules
+4. Add deployment server to store DNS
+5. Restart splunkd on affected forwarders:
+   systemctl restart SplunkForwarder
+                    </div>
+
+                    <h3>Runbook 5: Data Model Acceleration Failure</h3>
+                    <div class="arch-diagram">
+SCENARIO: ES dashboards showing "No Results" - DMA not completing
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: CHECK DMA STATUS
+───────────────────────────────────────────────────────────────────────────────
+` Check all data model acceleration status `
+| rest /services/admin/summarization splunk_server=local
+| where eai:acl.app="*security*" OR title="*Authentication*" OR title="*Network*"
+| table title, summary.is_inprogress, summary.complete, summary.access_count, 
+        summary.last_build_time, summary.last_error
+
+` Check for DMA errors `
+index=_internal sourcetype=splunkd component=DataModelAccelerator 
+| where log_level="ERROR"
+| stats count by message
+| sort -count
+
+` Check DMA build times `
+index=_introspection sourcetype=splunk_acceleration component=datamodel
+| timechart span=1h avg(run_time) by datamodel_name
+
+STEP 2: IDENTIFY ROOT CAUSE
+───────────────────────────────────────────────────────────────────────────────
+Common DMA issues:
+□ Bucket rebuild in progress
+□ Disk space exhaustion
+□ Search head cluster captain election
+□ Heavy search load competing for resources
+□ Data model definition changed
+□ Source data format changed (CIM mapping broken)
+
+` Check disk space `
+| rest /services/server/status/resource-usage/diskspace
+| table mount_point, available, pct_usage
+| where pct_usage > 80
+
+` Check for CIM compliance issues `
+| tstats count FROM datamodel=Authentication BY nodename
+| where count < 100
+
+STEP 3: REMEDIATION
+───────────────────────────────────────────────────────────────────────────────
+OPTION A: Rebuild Acceleration
+───────────────────────────────────────────────────────────────────────────────
+Settings → Data Models → [Model Name] → Edit Acceleration
+□ Disable acceleration
+□ Wait for completion
+□ Re-enable acceleration
+□ Set appropriate time range (start small, expand)
+
+OPTION B: Fix CIM Mapping
+───────────────────────────────────────────────────────────────────────────────
+# If data isn't mapping to CIM, check TA configuration
+# Example: Authentication data model needs these fields:
+- user
+- src
+- dest
+- action (success/failure)
+- app
+
+# props.conf fix
+[sobeys:pos:auth]
+FIELDALIAS-user = cashier_id AS user
+FIELDALIAS-action = auth_result AS action
+EVAL-src = if(isnull(src_ip), register_id, src_ip)
+
+OPTION C: Resource Issues
+───────────────────────────────────────────────────────────────────────────────
+# Reduce DMA scope
+[Authentication]
+acceleration.earliest_time = -30d  # Was -1y, reduce
+
+# Or disable less critical models
+[Network_Traffic]
+acceleration = false  # If not using network dashboards
+                    </div>
+
+                    <h3>Runbook 6: HEC Token Issues</h3>
+                    <div class="arch-diagram">
+SCENARIO: POS middleware team reports HEC 403 errors
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: DIAGNOSE HEC ISSUE
+───────────────────────────────────────────────────────────────────────────────
+` Check HEC health endpoint `
+curl -k https://hec.sobeys.com:8088/services/collector/health
+
+` Check HEC events by status `
+index=_internal sourcetype=splunkd component=HttpInputDataHandler
+| stats count by status
+| sort -count
+
+` Find failing tokens `
+index=_internal sourcetype=splunkd component=HttpInputDataHandler
+  status IN (400, 401, 403)
+| rex field=message "token=(?<token_id>\w+)"
+| stats count by token_id, status
+| sort -count
+
+` Check token configuration `
+| rest /services/data/inputs/http
+| table name, disabled, index, indexes, sourcetype, useACK
+
+STEP 2: COMMON HEC ERROR CODES
+───────────────────────────────────────────────────────────────────────────────
+401 Unauthorized:
+  → Token disabled or invalid
+  → Check: | rest /services/data/inputs/http | search disabled=1
+  → Fix: Re-enable token or generate new one
+
+403 Forbidden:
+  → Token doesn't have permission for index
+  → Check: indexes field on token configuration
+  → Fix: Add required index to token's allowed indexes
+
+400 Bad Request:
+  → Malformed JSON payload
+  → Check: Application sending data
+  → Fix: Validate JSON format before sending
+
+503 Service Unavailable:
+  → HEC queue full or indexer overloaded
+  → Check: index=_internal component=HttpInputDataHandler "queue"
+  → Fix: Add indexer capacity or reduce ingest rate
+
+STEP 3: TEST AND FIX
+───────────────────────────────────────────────────────────────────────────────
+# Test HEC token
+curl -k https://hec.sobeys.com:8088/services/collector \
+  -H "Authorization: Splunk YOUR_TOKEN" \
+  -d '{"event": "test event", "sourcetype": "test"}'
+
+# Expected response: {"text":"Success","code":0}
+
+# If token invalid, create new one
+Settings → Data Inputs → HTTP Event Collector → New Token:
+- Name: POS_Middleware_Token
+- Indexes: pos_transactions
+- Sourcetype: sobeys:pos:transaction
+- Enable indexer acknowledgment: Yes (for reliability)
+
+# Update middleware configuration with new token
                     </div>
                 </div>
 

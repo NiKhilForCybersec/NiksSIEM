@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Security Monitoring | Sobeys Enterprise Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .risk-critical { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600; }
+        .risk-high { background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%); color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600; }
+        .risk-medium { background: linear-gradient(135deg, #ffc107 0%, #d4a106 100%); color: #000; padding: 4px 12px; border-radius: 4px; font-weight: 600; }
+        .detection-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 16px 0; }
+        .detection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .detection-id { font-family: monospace; color: #58a6ff; font-weight: 600; }
+        .mitre-tag { background: #238636; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0; }
+        .metric-card { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; text-align: center; }
+        .metric-value { font-size: 2em; font-weight: 700; color: #58a6ff; }
+        .metric-label { color: #8b949e; font-size: 0.9em; }
+        .sobeys-context { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); border: 1px solid #3d8b5a; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .sobeys-context h4 { color: #7ce38b; margin-top: 0; }
+        .playbook-step { background: #161b22; border-left: 4px solid #58a6ff; padding: 12px 16px; margin: 8px 0; }
+        .playbook-step-num { background: #58a6ff; color: #0d1117; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Nik's SIEM</span>
+                </a>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Platforms</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link active"><span class="platform-dot"></span><span>Splunk</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Security Use Cases</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="retail-security.html" class="sidebar-nav-link active"><i class="fas fa-shopping-cart"></i><span>Retail Security</span></a></li>
+                        <li class="sidebar-nav-item"><a href="sap-security.html" class="sidebar-nav-link"><i class="fas fa-industry"></i><span>SAP Security</span></a></li>
+                        <li class="sidebar-nav-item"><a href="security-usecases.html" class="sidebar-nav-link"><i class="fas fa-crosshairs"></i><span>Detection Use Cases</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Certification Prep</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <main class="main-content">
+                <h1><i class="fas fa-shopping-cart"></i> Retail Security Monitoring - Sobeys Enterprise Guide</h1>
+                <p class="lead">Comprehensive security monitoring for Sobeys retail operations. Covers POS fraud detection, employee theft, organized retail crime, supply chain security, and PCI-DSS compliance across 1,500+ stores.</p>
+
+                <!-- Sobeys Context -->
+                <div class="sobeys-context">
+                    <h4><i class="fas fa-store"></i> Sobeys Enterprise Context</h4>
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">1,500+</div>
+                            <div class="metric-label">Retail Stores</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">10,000+</div>
+                            <div class="metric-label">POS Terminals</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">200 GB/day</div>
+                            <div class="metric-label">POS Data Volume</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$28B</div>
+                            <div class="metric-label">Annual Revenue</div>
+                        </div>
+                    </div>
+                    <p><strong>Brands:</strong> Sobeys, Safeway, FreshCo, Foodland, IGA, Farm Boy, Longo's, Lawtons Drugs, Pete's Fine Foods</p>
+                    <p><strong>Regions:</strong> Atlantic, Quebec, Ontario, West (4 distinct operational regions)</p>
+                </div>
+
+                <!-- Retail Threat Landscape -->
+                <h2><i class="fas fa-exclamation-triangle"></i> Retail Threat Landscape</h2>
+                
+                <div class="info-box info-box-warning">
+                    <h4>Key Statistics</h4>
+                    <table class="compact-table">
+                        <tr><td><strong>Employee Theft</strong></td><td>30-40% of all retail losses (~$1.2B annually for Canadian grocery)</td></tr>
+                        <tr><td><strong>Organized Retail Crime</strong></td><td>$4.6B annual impact in Canada, growing 20% YoY</td></tr>
+                        <tr><td><strong>POS Fraud</strong></td><td>Refund fraud, void abuse, sweethearting cost 1-3% of revenue</td></tr>
+                        <tr><td><strong>Shrinkage Rate</strong></td><td>Industry average 1.44%, best-in-class under 1%</td></tr>
+                        <tr><td><strong>Compliance</strong></td><td>PCI-DSS (cardholder data), PIPEDA (Canadian privacy), SOX (if applicable)</td></tr>
+                    </table>
+                </div>
+
+                <!-- Data Sources -->
+                <h2><i class="fas fa-database"></i> Retail Data Sources for Splunk</h2>
+                
+                <div class="config-section">
+                    <h3>Sobeys Data Source Inventory</h3>
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th>Data Source</th>
+                                <th>Sourcetype</th>
+                                <th>Index</th>
+                                <th>Volume</th>
+                                <th>Retention</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>POS Transactions</td>
+                                <td>sobeys:pos:transaction</td>
+                                <td>pos_transactions</td>
+                                <td>200 GB/day</td>
+                                <td>2 years</td>
+                            </tr>
+                            <tr>
+                                <td>Employee Badge Swipes</td>
+                                <td>sobeys:access:badge</td>
+                                <td>physical_security</td>
+                                <td>5 GB/day</td>
+                                <td>1 year</td>
+                            </tr>
+                            <tr>
+                                <td>Inventory Management</td>
+                                <td>sobeys:inventory:adjust</td>
+                                <td>inventory</td>
+                                <td>10 GB/day</td>
+                                <td>2 years</td>
+                            </tr>
+                            <tr>
+                                <td>Time & Attendance</td>
+                                <td>sobeys:hr:timeclock</td>
+                                <td>hr_systems</td>
+                                <td>2 GB/day</td>
+                                <td>7 years</td>
+                            </tr>
+                            <tr>
+                                <td>Loss Prevention Cases</td>
+                                <td>sobeys:lp:case</td>
+                                <td>loss_prevention</td>
+                                <td>500 MB/day</td>
+                                <td>7 years</td>
+                            </tr>
+                            <tr>
+                                <td>E-commerce Orders</td>
+                                <td>sobeys:ecomm:order</td>
+                                <td>ecommerce</td>
+                                <td>15 GB/day</td>
+                                <td>2 years</td>
+                            </tr>
+                            <tr>
+                                <td>Voila Delivery</td>
+                                <td>sobeys:voila:delivery</td>
+                                <td>ecommerce</td>
+                                <td>8 GB/day</td>
+                                <td>2 years</td>
+                            </tr>
+                            <tr>
+                                <td>Pharmacy Systems</td>
+                                <td>sobeys:pharmacy:dispense</td>
+                                <td>pharmacy_pci</td>
+                                <td>3 GB/day</td>
+                                <td>10 years</td>
+                            </tr>
+                            <tr>
+                                <td>Fuel Station POS</td>
+                                <td>sobeys:fuel:transaction</td>
+                                <td>pos_transactions</td>
+                                <td>5 GB/day</td>
+                                <td>2 years</td>
+                            </tr>
+                            <tr>
+                                <td>Gift Card System</td>
+                                <td>sobeys:giftcard:activity</td>
+                                <td>pos_transactions</td>
+                                <td>1 GB/day</td>
+                                <td>7 years</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="config-section">
+                    <h3>Index Configuration for Retail</h3>
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">indexes.conf</span>
+                        </div>
+                        <pre><code># POS Transactions - High volume, critical for fraud detection
+[pos_transactions]
+homePath = $SPLUNK_DB/pos_transactions/db
+coldPath = $SPLUNK_DB/pos_transactions/colddb
+thawedPath = $SPLUNK_DB/pos_transactions/thaweddb
+maxDataSize = auto_high_volume
+maxHotBuckets = 10
+maxWarmDBCount = 300
+frozenTimePeriodInSecs = 63072000  # 2 years
+maxTotalDataSizeMB = 5000000       # 5TB
+
+# Physical Security - Badge access, alarms
+[physical_security]
+homePath = $SPLUNK_DB/physical_security/db
+coldPath = $SPLUNK_DB/physical_security/colddb
+thawedPath = $SPLUNK_DB/physical_security/thaweddb
+frozenTimePeriodInSecs = 31536000  # 1 year
+maxTotalDataSizeMB = 500000
+
+# Inventory Systems
+[inventory]
+homePath = $SPLUNK_DB/inventory/db
+coldPath = $SPLUNK_DB/inventory/colddb
+thawedPath = $SPLUNK_DB/inventory/thaweddb
+frozenTimePeriodInSecs = 63072000  # 2 years
+maxTotalDataSizeMB = 1000000
+
+# PCI Scope - Cardholder data environment
+[pharmacy_pci]
+homePath = $SPLUNK_DB/pharmacy_pci/db
+coldPath = $SPLUNK_DB/pharmacy_pci/colddb
+thawedPath = $SPLUNK_DB/pharmacy_pci/thaweddb
+frozenTimePeriodInSecs = 315360000  # 10 years for pharmacy
+maxTotalDataSizeMB = 500000</code></pre>
+                    </div>
+                </div>
+
+                <!-- POS FRAUD DETECTION -->
+                <h2><i class="fas fa-cash-register"></i> POS Fraud Detection</h2>
+
+                <!-- Detection 1: Post-Tender Void -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-001</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-critical">CRITICAL</span>
+                    </div>
+                    <h3>Post-Tender Void Detection</h3>
+                    <p><strong>Description:</strong> A cash sale is completed, then voided within minutes. The cashier pockets the cash while the system shows the transaction was cancelled. This is the #1 indicator of cashier theft.</p>
+                    
+                    <div class="sobeys-context">
+                        <h4>Sobeys Context</h4>
+                        <p>With 10,000+ POS terminals, even a 0.1% false positive rate generates 10 alerts/day. Tune thresholds based on store volume and cashier tenure.</p>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    transaction_type IN ("SALE", "VOID")
+| eval event_time=_time
+| stats 
+    earliest(eval(if(transaction_type="SALE", event_time, null()))) as sale_time,
+    latest(eval(if(transaction_type="VOID", event_time, null()))) as void_time,
+    values(payment_method) as payment_methods,
+    sum(eval(if(transaction_type="SALE", amount, 0))) as sale_amount,
+    values(transaction_type) as txn_types
+    by transaction_id, cashier_id, register_id, store_id
+| where isnotnull(sale_time) AND isnotnull(void_time)
+| eval seconds_between = void_time - sale_time
+| where seconds_between > 0 AND seconds_between < 300
+| where payment_methods="CASH"
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name, hire_date, department
+| eval days_employed = round((now() - strptime(hire_date, "%Y-%m-%d")) / 86400)
+| eval risk_score = case(
+    sale_amount > 100 AND seconds_between < 60, 95,
+    sale_amount > 100, 90,
+    sale_amount > 50, 80,
+    days_employed < 90, 85,
+    1=1, 75
+)
+| where risk_score >= 75
+| table _time, store_id, cashier_id, employee_name, transaction_id, sale_amount, 
+        seconds_between, days_employed, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+
+                    <h4>Tuning Guidance</h4>
+                    <ul>
+                        <li><strong>Time Window:</strong> Start at 300 seconds (5 min), reduce to 120 seconds if too noisy</li>
+                        <li><strong>Amount Threshold:</strong> Add <code>| where sale_amount > 20</code> to filter small transactions</li>
+                        <li><strong>Exclude Training:</strong> Add <code>| where NOT match(cashier_id, "TRAIN.*")</code></li>
+                        <li><strong>Store-Specific:</strong> High-volume stores may need tighter windows</li>
+                    </ul>
+
+                    <h4>Response Playbook</h4>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">1</span>
+                        <strong>Verify Pattern:</strong> Check if this cashier has multiple post-tender voids in past 30 days
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">2</span>
+                        <strong>Pull Video:</strong> Request footage from timestamp ± 5 minutes
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">3</span>
+                        <strong>Compare Peers:</strong> Run peer comparison query to establish baseline
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">4</span>
+                        <strong>Escalate:</strong> If confirmed, create LP case and notify store manager
+                    </div>
+                </div>
+
+                <!-- Detection 2: No-Receipt Returns -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-002</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>Excessive No-Receipt Returns</h3>
+                    <p><strong>Description:</strong> Returns processed without original receipt are high-risk. Legitimate no-receipt returns happen, but excessive patterns indicate return fraud or employee collusion.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    transaction_type="RETURN" receipt_present="NO"
+    earliest=-24h
+| stats 
+    count as no_receipt_returns,
+    sum(amount) as total_returned,
+    dc(customer_id) as unique_customers,
+    values(category) as categories_returned,
+    avg(amount) as avg_return_amount
+    by store_id, cashier_id, register_id
+| eval returns_per_customer = round(no_receipt_returns / unique_customers, 2)
+
+` Compare to store average `
+| eventstats 
+    avg(no_receipt_returns) as store_avg_returns,
+    stdev(no_receipt_returns) as store_stdev
+    by store_id
+
+| eval z_score = round((no_receipt_returns - store_avg_returns) / store_stdev, 2)
+| eval risk_score = case(
+    z_score > 3 AND total_returned > 500, 95,
+    z_score > 3, 85,
+    z_score > 2 AND total_returned > 300, 80,
+    z_score > 2, 75,
+    no_receipt_returns >= 10, 70,
+    1=1, 50
+)
+| where risk_score >= 70
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name
+| table store_id, cashier_id, employee_name, no_receipt_returns, total_returned,
+        avg_return_amount, z_score, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- Detection 3: Sweethearting -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-003</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>Sweethearting Detection (Friends & Family Discounts)</h3>
+                    <p><strong>Description:</strong> Cashier gives unauthorized discounts to friends/family. Identified by repeated transactions between same cashier-customer pair with high discount rates.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    earliest=-7d
+| where isnotnull(customer_id) AND discount_amount > 0
+| eval discount_pct = round((discount_amount / (amount + discount_amount)) * 100, 2)
+
+` Aggregate by cashier-customer relationship `
+| stats 
+    count as transaction_count,
+    sum(discount_amount) as total_discounts,
+    avg(discount_pct) as avg_discount_pct,
+    sum(amount) as total_sales,
+    dc(date_mday) as days_active,
+    values(loyalty_card) as loyalty_cards
+    by cashier_id, customer_id, store_id
+
+` Flag suspicious patterns `
+| where transaction_count >= 3 AND avg_discount_pct > 10
+
+` Calculate expected vs actual `
+| eventstats avg(avg_discount_pct) as store_avg_discount by store_id
+| eval discount_variance = avg_discount_pct - store_avg_discount
+| eval frequency_score = case(
+    transaction_count >= 10, 40,
+    transaction_count >= 5, 25,
+    transaction_count >= 3, 15,
+    1=1, 0
+)
+| eval discount_score = case(
+    avg_discount_pct > 25, 40,
+    avg_discount_pct > 15, 25,
+    avg_discount_pct > 10, 15,
+    1=1, 0
+)
+| eval recency_score = case(
+    days_active >= 5, 20,
+    days_active >= 3, 10,
+    1=1, 0
+)
+| eval risk_score = frequency_score + discount_score + recency_score
+| where risk_score >= 50
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name
+| table store_id, cashier_id, employee_name, customer_id, transaction_count, 
+        total_discounts, avg_discount_pct, days_active, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+
+                    <div class="sobeys-context">
+                        <h4>Sobeys Employee Discount Policy</h4>
+                        <p>Legitimate employee discounts (typically 10%) require:</p>
+                        <ul>
+                            <li>Employee discount card scanned</li>
+                            <li>Employee NOT at register (cannot self-checkout with discount)</li>
+                            <li>Manager override for discounts > 15%</li>
+                        </ul>
+                        <p>Alert if discount applied WITHOUT these conditions.</p>
+                    </div>
+                </div>
+
+                <!-- Detection 4: Till Variance -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-004</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-medium">MEDIUM</span>
+                    </div>
+                    <h3>Till Variance Anomalies</h3>
+                    <p><strong>Description:</strong> Cash drawer doesn't match expected amount. Consistent shortages indicate theft; consistent overages may indicate under-ringing.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:till_count
+    earliest=-30d
+| eval variance = actual_amount - expected_amount
+| eval variance_pct = round((variance / expected_amount) * 100, 2)
+| eval variance_type = case(
+    variance < -10, "SHORT",
+    variance > 10, "OVER",
+    1=1, "OK"
+)
+| stats 
+    count as shift_count,
+    sum(eval(if(variance_type="SHORT", 1, 0))) as short_count,
+    sum(eval(if(variance_type="OVER", 1, 0))) as over_count,
+    sum(variance) as total_variance,
+    avg(variance) as avg_variance,
+    stdev(variance) as stdev_variance
+    by cashier_id, store_id
+
+| eval short_rate = round(short_count / shift_count * 100, 2)
+| eval consistency_score = case(
+    short_count >= 5 AND short_rate > 50, 40,
+    short_count >= 3 AND short_rate > 30, 25,
+    1=1, 0
+)
+| eval amount_score = case(
+    total_variance < -100, 40,
+    total_variance < -50, 25,
+    total_variance < -25, 15,
+    1=1, 0
+)
+| eval pattern_score = case(
+    stdev_variance < 5 AND short_count > 3, 20,  ` Very consistent shortages = intentional `
+    1=1, 0
+)
+| eval risk_score = consistency_score + amount_score + pattern_score
+| where risk_score >= 40
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name, hire_date
+| table store_id, cashier_id, employee_name, shift_count, short_count, short_rate,
+        total_variance, avg_variance, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- Detection 5: Gift Card Fraud -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-005</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-critical">CRITICAL</span>
+                    </div>
+                    <h3>Gift Card Fraud Detection</h3>
+                    <p><strong>Description:</strong> Gift card fraud includes: rapid activation/redemption, balance draining, loading with stolen payment, and employee self-issuance.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search - Rapid Activation/Redemption</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:giftcard:activity
+    (action="ACTIVATE" OR action="REDEEM")
+    earliest=-24h
+| stats 
+    earliest(_time) as first_activity,
+    latest(_time) as last_activity,
+    sum(eval(if(action="ACTIVATE", amount, 0))) as activated_value,
+    sum(eval(if(action="REDEEM", amount, 0))) as redeemed_value,
+    dc(store_id) as stores_used,
+    values(store_id) as store_list,
+    count as activity_count
+    by card_number
+
+| eval time_to_redeem_hours = round((last_activity - first_activity) / 3600, 2)
+| eval redemption_ratio = round(redeemed_value / activated_value * 100, 2)
+
+` Flag cards redeemed within 24 hours at different store `
+| where time_to_redeem_hours < 24 AND stores_used > 1 AND redemption_ratio > 90
+
+| eval risk_score = case(
+    time_to_redeem_hours < 1 AND stores_used > 1, 95,
+    time_to_redeem_hours < 4 AND activated_value > 200, 90,
+    stores_used > 2, 85,
+    redemption_ratio = 100 AND time_to_redeem_hours < 24, 80,
+    1=1, 70
+)
+| table card_number, first_activity, last_activity, time_to_redeem_hours,
+        activated_value, redeemed_value, stores_used, store_list, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Employee Self-Issuance Detection</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:giftcard:activity action="ACTIVATE"
+    earliest=-7d
+| join type=left card_number 
+    [search index=pos_transactions sourcetype=sobeys:giftcard:activity action="REDEEM"
+     | rename cashier_id as redeem_cashier, store_id as redeem_store
+     | fields card_number, redeem_cashier, redeem_store, _time as redeem_time]
+| where cashier_id = redeem_cashier  ` Same person activated and redeemed `
+| eval risk_score = 95
+| stats count as self_redeemed_cards, sum(amount) as total_value by cashier_id, store_id
+| where self_redeemed_cards >= 2 OR total_value > 100
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name
+| table store_id, cashier_id, employee_name, self_redeemed_cards, total_value</code></pre>
+                    </div>
+                </div>
+
+                <!-- EMPLOYEE THEFT SECTION -->
+                <h2><i class="fas fa-user-secret"></i> Employee Theft & Insider Threat</h2>
+
+                <!-- Detection 6: Terminated Employee Access -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-006</span>
+                            <span class="mitre-tag">T1078 - Valid Accounts</span>
+                        </div>
+                        <span class="risk-critical">CRITICAL</span>
+                    </div>
+                    <h3>Terminated Employee Access</h3>
+                    <p><strong>Description:</strong> Employee continues to access systems after termination. Critical security and compliance violation.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>` Get terminated employees from HR feed `
+| inputlookup employee_hr.csv 
+| where status="TERMINATED" AND isnotnull(termination_date)
+| eval term_epoch = strptime(termination_date, "%Y-%m-%d")
+| fields employee_id, employee_name, termination_date, term_epoch, store_id as home_store
+
+` Join with recent activity `
+| join type=inner employee_id 
+    [search index=pos_transactions OR index=physical_security earliest=-7d
+     | stats 
+         count as access_count,
+         latest(_time) as last_access,
+         values(sourcetype) as access_types,
+         values(store_id) as accessed_stores
+         by employee_id]
+
+| where last_access > term_epoch
+| eval days_since_termination = round((last_access - term_epoch) / 86400, 1)
+| eval risk_score = 95  ` Always critical `
+| table employee_id, employee_name, termination_date, days_since_termination,
+        access_count, access_types, accessed_stores, risk_score
+| sort -days_since_termination</code></pre>
+                    </div>
+
+                    <div class="info-box info-box-danger">
+                        <h4>Immediate Action Required</h4>
+                        <ol>
+                            <li>Disable all access immediately (AD, POS, badge)</li>
+                            <li>Review all activity since termination date</li>
+                            <li>Check for data exfiltration or fraudulent transactions</li>
+                            <li>Report to HR and Legal for potential breach notification</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Detection 7: After-Hours Activity -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-007</span>
+                            <span class="mitre-tag">T1078 - Valid Accounts</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>After-Hours POS Activity</h3>
+                    <p><strong>Description:</strong> POS transactions occurring outside normal store hours indicate potential theft or policy violation.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    earliest=-7d
+| lookup store_hours.csv store_id OUTPUT open_time, close_time, store_type
+| eval hour = tonumber(strftime(_time, "%H"))
+| eval minute = tonumber(strftime(_time, "%M"))
+| eval current_minutes = (hour * 60) + minute
+
+` Parse store hours (format: "06:00", "23:00") `
+| eval open_hour = tonumber(substr(open_time, 1, 2))
+| eval open_minutes = (open_hour * 60) + tonumber(substr(open_time, 4, 2))
+| eval close_hour = tonumber(substr(close_time, 1, 2))
+| eval close_minutes = (close_hour * 60) + tonumber(substr(close_time, 4, 2))
+
+` Flag after-hours (with 30 min buffer for closing procedures) `
+| eval is_after_hours = if(current_minutes < (open_minutes - 30) OR current_minutes > (close_minutes + 30), 1, 0)
+| where is_after_hours = 1
+
+| stats 
+    count as after_hours_txns,
+    sum(amount) as after_hours_sales,
+    values(transaction_type) as txn_types,
+    earliest(_time) as first_after_hours,
+    latest(_time) as last_after_hours
+    by store_id, cashier_id, register_id
+
+| eval risk_score = case(
+    after_hours_sales > 0 AND "SALE" IN (txn_types), 90,  ` Sales after hours very suspicious `
+    after_hours_txns > 5, 85,
+    1=1, 70
+)
+| where risk_score >= 70
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name, job_title
+| table store_id, cashier_id, employee_name, job_title, after_hours_txns, 
+        after_hours_sales, txn_types, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- Detection 8: Manager Override Abuse -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-008</span>
+                            <span class="mitre-tag">T1078 - Valid Accounts</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>Manager Override Abuse</h3>
+                    <p><strong>Description:</strong> Excessive use of manager overrides may indicate collusion, policy bypass, or credential sharing.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    override_used="YES"
+    earliest=-7d
+| stats 
+    count as override_count,
+    dc(cashier_id) as unique_cashiers,
+    dc(register_id) as unique_registers,
+    sum(discount_amount) as total_discounts,
+    sum(amount) as total_sales,
+    values(override_reason) as reasons
+    by manager_id, store_id
+
+` Calculate override rate per shift `
+| eventstats sum(override_count) as store_total_overrides by store_id
+| eval override_share = round(override_count / store_total_overrides * 100, 2)
+
+` Flag anomalies `
+| eventstats avg(override_count) as avg_overrides, stdev(override_count) as stdev_overrides by store_id
+| eval z_score = round((override_count - avg_overrides) / stdev_overrides, 2)
+
+| eval risk_score = case(
+    z_score > 3 AND unique_cashiers > 5, 90,  ` High overrides for many cashiers `
+    z_score > 3, 80,
+    override_share > 40, 75,  ` One manager doing 40%+ of overrides `
+    z_score > 2, 70,
+    1=1, 50
+)
+| where risk_score >= 70
+| lookup employee_info.csv employee_id as manager_id OUTPUT employee_name
+| table store_id, manager_id, employee_name, override_count, override_share,
+        unique_cashiers, total_discounts, z_score, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- Detection 9: Inventory Shrinkage -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-009</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>Inventory Adjustment Anomalies (Shrinkage)</h3>
+                    <p><strong>Description:</strong> Unusual inventory write-offs, adjustments, or damages in high-theft categories may indicate employee theft or receiving fraud.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=inventory sourcetype=sobeys:inventory:adjust
+    adjustment_type IN ("DAMAGE", "WRITEOFF", "SHRINK", "RECEIVING_SHORT")
+    earliest=-30d
+| lookup high_theft_categories.csv category_id OUTPUT category_name, is_high_risk, avg_unit_value
+| eval adjustment_value = quantity * avg_unit_value
+
+| stats 
+    count as adjustment_count,
+    sum(quantity) as total_units,
+    sum(adjustment_value) as total_value,
+    dc(category_id) as categories_affected,
+    values(adjustment_reason) as reasons
+    by store_id, employee_id, adjustment_type
+
+` Compare to store average `
+| eventstats 
+    avg(total_value) as store_avg_value,
+    stdev(total_value) as store_stdev
+    by store_id, adjustment_type
+
+| eval z_score = round((total_value - store_avg_value) / store_stdev, 2)
+| eval risk_score = case(
+    z_score > 3 AND is_high_risk="YES", 90,
+    z_score > 3, 80,
+    z_score > 2 AND total_value > 1000, 75,
+    z_score > 2, 65,
+    1=1, 50
+)
+| where risk_score >= 65
+| lookup employee_info.csv employee_id OUTPUT employee_name, department
+| table store_id, employee_id, employee_name, adjustment_type, adjustment_count,
+        total_units, total_value, z_score, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+
+                    <div class="sobeys-context">
+                        <h4>High-Theft Categories at Sobeys</h4>
+                        <ul>
+                            <li><strong>Pharmacy OTC:</strong> Pain relievers, allergy meds, baby formula</li>
+                            <li><strong>Health & Beauty:</strong> Razors, cosmetics, fragrances</li>
+                            <li><strong>Meat & Seafood:</strong> Premium cuts, lobster, crab</li>
+                            <li><strong>Alcohol:</strong> Spirits, premium wines</li>
+                            <li><strong>Electronics:</strong> Gift cards, phone accessories</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- ORGANIZED RETAIL CRIME -->
+                <h2><i class="fas fa-users"></i> Organized Retail Crime (ORC)</h2>
+
+                <!-- Detection 10: Return Fraud Ring -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-010</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-critical">CRITICAL</span>
+                    </div>
+                    <h3>Multi-Store Return Fraud Ring</h3>
+                    <p><strong>Description:</strong> Same individual returning merchandise at multiple stores, especially without receipts. Classic ORC indicator.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    transaction_type="RETURN"
+    earliest=-30d
+| stats 
+    count as return_count,
+    sum(amount) as total_returned,
+    dc(store_id) as stores_hit,
+    values(store_id) as store_list,
+    dc(date_mday) as days_active,
+    sum(eval(if(receipt_present="NO", 1, 0))) as no_receipt_count,
+    sum(eval(if(receipt_present="NO", amount, 0))) as no_receipt_value,
+    values(category) as categories
+    by id_number, id_type
+
+| where stores_hit >= 2 AND return_count >= 3
+
+| eval no_receipt_rate = round(no_receipt_count / return_count * 100, 2)
+| eval avg_per_store = round(total_returned / stores_hit, 2)
+
+| eval risk_score = case(
+    stores_hit >= 5 AND total_returned > 1000, 98,
+    stores_hit >= 5, 95,
+    stores_hit >= 3 AND no_receipt_rate > 50, 90,
+    stores_hit >= 3 AND total_returned > 500, 85,
+    no_receipt_rate > 70, 80,
+    1=1, 70
+)
+| eval orc_likelihood = case(
+    risk_score >= 95, "CONFIRMED ORC",
+    risk_score >= 85, "HIGH",
+    risk_score >= 75, "MEDIUM",
+    1=1, "LOW"
+)
+| where risk_score >= 75
+| table id_number, id_type, return_count, total_returned, stores_hit, store_list,
+        no_receipt_rate, days_active, orc_likelihood, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+
+                    <h4>ORC Investigation Workflow</h4>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">1</span>
+                        <strong>Confirm Pattern:</strong> Verify multi-store returns are same individual (check ID images)
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">2</span>
+                        <strong>Network Analysis:</strong> Search for associated individuals (same address, phone, vehicle)
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">3</span>
+                        <strong>Calculate Loss:</strong> Total value of fraudulent returns
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">4</span>
+                        <strong>Law Enforcement:</strong> If confirmed ORC (>$5,000), engage police
+                    </div>
+                    <div class="playbook-step">
+                        <span class="playbook-step-num">5</span>
+                        <strong>Civil Recovery:</strong> Initiate civil demand letter process
+                    </div>
+                </div>
+
+                <!-- Detection 11: Coordinated Theft -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-011</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-critical">CRITICAL</span>
+                    </div>
+                    <h3>Coordinated Theft Pattern (Grab & Run)</h3>
+                    <p><strong>Description:</strong> Multiple high-value transactions (often returns or voids) at different stores within short time window suggests coordinated ORC team.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    (transaction_type="RETURN" AND receipt_present="NO" AND amount > 100)
+    earliest=-24h
+| bin _time span=2h as time_window
+| stats 
+    count as incident_count,
+    dc(store_id) as stores_affected,
+    values(store_id) as store_list,
+    sum(amount) as total_value,
+    dc(id_number) as unique_ids,
+    values(category) as categories
+    by time_window, region
+
+| where stores_affected >= 3 AND incident_count >= 5
+
+| eval risk_score = case(
+    stores_affected >= 5 AND total_value > 2000, 98,
+    stores_affected >= 5, 95,
+    stores_affected >= 3 AND total_value > 1000, 90,
+    1=1, 80
+)
+| eval alert_level = case(
+    risk_score >= 95, "CRITICAL - ACTIVE ORC TEAM",
+    risk_score >= 90, "HIGH - COORDINATED ACTIVITY",
+    1=1, "MEDIUM - INVESTIGATE"
+)
+| table time_window, region, incident_count, stores_affected, store_list,
+        total_value, unique_ids, categories, alert_level, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- Detection 12: Receipt Lookup Abuse -->
+                <div class="detection-card">
+                    <div class="detection-header">
+                        <div>
+                            <span class="detection-id">RETAIL-012</span>
+                            <span class="mitre-tag">T1565 - Data Manipulation</span>
+                        </div>
+                        <span class="risk-high">HIGH</span>
+                    </div>
+                    <h3>Receipt Lookup Fraud</h3>
+                    <p><strong>Description:</strong> Using receipt lookup feature to find receipts for items shoplifted, then returning those items for refund.</p>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Correlation Search</span>
+                        </div>
+                        <pre><code>index=pos_transactions sourcetype=sobeys:pos:transaction
+    earliest=-7d
+| transaction customer_id maxspan=30m 
+    [search index=pos_transactions action="RECEIPT_LOOKUP"]
+| where eventcount >= 2
+| search transaction_type="RETURN"
+| stats 
+    count as lookup_return_count,
+    sum(amount) as total_returned,
+    dc(store_id) as stores,
+    values(category) as categories
+    by customer_id, id_number
+
+| where lookup_return_count >= 2
+| eval risk_score = case(
+    lookup_return_count >= 5, 90,
+    lookup_return_count >= 3, 80,
+    1=1, 70
+)
+| table customer_id, id_number, lookup_return_count, total_returned, stores, categories, risk_score
+| sort -risk_score</code></pre>
+                    </div>
+                </div>
+
+                <!-- PCI-DSS COMPLIANCE -->
+                <h2><i class="fas fa-lock"></i> PCI-DSS Compliance Monitoring</h2>
+
+                <div class="info-box info-box-info">
+                    <h4>PCI-DSS Scope at Sobeys</h4>
+                    <ul>
+                        <li><strong>POS Terminals:</strong> 10,000+ devices processing card-present transactions</li>
+                        <li><strong>E-commerce:</strong> Voila, grocery.sobeys.com, IGA.net</li>
+                        <li><strong>Pharmacy:</strong> Lawtons, Sobeys Pharmacy with insurance billing</li>
+                        <li><strong>Fuel Stations:</strong> Pay-at-pump card readers</li>
+                    </ul>
+                </div>
+
+                <div class="config-section">
+                    <h3>Requirement 10.2.1 - All Access to Cardholder Data</h3>
+                    <div class="config-block">
+                        <pre><code>index=pos_transactions OR index=pharmacy_pci OR index=ecommerce
+    (card_present="YES" OR pan_accessed="YES" OR card_lookup="YES")
+    earliest=-24h
+| stats 
+    count as access_count,
+    dc(transaction_id) as unique_transactions,
+    values(access_reason) as access_reasons
+    by user, sourcetype, action
+| table _time, user, sourcetype, action, access_count, access_reasons</code></pre>
+                    </div>
+
+                    <h3>Requirement 10.2.2 - All Admin Actions</h3>
+                    <div class="config-block">
+                        <pre><code>index=pos_transactions OR index=pharmacy_pci
+    user_role IN ("admin", "manager", "supervisor", "pci_admin")
+    earliest=-24h
+| stats count as admin_actions by user, user_role, action, target_system
+| sort -admin_actions</code></pre>
+                    </div>
+
+                    <h3>Requirement 10.2.4 - Invalid Access Attempts</h3>
+                    <div class="config-block">
+                        <pre><code>index=pos_transactions OR index=pharmacy_pci
+    (status="DENIED" OR status="FAILED" OR status="UNAUTHORIZED")
+    earliest=-24h
+| stats 
+    count as failed_attempts,
+    dc(src_ip) as unique_sources,
+    values(failure_reason) as reasons
+    by user, target_system
+| where failed_attempts >= 5
+| eval risk_score = case(
+    failed_attempts >= 20, 90,
+    failed_attempts >= 10, 75,
+    1=1, 60
+)
+| sort -failed_attempts</code></pre>
+                    </div>
+
+                    <h3>Requirement 10.2.5 - Authentication Mechanism Changes</h3>
+                    <div class="config-block">
+                        <pre><code>index=pos_transactions OR index=pharmacy_pci
+    (action="PASSWORD_CHANGE" OR action="ACCOUNT_CREATED" OR action="ACCOUNT_DELETED"
+     OR action="PERMISSION_CHANGED" OR action="MFA_DISABLED")
+    earliest=-24h
+| table _time, user, target_user, action, old_value, new_value, src_ip
+| sort _time</code></pre>
+                    </div>
+
+                    <h3>Requirement 10.2.6 - Audit Log Tampering</h3>
+                    <div class="config-block">
+                        <pre><code>index=_audit OR index=pos_transactions
+    (action="LOG_CLEARED" OR action="LOG_DISABLED" OR action="AUDIT_CONFIG_CHANGE")
+    earliest=-24h
+| eval risk_score = 95  ` Always critical `
+| table _time, user, action, target, src_ip, risk_score</code></pre>
+                    </div>
+
+                    <h3>POS Malware Detection</h3>
+                    <div class="config-block">
+                        <pre><code>` Memory scraping indicators `
+index=endpoint sourcetype=sysmon
+    (process_name="*pos*" OR process_name="*terminal*")
+    (EventCode=10 OR EventCode=8)  ` Process access or CreateRemoteThread `
+| stats count by host, process_name, target_process, call_trace
+| where count > 10
+
+` Network beaconing from POS terminals `
+index=network sourcetype=pan:traffic
+    src_zone="pos_network"
+    dest_zone="internet"
+| timechart span=5m count by dest_ip
+| where count > 100  ` Unusual outbound from POS `
+
+` Unauthorized processes on POS `
+index=endpoint sourcetype=sysmon EventCode=1
+    host=POS-*
+| lookup pos_approved_processes.csv process_name OUTPUT approved
+| where isnull(approved) OR approved="NO"
+| stats count by host, process_name, parent_process
+| sort -count</code></pre>
+                    </div>
+                </div>
+
+                <!-- DASHBOARDS -->
+                <h2><i class="fas fa-chart-line"></i> Retail Security Dashboards</h2>
+
+                <div class="config-section">
+                    <h3>Loss Prevention Executive Dashboard</h3>
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">Dashboard XML</span>
+                        </div>
+                        <pre><code>&lt;dashboard version="1.1" theme="dark"&gt;
+  &lt;label&gt;Sobeys Loss Prevention - Executive Dashboard&lt;/label&gt;
+  &lt;description&gt;Real-time fraud detection and shrinkage monitoring&lt;/description&gt;
+  
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;High-Risk Transactions (24h)&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions risk_score&gt;=75 earliest=-24h | stats count&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[50,100]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Total Till Variance (7d)&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions sourcetype=sobeys:pos:till_count earliest=-7d 
+| eval variance=actual_amount-expected_amount | stats sum(variance) as total_variance 
+| eval total_variance="$".tostring(round(total_variance,2),"commas")&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0xdc4e41","0xf8be34","0x53a051"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[-5000,-1000]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;ORC Alerts (30d)&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions orc_likelihood="*ORC*" earliest=-30d | stats dc(id_number) as orc_suspects&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="colorMode"&gt;block&lt;/option&gt;
+        &lt;option name="rangeColors"&gt;["0x53a051","0xf8be34","0xdc4e41"]&lt;/option&gt;
+        &lt;option name="rangeValues"&gt;[5,15]&lt;/option&gt;
+        &lt;option name="useColors"&gt;1&lt;/option&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Employees on Watchlist&lt;/title&gt;
+      &lt;single&gt;
+        &lt;search&gt;
+          &lt;query&gt;| inputlookup employee_watchlist.csv | where status="ACTIVE" | stats count&lt;/query&gt;
+        &lt;/search&gt;
+      &lt;/single&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Fraud Trends by Type (30d)&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions risk_score&gt;=70 earliest=-30d
+| timechart span=1d count by fraud_type&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;area&lt;/option&gt;
+        &lt;option name="charting.chart.stackMode"&gt;stacked&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Top Exception Stores&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions risk_score&gt;=70 earliest=-7d
+| stats count as exceptions by store_id
+| sort -exceptions | head 10&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;bar&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Highest Risk Employees&lt;/title&gt;
+      &lt;table&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions earliest=-7d
+| stats sum(risk_score) as total_risk, count as incidents by cashier_id, store_id
+| lookup employee_info.csv employee_id as cashier_id OUTPUT employee_name, hire_date
+| eval avg_risk=round(total_risk/incidents,1)
+| sort -total_risk | head 20
+| table store_id, cashier_id, employee_name, incidents, total_risk, avg_risk&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="drilldown"&gt;cell&lt;/option&gt;
+      &lt;/table&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Regional Exception Rates&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=pos_transactions earliest=-30d
+| lookup store_info.csv store_id OUTPUT region
+| stats count(eval(risk_score&gt;=70)) as exceptions, count as total by region
+| eval exception_rate=round(exceptions/total*100,3)
+| fields region, exception_rate&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;pie&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+    &lt;panel&gt;
+      &lt;title&gt;Shrinkage by Category (MTD)&lt;/title&gt;
+      &lt;chart&gt;
+        &lt;search&gt;
+          &lt;query&gt;index=inventory sourcetype=sobeys:inventory:adjust 
+  adjustment_type IN ("DAMAGE","WRITEOFF","SHRINK") earliest=-30d
+| lookup category_info.csv category_id OUTPUT category_name
+| stats sum(adjustment_value) as shrinkage by category_name
+| sort -shrinkage | head 10&lt;/query&gt;
+        &lt;/search&gt;
+        &lt;option name="charting.chart"&gt;bar&lt;/option&gt;
+      &lt;/chart&gt;
+    &lt;/panel&gt;
+  &lt;/row&gt;
+&lt;/dashboard&gt;</code></pre>
+                    </div>
+                </div>
+
+                <!-- INVESTIGATION PLAYBOOKS -->
+                <h2><i class="fas fa-book"></i> Investigation Playbooks</h2>
+
+                <div class="config-section">
+                    <h3>Playbook 1: Employee Theft Investigation</h3>
+                    <div class="arch-diagram">
+EMPLOYEE THEFT INVESTIGATION PLAYBOOK
+═══════════════════════════════════════════════════════════════════════════════
+
+TRIGGER: Employee risk score exceeds 70 OR specific fraud indicator detected
+
+PHASE 1: INITIAL ASSESSMENT (30 minutes)
+─────────────────────────────────────────
+□ Review alert details and triggering events
+□ Check employee profile and history:
+
+  | inputlookup employee_info.csv WHERE employee_id="&lt;ID&gt;"
+  | table employee_name, hire_date, position, store_id, manager, 
+          performance_rating, previous_incidents
+
+□ Gather 30-day transaction history:
+
+  index=pos_transactions cashier_id="&lt;ID&gt;" earliest=-30d
+  | stats count as total_txns, 
+          sum(eval(if(transaction_type="VOID",1,0))) as voids,
+          sum(eval(if(transaction_type="RETURN",1,0))) as returns,
+          sum(eval(if(override_used="YES",1,0))) as overrides,
+          sum(discount_amount) as total_discounts
+  | eval void_rate=round(voids/total_txns*100,2)
+  | eval return_rate=round(returns/total_txns*100,2)
+
+PHASE 2: PEER COMPARISON (1 hour)
+─────────────────────────────────────────
+□ Compare metrics to peers (same store, same role):
+
+  index=pos_transactions store_id="&lt;STORE&gt;" earliest=-30d
+  | stats count as txns, 
+          sum(eval(if(transaction_type="VOID",1,0))) as voids
+          by cashier_id
+  | eval void_rate=round(voids/txns*100,2)
+  | eventstats avg(void_rate) as peer_avg, stdev(void_rate) as peer_stdev
+  | eval z_score=round((void_rate-peer_avg)/peer_stdev,2)
+  | where cashier_id="&lt;ID&gt;"
+
+□ Document deviation from normal (z-score > 2 = significant)
+
+PHASE 3: DEEP DIVE ANALYSIS (2-4 hours)
+─────────────────────────────────────────
+□ Identify specific suspicious transactions:
+
+  index=pos_transactions cashier_id="&lt;ID&gt;" earliest=-30d
+      (transaction_type="VOID" OR 
+       (transaction_type="RETURN" AND receipt_present="NO") OR
+       discount_amount > 20)
+  | sort _time
+  | table _time, transaction_id, transaction_type, amount, payment_method,
+          customer_id, discount_amount, void_reason
+
+□ Check for customer-cashier relationships:
+
+  index=pos_transactions cashier_id="&lt;ID&gt;" earliest=-90d
+  | where isnotnull(customer_id) OR isnotnull(loyalty_card)
+  | stats count as interactions, sum(discount_amount) as total_discounts 
+          by customer_id
+  | where interactions >= 5 OR total_discounts > 50
+  | sort -interactions
+
+□ Pull video timestamps for top 5 suspicious transactions
+□ Review badge swipe patterns vs scheduled shifts
+□ Check till variance history
+
+PHASE 4: CORROBORATION (Variable)
+─────────────────────────────────────────
+□ Request video review from LP team
+□ Interview store manager (if appropriate and not involved)
+□ Review customer complaints related to employee
+□ Check inventory adjustments in employee's department
+
+PHASE 5: DECISION & ACTION
+─────────────────────────────────────────
+Based on evidence strength:
+
+┌─────────────────┬─────────────────────────────────────────────────┐
+│ Evidence Level  │ Action                                          │
+├─────────────────┼─────────────────────────────────────────────────┤
+│ CONFIRMED       │ → HR notification, termination, possible        │
+│ (Video + Data)  │   prosecution if > $5,000                       │
+├─────────────────┼─────────────────────────────────────────────────┤
+│ STRONG          │ → Create LP case, enhanced monitoring,          │
+│ (Data + Pattern)│   manager awareness, written warning            │
+├─────────────────┼─────────────────────────────────────────────────┤
+│ MODERATE        │ → Add to watchlist, 30-day enhanced monitoring, │
+│ (Statistical)   │   coaching conversation                         │
+├─────────────────┼─────────────────────────────────────────────────┤
+│ WEAK            │ → Document findings, continue standard          │
+│ (Insufficient)  │   monitoring, close investigation               │
+└─────────────────┴─────────────────────────────────────────────────┘
+
+PHASE 6: DOCUMENTATION
+─────────────────────────────────────────
+□ Update employee_watchlist.csv lookup
+□ Create case in LP case management system
+□ Document investigation timeline and findings
+□ Calculate total estimated loss
+□ File incident report if policy violation confirmed
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h3>Playbook 2: ORC Investigation</h3>
+                    <div class="arch-diagram">
+ORGANIZED RETAIL CRIME (ORC) INVESTIGATION PLAYBOOK
+═══════════════════════════════════════════════════════════════════════════════
+
+TRIGGER: Multi-store return pattern detected (3+ stores, $500+ value)
+
+PHASE 1: NETWORK MAPPING (2-4 hours)
+─────────────────────────────────────────
+□ Identify all related individuals:
+
+  index=pos_transactions transaction_type="RETURN" earliest=-90d
+      id_number="&lt;SUSPECT_ID&gt;"
+  | stats count, sum(amount) as total, dc(store_id) as stores,
+          values(store_id) as store_list, 
+          values(address) as addresses,
+          values(phone) as phones
+  | table id_number, count, total, stores, store_list, addresses, phones
+
+□ Find linked individuals (shared address/phone):
+
+  index=pos_transactions transaction_type="RETURN" earliest=-90d
+  | stats values(id_number) as linked_ids by address
+  | where mvcount(linked_ids) > 1
+  | mvexpand linked_ids
+  | stats values(address) as shared_addresses, dc(address) as links 
+          by linked_ids
+
+□ Timeline analysis:
+
+  index=pos_transactions id_number IN (&lt;SUSPECT_LIST&gt;) earliest=-90d
+  | timechart span=1d count by store_id
+  | addtotals
+
+PHASE 2: LOSS CALCULATION
+─────────────────────────────────────────
+□ Total confirmed fraudulent returns:
+
+  index=pos_transactions transaction_type="RETURN" 
+      id_number IN (&lt;SUSPECT_LIST&gt;) earliest=-90d
+  | stats sum(amount) as total_loss, count as return_count,
+          dc(store_id) as stores_affected,
+          values(category) as categories
+  | eval avg_return = round(total_loss/return_count, 2)
+
+□ Estimate unreported losses (returns without ID):
+
+  index=pos_transactions transaction_type="RETURN" receipt_present="NO"
+      store_id IN (&lt;AFFECTED_STORES&gt;) earliest=-90d
+      NOT id_number IN (&lt;SUSPECT_LIST&gt;)
+  | where amount > 50  ` Similar profile `
+  | stats sum(amount) as potential_additional_loss
+
+PHASE 3: EVIDENCE PACKAGE
+─────────────────────────────────────────
+Prepare for law enforcement:
+□ Transaction logs (CSV export)
+□ Video stills (key transactions)
+□ ID images from POS system
+□ Loss calculation spreadsheet
+□ Store location map with timeline
+□ Suspect relationship diagram
+
+PHASE 4: LAW ENFORCEMENT COORDINATION
+─────────────────────────────────────────
+If total loss > $5,000:
+□ Contact local police (non-emergency)
+□ File formal complaint
+□ Provide evidence package
+□ Request case number
+
+If part of known ORC ring:
+□ Contact ORC task force (if available in region)
+□ Share intelligence with RLPAC (Retail Loss Prevention Association of Canada)
+
+PHASE 5: PREVENTION MEASURES
+─────────────────────────────────────────
+□ Add suspects to ban list (share photos with stores)
+□ Update return policy thresholds if pattern exploited policy gap
+□ Alert affected region stores
+□ Consider requiring manager approval for returns > $X at affected stores
+
+PHASE 6: CIVIL RECOVERY
+─────────────────────────────────────────
+If confirmed fraud:
+□ Calculate civil demand amount (typically 2-3x loss + fees)
+□ Send civil demand letter
+□ Track recovery status
+                    </div>
+                </div>
+
+                <!-- LOOKUPS -->
+                <h2><i class="fas fa-table"></i> Required Lookup Tables</h2>
+
+                <div class="config-section">
+                    <h3>Lookup Configurations</h3>
+                    
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">store_info.csv</span>
+                        </div>
+                        <pre><code>store_id,store_name,brand,region,province,city,address,manager,store_type,sqft,open_time,close_time,pharmacy,fuel_station
+STR-0001,Sobeys Queen St,Sobeys,Ontario,ON,Toronto,123 Queen St E,John Smith,Urban,45000,06:00,23:00,YES,NO
+STR-0002,Safeway 8th Ave,Safeway,West,AB,Calgary,456 8th Ave SW,Jane Doe,Urban,52000,06:00,24:00,YES,YES
+STR-0003,FreshCo Dundas,FreshCo,Ontario,ON,Mississauga,789 Dundas St,Bob Wilson,Suburban,35000,07:00,22:00,NO,NO
+STR-0004,Foodland Main St,Foodland,Atlantic,NS,Halifax,101 Main St,Mary Johnson,Rural,18000,08:00,21:00,NO,NO
+STR-0005,IGA Mont-Royal,IGA,Quebec,QC,Montreal,202 Mont-Royal E,Pierre Tremblay,Urban,28000,07:00,23:00,YES,NO</code></pre>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">employee_info.csv</span>
+                        </div>
+                        <pre><code>employee_id,employee_name,store_id,department,job_title,hire_date,manager_id,status,hourly_rate
+EMP-10001,Alice Thompson,STR-0001,Front End,Cashier,2022-03-15,EMP-10050,ACTIVE,16.50
+EMP-10002,Bob Martinez,STR-0001,Front End,Cashier,2023-08-20,EMP-10050,ACTIVE,15.50
+EMP-10050,Carol Williams,STR-0001,Front End,Front End Manager,2018-06-01,EMP-10100,ACTIVE,28.00
+EMP-10100,David Lee,STR-0001,Management,Store Manager,2015-01-10,EMP-90001,ACTIVE,75000</code></pre>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">employee_watchlist.csv</span>
+                        </div>
+                        <pre><code>employee_id,employee_name,store_id,watchlist_reason,added_date,added_by,status,review_date,notes
+EMP-10002,Bob Martinez,STR-0001,High void rate - 3x peer average,2024-01-15,LP-001,ACTIVE,2024-02-15,Under 30-day monitoring
+EMP-10045,Jane Smith,STR-0003,No-receipt returns pattern,2024-01-10,LP-002,ACTIVE,2024-02-10,Video review pending
+EMP-10078,Mike Brown,STR-0005,After-hours POS activity,2024-01-05,LP-001,RESOLVED,2024-01-20,Explained - authorized OT</code></pre>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">high_theft_categories.csv</span>
+                        </div>
+                        <pre><code>category_id,category_name,department,is_high_risk,avg_unit_value,theft_method
+CAT-001,Baby Formula,Pharmacy OTC,YES,45.00,Grab and run
+CAT-002,Razor Blades,Health & Beauty,YES,35.00,Concealment
+CAT-003,Premium Spirits,Alcohol,YES,55.00,Grab and run
+CAT-004,Gift Cards,Front End,YES,50.00,Employee fraud
+CAT-005,Crab/Lobster,Seafood,YES,28.00,Sweethearting
+CAT-006,Premium Beef,Meat,YES,32.00,Mislabeling
+CAT-007,Cosmetics,Health & Beauty,YES,22.00,Concealment
+CAT-008,Allergy Medicine,Pharmacy OTC,YES,18.00,Concealment
+CAT-100,Produce,Produce,NO,3.50,N/A
+CAT-101,Dairy,Dairy,NO,5.00,N/A</code></pre>
+                    </div>
+
+                    <div class="config-block">
+                        <div class="config-block-header">
+                            <span class="config-title">store_hours.csv</span>
+                        </div>
+                        <pre><code>store_id,day_of_week,open_time,close_time,is_24hr
+STR-0001,Monday,06:00,23:00,NO
+STR-0001,Tuesday,06:00,23:00,NO
+STR-0001,Wednesday,06:00,23:00,NO
+STR-0001,Thursday,06:00,23:00,NO
+STR-0001,Friday,06:00,23:00,NO
+STR-0001,Saturday,07:00,22:00,NO
+STR-0001,Sunday,08:00,21:00,NO
+STR-0002,Monday,00:00,23:59,YES
+STR-0002,Tuesday,00:00,23:59,YES</code></pre>
+                    </div>
+                </div>
+
+                <!-- INTERVIEW QUESTIONS -->
+                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
+
+                <div class="qa-section">
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How would you detect employee theft in a large retail environment using Splunk?</button>
+                        <div class="qa-answer">
+                            <p><strong>Multi-layered detection approach:</strong></p>
+                            <ol>
+                                <li><strong>Transaction Anomalies:</strong> Monitor for post-tender voids (cash sale then void), excessive no-receipt returns, high discount rates, price overrides</li>
+                                <li><strong>Behavioral Patterns:</strong> After-hours POS activity, till variances, same customer-cashier relationships over time</li>
+                                <li><strong>Statistical Analysis:</strong> Use <code>eventstats</code> to calculate peer averages, then compute z-scores to identify outliers. A z-score > 2 indicates significant deviation.</li>
+                                <li><strong>Composite Risk Scoring:</strong> Combine multiple weak signals into risk score. Example: void_score + return_score + variance_score = total_risk</li>
+                            </ol>
+                            <p><strong>Key SPL pattern for peer comparison:</strong></p>
+                            <pre><code>index=pos_transactions earliest=-30d
+| stats count as txns, sum(eval(if(type="VOID",1,0))) as voids by cashier_id, store_id
+| eval void_rate = voids/txns*100
+| eventstats avg(void_rate) as peer_avg, stdev(void_rate) as peer_stdev by store_id
+| eval z_score = (void_rate - peer_avg) / peer_stdev
+| where z_score > 2</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question">Q: Explain PCI-DSS Requirement 10 and how you would implement it in Splunk.</button>
+                        <div class="qa-answer">
+                            <p><strong>Requirement 10 - Track and Monitor All Access:</strong></p>
+                            <ul>
+                                <li><strong>10.2.1:</strong> Log all individual user access to cardholder data - Query POS and payment systems for card_present or PAN access events</li>
+                                <li><strong>10.2.2:</strong> Log all administrative actions - Filter by user_role="admin" and track all configuration changes</li>
+                                <li><strong>10.2.4:</strong> Log invalid access attempts - Monitor for status="DENIED" or "FAILED", alert on 5+ failures</li>
+                                <li><strong>10.2.5:</strong> Log changes to authentication - Track PASSWORD_CHANGE, ACCOUNT_CREATED, PERMISSION_CHANGED events</li>
+                                <li><strong>10.2.6:</strong> Log audit log tampering - Critical alert for LOG_CLEARED or AUDIT_CONFIG_CHANGE</li>
+                            </ul>
+                            <p><strong>Retention Requirements:</strong></p>
+                            <ul>
+                                <li>Minimum 1 year retention</li>
+                                <li>At least 3 months immediately available for analysis</li>
+                                <li>In Splunk: <code>frozenTimePeriodInSecs = 31536000</code> (1 year)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How do you identify Organized Retail Crime (ORC) patterns?</button>
+                        <div class="qa-answer">
+                            <p><strong>ORC Detection Patterns:</strong></p>
+                            <ol>
+                                <li><strong>Multi-Store Returns:</strong> Same ID returning merchandise at 3+ stores within 30 days</li>
+                                <li><strong>Receipt Lookup Abuse:</strong> Returns using receipt lookup feature followed by refund</li>
+                                <li><strong>Coordinated Timing:</strong> Multiple high-value returns at different stores within 2-hour window</li>
+                                <li><strong>Network Analysis:</strong> Link individuals through shared addresses, phone numbers, vehicles</li>
+                            </ol>
+                            <p><strong>Key Detection Query:</strong></p>
+                            <pre><code>index=pos_transactions transaction_type="RETURN" receipt_present="NO" earliest=-30d
+| stats count, sum(amount) as total, dc(store_id) as stores, values(store_id) as store_list 
+    by id_number
+| where stores >= 3 AND total > 500
+| eval orc_score = stores * 20 + (total / 100)</code></pre>
+                            <p><strong>Investigation Steps:</strong></p>
+                            <ol>
+                                <li>Confirm pattern with video review</li>
+                                <li>Map network of associated individuals</li>
+                                <li>Calculate total loss</li>
+                                <li>Engage law enforcement if > $5,000</li>
+                                <li>Add to ban list and alert stores</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question">Q: How would you design a shrinkage monitoring solution for a grocery retailer?</button>
+                        <div class="qa-answer">
+                            <p><strong>Shrinkage = Lost Inventory Value (Theft + Damage + Administrative Error)</strong></p>
+                            <p><strong>Data Sources Required:</strong></p>
+                            <ul>
+                                <li>Inventory adjustment transactions (DAMAGE, WRITEOFF, SHRINK codes)</li>
+                                <li>Receiving logs (expected vs actual received)</li>
+                                <li>POS transactions (for known theft correlation)</li>
+                                <li>Category master with unit values</li>
+                            </ul>
+                            <p><strong>Key Metrics to Monitor:</strong></p>
+                            <ul>
+                                <li>Shrinkage rate by store (compare to target 1%)</li>
+                                <li>Shrinkage by category (focus on high-theft)</li>
+                                <li>Shrinkage by employee (who's doing adjustments)</li>
+                                <li>Time patterns (shrinkage by day/shift)</li>
+                            </ul>
+                            <p><strong>Detection Query:</strong></p>
+                            <pre><code>index=inventory adjustment_type IN ("DAMAGE","WRITEOFF","SHRINK")
+| lookup high_theft_categories.csv category_id OUTPUT is_high_risk, avg_unit_value
+| eval loss_value = quantity * avg_unit_value
+| stats sum(loss_value) as total_shrink by store_id, category_id, employee_id
+| eventstats avg(total_shrink) as avg_shrink, stdev(total_shrink) as stdev_shrink by store_id
+| eval z_score = (total_shrink - avg_shrink) / stdev_shrink
+| where z_score > 2 AND is_high_risk="YES"</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="qa-item">
+                        <button class="qa-question">Q: What's your approach to tuning retail fraud detection to reduce false positives?</button>
+                        <div class="qa-answer">
+                            <p><strong>Tuning Strategy:</strong></p>
+                            <ol>
+                                <li><strong>Baseline First:</strong> Run detection for 30 days in alert-only mode, don't action</li>
+                                <li><strong>Calculate False Positive Rate:</strong> Review sample of alerts, determine true positive %</li>
+                                <li><strong>Segment Analysis:</strong> FP rate may vary by store type, region, employee tenure</li>
+                                <li><strong>Adjust Thresholds:</strong>
+                                    <ul>
+                                        <li>High-volume stores need higher absolute thresholds</li>
+                                        <li>Use statistical methods (z-score > 2 or 3) instead of fixed numbers</li>
+                                        <li>Add minimum transaction count requirements</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Exclusions:</strong>
+                                    <ul>
+                                        <li>Training accounts</li>
+                                        <li>Known legitimate patterns (e.g., customer service desk voids)</li>
+                                        <li>Specific transaction codes that are authorized</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Time-Based Tuning:</strong> Holiday periods may need relaxed thresholds</li>
+                            </ol>
+                            <p><strong>Target Metrics:</strong></p>
+                            <ul>
+                                <li>True Positive Rate > 50% (ideally > 70%)</li>
+                                <li>Alert volume manageable by LP team (typically < 50/day for enterprise)</li>
+                                <li>Mean Time to Investigate < 30 minutes per alert</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Resources -->
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="sap-security.html">SAP Security Monitoring</a> - SAP integration with retail systems</li>
+                    <li><a href="correlation-searches.html">Correlation Searches</a> - Building detection rules</li>
+                    <li><a href="risk-based-alerting.html">Risk-Based Alerting</a> - Composite risk scoring</li>
+                    <li><a href="dashboards.html">Dashboard Development</a> - Building LP dashboards</li>
+                    <li><a href="data-models.html">Data Models & CIM</a> - CIM mapping for retail data</li>
+                    <li><a href="splunk-cloud-mastery.html">Splunk Cloud</a> - Cloud deployment for retail</li>
+                </ul>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.nextElementSibling;
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+                if (!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

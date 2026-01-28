@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Certification Lab Exercises | Hands-On Practice</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .lab-card { background: linear-gradient(135deg, #1a1f35 0%, #2d3555 100%); border: 1px solid #404968; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .lab-card h3 { color: #58a6ff; margin-top: 0; }
+        .lab-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .lab-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+        .lab-meta span { background: #21262d; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+        .lab-meta .difficulty-beginner { background: #238636; color: white; }
+        .lab-meta .difficulty-intermediate { background: #d29922; color: black; }
+        .lab-meta .difficulty-advanced { background: #f85149; color: white; }
+        .lab-meta .time { background: #1f6feb; color: white; }
+        .lab-meta .cert { background: #8957e5; color: white; }
+        .lab-objective { background: #0d1117; border-left: 4px solid #58a6ff; padding: 12px 16px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+        .lab-steps { counter-reset: step-counter; list-style: none; padding: 0; }
+        .lab-steps li { counter-increment: step-counter; padding: 16px 16px 16px 60px; margin: 12px 0; background: #0d1117; border-radius: 8px; position: relative; }
+        .lab-steps li::before { content: counter(step-counter); position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; background: #238636; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9em; }
+        .lab-verification { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); border: 1px solid #3d8b5a; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .lab-verification h5 { color: #7ce38b; margin-top: 0; }
+        .lab-hint { background: #1c1c3a; border: 1px solid #5a5aad; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .lab-hint h5 { color: #a5a5ff; margin-top: 0; }
+        .challenge-box { background: linear-gradient(135deg, #3d1a1a 0%, #5a2d2d 100%); border: 1px solid #8b3d3d; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .challenge-box h5 { color: #ff7b7b; margin-top: 0; }
+        .progress-tracker { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .progress-tracker h4 { margin-top: 0; color: #58a6ff; }
+        .checkbox-list { list-style: none; padding: 0; }
+        .checkbox-list li { padding: 8px 0; border-bottom: 1px solid #21262d; }
+        .checkbox-list input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
+        .section-divider { border: none; border-top: 2px solid #30363d; margin: 40px 0; }
+        .cert-badge { display: inline-block; padding: 8px 16px; border-radius: 8px; font-weight: bold; margin: 4px; }
+        .cert-badge.power-user { background: #238636; }
+        .cert-badge.admin { background: #1f6feb; }
+        .cert-badge.es-admin { background: #8957e5; }
+        .cert-badge.cloud-admin { background: #f78166; }
+        .toc-section { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .toc-section h4 { margin-top: 0; color: #58a6ff; }
+        .toc-section ul { columns: 2; column-gap: 40px; }
+        .toc-section li { padding: 4px 0; }
+        @media (max-width: 768px) { .toc-section ul { columns: 1; } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Nik's SIEM</span>
+                </a>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Certification Prep</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
+                        <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link active"><i class="fas fa-flask"></i><span>Lab Exercises</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Lab Categories</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="#spl-labs" class="sidebar-nav-link"><i class="fas fa-terminal"></i><span>SPL Labs</span></a></li>
+                        <li class="sidebar-nav-item"><a href="#knowledge-labs" class="sidebar-nav-link"><i class="fas fa-brain"></i><span>Knowledge Objects</span></a></li>
+                        <li class="sidebar-nav-item"><a href="#admin-labs" class="sidebar-nav-link"><i class="fas fa-cog"></i><span>Admin Labs</span></a></li>
+                        <li class="sidebar-nav-item"><a href="#es-labs" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Labs</span></a></li>
+                        <li class="sidebar-nav-item"><a href="#security-labs" class="sidebar-nav-link"><i class="fas fa-user-secret"></i><span>Security Use Cases</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="main-wrapper" id="mainWrapper">
+            <main class="main-content">
+                <h1><i class="fas fa-flask"></i> Splunk Certification Lab Exercises</h1>
+                <p class="lead">Hands-on practice labs designed for real Splunk environments. Complete these exercises using your office Splunk account to build practical skills for certification exams.</p>
+
+                <!-- Prerequisites -->
+                <div class="info-box info-box-warning">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Before You Start</h4>
+                    <ul>
+                        <li><strong>Access Required:</strong> Splunk Web UI with search capabilities</li>
+                        <li><strong>Recommended Role:</strong> power user or higher for most labs</li>
+                        <li><strong>For Admin Labs:</strong> admin role or access to test environment</li>
+                        <li><strong>Data:</strong> Labs use common indexes (_internal, _audit) - no special data needed</li>
+                        <li><strong>Safety:</strong> All labs are read-only unless marked [REQUIRES WRITE ACCESS]</li>
+                    </ul>
+                </div>
+
+                <!-- Progress Tracker -->
+                <div class="progress-tracker">
+                    <h4><i class="fas fa-tasks"></i> Lab Progress Tracker</h4>
+                    <p>Check off labs as you complete them. Your progress is saved in your browser.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 16px;">
+                        <div>
+                            <strong class="cert-badge power-user">Power User Labs</strong>
+                            <ul class="checkbox-list" id="power-user-progress">
+                                <li><input type="checkbox" id="lab1"> Basic Search & Filtering</li>
+                                <li><input type="checkbox" id="lab2"> Transforming Commands</li>
+                                <li><input type="checkbox" id="lab3"> Eval Functions Mastery</li>
+                                <li><input type="checkbox" id="lab4"> Time Functions</li>
+                                <li><input type="checkbox" id="lab5"> Field Extractions</li>
+                                <li><input type="checkbox" id="lab6"> Lookups</li>
+                                <li><input type="checkbox" id="lab7"> Macros</li>
+                                <li><input type="checkbox" id="lab8"> Tags & Event Types</li>
+                                <li><input type="checkbox" id="lab9"> Data Models</li>
+                                <li><input type="checkbox" id="lab10"> Dashboard Creation</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="cert-badge admin">Admin Labs</strong>
+                            <ul class="checkbox-list" id="admin-progress">
+                                <li><input type="checkbox" id="lab11"> Index Exploration</li>
+                                <li><input type="checkbox" id="lab12"> User & Role Analysis</li>
+                                <li><input type="checkbox" id="lab13"> Forwarder Monitoring</li>
+                                <li><input type="checkbox" id="lab14"> License Usage</li>
+                                <li><input type="checkbox" id="lab15"> Config File Analysis</li>
+                                <li><input type="checkbox" id="lab16"> Search Performance</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="cert-badge es-admin">ES Admin Labs</strong>
+                            <ul class="checkbox-list" id="es-progress">
+                                <li><input type="checkbox" id="lab17"> Notable Event Triage</li>
+                                <li><input type="checkbox" id="lab18"> Correlation Search Analysis</li>
+                                <li><input type="checkbox" id="lab19"> Risk Score Investigation</li>
+                                <li><input type="checkbox" id="lab20"> Asset & Identity</li>
+                                <li><input type="checkbox" id="lab21"> Threat Intelligence</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="cert-badge cloud-admin">Security Use Cases</strong>
+                            <ul class="checkbox-list" id="security-progress">
+                                <li><input type="checkbox" id="lab22"> Authentication Analysis</li>
+                                <li><input type="checkbox" id="lab23"> Brute Force Detection</li>
+                                <li><input type="checkbox" id="lab24"> Data Exfiltration Hunt</li>
+                                <li><input type="checkbox" id="lab25"> Privileged Access Audit</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table of Contents -->
+                <div class="toc-section">
+                    <h4><i class="fas fa-list"></i> Quick Navigation</h4>
+                    <ul>
+                        <li><a href="#spl-labs">SPL Fundamentals Labs (1-4)</a></li>
+                        <li><a href="#knowledge-labs">Knowledge Objects Labs (5-10)</a></li>
+                        <li><a href="#admin-labs">Admin Labs (11-16)</a></li>
+                        <li><a href="#es-labs">ES Admin Labs (17-21)</a></li>
+                        <li><a href="#security-labs">Security Use Case Labs (22-25)</a></li>
+                    </ul>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ==================== SPL LABS ==================== -->
+                <h2 id="spl-labs"><i class="fas fa-terminal"></i> SPL Fundamentals Labs</h2>
+                <p>Master the Splunk Processing Language with these progressive exercises.</p>
+
+                <!-- Lab 1: Basic Search -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 1: Basic Search & Filtering</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-beginner">Beginner</span>
+                            <span class="time">⏱️ 20 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Learn to search, filter, and explore Splunk data using basic SPL commands.
+                    </div>
+
+                    <h4>Exercises</h4>
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Search the internal index</strong><br>
+                            <code>index=_internal | head 100</code><br>
+                            <em>Observe the fields: _time, source, sourcetype, host</em>
+                        </li>
+                        <li>
+                            <strong>Filter by sourcetype</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 50</code><br>
+                            <em>Notice how results narrow down</em>
+                        </li>
+                        <li>
+                            <strong>Use time modifiers</strong><br>
+                            <code>index=_internal earliest=-1h latest=now</code><br>
+                            <em>Try: -15m, -4h, -1d, -7d@d</em>
+                        </li>
+                        <li>
+                            <strong>Search for specific terms</strong><br>
+                            <code>index=_internal ERROR OR WARN | head 100</code><br>
+                            <em>Boolean operators: AND, OR, NOT</em>
+                        </li>
+                        <li>
+                            <strong>Use wildcards</strong><br>
+                            <code>index=_internal source=*metrics.log* | head 50</code><br>
+                            <em>Wildcards: * (any characters), ? (single character)</em>
+                        </li>
+                        <li>
+                            <strong>Field filtering</strong><br>
+                            <code>index=_internal sourcetype=splunkd log_level=ERROR</code><br>
+                            <em>Direct field=value filtering</em>
+                        </li>
+                        <li>
+                            <strong>Select specific fields</strong><br>
+                            <code>index=_internal sourcetype=splunkd log_level=ERROR | fields _time, component, message | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Rename fields</strong><br>
+                            <code>index=_internal | head 10 | rename sourcetype AS "Log Type", host AS "Server"</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-verification">
+                        <h5><i class="fas fa-check-circle"></i> Verification</h5>
+                        <ul>
+                            <li>✓ You can search any index with time bounds</li>
+                            <li>✓ You understand AND/OR/NOT operators</li>
+                            <li>✓ You can filter by field values</li>
+                            <li>✓ You can use fields and rename commands</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h5><i class="fas fa-trophy"></i> Challenge</h5>
+                        <p>Find all ERROR events from the last 24 hours in _internal, showing only _time, source, and message fields, sorted by newest first.</p>
+                        <details>
+                            <summary>Solution</summary>
+                            <code>index=_internal log_level=ERROR earliest=-24h | fields _time, source, message | sort -_time</code>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Lab 2: Transforming Commands -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 2: Transforming Commands</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-beginner">Beginner</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Master stats, chart, timechart, top, rare, and other transforming commands.
+                    </div>
+
+                    <h4>Exercises</h4>
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Basic stats</strong><br>
+                            <code>index=_internal sourcetype=splunkd | stats count</code><br>
+                            <em>Count total events</em>
+                        </li>
+                        <li>
+                            <strong>Stats with BY clause</strong><br>
+                            <code>index=_internal sourcetype=splunkd | stats count BY log_level</code><br>
+                            <em>Count per log level</em>
+                        </li>
+                        <li>
+                            <strong>Multiple stats functions</strong><br>
+                            <code>index=_internal sourcetype=splunkd | stats count, dc(host) AS unique_hosts, earliest(_time) AS first_seen, latest(_time) AS last_seen BY component</code>
+                        </li>
+                        <li>
+                            <strong>Top command</strong><br>
+                            <code>index=_internal | top 10 sourcetype</code><br>
+                            <em>Most common sourcetypes</em>
+                        </li>
+                        <li>
+                            <strong>Rare command</strong><br>
+                            <code>index=_internal | rare 10 sourcetype</code><br>
+                            <em>Least common sourcetypes</em>
+                        </li>
+                        <li>
+                            <strong>Timechart - events over time</strong><br>
+                            <code>index=_internal | timechart span=5m count</code><br>
+                            <em>Try different spans: 1m, 15m, 1h, 1d</em>
+                        </li>
+                        <li>
+                            <strong>Timechart with split</strong><br>
+                            <code>index=_internal sourcetype=splunkd | timechart span=15m count BY log_level</code>
+                        </li>
+                        <li>
+                            <strong>Chart command</strong><br>
+                            <code>index=_internal sourcetype=splunkd | chart count BY component, log_level</code><br>
+                            <em>Two-dimensional analysis</em>
+                        </li>
+                        <li>
+                            <strong>Stats with eval</strong><br>
+                            <code>index=_internal source=*metrics.log group=per_sourcetype_thruput | stats sum(kb) AS total_kb BY series | eval total_mb = round(total_kb/1024, 2)</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-verification">
+                        <h5><i class="fas fa-check-circle"></i> Verification</h5>
+                        <ul>
+                            <li>✓ You can use count, dc, sum, avg, min, max</li>
+                            <li>✓ You understand BY clause for grouping</li>
+                            <li>✓ You can create timecharts with different spans</li>
+                            <li>✓ You know the difference between chart and timechart</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h5><i class="fas fa-trophy"></i> Challenge</h5>
+                        <p>Create a timechart showing the average events per minute for each sourcetype in _internal over the last 4 hours, but only for the top 5 sourcetypes by volume.</p>
+                        <details>
+                            <summary>Solution</summary>
+                            <code>index=_internal earliest=-4h | timechart span=1m count BY sourcetype limit=5</code>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Lab 3: Eval Functions -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 3: Eval Functions Mastery</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Master eval functions including conditionals, string manipulation, and calculations.
+                    </div>
+
+                    <h4>Exercises</h4>
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Basic calculation</strong><br>
+                            <code>| makeresults | eval bytes=1073741824 | eval gb=bytes/1024/1024/1024 | eval gb_rounded=round(gb, 2)</code>
+                        </li>
+                        <li>
+                            <strong>if() function</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 100 | eval severity=if(log_level=="ERROR", "CRITICAL", "NORMAL") | stats count BY severity</code>
+                        </li>
+                        <li>
+                            <strong>case() function</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 200 | eval priority=case(
+    log_level=="ERROR", "P1-Critical",
+    log_level=="WARN", "P2-High",
+    log_level=="INFO", "P3-Medium",
+    1==1, "P4-Low"
+) | stats count BY priority</code>
+                        </li>
+                        <li>
+                            <strong>coalesce() - handle nulls</strong><br>
+                            <code>index=_internal | head 50 | eval user=coalesce(user, "system") | table _time, user, source</code>
+                        </li>
+                        <li>
+                            <strong>String functions - lower, upper, len</strong><br>
+                            <code>index=_internal | head 20 | eval source_lower=lower(source), source_len=len(source) | table source, source_lower, source_len</code>
+                        </li>
+                        <li>
+                            <strong>substr() - extract substring</strong><br>
+                            <code>index=_internal | head 20 | eval short_source=substr(source, 1, 30) | table source, short_source</code>
+                        </li>
+                        <li>
+                            <strong>replace() - string replacement</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 20 | eval clean_message=replace(message, "\d+", "XXX") | table message, clean_message</code>
+                        </li>
+                        <li>
+                            <strong>split() and mvindex()</strong><br>
+                            <code>| makeresults | eval path="/opt/splunk/var/log/splunk/splunkd.log" | eval parts=split(path, "/") | eval filename=mvindex(parts, -1) | table path, filename</code>
+                        </li>
+                        <li>
+                            <strong>tonumber() and tostring()</strong><br>
+                            <code>| makeresults | eval num_str="12345" | eval num=tonumber(num_str) | eval doubled=num*2 | eval result=tostring(doubled, "commas")</code>
+                        </li>
+                        <li>
+                            <strong>Combining multiple eval functions</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 100 
+| eval severity=case(log_level=="ERROR", 3, log_level=="WARN", 2, 1==1, 1)
+| eval severity_name=case(severity==3, "Critical", severity==2, "Warning", 1==1, "Info")
+| eval alert=if(severity>=2, "YES", "NO")
+| stats count BY severity_name, alert</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> Pro Tips</h5>
+                        <ul>
+                            <li><code>case()</code> evaluates conditions in order - first match wins</li>
+                            <li><code>1==1</code> is the "default" case that always matches</li>
+                            <li><code>mvindex(field, -1)</code> gets the last element of a multivalue field</li>
+                            <li><code>coalesce()</code> returns first non-null value from a list</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h5><i class="fas fa-trophy"></i> Challenge</h5>
+                        <p>Create a search that classifies events by size: "Small" (<1KB), "Medium" (1-10KB), "Large" (>10KB), then show count by category.</p>
+                        <details>
+                            <summary>Solution</summary>
+                            <code>index=_internal | head 500 | eval size_bytes=len(_raw) | eval size_category=case(
+    size_bytes < 1024, "Small",
+    size_bytes <= 10240, "Medium",
+    1==1, "Large"
+) | stats count BY size_category</code>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Lab 4: Time Functions -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 4: Time Functions</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Master time manipulation with strftime, strptime, now(), and relative_time().
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Format timestamp with strftime</strong><br>
+                            <code>index=_internal | head 10 | eval formatted_time=strftime(_time, "%Y-%m-%d %H:%M:%S") | table _time, formatted_time</code>
+                        </li>
+                        <li>
+                            <strong>Extract date components</strong><br>
+                            <code>index=_internal | head 20 
+| eval year=strftime(_time, "%Y")
+| eval month=strftime(_time, "%m")
+| eval day=strftime(_time, "%d")
+| eval hour=strftime(_time, "%H")
+| eval day_of_week=strftime(_time, "%A")
+| table _time, year, month, day, hour, day_of_week</code>
+                        </li>
+                        <li>
+                            <strong>Use now() for current time</strong><br>
+                            <code>| makeresults | eval current_time=now() | eval formatted=strftime(current_time, "%Y-%m-%d %H:%M:%S")</code>
+                        </li>
+                        <li>
+                            <strong>Calculate event age</strong><br>
+                            <code>index=_internal | head 50 | eval age_seconds=now()-_time | eval age_minutes=round(age_seconds/60, 1) | table _time, age_minutes</code>
+                        </li>
+                        <li>
+                            <strong>relative_time() function</strong><br>
+                            <code>| makeresults 
+| eval now=now()
+| eval one_hour_ago=relative_time(now, "-1h")
+| eval start_of_today=relative_time(now, "@d")
+| eval start_of_week=relative_time(now, "@w0")
+| eval now_fmt=strftime(now, "%Y-%m-%d %H:%M")
+| eval hour_ago_fmt=strftime(one_hour_ago, "%Y-%m-%d %H:%M")
+| eval today_fmt=strftime(start_of_today, "%Y-%m-%d %H:%M")
+| table now_fmt, hour_ago_fmt, today_fmt</code>
+                        </li>
+                        <li>
+                            <strong>Parse time string with strptime</strong><br>
+                            <code>| makeresults | eval date_str="2024-12-25 14:30:00" | eval epoch=strptime(date_str, "%Y-%m-%d %H:%M:%S") | eval verified=strftime(epoch, "%A, %B %d, %Y")</code>
+                        </li>
+                        <li>
+                            <strong>Business hours filter</strong><br>
+                            <code>index=_internal 
+| eval hour=tonumber(strftime(_time, "%H"))
+| eval day=strftime(_time, "%u")
+| eval business_hours=if(hour>=9 AND hour<17 AND day<6, "Yes", "No")
+| stats count BY business_hours</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> Key Time Format Codes</h5>
+                        <table style="width: 100%; margin-top: 10px;">
+                            <tr><td><code>%Y</code></td><td>4-digit year (2024)</td><td><code>%H</code></td><td>Hour 24h (00-23)</td></tr>
+                            <tr><td><code>%m</code></td><td>Month (01-12)</td><td><code>%M</code></td><td>Minute (00-59)</td></tr>
+                            <tr><td><code>%d</code></td><td>Day (01-31)</td><td><code>%S</code></td><td>Second (00-59)</td></tr>
+                            <tr><td><code>%A</code></td><td>Weekday name</td><td><code>%u</code></td><td>Weekday (1-7)</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ==================== KNOWLEDGE OBJECTS LABS ==================== -->
+                <h2 id="knowledge-labs"><i class="fas fa-brain"></i> Knowledge Objects Labs</h2>
+
+                <!-- Lab 5: Field Extractions -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 5: Field Extractions</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 40 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Extract fields using rex command, regex, and the Field Extractor UI.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Basic rex extraction</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 50 | rex field=source "(?&lt;filename&gt;[^/]+)$" | table source, filename</code>
+                        </li>
+                        <li>
+                            <strong>Extract multiple fields</strong><br>
+                            <code>index=_internal sourcetype=splunkd | head 50 | rex field=_raw "component=(?&lt;comp&gt;\w+)" | rex field=_raw "log_level=(?&lt;level&gt;\w+)" | table _raw, comp, level</code>
+                        </li>
+                        <li>
+                            <strong>Extract IP addresses</strong><br>
+                            <code>index=_internal | head 100 | rex field=_raw "(?&lt;ip_address&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})" | where isnotnull(ip_address) | table _raw, ip_address</code>
+                        </li>
+                        <li>
+                            <strong>Extract email addresses</strong><br>
+                            <code>| makeresults | eval _raw="Contact us at support@company.com or sales@company.com" | rex field=_raw "(?&lt;email&gt;[\w.]+@[\w.]+)" max_match=10 | table email</code>
+                        </li>
+                        <li>
+                            <strong>Use rex with mode=sed for replacement</strong><br>
+                            <code>index=_internal | head 20 | rex field=source mode=sed "s/\/opt\/splunk/SPLUNK_HOME/g" | table source</code>
+                        </li>
+                        <li>
+                            <strong>Practice: Use Field Extractor UI</strong><br>
+                            <em>Settings → Fields → Field Extractions → New Field Extraction</em><br>
+                            <em>Select sample events and use the interactive extractor</em>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> Regex Quick Reference</h5>
+                        <ul>
+                            <li><code>\d</code> = digit, <code>\w</code> = word char, <code>\s</code> = whitespace</li>
+                            <li><code>+</code> = one or more, <code>*</code> = zero or more, <code>?</code> = optional</li>
+                            <li><code>(?&lt;name&gt;...)</code> = named capture group</li>
+                            <li><code>[^/]+</code> = one or more non-slash characters</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Lab 6: Lookups -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 6: Lookups</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Create and use lookup tables for data enrichment.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View existing lookups</strong><br>
+                            <code>| inputlookup splunk_servers.csv</code> (may not exist)<br>
+                            <code>| rest /services/data/lookup-table-files | table title, eai:acl.app</code>
+                        </li>
+                        <li>
+                            <strong>Create sample lookup data</strong><br>
+                            <code>| makeresults count=5 
+| streamstats count AS id 
+| eval host=case(id==1, "web01", id==2, "web02", id==3, "db01", id==4, "app01", id==5, "fw01")
+| eval priority=case(id<=2, "low", id<=4, "medium", 1==1, "high")
+| eval owner=case(id<=2, "Web Team", id<=4, "App Team", 1==1, "Network Team")
+| table host, priority, owner
+| outputlookup my_servers.csv</code>
+                            <br><em>[REQUIRES WRITE ACCESS]</em>
+                        </li>
+                        <li>
+                            <strong>Use inputlookup</strong><br>
+                            <code>| inputlookup my_servers.csv | where priority="high"</code>
+                        </li>
+                        <li>
+                            <strong>Enrich search results with lookup</strong><br>
+                            <code>index=_internal | stats count BY host | lookup my_servers.csv host OUTPUT priority, owner | table host, count, priority, owner</code>
+                        </li>
+                        <li>
+                            <strong>Subsearch with lookup</strong><br>
+                            <code>index=_internal [| inputlookup my_servers.csv | where priority="high" | fields host | format] | stats count BY host</code>
+                        </li>
+                        <li>
+                            <strong>Automatic lookup (view definition)</strong><br>
+                            <em>Settings → Lookups → Automatic lookups</em><br>
+                            <em>Review how lookups are automatically applied to sourcetypes</em>
+                        </li>
+                    </ol>
+
+                    <div class="lab-verification">
+                        <h5><i class="fas fa-check-circle"></i> Verification</h5>
+                        <ul>
+                            <li>✓ You can create a lookup with outputlookup</li>
+                            <li>✓ You can read a lookup with inputlookup</li>
+                            <li>✓ You can enrich data with the lookup command</li>
+                            <li>✓ You understand automatic lookups</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Lab 7: Macros -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 7: Search Macros</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Create and use search macros for reusable search logic.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View existing macros</strong><br>
+                            <code>| rest /services/admin/macros | table title, definition, args</code>
+                        </li>
+                        <li>
+                            <strong>Create a simple macro (via UI)</strong><br>
+                            <em>Settings → Advanced Search → Search Macros → New</em><br>
+                            Name: <code>get_errors</code><br>
+                            Definition: <code>index=_internal log_level=ERROR</code>
+                        </li>
+                        <li>
+                            <strong>Use the macro</strong><br>
+                            <code>`get_errors` | stats count BY component</code>
+                        </li>
+                        <li>
+                            <strong>Create macro with argument</strong><br>
+                            Name: <code>get_logs(1)</code><br>
+                            Arguments: <code>log_level</code><br>
+                            Definition: <code>index=_internal log_level=$log_level$</code>
+                        </li>
+                        <li>
+                            <strong>Use macro with argument</strong><br>
+                            <code>`get_logs(ERROR)` | stats count BY host</code><br>
+                            <code>`get_logs(WARN)` | stats count BY host</code>
+                        </li>
+                        <li>
+                            <strong>Create macro with multiple arguments</strong><br>
+                            Name: <code>search_index(2)</code><br>
+                            Arguments: <code>idx, timerange</code><br>
+                            Definition: <code>index=$idx$ earliest=$timerange$</code>
+                        </li>
+                        <li>
+                            <strong>Nested macro usage</strong><br>
+                            <code>`search_index(_internal, -1h)` | `get_errors` | stats count</code><br>
+                            <em>Note: You can use macros inside other macros</em>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> Macro Best Practices</h5>
+                        <ul>
+                            <li>Name macros clearly: <code>get_*</code>, <code>filter_*</code>, <code>calculate_*</code></li>
+                            <li>Add validation for arguments when possible</li>
+                            <li>Document what the macro does in description</li>
+                            <li>Use macros for complex logic used in multiple searches</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Lab 8: Tags & Event Types -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 8: Tags & Event Types</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Classify events using tags and event types for better organization.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View existing event types</strong><br>
+                            <code>| rest /services/saved/eventtypes | table title, search | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Search by event type</strong><br>
+                            <code>eventtype=splunk_errors | stats count BY host</code><br>
+                            <em>(may not exist in your environment)</em>
+                        </li>
+                        <li>
+                            <strong>Create an event type (via UI)</strong><br>
+                            <em>Settings → Event Types → New Event Type</em><br>
+                            Name: <code>splunk_critical</code><br>
+                            Search: <code>index=_internal log_level=ERROR</code><br>
+                            Priority: 1
+                        </li>
+                        <li>
+                            <strong>View existing tags</strong><br>
+                            <code>| rest /services/search/tags | table title</code>
+                        </li>
+                        <li>
+                            <strong>Search by tag</strong><br>
+                            <code>tag=authentication | stats count BY sourcetype</code><br>
+                            <em>(CIM tag - may require ES or CIM add-on)</em>
+                        </li>
+                        <li>
+                            <strong>Create a tag (via UI)</strong><br>
+                            <em>Settings → Tags → All unique tag field value pairs</em><br>
+                            <em>Tag the event type you created with "critical"</em>
+                        </li>
+                        <li>
+                            <strong>Use tags in searches</strong><br>
+                            <code>tag=critical | stats count BY source</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-verification">
+                        <h5><i class="fas fa-check-circle"></i> Key Concepts</h5>
+                        <ul>
+                            <li><strong>Event Type:</strong> Named search that categorizes events</li>
+                            <li><strong>Tag:</strong> Label applied to field values or event types</li>
+                            <li><strong>CIM Tags:</strong> Standard tags like "authentication", "network", "malware"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Lab 9: Data Models -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 9: Data Models & tstats</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">Power User / ES Admin</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Query data models using tstats for high-performance searches.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List available data models</strong><br>
+                            <code>| rest /services/datamodel/model | table title, acceleration, eai:acl.app</code>
+                        </li>
+                        <li>
+                            <strong>Explore internal_server data model</strong><br>
+                            <code>| datamodel internal_server search</code>
+                        </li>
+                        <li>
+                            <strong>Basic tstats query</strong><br>
+                            <code>| tstats count FROM datamodel=internal_server WHERE * BY host</code>
+                        </li>
+                        <li>
+                            <strong>Check if Authentication model exists (ES/CIM)</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE * BY Authentication.user | head 10</code>
+                        </li>
+                        <li>
+                            <strong>tstats with time chart</strong><br>
+                            <code>| tstats count FROM datamodel=internal_server WHERE * BY _time span=1h | timechart span=1h sum(count)</code>
+                        </li>
+                        <li>
+                            <strong>Compare tstats vs regular search speed</strong><br>
+                            <em>Run both and compare job inspector times:</em><br>
+                            <code>| tstats count FROM datamodel=internal_server WHERE *</code><br>
+                            vs<br>
+                            <code>index=_internal | stats count</code>
+                        </li>
+                        <li>
+                            <strong>Check data model acceleration status</strong><br>
+                            <code>| rest /services/datamodel/model | search acceleration=1 | table title, acceleration.earliest_time, acceleration.cron_schedule</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> Why tstats?</h5>
+                        <ul>
+                            <li>10-100x faster than regular searches on large datasets</li>
+                            <li>Uses pre-computed summaries (accelerated data models)</li>
+                            <li>Essential for ES correlation searches</li>
+                            <li><code>summariesonly=true</code> = only accelerated data (faster)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Lab 10: Dashboard Creation -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 10: Dashboard Creation</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 60 min</span>
+                            <span class="cert">Power User</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Build an interactive dashboard with multiple panels and inputs.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Create new dashboard</strong><br>
+                            <em>Search → Save As → Dashboard Panel → New Dashboard</em><br>
+                            Name: "System Health Monitor"
+                        </li>
+                        <li>
+                            <strong>Add single value panel - Event Count</strong><br>
+                            <code>index=_internal earliest=-1h | stats count</code><br>
+                            <em>Save as Dashboard Panel → Add to System Health Monitor</em>
+                        </li>
+                        <li>
+                            <strong>Add timechart panel - Events Over Time</strong><br>
+                            <code>index=_internal earliest=-4h | timechart span=5m count BY sourcetype limit=5</code>
+                        </li>
+                        <li>
+                            <strong>Add table panel - Top Errors</strong><br>
+                            <code>index=_internal log_level=ERROR earliest=-1h | stats count BY component | sort -count | head 10</code>
+                        </li>
+                        <li>
+                            <strong>Add time picker input</strong><br>
+                            <em>Edit Dashboard → Add Input → Time</em><br>
+                            Token: <code>time_picker</code>
+                        </li>
+                        <li>
+                            <strong>Connect panels to time picker</strong><br>
+                            <em>Edit each panel, replace earliest=-1h with:</em><br>
+                            <code>earliest=$time_picker.earliest$ latest=$time_picker.latest$</code>
+                        </li>
+                        <li>
+                            <strong>Add dropdown filter</strong><br>
+                            <em>Add Input → Dropdown</em><br>
+                            Label: "Log Level"<br>
+                            Token: <code>log_level</code><br>
+                            Search: <code>index=_internal | stats count BY log_level | fields log_level</code>
+                        </li>
+                        <li>
+                            <strong>Connect panels to dropdown</strong><br>
+                            <em>Add to panel searches:</em><br>
+                            <code>log_level=$log_level$</code>
+                        </li>
+                        <li>
+                            <strong>Add drilldown</strong><br>
+                            <em>Edit panel → Drilldown → Link to search</em><br>
+                            <em>Pass clicked value as token</em>
+                        </li>
+                    </ol>
+
+                    <div class="lab-verification">
+                        <h5><i class="fas fa-check-circle"></i> Final Dashboard Should Have</h5>
+                        <ul>
+                            <li>✓ Single value showing event count</li>
+                            <li>✓ Timechart showing trends</li>
+                            <li>✓ Table showing top errors</li>
+                            <li>✓ Time picker that controls all panels</li>
+                            <li>✓ At least one dropdown filter</li>
+                            <li>✓ Drilldown on at least one panel</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ==================== ADMIN LABS ==================== -->
+                <h2 id="admin-labs"><i class="fas fa-cog"></i> Admin Labs</h2>
+                <p>Practice administration tasks for the Splunk Enterprise Certified Admin exam.</p>
+
+                <!-- Lab 11: Index Exploration -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 11: Index Exploration & Management</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Explore index configuration, sizing, and retention settings.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List all indexes</strong><br>
+                            <code>| rest /services/data/indexes | table title, currentDBSizeMB, totalEventCount, maxTotalDataSizeMB, frozenTimePeriodInSecs | sort -currentDBSizeMB</code>
+                        </li>
+                        <li>
+                            <strong>Calculate retention in days</strong><br>
+                            <code>| rest /services/data/indexes | eval retention_days=round(frozenTimePeriodInSecs/86400, 0) | table title, currentDBSizeMB, retention_days | sort -currentDBSizeMB</code>
+                        </li>
+                        <li>
+                            <strong>Check index data distribution</strong><br>
+                            <code>| tstats count WHERE index=* BY index | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Examine index paths</strong><br>
+                            <code>| rest /services/data/indexes | table title, homePath, coldPath, maxDataSize</code>
+                        </li>
+                        <li>
+                            <strong>Check data volume by sourcetype per index</strong><br>
+                            <code>index=_internal source=*license_usage.log type=Usage | stats sum(b) AS bytes BY idx, st | eval MB=round(bytes/1024/1024, 2) | sort -MB | head 20</code>
+                        </li>
+                        <li>
+                            <strong>View bucket information</strong><br>
+                            <code>| dbinspect index=_internal | stats count BY bucketId, state | head 20</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 12: User & Role Analysis -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 12: User & Role Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List all users</strong><br>
+                            <code>| rest /services/authentication/users | table title, roles, realname, email</code>
+                        </li>
+                        <li>
+                            <strong>List all roles</strong><br>
+                            <code>| rest /services/authorization/roles | table title, imported_roles, srchIndexesAllowed, capabilities | sort title</code>
+                        </li>
+                        <li>
+                            <strong>Find users with admin role</strong><br>
+                            <code>| rest /services/authentication/users | search roles=*admin* | table title, roles, realname</code>
+                        </li>
+                        <li>
+                            <strong>Analyze role capabilities</strong><br>
+                            <code>| rest /services/authorization/roles | table title, capabilities | search title=power</code>
+                        </li>
+                        <li>
+                            <strong>Check user search activity</strong><br>
+                            <code>index=_audit action=search info=completed | stats count, avg(total_run_time) AS avg_runtime BY user | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Find users who haven't searched recently</strong><br>
+                            <code>| rest /services/authentication/users | table title | join type=left title [search index=_audit action=search earliest=-7d | stats latest(_time) AS last_search BY user | rename user AS title] | eval last_search=if(isnull(last_search), "Never", strftime(last_search, "%Y-%m-%d"))</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 13: Forwarder Monitoring -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 13: Forwarder Monitoring</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List connected forwarders</strong><br>
+                            <code>| rest /services/deployment/server/clients | table hostname, ip, dns, utsname, splunkVersion</code><br>
+                            <em>(Requires deployment server)</em>
+                        </li>
+                        <li>
+                            <strong>Check forwarder throughput</strong><br>
+                            <code>index=_internal source=*metrics.log group=tcpin_connections | stats latest(connectionType) AS type, latest(version) AS version, sum(kb) AS total_kb BY hostname | eval MB=round(total_kb/1024, 2) | sort -MB</code>
+                        </li>
+                        <li>
+                            <strong>Find silent forwarders (not sending data)</strong><br>
+                            <code>index=_internal source=*metrics.log group=tcpin_connections earliest=-1h | stats latest(_time) AS last_seen BY hostname | eval hours_ago=round((now()-last_seen)/3600, 1) | where hours_ago > 1 | sort -hours_ago</code>
+                        </li>
+                        <li>
+                            <strong>Forwarder version distribution</strong><br>
+                            <code>index=_internal source=*metrics.log group=tcpin_connections | stats dc(hostname) AS count BY version | sort -version</code>
+                        </li>
+                        <li>
+                            <strong>Check for forwarder errors</strong><br>
+                            <code>index=_internal sourcetype=splunkd component=TcpInputProc ERROR | stats count BY host, message | sort -count</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 14: License Usage -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 14: License Usage Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-beginner">Beginner</span>
+                            <span class="time">⏱️ 20 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Daily license usage</strong><br>
+                            <code>index=_internal source=*license_usage.log type=Usage | timechart span=1d sum(b) AS bytes | eval GB=round(bytes/1024/1024/1024, 2) | fields _time, GB</code>
+                        </li>
+                        <li>
+                            <strong>License usage by index</strong><br>
+                            <code>index=_internal source=*license_usage.log type=Usage | stats sum(b) AS bytes BY idx | eval GB=round(bytes/1024/1024/1024, 2) | sort -GB</code>
+                        </li>
+                        <li>
+                            <strong>License usage by sourcetype</strong><br>
+                            <code>index=_internal source=*license_usage.log type=Usage | stats sum(b) AS bytes BY st | eval GB=round(bytes/1024/1024/1024, 2) | sort -GB | head 20</code>
+                        </li>
+                        <li>
+                            <strong>License usage by host</strong><br>
+                            <code>index=_internal source=*license_usage.log type=Usage | stats sum(b) AS bytes BY h | eval MB=round(bytes/1024/1024, 2) | sort -MB | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Check license pool status</strong><br>
+                            <code>| rest /services/licenser/pools | table title, quota, used_bytes, effective_quota | eval used_GB=round(used_bytes/1024/1024/1024, 2), quota_GB=round(quota/1024/1024/1024, 2)</code>
+                        </li>
+                        <li>
+                            <strong>License warning detection</strong><br>
+                            <code>index=_internal sourcetype=splunkd component=LicenseUsage | search "license" "warning" OR "violation" | table _time, message</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 15: Config File Analysis -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 15: Configuration Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List all apps</strong><br>
+                            <code>| rest /services/apps/local | table title, label, version, disabled | sort title</code>
+                        </li>
+                        <li>
+                            <strong>View saved searches</strong><br>
+                            <code>| rest /services/saved/searches | table title, search, cron_schedule, is_scheduled | where is_scheduled=1</code>
+                        </li>
+                        <li>
+                            <strong>Check inputs configuration</strong><br>
+                            <code>| rest /services/data/inputs/all | table title, disabled | where disabled=0</code>
+                        </li>
+                        <li>
+                            <strong>View props.conf settings for a sourcetype</strong><br>
+                            <code>| rest /services/configs/conf-props | search title=syslog | table title, TIME_FORMAT, MAX_TIMESTAMP_LOOKAHEAD</code>
+                        </li>
+                        <li>
+                            <strong>Check transforms.conf</strong><br>
+                            <code>| rest /services/configs/conf-transforms | table title, REGEX, FORMAT | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Simulating btool (view effective config)</strong><br>
+                            <code>| rest /services/properties/props/syslog | transpose | rename column AS setting, "row 1" AS value</code>
+                        </li>
+                    </ol>
+
+                    <div class="lab-hint">
+                        <h5><i class="fas fa-lightbulb"></i> CLI btool (if you have shell access)</h5>
+                        <code>./splunk btool props list syslog --debug</code><br>
+                        <code>./splunk btool inputs list --debug | grep -A5 "monitor"</code>
+                    </div>
+                </div>
+
+                <!-- Lab 16: Search Performance -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 16: Search Performance Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Find long-running searches</strong><br>
+                            <code>index=_audit action=search info=completed | where total_run_time > 60 | table _time, user, total_run_time, search | sort -total_run_time | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Search concurrency</strong><br>
+                            <code>index=_internal sourcetype=scheduler | timechart span=5m count BY status</code>
+                        </li>
+                        <li>
+                            <strong>Expensive searches by user</strong><br>
+                            <code>index=_audit action=search info=completed | stats count, avg(total_run_time) AS avg_time, sum(total_run_time) AS total_time BY user | sort -total_time</code>
+                        </li>
+                        <li>
+                            <strong>Search failure analysis</strong><br>
+                            <code>index=_audit action=search info=failed | stats count BY user, reason | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Identify inefficient searches</strong><br>
+                            <code>index=_audit action=search info=completed | eval efficiency=scan_count/result_count | where efficiency > 1000 | table _time, user, efficiency, search | sort -efficiency | head 10</code><br>
+                            <em>High scan/result ratio = inefficient search</em>
+                        </li>
+                        <li>
+                            <strong>Scheduled search health</strong><br>
+                            <code>index=_internal sourcetype=scheduler | stats count BY status, app | sort -count</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ==================== ES LABS ==================== -->
+                <h2 id="es-labs"><i class="fas fa-shield-alt"></i> Enterprise Security Labs</h2>
+                <p>Practice ES administration tasks. <strong>Note:</strong> These labs require Splunk ES installed.</p>
+
+                <!-- Lab 17: Notable Event Triage -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 17: Notable Event Triage</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">ES Admin</span>
+                        </div>
+                    </div>
+
+                    <div class="lab-objective">
+                        <strong>Objective:</strong> Practice triaging notable events in Incident Review.
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Access Incident Review</strong><br>
+                            <em>Enterprise Security → Incident Review</em>
+                        </li>
+                        <li>
+                            <strong>Query notable events directly</strong><br>
+                            <code>index=notable | head 50 | table _time, rule_name, urgency, status_label, owner, src, dest, user</code>
+                        </li>
+                        <li>
+                            <strong>Count notables by urgency</strong><br>
+                            <code>index=notable | stats count BY urgency | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Count notables by status</strong><br>
+                            <code>index=notable | stats count BY status_label</code>
+                        </li>
+                        <li>
+                            <strong>Calculate MTTR (Mean Time to Resolve)</strong><br>
+                            <code>index=notable status_label="Resolved" OR status_label="Closed" | eval resolve_time=_time | eval create_time=strptime(create_time, "%Y-%m-%d %H:%M:%S") | eval ttr=resolve_time-create_time | stats avg(ttr) AS avg_ttr_seconds | eval avg_ttr_hours=round(avg_ttr_seconds/3600, 2)</code>
+                        </li>
+                        <li>
+                            <strong>Practice triage workflow (in UI)</strong><br>
+                            <em>1. Claim a notable (assign to yourself)</em><br>
+                            <em>2. Change status to "In Progress"</em><br>
+                            <em>3. Add a comment with investigation notes</em><br>
+                            <em>4. Set disposition (True Positive, False Positive, etc.)</em><br>
+                            <em>5. Close the notable</em>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 18: Correlation Search Analysis -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 18: Correlation Search Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-advanced">Advanced</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">ES Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>List all correlation searches</strong><br>
+                            <code>| rest /services/saved/searches | search action.correlationsearch.enabled=1 | table title, cron_schedule, disabled</code>
+                        </li>
+                        <li>
+                            <strong>Find most triggered correlation searches</strong><br>
+                            <code>index=notable | stats count BY rule_name | sort -count | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Analyze correlation search schedule</strong><br>
+                            <code>| rest /services/saved/searches | search action.correlationsearch.enabled=1 | table title, cron_schedule | sort cron_schedule</code>
+                        </li>
+                        <li>
+                            <strong>Check correlation search errors</strong><br>
+                            <code>index=_internal sourcetype=scheduler savedsearch_name="*" status=error | stats count BY savedsearch_name | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>View correlation search details</strong><br>
+                            <em>Configure → Content → Content Management → Correlation Searches</em><br>
+                            <em>Review: Search logic, threshold, severity, schedule</em>
+                        </li>
+                        <li>
+                            <strong>Test a correlation search manually</strong><br>
+                            <em>Copy the search from correlation search config</em><br>
+                            <em>Run manually to see what it would generate</em>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 19: Risk Score Investigation -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 19: Risk Score Investigation</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">ES Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View risk index</strong><br>
+                            <code>index=risk | head 50 | table _time, risk_object, risk_object_type, risk_score, risk_message, source</code>
+                        </li>
+                        <li>
+                            <strong>Top risky users</strong><br>
+                            <code>| tstats sum(All_Risk.calculated_risk_score) AS risk_score FROM datamodel=Risk.All_Risk WHERE All_Risk.risk_object_type="user" BY All_Risk.risk_object | sort -risk_score | head 10</code>
+                        </li>
+                        <li>
+                            <strong>Top risky hosts</strong><br>
+                            <code>| tstats sum(All_Risk.calculated_risk_score) AS risk_score FROM datamodel=Risk.All_Risk WHERE All_Risk.risk_object_type="system" BY All_Risk.risk_object | sort -risk_score | head 10</code>
+                        </li>
+                        <li>
+                            <strong>Risk trend over time</strong><br>
+                            <code>| tstats sum(All_Risk.calculated_risk_score) AS risk_score FROM datamodel=Risk.All_Risk BY _time span=1d | timechart span=1d sum(risk_score)</code>
+                        </li>
+                        <li>
+                            <strong>Investigate a specific user's risk</strong><br>
+                            <code>index=risk risk_object="$USERNAME$" | table _time, risk_score, risk_message, source | sort -_time</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 20: Asset & Identity -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 20: Asset & Identity Framework</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">ES Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View asset lookup</strong><br>
+                            <code>| inputlookup asset_lookup_by_str | head 20 | table ip, nt_host, dns, owner, priority, bunit, category</code>
+                        </li>
+                        <li>
+                            <strong>View identity lookup</strong><br>
+                            <code>| inputlookup identity_lookup_expanded | head 20 | table identity, first, last, email, priority, bunit, category</code>
+                        </li>
+                        <li>
+                            <strong>Count assets by priority</strong><br>
+                            <code>| inputlookup asset_lookup_by_str | stats count BY priority</code>
+                        </li>
+                        <li>
+                            <strong>Count identities by category</strong><br>
+                            <code>| inputlookup identity_lookup_expanded | stats count BY category</code>
+                        </li>
+                        <li>
+                            <strong>Find assets missing owner</strong><br>
+                            <code>| inputlookup asset_lookup_by_str | where isnull(owner) OR owner="" | table ip, nt_host</code>
+                        </li>
+                        <li>
+                            <strong>Test asset enrichment</strong><br>
+                            <code>index=_internal | head 100 | lookup asset_lookup_by_str ip AS host OUTPUT priority, owner, category | where isnotnull(priority) | table host, priority, owner, category</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 21: Threat Intelligence -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 21: Threat Intelligence</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">ES Admin</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>View threat intel lookups</strong><br>
+                            <code>| inputlookup ip_intel | head 20</code><br>
+                            <code>| inputlookup domain_intel | head 20</code>
+                        </li>
+                        <li>
+                            <strong>Check threat intel downloads</strong><br>
+                            <em>Configure → Data Enrichment → Threat Intelligence Downloads</em>
+                        </li>
+                        <li>
+                            <strong>View threat activity</strong><br>
+                            <code>index=threat_activity | head 50 | table _time, threat_match_field, threat_match_value, threat_collection, src, dest</code>
+                        </li>
+                        <li>
+                            <strong>Count TI matches by collection</strong><br>
+                            <code>index=threat_activity | stats count BY threat_collection | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Manual TI lookup test</strong><br>
+                            <code>| makeresults | eval ip="8.8.8.8" | lookup ip_intel ip OUTPUT description, threat_group | table ip, description, threat_group</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ==================== SECURITY USE CASE LABS ==================== -->
+                <h2 id="security-labs"><i class="fas fa-user-secret"></i> Security Use Case Labs</h2>
+                <p>Real-world security monitoring scenarios. Use whatever security data you have available.</p>
+
+                <!-- Lab 22: Authentication Analysis -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 22: Authentication Analysis</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-beginner">Beginner</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Security Analyst</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Query authentication data model</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication BY Authentication.action | rename Authentication.action AS action</code>
+                        </li>
+                        <li>
+                            <strong>Top users with failed logins</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE Authentication.action=failure BY Authentication.user | sort -count | head 10</code>
+                        </li>
+                        <li>
+                            <strong>Failed logins by source</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE Authentication.action=failure BY Authentication.src | sort -count | head 10</code>
+                        </li>
+                        <li>
+                            <strong>Authentication trend</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication BY _time, Authentication.action span=1h | timechart span=1h count BY Authentication.action</code>
+                        </li>
+                        <li>
+                            <strong>After-hours authentication</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE Authentication.action=success BY Authentication.user, _time span=1h | eval hour=strftime(_time, "%H") | where hour<6 OR hour>20 | stats sum(count) BY Authentication.user</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 23: Brute Force Detection -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 23: Brute Force Detection</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Security Analyst</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Detect multiple failed logins per user</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE Authentication.action=failure BY Authentication.user, Authentication.src, _time span=5m | where count > 5 | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Detect password spray (many users, same source)</strong><br>
+                            <code>| tstats dc(Authentication.user) AS users, count FROM datamodel=Authentication WHERE Authentication.action=failure BY Authentication.src, _time span=10m | where users > 5 | sort -users</code>
+                        </li>
+                        <li>
+                            <strong>Success after multiple failures</strong><br>
+                            <code>| tstats values(Authentication.action) AS actions, count FROM datamodel=Authentication BY Authentication.user, Authentication.src | where mvcount(mvfilter(match(actions, "failure")))>3 AND mvcount(mvfilter(match(actions, "success")))>0</code>
+                        </li>
+                        <li>
+                            <strong>Build a brute force alert</strong><br>
+                            <code>| tstats count FROM datamodel=Authentication WHERE Authentication.action=failure BY Authentication.user, Authentication.src, _time span=5m | where count > 10 | eval severity=case(count>50, "critical", count>20, "high", 1==1, "medium")</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 24: Data Exfiltration Hunt -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 24: Data Exfiltration Hunt</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-advanced">Advanced</span>
+                            <span class="time">⏱️ 45 min</span>
+                            <span class="cert">Security Analyst</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Large outbound transfers (if network data available)</strong><br>
+                            <code>| tstats sum(All_Traffic.bytes_out) AS bytes_out FROM datamodel=Network_Traffic WHERE All_Traffic.direction=outbound BY All_Traffic.src, _time span=1h | where bytes_out > 104857600 | eval MB=round(bytes_out/1024/1024, 2)</code>
+                        </li>
+                        <li>
+                            <strong>Connections to rare destinations</strong><br>
+                            <code>| tstats count FROM datamodel=Network_Traffic BY All_Traffic.dest | sort count | head 20</code>
+                        </li>
+                        <li>
+                            <strong>DNS exfiltration indicators</strong><br>
+                            <code>| tstats count FROM datamodel=Network_Resolution BY DNS.query | eval query_length=len(DNS.query) | where query_length > 50 | sort -query_length</code>
+                        </li>
+                        <li>
+                            <strong>Baseline internal traffic (practice query)</strong><br>
+                            <code>index=_internal | timechart span=1h sum(bytes) AS total_bytes | eval MB=round(total_bytes/1024/1024, 2)</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Lab 25: Privileged Access Audit -->
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3>Lab 25: Privileged Access Audit</h3>
+                        <div class="lab-meta">
+                            <span class="difficulty-intermediate">Intermediate</span>
+                            <span class="time">⏱️ 30 min</span>
+                            <span class="cert">Security Analyst</span>
+                        </div>
+                    </div>
+
+                    <ol class="lab-steps">
+                        <li>
+                            <strong>Audit Splunk admin activity</strong><br>
+                            <code>index=_audit user=admin | stats count BY action | sort -count</code>
+                        </li>
+                        <li>
+                            <strong>Track configuration changes</strong><br>
+                            <code>index=_audit action=edit* OR action=create* OR action=delete* | table _time, user, action, info, object</code>
+                        </li>
+                        <li>
+                            <strong>Track role changes</strong><br>
+                            <code>index=_audit action="*role*" | table _time, user, action, info</code>
+                        </li>
+                        <li>
+                            <strong>Detect new admin users</strong><br>
+                            <code>index=_audit action=edit_user info=granted role=admin | table _time, user, object, info</code>
+                        </li>
+                        <li>
+                            <strong>Service account activity (using identities)</strong><br>
+                            <code>| inputlookup identity_lookup_expanded | search category="service_account" | table identity | map search="index=_audit user=$identity$ | stats count BY action"</code>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Final Summary -->
+                <hr class="section-divider">
+
+                <h2><i class="fas fa-graduation-cap"></i> Lab Completion Checklist</h2>
+                <div class="info-box info-box-tip">
+                    <h4>Before Taking Certification Exams</h4>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td><strong>Power User Cert:</strong></td>
+                            <td>Complete Labs 1-10</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admin Cert:</strong></td>
+                            <td>Complete Labs 1-10 + Labs 11-16</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ES Admin Cert:</strong></td>
+                            <td>Complete Labs 1-10 + Labs 17-21</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Analyst Skills:</strong></td>
+                            <td>Complete Labs 22-25</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Related Pages -->
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="power-user-certification.html">Power User Certification Guide</a></li>
+                    <li><a href="admin-certification.html">Admin Certification Guide</a></li>
+                    <li><a href="es-admin-certification.html">ES Admin Certification Guide</a></li>
+                    <li><a href="cloud-admin-certification.html">Cloud Admin Certification Guide</a></li>
+                    <li><a href="spl-fundamentals.html">SPL Fundamentals Reference</a></li>
+                    <li><a href="spl-advanced.html">SPL Advanced Reference</a></li>
+                </ul>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Save checkbox state to localStorage
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            const savedState = localStorage.getItem(checkbox.id);
+            if (savedState === 'true') checkbox.checked = true;
+            
+            checkbox.addEventListener('change', () => {
+                localStorage.setItem(checkbox.id, checkbox.checked);
+            });
+        });
+    </script>
+</body>
+</html>
