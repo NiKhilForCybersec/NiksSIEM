@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL When to Use What | Complete Decision Guide with Examples</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #21262d;
+            --border-color: #30363d; --text-primary: #c9d1d9; --text-secondary: #8b949e;
+            --accent-green: #238636; --accent-green-light: #7ce38b; --accent-orange: #f0883e;
+            --accent-purple: #8957e5; --accent-blue: #58a6ff; --accent-cyan: #39c5cf; --accent-red: #da3633;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 32px; }
+        
+        h1 { color: var(--accent-green-light); margin-bottom: 16px; font-size: 2.2em; }
+        h2 { color: var(--accent-blue); margin: 48px 0 24px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); font-size: 1.6em; }
+        h3 { color: var(--accent-orange); margin: 32px 0 16px; font-size: 1.3em; }
+        h4 { color: var(--accent-cyan); margin: 24px 0 12px; }
+        .lead { font-size: 1.15em; color: var(--text-secondary); margin-bottom: 32px; }
+        code { background: var(--bg-secondary); padding: 3px 8px; border-radius: 6px; color: #79c0ff; font-family: 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: #0d1117; padding: 20px; border-radius: 10px; overflow-x: auto; margin: 16px 0; border: 1px solid var(--border-color); font-size: 0.9em; line-height: 1.6; }
+        pre code { background: none; padding: 0; }
+        
+        .decision-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; margin: 32px 0; overflow: hidden; }
+        .decision-header { background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary)); padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
+        .decision-header h3 { margin: 0; color: var(--accent-blue); display: flex; align-items: center; gap: 12px; }
+        .decision-content { padding: 24px; }
+        
+        .scenario { background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+        .scenario-header { background: linear-gradient(135deg, #1a2a3d, var(--bg-primary)); padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+        .scenario-header .icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1em; }
+        .scenario-header .icon.need { background: var(--accent-orange); color: white; }
+        .scenario-header .icon.use { background: var(--accent-green); color: white; }
+        .scenario-header .icon.wrong { background: var(--accent-red); color: white; }
+        .scenario-header h4 { margin: 0; color: var(--text-primary); font-size: 1.05em; }
+        .scenario-body { padding: 20px; }
+        .scenario-body .label { font-size: 0.8em; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        
+        .example-box { background: #0d1117; border-radius: 10px; padding: 20px; margin: 16px 0; border-left: 4px solid var(--accent-green); }
+        .example-box.wrong { border-left-color: var(--accent-red); }
+        .example-box .title { color: var(--accent-green-light); font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .example-box.wrong .title { color: var(--accent-red); }
+        .example-box pre { margin: 12px 0 0 0; background: var(--bg-secondary); }
+        .example-box .explanation { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9em; }
+        
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; }
+        .comparison-card h5 { color: var(--accent-cyan); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+        .comparison-card.good { border-color: var(--accent-green); }
+        .comparison-card.bad { border-color: var(--accent-red); }
+        .comparison-card.good h5 { color: var(--accent-green-light); }
+        .comparison-card.bad h5 { color: var(--accent-red); }
+        
+        .quick-ref { background: linear-gradient(135deg, #1a472a, var(--bg-secondary)); border: 2px solid var(--accent-green); border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .quick-ref h4 { color: var(--accent-green-light); margin: 0 0 16px 0; }
+        .quick-ref table { width: 100%; border-collapse: collapse; }
+        .quick-ref th, .quick-ref td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quick-ref th { color: var(--accent-cyan); font-weight: 600; }
+        .quick-ref tr:last-child td { border-bottom: none; }
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75em; font-weight: 600; }
+        .badge-green { background: var(--accent-green); color: white; }
+        .badge-red { background: var(--accent-red); color: white; }
+        .badge-orange { background: var(--accent-orange); color: white; }
+        .badge-blue { background: var(--accent-blue); color: white; }
+        
+        .decision-tree { background: var(--bg-primary); border: 2px solid var(--accent-purple); border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .decision-tree h4 { color: var(--accent-purple); margin: 0 0 20px 0; }
+        .tree-node { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .tree-question { color: var(--accent-orange); font-weight: 600; margin-bottom: 12px; }
+        .tree-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .tree-option { background: var(--bg-tertiary); padding: 12px; border-radius: 6px; text-align: center; }
+        .tree-option .if { color: var(--accent-cyan); font-size: 0.8em; margin-bottom: 4px; }
+        .tree-option .then { color: var(--accent-green-light); font-weight: 600; }
+        
+        .toc { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .toc h3 { margin: 0 0 16px 0; color: var(--accent-blue); }
+        .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+        .toc-item { padding: 10px 14px; background: var(--bg-primary); border-radius: 6px; }
+        .toc-item a { color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .toc-item a:hover { color: var(--accent-blue); }
+        
+        @media (max-width: 768px) {
+            .comparison { grid-template-columns: 1fr; }
+            .tree-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-map-signs"></i> SPL: When to Use What</h1>
+        <p class="lead">The definitive guide to choosing the right SPL command for every situation. Each scenario shows exactly WHEN and WHY to use specific commands with real examples.</p>
+
+        <div class="toc">
+            <h3><i class="fas fa-list"></i> Quick Navigation</h3>
+            <div class="toc-grid">
+                <div class="toc-item"><a href="#search-where"><i class="fas fa-filter"></i> search vs where</a></div>
+                <div class="toc-item"><a href="#stats-functions"><i class="fas fa-calculator"></i> count vs dc vs values vs list</a></div>
+                <div class="toc-item"><a href="#time-functions"><i class="fas fa-clock"></i> earliest/latest vs first/last</a></div>
+                <div class="toc-item"><a href="#chart-commands"><i class="fas fa-chart-bar"></i> stats vs chart vs timechart</a></div>
+                <div class="toc-item"><a href="#field-commands"><i class="fas fa-columns"></i> fields vs table</a></div>
+                <div class="toc-item"><a href="#aggregation"><i class="fas fa-layer-group"></i> stats vs eventstats vs streamstats</a></div>
+                <div class="toc-item"><a href="#dedup-sort"><i class="fas fa-sort"></i> dedup vs sort vs head</a></div>
+                <div class="toc-item"><a href="#eval-functions"><i class="fas fa-code"></i> if vs case vs coalesce</a></div>
+                <div class="toc-item"><a href="#correlation"><i class="fas fa-link"></i> join vs subsearch vs lookup</a></div>
+                <div class="toc-item"><a href="#time-modifiers"><i class="fas fa-calendar"></i> Time Modifiers Explained</a></div>
+            </div>
+        </div>
+
+        <!-- ==================== SEARCH VS WHERE ==================== -->
+        <div class="decision-section" id="search-where">
+            <div class="decision-header">
+                <h3><i class="fas fa-filter"></i> search vs where - When to Use Each</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>I need to...</th><th>Use</th><th>Example</th></tr>
+                        <tr><td>Filter with wildcards</td><td><span class="badge badge-blue">search</span></td><td><code>| search status=fail*</code></td></tr>
+                        <tr><td>Compare two fields</td><td><span class="badge badge-green">where</span></td><td><code>| where bytes_sent > bytes_received</code></td></tr>
+                        <tr><td>Use functions in filter</td><td><span class="badge badge-green">where</span></td><td><code>| where len(user) > 10</code></td></tr>
+                        <tr><td>Simple value match</td><td><span class="badge badge-blue">search</span></td><td><code>| search status=200</code></td></tr>
+                        <tr><td>Check if field is null</td><td><span class="badge badge-green">where</span></td><td><code>| where isnull(error_code)</code></td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario 1: Wildcard Matching</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Find all events where status starts with "fail"</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="comparison">
+                            <div class="comparison-card good">
+                                <h5><i class="fas fa-check"></i> CORRECT - Use search</h5>
+                                <pre><code>index=main 
+| search status=fail*</code></pre>
+                                <p style="color:var(--text-secondary);font-size:0.9em;margin-top:10px;">✓ search supports wildcards (*)</p>
+                            </div>
+                            <div class="comparison-card bad">
+                                <h5><i class="fas fa-times"></i> WRONG - where doesn't support wildcards</h5>
+                                <pre><code>index=main 
+| where status=fail*   ❌ ERROR!</code></pre>
+                                <p style="color:var(--text-secondary);font-size:0.9em;margin-top:10px;">✗ where cannot use * wildcard</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Scenario 2: Comparing Two Fields</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Find events where bytes sent exceeds bytes received</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="comparison">
+                            <div class="comparison-card good">
+                                <h5><i class="fas fa-check"></i> CORRECT - Use where</h5>
+                                <pre><code>index=network 
+| where bytes_sent > bytes_received</code></pre>
+                                <p style="color:var(--text-secondary);font-size:0.9em;margin-top:10px;">✓ where can compare field to field</p>
+                            </div>
+                            <div class="comparison-card bad">
+                                <h5><i class="fas fa-times"></i> WRONG - search can't compare fields</h5>
+                                <pre><code>index=network 
+| search bytes_sent > bytes_received  ❌</code></pre>
+                                <p style="color:var(--text-secondary);font-size:0.9em;margin-top:10px;">✗ search treats bytes_received as literal string</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Scenario 3: Using Functions in Filter</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Find usernames longer than 15 characters</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="example-box">
+                            <div class="title"><i class="fas fa-check-circle"></i> CORRECT - Use where with len()</div>
+                            <pre><code>index=auth 
+| where len(username) > 15</code></pre>
+                            <div class="explanation">Only <code>where</code> can use functions like <code>len()</code>, <code>lower()</code>, <code>like()</code> in the filter condition.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="decision-tree">
+                    <h4><i class="fas fa-sitemap"></i> Decision Tree: search vs where</h4>
+                    <div class="tree-node">
+                        <div class="tree-question">Do you need wildcards (* or ?)?</div>
+                        <div class="tree-options">
+                            <div class="tree-option"><div class="if">YES</div><div class="then">→ Use search</div></div>
+                            <div class="tree-option"><div class="if">NO</div><div class="then">→ Continue ↓</div></div>
+                        </div>
+                    </div>
+                    <div class="tree-node">
+                        <div class="tree-question">Are you comparing two fields (field vs field)?</div>
+                        <div class="tree-options">
+                            <div class="tree-option"><div class="if">YES</div><div class="then">→ Use where</div></div>
+                            <div class="tree-option"><div class="if">NO</div><div class="then">→ Continue ↓</div></div>
+                        </div>
+                    </div>
+                    <div class="tree-node">
+                        <div class="tree-question">Do you need to use a function (len, lower, like)?</div>
+                        <div class="tree-options">
+                            <div class="tree-option"><div class="if">YES</div><div class="then">→ Use where</div></div>
+                            <div class="tree-option"><div class="if">NO</div><div class="then">→ Either works (search is faster early in pipeline)</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-ref" style="background: linear-gradient(135deg, #3d1a1a, var(--bg-secondary)); border-color: var(--accent-red);">
+                    <h4 style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i> EXAM TRAP: Equality Syntax</h4>
+                    <table>
+                        <tr><th>Command</th><th>Equality Operator</th><th>Example</th></tr>
+                        <tr><td>search</td><td><code>=</code> (single)</td><td><code>| search status=200</code></td></tr>
+                        <tr><td>where</td><td><code>==</code> (double)</td><td><code>| where status==200</code></td></tr>
+                    </table>
+                    <p style="color:var(--accent-red);margin-top:12px;"><strong>Using single = in where is ASSIGNMENT, not comparison!</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== STATS FUNCTIONS ==================== -->
+        <div class="decision-section" id="stats-functions">
+            <div class="decision-header">
+                <h3><i class="fas fa-calculator"></i> count vs dc vs values vs list</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>I need to...</th><th>Use</th><th>Result</th></tr>
+                        <tr><td>Count all events</td><td><code>count</code></td><td>1000</td></tr>
+                        <tr><td>Count events with a field value</td><td><code>count(field)</code></td><td>950 (non-null only)</td></tr>
+                        <tr><td>Count UNIQUE values</td><td><code>dc(field)</code></td><td>42 (distinct count)</td></tr>
+                        <tr><td>List all UNIQUE values</td><td><code>values(field)</code></td><td>[200, 404, 500]</td></tr>
+                        <tr><td>List ALL values (with duplicates)</td><td><code>list(field)</code></td><td>[200, 200, 404, 200, 500]</td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario: Security - How many unique users logged in?</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Count unique users who logged in today</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="comparison">
+                            <div class="comparison-card good">
+                                <h5><i class="fas fa-check"></i> CORRECT - dc() for unique count</h5>
+                                <pre><code>index=auth action=login earliest=-1d@d 
+| stats dc(user) as unique_users</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">Result: <code>unique_users=42</code></p>
+                            </div>
+                            <div class="comparison-card bad">
+                                <h5><i class="fas fa-times"></i> WRONG - count() gives total logins</h5>
+                                <pre><code>index=auth action=login earliest=-1d@d 
+| stats count(user) as users  ❌</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">Result: <code>users=1500</code> (total events, not unique!)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Scenario: What status codes did each user receive?</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>List all unique status codes per user</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="comparison">
+                            <div class="comparison-card good">
+                                <h5><i class="fas fa-check"></i> CORRECT - values() for unique list</h5>
+                                <pre><code>index=web 
+| stats values(status) as status_codes by user</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">
+                                    Result:<br>
+                                    john: [200, 404, 500]<br>
+                                    jane: [200, 301]
+                                </p>
+                            </div>
+                            <div class="comparison-card">
+                                <h5><i class="fas fa-info-circle"></i> list() shows ALL including duplicates</h5>
+                                <pre><code>index=web 
+| stats list(status) as all_status by user</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">
+                                    Result:<br>
+                                    john: [200, 200, 200, 404, 200, 500]<br>
+                                    jane: [200, 200, 301]
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Real Example: Failed Login Report</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-shield-alt"></i> Security Use Case</div>
+                    <pre><code>index=auth action=failed 
+| stats count as total_failures,
+        dc(user) as unique_users_failed,
+        dc(src_ip) as unique_source_ips,
+        values(user) as failed_usernames,
+        values(src_ip) as source_ips
+        by host</code></pre>
+                    <div class="explanation">
+                        <strong>Output per host:</strong><br>
+                        • total_failures = 150 (how many failed attempts)<br>
+                        • unique_users_failed = 12 (how many different users)<br>
+                        • unique_source_ips = 3 (how many different IPs)<br>
+                        • failed_usernames = [admin, root, test, john, ...] (who failed)<br>
+                        • source_ips = [192.168.1.100, 10.0.0.5, 172.16.0.1] (from where)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TIME FUNCTIONS ==================== -->
+        <div class="decision-section" id="time-functions">
+            <div class="decision-header">
+                <h3><i class="fas fa-clock"></i> earliest/latest vs first/last</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref" style="background: linear-gradient(135deg, #3d1a1a, var(--bg-secondary)); border-color: var(--accent-red);">
+                    <h4 style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i> CRITICAL DIFFERENCE</h4>
+                    <table>
+                        <tr><th>Function</th><th>Based On</th><th>Reliable?</th></tr>
+                        <tr><td><code>earliest(field)</code></td><td>Event _time (oldest)</td><td><span class="badge badge-green">YES - time based</span></td></tr>
+                        <tr><td><code>latest(field)</code></td><td>Event _time (newest)</td><td><span class="badge badge-green">YES - time based</span></td></tr>
+                        <tr><td><code>first(field)</code></td><td>Processing order</td><td><span class="badge badge-red">NO - unreliable</span></td></tr>
+                        <tr><td><code>last(field)</code></td><td>Processing order</td><td><span class="badge badge-red">NO - unreliable</span></td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario: Get user's most recent login location</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Find where each user last logged in from</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="comparison">
+                            <div class="comparison-card good">
+                                <h5><i class="fas fa-check"></i> CORRECT - latest() uses _time</h5>
+                                <pre><code>index=auth action=login 
+| stats latest(src_ip) as last_login_ip,
+        latest(_time) as last_login_time
+        by user</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">✓ Gets IP from the most recent event by timestamp</p>
+                            </div>
+                            <div class="comparison-card bad">
+                                <h5><i class="fas fa-times"></i> RISKY - last() uses processing order</h5>
+                                <pre><code>index=auth action=login 
+| stats last(src_ip) as last_login_ip
+        by user  ⚠️</code></pre>
+                                <p style="color:var(--text-secondary);margin-top:10px;">✗ Processing order may not match time order!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>When to Use first/last</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-info-circle"></i> first/last ARE useful when...</div>
+                    <pre><code># After sorting - order is guaranteed
+index=web | sort _time | stats first(status) as earliest_status
+
+# With already-ordered data (like CSV)
+| inputlookup events.csv | stats last(value) as final_value</code></pre>
+                    <div class="explanation">Use first/last only when you've explicitly controlled the order with <code>sort</code> or know the data is pre-sorted.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CHART COMMANDS ==================== -->
+        <div class="decision-section" id="chart-commands">
+            <div class="decision-header">
+                <h3><i class="fas fa-chart-bar"></i> stats vs chart vs timechart</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>I need to...</th><th>Use</th><th>Output</th></tr>
+                        <tr><td>Create a table/report</td><td><code>stats</code></td><td>Table with rows per group</td></tr>
+                        <tr><td>Chart over ANY field (not time)</td><td><code>chart</code></td><td>X=any field, series by another</td></tr>
+                        <tr><td>Chart over TIME</td><td><code>timechart</code></td><td>X=_time, series by field</td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario 1: Events per hour over time</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use timechart - X-axis is always time</div>
+                    <pre><code>index=web 
+| timechart span=1h count by status</code></pre>
+                    <div class="explanation">
+                        <strong>Output:</strong> Time-series chart<br>
+                        X-axis: Time (hourly buckets)<br>
+                        Series: One line per status code (200, 404, 500)
+                    </div>
+                </div>
+
+                <h4>Scenario 2: Requests by department (not time-based)</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use chart - X-axis is department field</div>
+                    <pre><code>index=web 
+| chart count OVER department BY status</code></pre>
+                    <div class="explanation">
+                        <strong>Output:</strong> Category chart<br>
+                        X-axis: department (Sales, IT, HR, ...)<br>
+                        Series: One bar per status code
+                    </div>
+                </div>
+
+                <h4>Scenario 3: Just need numbers, no chart</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use stats - creates table</div>
+                    <pre><code>index=web 
+| stats count, avg(response_time), max(bytes) by status</code></pre>
+                    <div class="explanation">
+                        <strong>Output:</strong> Table<br>
+                        | status | count | avg(response_time) | max(bytes) |<br>
+                        | 200 | 5000 | 120.5 | 50000 |<br>
+                        | 404 | 200 | 45.2 | 1000 |
+                    </div>
+                </div>
+
+                <div class="decision-tree">
+                    <h4><i class="fas fa-sitemap"></i> Decision Tree</h4>
+                    <div class="tree-node">
+                        <div class="tree-question">Do you need a visualization or just data?</div>
+                        <div class="tree-options">
+                            <div class="tree-option"><div class="if">Just data/table</div><div class="then">→ Use stats</div></div>
+                            <div class="tree-option"><div class="if">Need chart</div><div class="then">→ Continue ↓</div></div>
+                        </div>
+                    </div>
+                    <div class="tree-node">
+                        <div class="tree-question">Is the X-axis TIME?</div>
+                        <div class="tree-options">
+                            <div class="tree-option"><div class="if">YES (hourly, daily)</div><div class="then">→ Use timechart</div></div>
+                            <div class="tree-option"><div class="if">NO (category, field)</div><div class="then">→ Use chart</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== FIELDS VS TABLE ==================== -->
+        <div class="decision-section" id="field-commands">
+            <div class="decision-header">
+                <h3><i class="fas fa-columns"></i> fields vs table</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>Command</th><th>Purpose</th><th>Performance</th><th>When to Use</th></tr>
+                        <tr><td><code>fields</code></td><td>Filter columns for processing</td><td><span class="badge badge-green">Improves speed</span></td><td>EARLY in search</td></tr>
+                        <tr><td><code>table</code></td><td>Format output display</td><td><span class="badge badge-orange">No improvement</span></td><td>END of search</td></tr>
+                    </table>
+                </div>
+
+                <h4>Best Practice Pattern</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use fields early, table last</div>
+                    <pre><code>index=web 
+| fields _time, user, status, response_time   ← EARLY: reduce data
+| where response_time > 1000
+| stats avg(response_time) as avg_rt by user
+| sort - avg_rt
+| table user, avg_rt                          ← END: format output</code></pre>
+                    <div class="explanation">
+                        <code>fields</code> early = less data to process = faster search<br>
+                        <code>table</code> last = clean formatted output
+                    </div>
+                </div>
+
+                <h4>fields - Include/Exclude Syntax</h4>
+                <div class="comparison">
+                    <div class="comparison-card">
+                        <h5><i class="fas fa-plus"></i> Include only these fields</h5>
+                        <pre><code>| fields user, status, bytes</code></pre>
+                    </div>
+                    <div class="comparison-card">
+                        <h5><i class="fas fa-minus"></i> Exclude these fields</h5>
+                        <pre><code>| fields - _raw, _time, linecount</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== STATS VS EVENTSTATS VS STREAMSTATS ==================== -->
+        <div class="decision-section" id="aggregation">
+            <div class="decision-header">
+                <h3><i class="fas fa-layer-group"></i> stats vs eventstats vs streamstats</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>Command</th><th>Output</th><th>Use When...</th></tr>
+                        <tr><td><code>stats</code></td><td>Only aggregated results</td><td>You need summary only</td></tr>
+                        <tr><td><code>eventstats</code></td><td>Original events + aggregate</td><td>Compare each event to the group total</td></tr>
+                        <tr><td><code>streamstats</code></td><td>Running/cumulative values</td><td>Running totals, moving averages</td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario: Find events above average response time</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Show events where response_time > average</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="example-box">
+                            <div class="title"><i class="fas fa-check-circle"></i> Use eventstats - keeps events AND adds average</div>
+                            <pre><code>index=web 
+| eventstats avg(response_time) as avg_rt
+| where response_time > avg_rt
+| table _time, user, response_time, avg_rt</code></pre>
+                            <div class="explanation">
+                                <code>eventstats</code> adds the average to EACH event, so you can compare each event's response_time to the overall average.
+                            </div>
+                        </div>
+                        <div class="example-box wrong">
+                            <div class="title"><i class="fas fa-times-circle"></i> WRONG - stats removes the events</div>
+                            <pre><code>index=web 
+| stats avg(response_time) as avg_rt  ← You now have only 1 row!
+| where response_time > avg_rt        ← ERROR: response_time doesn't exist</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Scenario: Running total of bytes transferred</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use streamstats - cumulative calculation</div>
+                    <pre><code>index=network 
+| sort _time
+| streamstats sum(bytes) as running_total
+| table _time, bytes, running_total</code></pre>
+                    <div class="explanation">
+                        <strong>Output:</strong><br>
+                        | _time | bytes | running_total |<br>
+                        | 10:00 | 100 | 100 |<br>
+                        | 10:01 | 200 | 300 |<br>
+                        | 10:02 | 150 | 450 |
+                    </div>
+                </div>
+
+                <h4>Scenario: Count events per user, running count</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use streamstats with window</div>
+                    <pre><code>index=auth 
+| sort _time
+| streamstats count as event_number by user
+| table _time, user, event_number</code></pre>
+                    <div class="explanation">
+                        <strong>Output:</strong><br>
+                        | _time | user | event_number |<br>
+                        | 10:00 | john | 1 |<br>
+                        | 10:01 | jane | 1 |<br>
+                        | 10:02 | john | 2 |<br>
+                        | 10:03 | john | 3 |
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== DEDUP VS SORT ==================== -->
+        <div class="decision-section" id="dedup-sort">
+            <div class="decision-header">
+                <h3><i class="fas fa-sort"></i> dedup vs sort vs head/tail</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>I need to...</th><th>Use</th><th>Example</th></tr>
+                        <tr><td>Keep only ONE event per user</td><td><code>dedup</code></td><td><code>| dedup user</code></td></tr>
+                        <tr><td>Keep MOST RECENT per user</td><td><code>dedup sortby</code></td><td><code>| dedup user sortby -_time</code></td></tr>
+                        <tr><td>Sort all results</td><td><code>sort</code></td><td><code>| sort -bytes</code> (desc)</td></tr>
+                        <tr><td>Get top N results</td><td><code>sort N</code> or <code>head</code></td><td><code>| sort 10 -bytes</code></td></tr>
+                        <tr><td>Get last N results</td><td><code>tail</code></td><td><code>| tail 10</code></td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario: Get each user's most recent login</h4>
+                <div class="scenario">
+                    <div class="scenario-header">
+                        <div class="icon need"><i class="fas fa-question"></i></div>
+                        <h4>Show only the latest login event per user</h4>
+                    </div>
+                    <div class="scenario-body">
+                        <div class="example-box">
+                            <div class="title"><i class="fas fa-check-circle"></i> CORRECT - dedup with sortby</div>
+                            <pre><code>index=auth action=login 
+| dedup user sortby -_time
+| table _time, user, src_ip, status</code></pre>
+                            <div class="explanation">
+                                <code>sortby -_time</code> sorts by time descending (newest first)<br>
+                                <code>dedup user</code> then keeps only the first (newest) per user
+                            </div>
+                        </div>
+                        <div class="example-box wrong">
+                            <div class="title"><i class="fas fa-times-circle"></i> WRONG - plain dedup keeps random event</div>
+                            <pre><code>index=auth action=login 
+| dedup user  ← Keeps first encountered, NOT newest!</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>sort Syntax Tips</h4>
+                <div class="comparison">
+                    <div class="comparison-card">
+                        <h5><i class="fas fa-sort-amount-down"></i> Descending (highest first)</h5>
+                        <pre><code>| sort -bytes     ← minus prefix
+| sort 10 -bytes  ← top 10</code></pre>
+                    </div>
+                    <div class="comparison-card">
+                        <h5><i class="fas fa-sort-amount-up"></i> Ascending (lowest first)</h5>
+                        <pre><code>| sort bytes      ← no prefix (default)
+| sort +bytes     ← explicit plus</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== EVAL FUNCTIONS ==================== -->
+        <div class="decision-section" id="eval-functions">
+            <div class="decision-header">
+                <h3><i class="fas fa-code"></i> if vs case vs coalesce</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Quick Decision</h4>
+                    <table>
+                        <tr><th>Scenario</th><th>Use</th><th>Example</th></tr>
+                        <tr><td>Simple true/false</td><td><code>if()</code></td><td><code>if(status<400,"OK","Error")</code></td></tr>
+                        <tr><td>Multiple conditions</td><td><code>case()</code></td><td><code>case(status<300,"Good",status<400,"Redirect",1=1,"Error")</code></td></tr>
+                        <tr><td>First non-null value</td><td><code>coalesce()</code></td><td><code>coalesce(email,phone,"N/A")</code></td></tr>
+                        <tr><td>Return null if equal</td><td><code>nullif()</code></td><td><code>nullif(status,0)</code></td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario 1: Categorize status codes</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use case() for multiple conditions</div>
+                    <pre><code>index=web 
+| eval status_category = case(
+    status < 300, "Success",
+    status < 400, "Redirect", 
+    status < 500, "Client Error",
+    status >= 500, "Server Error",
+    1=1, "Unknown"
+  )
+| stats count by status_category</code></pre>
+                    <div class="explanation">
+                        <strong>Important:</strong> Always end with <code>1=1, "default"</code> to catch unmatched cases!
+                    </div>
+                </div>
+
+                <h4>Scenario 2: Simple pass/fail</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use if() for binary choice</div>
+                    <pre><code>index=auth 
+| eval result = if(action="success", "PASS", "FAIL")
+| stats count by result</code></pre>
+                </div>
+
+                <h4>Scenario 3: Get contact info (email or phone)</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use coalesce() for fallback values</div>
+                    <pre><code>index=users 
+| eval contact = coalesce(email, phone, mobile, "No contact")
+| table user, contact</code></pre>
+                    <div class="explanation">
+                        Returns the FIRST non-null value: email → phone → mobile → "No contact"
+                    </div>
+                </div>
+
+                <h4>Time Functions: strftime vs strptime</h4>
+                <div class="quick-ref" style="background: linear-gradient(135deg, #1a2a3d, var(--bg-secondary)); border-color: var(--accent-blue);">
+                    <h4 style="color: var(--accent-blue);"><i class="fas fa-clock"></i> Memory Trick</h4>
+                    <table>
+                        <tr><th>Function</th><th>Direction</th><th>Memory Trick</th><th>Example</th></tr>
+                        <tr><td><code>strftime</code></td><td>epoch → string</td><td>str<strong>F</strong>time = <strong>F</strong>ormat</td><td><code>strftime(_time, "%Y-%m-%d")</code> → "2024-01-15"</td></tr>
+                        <tr><td><code>strptime</code></td><td>string → epoch</td><td>str<strong>P</strong>time = <strong>P</strong>arse</td><td><code>strptime("2024-01-15", "%Y-%m-%d")</code> → 1705276800</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TIME MODIFIERS ==================== -->
+        <div class="decision-section" id="time-modifiers">
+            <div class="decision-header">
+                <h3><i class="fas fa-calendar"></i> Time Modifiers Explained with Examples</h3>
+            </div>
+            <div class="decision-content">
+                
+                <h4>Assume Current Time: Wednesday, 3:45 PM</h4>
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-clock"></i> Basic Time Modifiers</h4>
+                    <table>
+                        <tr><th>Modifier</th><th>Meaning</th><th>Result</th></tr>
+                        <tr><td><code>-1h</code></td><td>1 hour ago</td><td>Wednesday 2:45 PM</td></tr>
+                        <tr><td><code>-1d</code></td><td>1 day ago (24 hours)</td><td>Tuesday 3:45 PM</td></tr>
+                        <tr><td><code>-7d</code></td><td>7 days ago</td><td>Last Wednesday 3:45 PM</td></tr>
+                        <tr><td><code>-1w</code></td><td>1 week ago</td><td>Last Wednesday 3:45 PM</td></tr>
+                        <tr><td><code>-1mon</code></td><td>1 month ago</td><td>Same day last month 3:45 PM</td></tr>
+                    </table>
+                </div>
+
+                <div class="quick-ref" style="background: linear-gradient(135deg, #3d2a1a, var(--bg-secondary)); border-color: var(--accent-orange);">
+                    <h4 style="color: var(--accent-orange);"><i class="fas fa-crosshairs"></i> Snap-to (@) Modifiers - EXAM FAVORITE!</h4>
+                    <table>
+                        <tr><th>Modifier</th><th>Meaning</th><th>Result (at Wed 3:45 PM)</th></tr>
+                        <tr><td><code>@d</code></td><td>Snap to midnight TODAY</td><td>Wednesday 00:00:00</td></tr>
+                        <tr><td><code>@h</code></td><td>Snap to start of current hour</td><td>Wednesday 15:00:00</td></tr>
+                        <tr><td><code>-1d@d</code></td><td>Go back 1 day, snap to midnight</td><td>Tuesday 00:00:00</td></tr>
+                        <tr><td><code>@w0</code></td><td>Snap to Sunday</td><td>Last Sunday 00:00:00</td></tr>
+                        <tr><td><code>@w1</code></td><td>Snap to Monday</td><td>Last Monday 00:00:00</td></tr>
+                        <tr><td><code>@mon</code></td><td>Snap to 1st of month</td><td>1st of current month 00:00</td></tr>
+                    </table>
+                </div>
+
+                <h4>Common Time Range Patterns</h4>
+                <div class="comparison">
+                    <div class="comparison-card good">
+                        <h5><i class="fas fa-check"></i> Complete Yesterday</h5>
+                        <pre><code>earliest=-1d@d latest=@d</code></pre>
+                        <p style="color:var(--text-secondary);font-size:0.9em;">Tuesday 00:00 → Wednesday 00:00</p>
+                    </div>
+                    <div class="comparison-card good">
+                        <h5><i class="fas fa-check"></i> Today So Far</h5>
+                        <pre><code>earliest=@d latest=now</code></pre>
+                        <p style="color:var(--text-secondary);font-size:0.9em;">Wednesday 00:00 → now</p>
+                    </div>
+                    <div class="comparison-card good">
+                        <h5><i class="fas fa-check"></i> This Week (Mon-Now)</h5>
+                        <pre><code>earliest=@w1 latest=now</code></pre>
+                        <p style="color:var(--text-secondary);font-size:0.9em;">Monday 00:00 → now</p>
+                    </div>
+                    <div class="comparison-card good">
+                        <h5><i class="fas fa-check"></i> Last 7 Complete Days</h5>
+                        <pre><code>earliest=-7d@d latest=@d</code></pre>
+                        <p style="color:var(--text-secondary);font-size:0.9em;">7 days ago midnight → today midnight</p>
+                    </div>
+                </div>
+
+                <div class="example-box wrong">
+                    <div class="title"><i class="fas fa-exclamation-triangle"></i> Common Mistake</div>
+                    <pre><code># This does NOT give complete yesterday!
+earliest=-1d latest=now  ❌
+
+# This gives: Tuesday 3:45 PM → Wednesday 3:45 PM
+# (24 hours ago to now, not midnight to midnight)</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CORRELATION ==================== -->
+        <div class="decision-section" id="correlation">
+            <div class="decision-header">
+                <h3><i class="fas fa-link"></i> join vs subsearch vs lookup vs stats</h3>
+            </div>
+            <div class="decision-content">
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt"></i> Performance Ranking (Best to Worst)</h4>
+                    <table>
+                        <tr><th>Method</th><th>Performance</th><th>Best For</th></tr>
+                        <tr><td><code>stats</code></td><td><span class="badge badge-green">BEST</span></td><td>Same index, aggregation possible</td></tr>
+                        <tr><td><code>lookup</code></td><td><span class="badge badge-green">FAST</span></td><td>Enrichment from CSV/KV Store</td></tr>
+                        <tr><td><code>subsearch</code></td><td><span class="badge badge-orange">MEDIUM</span></td><td>Filter main search with results from another</td></tr>
+                        <tr><td><code>join</code></td><td><span class="badge badge-red">SLOW</span></td><td>Last resort, complex joins</td></tr>
+                    </table>
+                </div>
+
+                <h4>Scenario: Correlate login failures with successful logins</h4>
+                <div class="comparison">
+                    <div class="comparison-card good">
+                        <h5><i class="fas fa-check"></i> BEST - Use stats (same index)</h5>
+                        <pre><code>index=auth 
+| stats count(eval(action="failed")) as failures,
+        count(eval(action="success")) as successes
+        by user
+| where failures > 5 AND successes > 0</code></pre>
+                    </div>
+                    <div class="comparison-card">
+                        <h5><i class="fas fa-info-circle"></i> OK - Use subsearch</h5>
+                        <pre><code>index=auth action=success 
+  [search index=auth action=failed 
+   | stats count by user 
+   | where count > 5 
+   | fields user]</code></pre>
+                        <p style="color:var(--text-secondary);font-size:0.85em;">Subsearch finds users with >5 failures, main search finds their successes</p>
+                    </div>
+                </div>
+
+                <h4>Scenario: Add department from HR system</h4>
+                <div class="example-box">
+                    <div class="title"><i class="fas fa-check-circle"></i> Use lookup - enrichment from external data</div>
+                    <pre><code>index=auth 
+| lookup users.csv username AS user OUTPUT department, manager
+| stats count by department</code></pre>
+                    <div class="explanation">
+                        <code>lookup</code> enriches events with data from users.csv file.<br>
+                        Maps <code>user</code> field to <code>username</code> column, outputs department and manager.
+                    </div>
+                </div>
+
+                <h4>When to Use Join (Last Resort)</h4>
+                <div class="example-box" style="border-left-color: var(--accent-orange);">
+                    <div class="title" style="color: var(--accent-orange);"><i class="fas fa-exclamation-triangle"></i> Only use join when...</div>
+                    <pre><code># Different indexes, complex relationship
+index=network 
+| join src_ip 
+    [search index=threat_intel 
+     | fields ip, threat_score]
+| where threat_score > 80</code></pre>
+                    <div class="explanation">
+                        Use join only when:<br>
+                        • Data is in different indexes<br>
+                        • Cannot use stats or lookup<br>
+                        • Need row-by-row matching<br>
+                        <strong>Warning:</strong> join has 50,000 row limit by default!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== FINAL CHEAT SHEET ==================== -->
+        <div class="decision-section" style="border-color: var(--accent-green);">
+            <div class="decision-header" style="background: linear-gradient(135deg, #1a472a, var(--bg-secondary));">
+                <h3 style="color: var(--accent-green-light);"><i class="fas fa-clipboard-check"></i> Ultimate Cheat Sheet</h3>
+            </div>
+            <div class="decision-content">
+                <div class="quick-ref" style="border-color: var(--accent-green-light);">
+                    <h4><i class="fas fa-star"></i> "I need to..." Quick Reference</h4>
+                    <table>
+                        <tr><th style="width:40%">I need to...</th><th>Use</th></tr>
+                        <tr><td>Filter with wildcards</td><td><code>| search status=fail*</code></td></tr>
+                        <tr><td>Compare two fields</td><td><code>| where sent > received</code></td></tr>
+                        <tr><td>Count unique values</td><td><code>| stats dc(user)</code></td></tr>
+                        <tr><td>List unique values</td><td><code>| stats values(status)</code></td></tr>
+                        <tr><td>Get most recent per group</td><td><code>| dedup user sortby -_time</code></td></tr>
+                        <tr><td>Get latest value by time</td><td><code>| stats latest(field) by user</code></td></tr>
+                        <tr><td>Calculate running total</td><td><code>| streamstats sum(bytes)</code></td></tr>
+                        <tr><td>Add group average to each event</td><td><code>| eventstats avg(x) as avg_x</code></td></tr>
+                        <tr><td>Time-series chart</td><td><code>| timechart span=1h count by status</code></td></tr>
+                        <tr><td>Category chart (not time)</td><td><code>| chart count OVER dept BY status</code></td></tr>
+                        <tr><td>Multiple conditions</td><td><code>| eval x=case(a,1,b,2,1=1,0)</code></td></tr>
+                        <tr><td>First non-null value</td><td><code>| eval x=coalesce(a,b,"default")</code></td></tr>
+                        <tr><td>Format time as string</td><td><code>| eval date=strftime(_time,"%Y-%m-%d")</code></td></tr>
+                        <tr><td>Complete yesterday</td><td><code>earliest=-1d@d latest=@d</code></td></tr>
+                        <tr><td>Enrich from CSV</td><td><code>| lookup file.csv key OUTPUT fields</code></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
