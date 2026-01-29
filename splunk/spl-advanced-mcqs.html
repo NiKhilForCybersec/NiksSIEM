@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Advanced MCQs | Deep Dive Questions | Splunk Reference</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #21262d;
+            --border-color: #30363d; --text-primary: #c9d1d9; --text-secondary: #8b949e;
+            --accent-green: #238636; --accent-green-light: #7ce38b; --accent-orange: #f0883e;
+            --accent-purple: #8957e5; --accent-blue: #58a6ff; --accent-cyan: #39c5cf; --accent-red: #da3633;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; }
+        .app-container { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, #1a472a 0%, var(--bg-secondary) 100%); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--accent-green-light); font-weight: 700; font-size: 1.1em; }
+        .sidebar-content { padding: 16px 12px; }
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section-title { color: var(--text-secondary); font-size: 0.7em; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; padding-left: 12px; font-weight: 600; }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav-item { margin: 2px 0; }
+        .sidebar-nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; font-size: 0.85em; transition: all 0.2s; }
+        .sidebar-nav-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .sidebar-nav-link.active { background: linear-gradient(135deg, var(--accent-purple), #a371f7); color: white; }
+        .sidebar-nav-link i { width: 18px; text-align: center; }
+        .sidebar-badge { margin-left: auto; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; background: var(--bg-tertiary); }
+        
+        .main-wrapper { margin-left: 280px; flex: 1; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 32px; }
+        
+        h1 { color: var(--accent-purple); margin-bottom: 16px; font-size: 2em; }
+        h2 { color: var(--accent-green-light); margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border-color); }
+        .lead { font-size: 1.1em; color: var(--text-secondary); margin-bottom: 24px; }
+        code { background: var(--bg-secondary); padding: 3px 8px; border-radius: 6px; color: #79c0ff; font-family: 'Consolas', monospace; }
+        
+        .question-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; margin: 24px 0; overflow: hidden; }
+        .section-header { background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary)); padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .section-header h3 { margin: 0; color: var(--accent-blue); display: flex; align-items: center; gap: 12px; }
+        .section-header .count { background: var(--accent-purple); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+        .section-content { padding: 24px; }
+        
+        .mcq { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .mcq-number { display: inline-block; background: var(--accent-purple); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600; margin-bottom: 12px; }
+        .mcq-difficulty { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75em; font-weight: 600; margin-left: 8px; }
+        .mcq-difficulty.easy { background: var(--accent-green); color: white; }
+        .mcq-difficulty.medium { background: var(--accent-orange); color: white; }
+        .mcq-difficulty.hard { background: var(--accent-red); color: white; }
+        .mcq-question { font-size: 1.05em; color: var(--text-primary); margin-bottom: 16px; line-height: 1.6; }
+        .mcq-scenario { background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); }
+        .mcq-options { list-style: none; padding: 0; }
+        .mcq-options li { padding: 14px 18px; margin: 8px 0; background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
+        .mcq-options li:hover { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .mcq-options li.selected { border-color: var(--accent-blue); background: rgba(88, 166, 255, 0.1); }
+        .mcq-options li.correct { border-color: var(--accent-green); background: rgba(35, 134, 54, 0.2); }
+        .mcq-options li.incorrect { border-color: var(--accent-red); background: rgba(218, 54, 51, 0.2); }
+        .mcq-options .letter { background: var(--bg-tertiary); padding: 4px 10px; border-radius: 6px; font-weight: 600; color: var(--text-secondary); min-width: 32px; text-align: center; }
+        .mcq-options li.correct .letter { background: var(--accent-green); color: white; }
+        .mcq-options li.incorrect .letter { background: var(--accent-red); color: white; }
+        
+        .mcq-answer { margin-top: 16px; padding: 20px; border-radius: 10px; display: none; background: linear-gradient(135deg, #1a472a, #0d1117); border: 1px solid var(--accent-green); }
+        .mcq-answer.show { display: block; }
+        .mcq-answer h5 { color: var(--accent-green-light); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+        .mcq-answer .explanation { color: var(--text-secondary); line-height: 1.7; }
+        .mcq-answer .key-point { background: var(--bg-tertiary); padding: 12px 16px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--accent-orange); }
+        .mcq-answer .key-point strong { color: var(--accent-orange); }
+        
+        .check-btn { background: linear-gradient(135deg, var(--accent-purple), #a371f7); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; transition: all 0.2s; }
+        .check-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(137, 87, 229, 0.3); }
+        
+        .quick-ref { background: var(--bg-secondary); border: 2px solid var(--accent-cyan); border-radius: 12px; margin: 24px 0; overflow: hidden; }
+        .quick-ref-header { background: linear-gradient(135deg, #1a2a3d, var(--bg-secondary)); padding: 16px 20px; color: var(--accent-cyan); font-weight: 600; }
+        .quick-ref table { width: 100%; border-collapse: collapse; }
+        .quick-ref th, .quick-ref td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .quick-ref th { background: var(--bg-tertiary); color: var(--accent-blue); font-weight: 600; }
+        .quick-ref tr:hover { background: var(--bg-tertiary); }
+        
+        .mobile-menu-toggle { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; cursor: pointer; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .mobile-menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-logo"><i class="fas fa-terminal"></i><span>Splunk Reference</span></a>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Certifications</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-user-graduate" style="color:#7ce38b"></i>Power User</a></li>
+                        <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog" style="color:#f0883e"></i>Admin</a></li>
+                        <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt" style="color:#8957e5"></i>ES Admin</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">SPL Practice</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="spl-practice-questions.html" class="sidebar-nav-link"><i class="fas fa-tasks"></i>SPL MCQs (60 Qs)</a></li>
+                        <li class="sidebar-nav-item"><a href="spl-advanced-mcqs.html" class="sidebar-nav-link active"><i class="fas fa-brain"></i>Advanced MCQs (90 Qs)</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Resources</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i>Lab Exercises</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <main class="main-content">
+                <h1><i class="fas fa-brain"></i> SPL Advanced Practice Questions</h1>
+                <p class="lead">90 additional deep-dive questions covering field extractions, regular expressions, macros, data models, and enterprise security SPL patterns.</p>
+
+                <!-- ==================== SECTION: Field Extractions ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-magic"></i> Field Extractions & Regular Expressions</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q61</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Your logs have the format: <code>ERROR [2024-01-15 14:30:00] UserService - Failed login for user: john.doe</code>. Extract the service name and username.
+                            </div>
+                            <div class="mcq-question">Which rex command correctly extracts both fields?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| rex "\[.+\] (?&lt;service&gt;\w+) - .+user: (?&lt;user&gt;\S+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rex field=_raw "(?&lt;service&gt;[A-Z]\w+) - .*user: (?&lt;user&gt;[a-z.]+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| rex "\] (?&lt;service&gt;\S+) - .* (?&lt;user&gt;\S+)$"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span>All three can work, but A is most precise</li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'All patterns can extract, but they have different precision. Option A is best: <code>\\w+</code> for service name (word chars), <code>\\S+</code> for username (non-whitespace).')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Regex Tips:</strong> <code>\w+</code>=word chars, <code>\S+</code>=non-whitespace, <code>\d+</code>=digits, <code>.+</code>=any chars (greedy), <code>.+?</code>=any chars (non-greedy)</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q62</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Extract multiple key-value pairs from logs like: <code>action=login user=john status=success duration=150ms</code>
+                            </div>
+                            <div class="mcq-question">Which approach extracts ALL key-value pairs automatically?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| rex "(?&lt;_KEY_1&gt;\w+)=(?&lt;_VAL_1&gt;\w+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rex max_match=0 "(?&lt;_KEY_1&gt;\w+)=(?&lt;_VAL_1&gt;\S+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| extract kvdelim="=" pairdelim=" "</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>| kv</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', '<code>kv</code> (or <code>kvform</code>) automatically extracts key=value pairs! It is the simplest solution for standard KV formatted data.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Auto-extraction:</strong> <code>kv</code> command auto-extracts key=value pairs. For custom delimiters, use <code>| kv pairdelim=";" kvdelim=":"</code></div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q63</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want to mask sensitive data: replace credit card numbers (16 digits) with "XXXX-XXXX-XXXX-####" showing only last 4 digits.
+                            </div>
+                            <div class="mcq-question">Which rex mode modifies the field in place?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| rex field=message "(?&lt;cc&gt;\d{16})"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rex mode=sed field=message "s/\d{12}(\d{4})/XXXX-XXXX-XXXX-\1/g"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| eval message=replace(message, "\d{12}(\d{4})", "XXXX-XXXX-XXXX-\1")</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span>Both B and C achieve the same result</div>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', '<code>rex mode=sed</code> uses sed-style substitution. <code>replace()</code> in eval does the same. Both support capture groups with <code>\\1</code>.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Data Masking:</strong> <code>rex mode=sed</code> or <code>replace()</code> for in-place modification. Capture groups: <code>(\d{4})</code> → <code>\1</code></div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q64</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to extract an IP address from a log line that may contain multiple IPs, but you only want the FIRST one.
+                            </div>
+                            <div class="mcq-question">Which rex option controls multiple matches?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| rex max_match=1 "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rex "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code> (default extracts first only)</li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| rex max_match=0 "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>| rex first=true "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'By default, rex extracts only the FIRST match. Use <code>max_match=0</code> to extract ALL matches (creates multivalue). <code>max_match=N</code> extracts up to N matches.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>max_match:</strong> Default=1 (first match). <code>max_match=0</code>=all matches (multivalue). <code>max_match=N</code>=up to N matches.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q65</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Extract a JSON value from mixed log format: <code>INFO {"user": "john", "action": "login"} completed</code>
+                            </div>
+                            <div class="mcq-question">Which approach best handles embedded JSON?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| rex "\"user\": \"(?&lt;user&gt;[^\"]+)\""</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| spath input=_raw path=user</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| rex "(?&lt;json&gt;\{.+\})" | spath input=json</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span>C is most robust for mixed formats</div>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'First extract the JSON portion with rex, then use <code>spath</code> to parse JSON structure. <code>spath</code> is specifically designed for JSON/XML parsing.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>JSON Parsing:</strong> <code>spath</code> parses JSON/XML. For mixed formats: extract JSON portion first, then spath. Use <code>path=field.subfield</code> for nested values.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: Macros & Lookups ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-cog"></i> Macros, Lookups & Knowledge Objects</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q66</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You created a macro called <code>get_errors(1)</code> that takes an index name as parameter. The macro definition is: <code>index=$idx$ level=ERROR</code>
+                            </div>
+                            <div class="mcq-question">How do you call this macro in a search?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| get_errors(main)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>`get_errors(main)`</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>${get_errors(main)}</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>macro(get_errors, main)</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'Macros use backticks! <code>`macroname`</code> or <code>`macroname(arg1,arg2)`</code>. The number in parentheses after macro name indicates argument count.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Macro Syntax:</strong> Use backticks: <code>`macroname`</code> or <code>`macroname(arg)`</code>. Macro name includes arg count: <code>get_errors(1)</code> = 1 argument.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q67</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to create an automatic lookup that adds user department whenever the <code>user</code> field appears in any search.
+                            </div>
+                            <div class="mcq-question">Where do you configure automatic lookups?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>transforms.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>props.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Both A and B are required</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>savedsearches.conf</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'C', 'Automatic lookups require BOTH: transforms.conf defines the lookup table, props.conf defines when to apply it (which sourcetype/source triggers it).')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: C</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Auto Lookup:</strong> transforms.conf = lookup definition. props.conf = LOOKUP-name = lookup_table input OUTPUT output (per sourcetype).</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q68</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Your lookup file <code>assets.csv</code> contains thousands of rows. You want to improve lookup performance.
+                            </div>
+                            <div class="mcq-question">Which lookup setting improves performance for large files?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Enable "Advanced options" → "Case sensitive match"</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>Convert to KV Store lookup</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Add to an accelerated data model</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Both B and C can improve performance</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'KV Store lookups are optimized for large datasets with indexing capabilities. CSV lookups load entirely into memory - problematic for large files.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Lookup Performance:</strong> CSV = small files. KV Store = large files, complex queries. External lookup = real-time API integration.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q69</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want lookup to return results even when there's no match (left outer join behavior).
+                            </div>
+                            <div class="mcq-question">Which lookup option provides outer join behavior?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| lookup local=true assets.csv ip OUTPUT asset_name</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| lookup assets.csv ip OUTPUT asset_name default=Unknown</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| lookup assets.csv ip OUTPUTNEW asset_name</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Lookups always return all events (outer join by default)</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'Splunk lookups are LEFT OUTER JOIN by default - all events are kept, even without match (output fields will be null). This is different from the join command!')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Lookup Behavior:</strong> Lookups = left outer join (keep all events). <code>OUTPUTNEW</code> = only add if field doesn't exist. <code>OUTPUT</code> = always overwrite.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q70</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to create a calculated field that always shows <code>response_time_sec = response_time_ms / 1000</code> automatically.
+                            </div>
+                            <div class="mcq-question">Which knowledge object creates auto-calculated fields?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Field extraction</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>Calculated field (eval expression)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Field alias</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Lookup with OUTPUT</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'Calculated fields use eval expressions and are computed automatically at search time. Defined in props.conf with EVAL-fieldname = expression.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Calculated Fields:</strong> Settings → Fields → Calculated Fields. Uses eval syntax. Auto-computed at search time for matching sourcetypes.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: Data Models & tstats ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-cubes"></i> Data Models, Acceleration & tstats</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q71</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to query the accelerated Authentication data model to count failed logins per user.
+                            </div>
+                            <div class="mcq-question">Which tstats syntax correctly queries the data model?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| tstats count from Authentication where action=failed by user</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| tstats count from datamodel=Authentication where Authentication.action=failure by Authentication.user</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| tstats count from datamodel=Authentication.Authentication where action=failure by user</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>| datamodel Authentication search | stats count by user</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'tstats requires: <code>from datamodel=ModelName</code> and fields must be prefixed with dataset name: <code>Authentication.action</code>, <code>Authentication.user</code>.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>tstats Syntax:</strong> <code>| tstats aggregation from datamodel=Model.Dataset where Dataset.field=value by Dataset.field</code></div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q72</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want to use tstats but also need fields that aren't in the accelerated summary.
+                            </div>
+                            <div class="mcq-question">Which option allows tstats to access non-accelerated fields?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| tstats ... summariesonly=false</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| tstats ... allow_old_summaries=true</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| tstats ... include_raw=true</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Cannot use tstats with non-accelerated fields</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'A', '<code>summariesonly=false</code> tells tstats to also search raw events for fields not in acceleration. Slower but gives access to all fields.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: A</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>tstats Options:</strong> <code>summariesonly=true</code> (default, fast) vs <code>summariesonly=false</code> (slower, all fields). <code>allow_old_summaries=true</code> for stale summaries.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q73</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Data model acceleration is taking too long and consuming too many resources.
+                            </div>
+                            <div class="mcq-question">Which factor MOST affects acceleration performance?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Number of fields in the data model</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>The base search/constraint of the root dataset</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Number of users accessing the data model</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Dashboard refresh interval</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'The root dataset constraint determines what data is accelerated. A broad constraint (like just sourcetype) accelerates more data = more resources. Narrow constraints are more efficient.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Acceleration Tip:</strong> Narrow the base constraint (root dataset). Add specific index, sourcetype, or field filters to reduce accelerated data volume.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q74</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want to find which CIM data model a sourcetype maps to.
+                            </div>
+                            <div class="mcq-question">Where are CIM data model mappings configured?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>datamodels.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>tags.conf and eventtypes.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>props.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>transforms.conf</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'CIM uses tags! eventtypes.conf defines event categories, tags.conf applies tags. Data models use tag-based constraints like <code>tag=authentication</code>.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>CIM Mapping:</strong> eventtypes.conf → tags.conf → Data Model. Add tags like <code>authentication</code>, <code>network</code>, <code>malware</code> to map to CIM models.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q75</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Compare tstats vs regular stats for a query counting events by source IP over the last 7 days.
+                            </div>
+                            <div class="mcq-question">When is tstats significantly faster than stats?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Always faster regardless of data volume</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>When querying accelerated data models or indexed fields</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Only for real-time searches</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>When using wildcards in field values</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'tstats is fast because it queries pre-computed summaries (tsidx) instead of raw events. Only works with accelerated data models or indexed fields.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>tstats Speed:</strong> Uses tsidx files (summaries) not raw events. Requires: accelerated data model OR indexed fields (<code>INDEXED_EXTRACTIONS</code> in props.conf).</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: Enterprise Security SPL ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-shield-alt"></i> Enterprise Security SPL Patterns</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q76</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Create a correlation search that generates a notable event when a user fails login more than 5 times in 10 minutes.
+                            </div>
+                            <div class="mcq-question">Which adaptive response action creates notable events?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| sendalert notable</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| collect index=notable</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| outputlookup notable_events</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Configure "Notable" adaptive response action in correlation search settings</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'Notable events are created through the ES framework adaptive response actions, not direct SPL commands. Configure in correlation search settings → Adaptive Response Actions → Notable.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>ES Notables:</strong> Created via Adaptive Response Actions, not SPL. The search produces results; the action creates notables from those results.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q77</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to add risk score to a user based on suspicious activity detected by your correlation search.
+                            </div>
+                            <div class="mcq-question">Which command adds risk events in ES?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| eval risk_score=50 | collect index=risk</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| sendalert risk</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| outputlookup append=t risk_lookup</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Configure "Risk Analysis" adaptive response action</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'Risk scores are added via the Risk Analysis adaptive response action. You configure risk_object, risk_object_type, and risk_score in the action settings.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Risk-Based Alerting:</strong> Risk Analysis action creates risk events. Fields: risk_object (user/host), risk_object_type, risk_score, risk_message.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q78</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Query the risk index to find users with cumulative risk score above 100 in the last 24 hours.
+                            </div>
+                            <div class="mcq-question">Which search correctly aggregates risk scores?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>index=risk earliest=-24h | stats sum(risk_score) as total_risk by risk_object | where total_risk > 100</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| from datamodel:Risk.All_Risk | stats sum(calculated_risk_score) as total by risk_object | where total > 100</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| tstats sum(All_Risk.calculated_risk_score) as total from datamodel=Risk.All_Risk by All_Risk.risk_object | where total > 100</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>All three can work, but C is most performant</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'All work! tstats against the Risk data model is fastest. The Risk data model uses <code>calculated_risk_score</code> as the normalized field name.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Risk Queries:</strong> Risk data model fields: <code>calculated_risk_score</code>, <code>risk_object</code>, <code>risk_object_type</code>, <code>source</code>, <code>risk_message</code>.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q79</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want to correlate threat intelligence IOCs with your network traffic logs.
+                            </div>
+                            <div class="mcq-question">Which ES feature provides automatic IOC matching?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| lookup threat_intel_lookup ip</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>Threat Intelligence framework with automatic lookup</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| inputlookup threat_feeds.csv | join ip [search index=network]</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>| tstats from datamodel=Threat_Intel</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'ES Threat Intelligence framework automatically matches IOCs against indexed data. Feeds are configured, and matching happens via automatic lookups on ip_intel, file_intel, etc.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Threat Intel:</strong> ES auto-matches IOCs using threat intel lookups. Key fields: <code>threat_match_field</code>, <code>threat_match_value</code>, <code>threat_collection_key</code>.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q80</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Create a detection for "impossible travel" - user logging in from two countries more than 500 miles apart within 1 hour.
+                            </div>
+                            <div class="mcq-question">Which approach best implements impossible travel detection?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| tstats from datamodel=Authentication | stats values(src_country) by user | where mvcount(src_country) > 1</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| tstats ... by _time span=1h, user, src_ip | iplocation src_ip | streamstats current=f last(lat) as prev_lat by user | eval distance=...</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| transaction user maxspan=1h | where mvcount(src_country) > 1</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>B is the most accurate approach using geo-distance calculation</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'True impossible travel needs: 1) iplocation for coordinates, 2) streamstats to track previous location, 3) haversine formula for distance, 4) time-based threshold.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Impossible Travel:</strong> Use <code>iplocation</code> → <code>streamstats</code> (prev location) → distance calculation → compare time/distance. ES has built-in detection too.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: Admin & Performance ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-cogs"></i> Admin Commands & Performance Optimization</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q81</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Your search is running slowly. You need to identify which part of the pipeline is the bottleneck.
+                            </div>
+                            <div class="mcq-question">Which tool shows search job performance details?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Job Inspector (click job → Inspect Job)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rest /services/search/jobs</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Monitoring Console → Search Activity</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>All provide useful performance information</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', 'Job Inspector shows detailed breakdown per command. REST endpoint shows job metadata. Monitoring Console shows historical trends and resource usage.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Job Inspector:</strong> Shows execution costs per command, scan count, event count, and timing. Key for identifying slow commands.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q82</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Order these search commands from MOST to LEAST efficient for filtering 1 million events to 1000.
+                            </div>
+                            <div class="mcq-question">Which is the correct efficiency order?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>index-time filter > search command > where command > eval+where</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>where command > search command > index-time filter > eval+where</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>eval+where > where command > search command > index-time filter</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>All filtering methods are equally efficient</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'A', 'Index-time filtering (index, sourcetype, indexed fields) is fastest - uses bloom filters. search command next. where is slower (processes all events). eval+where slowest (creates field first).')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: A</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Filter Efficiency:</strong> 1) Index-time (bloom filters) 2) search (lispy) 3) where (all events) 4) eval+where (compute then filter)</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q83</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You want to save search results for later use without re-running the search.
+                            </div>
+                            <div class="mcq-question">Which command saves results to a lookup table?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| outputcsv results.csv</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| outputlookup results.csv</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| collect index=summary</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>All can save results for later use</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', '<code>outputlookup</code> creates CSV in lookups/. <code>outputcsv</code> creates file in dispatch/. <code>collect</code> indexes results for search later.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Save Results:</strong> <code>outputlookup</code>=lookup table. <code>outputcsv</code>=CSV file. <code>collect</code>=index. <code>append=t</code> to add to existing.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q84</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> You need to run a search that will take 2+ hours. How do you prevent it from timing out?
+                            </div>
+                            <div class="mcq-question">Which approach handles long-running searches?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Increase max_time in limits.conf</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>Run as scheduled search with longer timeout</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Use | head 0 to disable timeout</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Break into smaller time ranges and use | append</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'Scheduled searches can have extended timeouts configured. Also consider breaking into smaller searches, or using summary indexing for recurring reports.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Long Searches:</strong> Scheduled search with extended timeout, OR summary indexing for recurring reports, OR break into smaller time chunks.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q85</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Scenario:</strong> Check how much disk space each index is using.
+                            </div>
+                            <div class="mcq-question">Which command shows index storage statistics?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>| eventcount summarize=false index=* | stats sum(count) by index</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>| rest /services/data/indexes | table title currentDBSizeMB</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>| dbinspect index=*</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>All show index information, B shows disk size directly</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'D', '<code>rest /services/data/indexes</code> shows currentDBSizeMB, totalEventCount. <code>dbinspect</code> shows bucket details. <code>eventcount</code> shows event counts.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: D</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Index Stats:</strong> <code>| rest /services/data/indexes</code> for size/count. <code>| dbinspect</code> for bucket details. Monitoring Console for trends.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: Tricky Exam Questions ==================== -->
+                <div class="question-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Tricky Exam Questions & Common Mistakes</h3>
+                        <span class="count">15 Questions</span>
+                    </div>
+                    <div class="section-content">
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q86</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Tricky:</strong> What is the result of this search?<br>
+                                <code>index=main | stats count | where count > 0</code>
+                            </div>
+                            <div class="mcq-question">How many rows are returned?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>0 rows (where filters everything)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>1 row (total count if > 0)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Multiple rows (one per matching event)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Error (where cannot follow stats)</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', '<code>stats count</code> with no by clause returns exactly 1 row. If count > 0, that one row passes the where filter. If count = 0, no rows returned.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Trap:</strong> <code>stats</code> without <code>by</code> always returns exactly 1 row (the aggregate). Post-stats filtering works on that single row.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q87</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Tricky:</strong> What's wrong with this search?<br>
+                                <code>index=main | where status=200</code>
+                            </div>
+                            <div class="mcq-question">Why might this return unexpected results?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Nothing wrong, works correctly</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>where uses == not = for equality</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>where can't reference index fields</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>status might be string "200" not number 200</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', '<code>where</code> requires <code>==</code> for equality. Using <code>=</code> is assignment in eval context. This is a VERY common exam trap!')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Critical Trap:</strong> <code>where status==200</code> (double equals) not <code>where status=200</code>. Single = is assignment!</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q88</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Tricky:</strong> What happens with this search?<br>
+                                <code>index=main | stats count by user | top user</code>
+                            </div>
+                            <div class="mcq-question">What does the output show?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>Top users by event count (count field)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>Top users by frequency (new count from top)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>Error - can't use top after stats</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>Same as just: index=main | top user</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', '<code>top</code> counts rows in its input - NOT original events. After stats, each user has 1 row, so top just counts those rows. Result is misleading!')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Trap:</strong> <code>top</code> after <code>stats</code> counts rows in stats output, NOT original events. Use <code>| sort -count | head 10</code> instead.</div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q89</span>
+                            <span class="mcq-difficulty medium">Medium</span>
+                            <div class="mcq-scenario">
+                                <strong>Tricky:</strong> Boolean logic: What does this match?<br>
+                                <code>index=main error OR warning NOT debug</code>
+                            </div>
+                            <div class="mcq-question">What is the actual filter logic?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>(error OR warning) AND NOT debug</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>error OR (warning AND NOT debug)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>(error) OR (warning NOT debug)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>error OR warning OR NOT debug</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'B', 'Boolean precedence: NOT > AND > OR. Without parentheses: <code>error OR (warning NOT debug)</code>. Always use parentheses to be explicit!')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: B</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Boolean Precedence:</strong> NOT binds tightest, then AND (implicit), then OR. Use parentheses: <code>(error OR warning) NOT debug</code></div>
+                            </div>
+                        </div>
+
+                        <div class="mcq">
+                            <span class="mcq-number">Q90</span>
+                            <span class="mcq-difficulty hard">Hard</span>
+                            <div class="mcq-scenario">
+                                <strong>Tricky:</strong> What does <code>earliest=-1d@d</code> actually mean when it's 3:45 PM on Wednesday?
+                            </div>
+                            <div class="mcq-question">What time does the search start from?</div>
+                            <ul class="mcq-options">
+                                <li onclick="selectOption(this)"><span class="letter">A</span><code>3:45 PM Tuesday (exactly 24 hours ago)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">B</span><code>12:00 AM Wednesday (midnight today)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">C</span><code>12:00 AM Tuesday (midnight yesterday)</code></li>
+                                <li onclick="selectOption(this)"><span class="letter">D</span><code>3:45 PM Monday (same time 2 days ago)</code></li>
+                            </ul>
+                            <button class="check-btn" onclick="checkAnswer(this, 'C', '<code>-1d</code> = go back 1 day from now (3:45 PM Tuesday). <code>@d</code> = snap to beginning of that day = midnight Tuesday. Result: 12:00 AM Tuesday.')">Check Answer</button>
+                            <div class="mcq-answer">
+                                <h5><i class="fas fa-check-circle"></i> Correct Answer: C</h5>
+                                <div class="explanation"></div>
+                                <div class="key-point"><strong>Snap-to Logic:</strong> First apply offset (-1d), THEN snap (@d). <code>-1d@d</code> = yesterday midnight. <code>@d-1d</code> would be different!</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function selectOption(el) {
+            const options = el.parentElement.querySelectorAll('li');
+            options.forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function checkAnswer(btn, correctLetter, explanation) {
+            const mcq = btn.closest('.mcq');
+            const options = mcq.querySelectorAll('.mcq-options li');
+            const selected = mcq.querySelector('.mcq-options li.selected');
+            
+            if (!selected) { alert('Please select an answer first!'); return; }
+
+            const selectedLetter = selected.querySelector('.letter').textContent;
+            const isCorrect = selectedLetter === correctLetter;
+
+            options.forEach(o => {
+                o.classList.remove('correct', 'incorrect');
+                if (o.querySelector('.letter').textContent === correctLetter) o.classList.add('correct');
+                else if (o === selected && !isCorrect) o.classList.add('incorrect');
+            });
+
+            const answerDiv = mcq.querySelector('.mcq-answer');
+            answerDiv.querySelector('.explanation').innerHTML = explanation;
+            answerDiv.classList.add('show');
+
+            btn.disabled = true;
+            btn.textContent = isCorrect ? '✓ Correct!' : '✗ See Explanation';
+            btn.style.background = isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    </script>
+</body>
+</html>

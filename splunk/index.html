@@ -3,745 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splunk Enterprise Security - Complete Guide | Splunk</title>
+    <title>Splunk Comprehensive Reference | Enterprise Security & Administration</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/main.css">
-
-
+    <style>
+        :root {
+            --bg-primary: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #21262d;
+            --border-color: #30363d; --text-primary: #c9d1d9; --text-secondary: #8b949e;
+            --accent-green: #238636; --accent-green-light: #7ce38b; --accent-orange: #f0883e;
+            --accent-purple: #8957e5; --accent-blue: #58a6ff; --accent-cyan: #39c5cf; --accent-red: #da3633;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; }
+        .app-container { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, #1a472a 0%, var(--bg-secondary) 100%); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--accent-green-light); font-weight: 700; font-size: 1.1em; }
+        .sidebar-content { padding: 16px 12px; }
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section-title { color: var(--text-secondary); font-size: 0.7em; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; padding-left: 12px; font-weight: 600; }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav-item { margin: 2px 0; }
+        .sidebar-nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; font-size: 0.85em; transition: all 0.2s; }
+        .sidebar-nav-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .sidebar-nav-link.active { background: linear-gradient(135deg, var(--accent-green), #2ea043); color: white; }
+        .sidebar-nav-link i { width: 18px; text-align: center; }
+        .sidebar-badge { margin-left: auto; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; background: var(--bg-tertiary); }
+        
+        .main-wrapper { margin-left: 280px; flex: 1; }
+        .main-content { max-width: 1400px; margin: 0 auto; padding: 32px; }
+        
+        .hero { background: linear-gradient(135deg, #1a472a 0%, var(--bg-primary) 50%, #1a1f35 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 48px; margin-bottom: 32px; text-align: center; }
+        .hero h1 { font-size: 2.5em; color: var(--accent-green-light); margin-bottom: 16px; }
+        .hero .lead { font-size: 1.2em; color: var(--text-secondary); max-width: 800px; margin: 0 auto 24px; }
+        .hero-stats { display: flex; justify-content: center; gap: 40px; margin-top: 32px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat .number { font-size: 2.5em; font-weight: 700; color: var(--accent-blue); }
+        .hero-stat .label { font-size: 0.9em; color: var(--text-secondary); }
+        
+        .cert-tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 0; overflow-x: auto; }
+        .cert-tab { padding: 16px 24px; background: transparent; border: none; color: var(--text-secondary); font-size: 0.95em; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+        .cert-tab:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .cert-tab.active { border-bottom-color: var(--accent-green-light); }
+        .cert-tab.active.power-user { color: var(--accent-green-light); border-bottom-color: var(--accent-green-light); }
+        .cert-tab.active.admin { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
+        .cert-tab.active.es-admin { color: var(--accent-purple); border-bottom-color: var(--accent-purple); }
+        .cert-tab.active.cloud { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+        
+        .cert-tab-content { display: none; padding: 24px 0; }
+        .cert-tab-content.active { display: block; }
+        
+        .cert-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 32px; }
+        .cert-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; }
+        .cert-card-title { display: flex; align-items: center; gap: 16px; }
+        .cert-card-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: white; }
+        .cert-card-icon.power-user { background: linear-gradient(135deg, var(--accent-green), #2ea043); }
+        .cert-card-icon.admin { background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); }
+        .cert-card-icon.es-admin { background: linear-gradient(135deg, var(--accent-purple), #a371f7); }
+        .cert-card-icon.cloud { background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); }
+        .cert-card h2 { color: var(--text-primary); font-size: 1.4em; margin: 0 0 4px 0; }
+        .cert-card .exam-code { color: var(--text-secondary); font-size: 0.9em; }
+        .cert-card-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+        .cert-stat { text-align: center; padding: 12px 20px; background: var(--bg-tertiary); border-radius: 10px; }
+        .cert-stat .value { font-size: 1.3em; font-weight: 700; color: var(--accent-blue); }
+        .cert-stat .label { font-size: 0.75em; color: var(--text-secondary); }
+        
+        .cert-domains { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 24px 0; }
+        .domain-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-tertiary); border-radius: 8px; font-size: 0.9em; }
+        .domain-item .weight { margin-left: auto; color: var(--accent-green-light); font-weight: 600; }
+        
+        .cert-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border: none; cursor: pointer; font-size: 0.95em; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), #2ea043); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+        
+        .section-title { color: var(--text-primary); font-size: 1.5em; margin: 40px 0 20px; display: flex; align-items: center; gap: 12px; }
+        .section-title i { color: var(--accent-blue); }
+        
+        .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .topic-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-decoration: none; transition: all 0.2s; display: flex; flex-direction: column; }
+        .topic-card:hover { border-color: var(--accent-blue); transform: translateY(-4px); }
+        .topic-card-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 1.3em; }
+        .topic-card-icon.blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .topic-card-icon.green { background: rgba(35, 134, 54, 0.15); color: var(--accent-green); }
+        .topic-card-icon.orange { background: rgba(240, 136, 62, 0.15); color: var(--accent-orange); }
+        .topic-card-icon.purple { background: rgba(137, 87, 229, 0.15); color: var(--accent-purple); }
+        .topic-card-icon.red { background: rgba(218, 54, 51, 0.15); color: var(--accent-red); }
+        .topic-card-icon.cyan { background: rgba(57, 197, 207, 0.15); color: var(--accent-cyan); }
+        .topic-card h3 { color: var(--text-primary); font-size: 1.1em; margin-bottom: 8px; }
+        .topic-card p { color: var(--text-secondary); font-size: 0.9em; flex: 1; }
+        .topic-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+        .topic-card-tag { font-size: 0.75em; padding: 4px 10px; border-radius: 6px; background: var(--bg-tertiary); color: var(--text-secondary); }
+        
+        /* MCQ Highlight Section */
+        .mcq-highlight { background: linear-gradient(135deg, #2a1a3d 0%, var(--bg-primary) 100%); border: 2px solid var(--accent-purple); border-radius: 16px; padding: 32px; margin: 32px 0; }
+        .mcq-highlight h2 { color: var(--accent-purple); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .mcq-highlight p { color: var(--text-secondary); margin-bottom: 20px; }
+        .mcq-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .mcq-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-decoration: none; transition: all 0.2s; }
+        .mcq-card:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
+        .mcq-card h3 { color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .mcq-card h3 .count { background: var(--accent-purple); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75em; }
+        .mcq-card ul { list-style: none; padding: 0; margin: 16px 0; }
+        .mcq-card li { padding: 8px 0; color: var(--text-secondary); font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
+        .mcq-card li i { color: var(--accent-green-light); }
+        .mcq-card .btn { width: 100%; justify-content: center; }
+        
+        .mobile-menu-toggle { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; cursor: pointer; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .mobile-menu-toggle { display: block; }
+        }
+    </style>
 </head>
 <body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     <div class="app-container">
-        
-    <!-- Sidebar -->
-        <!-- Sidebar -->
-        <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="../index.html" class="sidebar-brand">
-                <i class="fas fa-shield-alt"></i>
-                <span>Nik's SIEM</span>
-            </a>
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-        </div>
-        
-        <div class="sidebar-content">
-            <!-- Platforms Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Platforms</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="../xsiam/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>XSIAM</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../splunk/index.html" class="sidebar-nav-link active"><span class="platform-dot"></span><span>Splunk</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../sentinel/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Sentinel</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../crowdstrike/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>CrowdStrike</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../cortex/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Cortex XDR</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../mde/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>Defender for Endpoint</span></a></li>
-                    <li class="sidebar-nav-item"><a href="../operations/index.html" class="sidebar-nav-link"><span class="platform-dot"></span><span>SOC Operations</span></a></li>
-                </ul>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-logo"><i class="fas fa-terminal"></i><span>Splunk Reference</span></a>
             </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Certifications</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-user-graduate" style="color:#7ce38b"></i>Power User<span class="sidebar-badge" style="color:#7ce38b">SPLK-1002</span></a></li>
+                        <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog" style="color:#f0883e"></i>Admin<span class="sidebar-badge" style="color:#f0883e">SPLK-1003</span></a></li>
+                        <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt" style="color:#8957e5"></i>ES Admin<span class="sidebar-badge" style="color:#8957e5">SPLK-3001</span></a></li>
+                        <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud" style="color:#39c5cf"></i>Cloud Admin<span class="sidebar-badge" style="color:#39c5cf">SPLK-1004</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">SPL Practice</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="spl-practice-questions.html" class="sidebar-nav-link"><i class="fas fa-tasks" style="color:#58a6ff"></i>SPL MCQs<span class="sidebar-badge" style="color:#58a6ff">60Q</span></a></li>
+                        <li class="sidebar-nav-item"><a href="spl-advanced-mcqs.html" class="sidebar-nav-link"><i class="fas fa-brain" style="color:#a371f7"></i>Advanced MCQs<span class="sidebar-badge" style="color:#a371f7">30Q</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">SPL & Searching</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="spl-fundamentals.html" class="sidebar-nav-link"><i class="fas fa-code"></i>SPL Fundamentals</a></li>
+                        <li class="sidebar-nav-item"><a href="spl-intermediate.html" class="sidebar-nav-link"><i class="fas fa-layer-group"></i>SPL Intermediate</a></li>
+                        <li class="sidebar-nav-item"><a href="spl-advanced.html" class="sidebar-nav-link"><i class="fas fa-rocket"></i>SPL Advanced</a></li>
+                        <li class="sidebar-nav-item"><a href="knowledge-objects.html" class="sidebar-nav-link"><i class="fas fa-lightbulb"></i>Knowledge Objects</a></li>
+                        <li class="sidebar-nav-item"><a href="data-models.html" class="sidebar-nav-link"><i class="fas fa-cubes"></i>Data Models</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Administration</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="architecture.html" class="sidebar-nav-link"><i class="fas fa-sitemap"></i>Architecture</a></li>
+                        <li class="sidebar-nav-item"><a href="data-ingestion.html" class="sidebar-nav-link"><i class="fas fa-database"></i>Data Ingestion</a></li>
+                        <li class="sidebar-nav-item"><a href="forwarders.html" class="sidebar-nav-link"><i class="fas fa-share-alt"></i>Forwarders</a></li>
+                        <li class="sidebar-nav-item"><a href="clustering-ha.html" class="sidebar-nav-link"><i class="fas fa-network-wired"></i>Clustering & HA</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Enterprise Security</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="es-overview.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i>ES Overview</a></li>
+                        <li class="sidebar-nav-item"><a href="correlation-searches.html" class="sidebar-nav-link"><i class="fas fa-search-plus"></i>Correlation Searches</a></li>
+                        <li class="sidebar-nav-item"><a href="risk-based-alerting.html" class="sidebar-nav-link"><i class="fas fa-chart-line"></i>Risk-Based Alerting</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Resources</div>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i>Lab Exercises</a></li>
+                        <li class="sidebar-nav-item"><a href="troubleshooting.html" class="sidebar-nav-link"><i class="fas fa-wrench"></i>Troubleshooting</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
 
-            <div class="sidebar-divider"></div>
-            
-            <!-- Getting Started -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Getting Started</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="index.html" class="sidebar-nav-link"><i class="fas fa-home"></i><span>Overview</span></a></li>
-                    <li class="sidebar-nav-item"><a href="architecture.html" class="sidebar-nav-link"><i class="fas fa-sitemap"></i><span>Architecture</span></a></li>
-                    <li class="sidebar-nav-item"><a href="apps-tas.html" class="sidebar-nav-link"><i class="fas fa-puzzle-piece"></i><span>Apps & TAs</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Data Collection -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Data Collection</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="data-ingestion.html" class="sidebar-nav-link"><i class="fas fa-database"></i><span>Data Ingestion</span></a></li>
-                    <li class="sidebar-nav-item"><a href="forwarders.html" class="sidebar-nav-link"><i class="fas fa-paper-plane"></i><span>Forwarders</span></a></li>
-                    <li class="sidebar-nav-item"><a href="custom-log-onboarding.html" class="sidebar-nav-link"><i class="fas fa-plus-circle"></i><span>Custom Log Onboarding</span></a></li>
-                    <li class="sidebar-nav-item"><a href="parsing-flows.html" class="sidebar-nav-link"><i class="fas fa-stream"></i><span>Parsing & Props/Transforms</span></a></li>
-                    <li class="sidebar-nav-item"><a href="retention-tiers.html" class="sidebar-nav-link"><i class="fas fa-archive"></i><span>Index & Retention</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Query & Analysis -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Query & Analysis</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="spl-fundamentals.html" class="sidebar-nav-link"><i class="fas fa-terminal"></i><span>SPL Fundamentals</span></a></li>
-                    <li class="sidebar-nav-item"><a href="spl-intermediate.html" class="sidebar-nav-link"><i class="fas fa-code"></i><span>SPL Intermediate</span></a></li>
-                    <li class="sidebar-nav-item"><a href="spl-advanced.html" class="sidebar-nav-link"><i class="fas fa-rocket"></i><span>SPL Advanced</span></a></li>
-                    <li class="sidebar-nav-item"><a href="data-models.html" class="sidebar-nav-link"><i class="fas fa-cubes"></i><span>Data Models & CIM</span></a></li>
-                    <li class="sidebar-nav-item"><a href="knowledge-objects.html" class="sidebar-nav-link"><i class="fas fa-brain"></i><span>Knowledge Objects</span></a></li>
-                    <li class="sidebar-nav-item"><a href="dashboards.html" class="sidebar-nav-link"><i class="fas fa-chart-line"></i><span>Dashboards</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Detection & Response -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Detection & Response</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="es-overview.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>Enterprise Security</span></a></li>
-                    <li class="sidebar-nav-item"><a href="correlation-searches.html" class="sidebar-nav-link"><i class="fas fa-project-diagram"></i><span>Correlation Searches</span></a></li>
-                    <li class="sidebar-nav-item"><a href="notable-events.html" class="sidebar-nav-link"><i class="fas fa-bell"></i><span>Notable Events</span></a></li>
-                    <li class="sidebar-nav-item"><a href="risk-based-alerting.html" class="sidebar-nav-link"><i class="fas fa-exclamation-triangle"></i><span>Risk-Based Alerting</span></a></li>
-                    <li class="sidebar-nav-item"><a href="alerting-actions.html" class="sidebar-nav-link"><i class="fas fa-bolt"></i><span>Alerting & Actions</span></a></li>
-                    <li class="sidebar-nav-item"><a href="threat-hunting.html" class="sidebar-nav-link"><i class="fas fa-search"></i><span>Threat Hunting</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Security Use Cases -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Security Use Cases</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="security-usecases.html" class="sidebar-nav-link"><i class="fas fa-crosshairs"></i><span>Detection Use Cases</span></a></li>
-                    <li class="sidebar-nav-item"><a href="enterprise-scenarios.html" class="sidebar-nav-link"><i class="fas fa-building"></i><span>Enterprise Scenarios</span></a></li>
-                    <li class="sidebar-nav-item"><a href="retail-security.html" class="sidebar-nav-link"><i class="fas fa-shopping-cart"></i><span>Retail Security</span></a></li>
-                    <li class="sidebar-nav-item"><a href="sap-security.html" class="sidebar-nav-link"><i class="fas fa-industry"></i><span>SAP Security</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Automation & Intel -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Automation & Intel</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="soar.html" class="sidebar-nav-link"><i class="fas fa-robot"></i><span>SOAR</span></a></li>
-                    <li class="sidebar-nav-item"><a href="threat-intel.html" class="sidebar-nav-link"><i class="fas fa-skull-crossbones"></i><span>Threat Intelligence</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Operations -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Operations</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="troubleshooting.html" class="sidebar-nav-link"><i class="fas fa-wrench"></i><span>Troubleshooting</span></a></li>
-                    <li class="sidebar-nav-item"><a href="performance-tuning.html" class="sidebar-nav-link"><i class="fas fa-tachometer-alt"></i><span>Performance Tuning</span></a></li>
-                    <li class="sidebar-nav-item"><a href="monitoring-console.html" class="sidebar-nav-link"><i class="fas fa-heartbeat"></i><span>Monitoring Console</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Administration -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Administration</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="administration.html" class="sidebar-nav-link"><i class="fas fa-cog"></i><span>Administration</span></a></li>
-                    <li class="sidebar-nav-item"><a href="security-rbac.html" class="sidebar-nav-link"><i class="fas fa-users-cog"></i><span>Security & RBAC</span></a></li>
-                    <li class="sidebar-nav-item"><a href="clustering-ha.html" class="sidebar-nav-link"><i class="fas fa-server"></i><span>Clustering & HA</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Deployment -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Deployment</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="splunk-cloud.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Splunk Cloud Basics</span></a></li>
-                    <li class="sidebar-nav-item"><a href="splunk-cloud-mastery.html" class="sidebar-nav-link"><i class="fas fa-cloud-upload-alt"></i><span>Cloud Mastery</span></a></li>
-                </ul>
-            </div>
-            
-            <!-- Certification Prep -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Certification Prep</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item"><a href="power-user-certification.html" class="sidebar-nav-link"><i class="fas fa-certificate"></i><span>Power User Cert</span></a></li>
-                    <li class="sidebar-nav-item"><a href="admin-certification.html" class="sidebar-nav-link"><i class="fas fa-user-cog"></i><span>Admin Cert</span></a></li>
-                    <li class="sidebar-nav-item"><a href="es-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-shield-alt"></i><span>ES Admin Cert</span></a></li>
-                    <li class="sidebar-nav-item"><a href="cloud-admin-certification.html" class="sidebar-nav-link"><i class="fas fa-cloud"></i><span>Cloud Admin Cert</span></a></li>
-                    <li class="sidebar-nav-item"><a href="lab-exercises.html" class="sidebar-nav-link"><i class="fas fa-flask"></i><span>Lab Exercises</span></a></li>
-                </ul>
-            </div>
-        </div>
-    </aside>
-    
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-        
-        <!-- Main Content Wrapper -->
-        <div class="main-wrapper" id="mainWrapper">
-            <button class="mobile-toggle" onclick="toggleSidebar()" title="Open menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            
+        <div class="main-wrapper">
             <main class="main-content">
-                <div class="breadcrumb">
-                    <a href="../index.html">Home</a>
-                    <span class="separator">/</span>
-                    <a href="index.html">Splunk</a>
-                    <span class="separator">/</span>
-                    <span class="current">Overview</span>
+                <div class="hero">
+                    <h1><i class="fas fa-terminal"></i> Splunk Comprehensive Reference</h1>
+                    <p class="lead">Master SPL with 75+ practice questions, certification guides, and hands-on labs. Learn exactly when to use what command.</p>
+                    <div class="hero-stats">
+                        <div class="hero-stat"><div class="number">4</div><div class="label">Certifications</div></div>
+                        <div class="hero-stat"><div class="number">75+</div><div class="label">MCQ Questions</div></div>
+                        <div class="hero-stat"><div class="number">40+</div><div class="label">Topic Pages</div></div>
+                        <div class="hero-stat"><div class="number">50+</div><div class="label">Lab Exercises</div></div>
+                    </div>
                 </div>
 
-                <div class="hero-section">
-                    <span class="version-badge">Enterprise Security 7.x / Splunk 9.x</span>
-                    <h1 class="hero-title"><i class="fas fa-chart-line" style="color: #3fb950;"></i> Splunk Enterprise Security</h1>
-                    <p class="hero-subtitle">Industry-leading SIEM platform for security monitoring, incident detection, and compliance. This compendium covers everything from SPL fundamentals to advanced correlation searches and Enterprise Security workflows.</p>
+                <!-- MCQ Highlight Section -->
+                <div class="mcq-highlight">
+                    <h2><i class="fas fa-tasks"></i> SPL Practice Questions - "When to Use What"</h2>
+                    <p>Master SPL command selection with scenario-based questions. Each question explains why a specific command or function is the right choice.</p>
+                    <div class="mcq-cards">
+                        <a href="spl-practice-questions.html" class="mcq-card">
+                            <h3><i class="fas fa-tasks"></i> SPL Core MCQs <span class="count">60 Questions</span></h3>
+                            <ul>
+                                <li><i class="fas fa-check"></i> search vs where - when to use each</li>
+                                <li><i class="fas fa-check"></i> stats functions - count, dc, values, list</li>
+                                <li><i class="fas fa-check"></i> eval functions - if, case, coalesce</li>
+                                <li><i class="fas fa-check"></i> Time operations & modifiers</li>
+                                <li><i class="fas fa-check"></i> Data manipulation commands</li>
+                                <li><i class="fas fa-check"></i> Real-world security scenarios</li>
+                            </ul>
+                            <button class="btn btn-primary"><i class="fas fa-play"></i> Start Practice</button>
+                        </a>
+                        <a href="spl-advanced-mcqs.html" class="mcq-card">
+                            <h3><i class="fas fa-brain"></i> Advanced MCQs <span class="count">30 Questions</span></h3>
+                            <ul>
+                                <li><i class="fas fa-check"></i> Field extractions & regex patterns</li>
+                                <li><i class="fas fa-check"></i> Macros, lookups & knowledge objects</li>
+                                <li><i class="fas fa-check"></i> Data models & tstats optimization</li>
+                                <li><i class="fas fa-check"></i> Enterprise Security SPL patterns</li>
+                                <li><i class="fas fa-check"></i> Admin commands & performance</li>
+                                <li><i class="fas fa-check"></i> Tricky exam questions & gotchas</li>
+                            </ul>
+                            <button class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-purple), #a371f7);"><i class="fas fa-play"></i> Start Practice</button>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- What is Splunk -->
-                <h2><i class="fas fa-info-circle"></i> What is Splunk?</h2>
-                <div class="config-section">
-                    <p><strong>Splunk</strong> is a data platform that collects, indexes, and correlates machine data from virtually any source. <strong>Splunk Enterprise Security (ES)</strong> is the premium SIEM application built on Splunk that provides:</p>
-                    <ul style="color: #8b949e; margin-top: 12px;">
-                        <li><strong>Security Monitoring:</strong> Real-time visibility into security events across the enterprise</li>
-                        <li><strong>Incident Detection:</strong> Correlation searches that detect threats and create notable events</li>
-                        <li><strong>Investigation:</strong> Powerful SPL queries for threat hunting and forensic analysis</li>
-                        <li><strong>Compliance:</strong> Pre-built dashboards and reports for regulatory requirements</li>
-                        <li><strong>Risk-Based Alerting:</strong> Aggregate risk scores to surface high-priority threats</li>
-                    </ul>
+                <!-- Certification Tabs -->
+                <h2 class="section-title"><i class="fas fa-certificate"></i> Certification Paths</h2>
+                <div class="cert-tabs">
+                    <button class="cert-tab power-user active" onclick="showCertTab('power-user')"><i class="fas fa-user-graduate"></i>Power User</button>
+                    <button class="cert-tab admin" onclick="showCertTab('admin')"><i class="fas fa-user-cog"></i>Admin</button>
+                    <button class="cert-tab es-admin" onclick="showCertTab('es-admin')"><i class="fas fa-shield-alt"></i>ES Admin</button>
+                    <button class="cert-tab cloud" onclick="showCertTab('cloud')"><i class="fas fa-cloud"></i>Cloud Admin</button>
                 </div>
 
-                <!-- Key Capabilities -->
-                <h2><i class="fas fa-th-large"></i> Key Capabilities</h2>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-database"></i></div>
-                        <h3>Universal Data Collection</h3>
-                        <p style="color: #8b949e;">Ingest data from any source: logs, metrics, APIs, cloud services. Forwarders, HEC, and 1000+ apps/TAs.</p>
-                        <a href="data-ingestion.html" style="color: #3fb950;">Data Ingestion →</a>
+                <div id="power-user" class="cert-tab-content active">
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-card-title">
+                                <div class="cert-card-icon power-user"><i class="fas fa-user-graduate"></i></div>
+                                <div><h2>Splunk Core Certified Power User</h2><span class="exam-code">SPLK-1002</span></div>
+                            </div>
+                            <div class="cert-card-stats">
+                                <div class="cert-stat"><div class="value">57</div><div class="label">Minutes</div></div>
+                                <div class="cert-stat"><div class="value">58</div><div class="label">Questions</div></div>
+                                <div class="cert-stat"><div class="value">70%</div><div class="label">Passing</div></div>
+                            </div>
+                        </div>
+                        <div class="cert-domains">
+                            <div class="domain-item"><i class="fas fa-search"></i> Basic Searching <span class="weight">22%</span></div>
+                            <div class="domain-item"><i class="fas fa-columns"></i> Using Fields <span class="weight">20%</span></div>
+                            <div class="domain-item"><i class="fas fa-code"></i> SPL Fundamentals <span class="weight">17%</span></div>
+                            <div class="domain-item"><i class="fas fa-chart-bar"></i> Transforming <span class="weight">15%</span></div>
+                        </div>
+                        <div class="cert-actions">
+                            <a href="power-user-certification.html" class="btn btn-primary"><i class="fas fa-book-open"></i> Study Guide</a>
+                            <a href="spl-practice-questions.html" class="btn btn-secondary"><i class="fas fa-tasks"></i> Practice MCQs</a>
+                        </div>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-search"></i></div>
-                        <h3>Powerful Search (SPL)</h3>
-                        <p style="color: #8b949e;">Search Processing Language for queries, transformations, and analytics. From simple filters to complex correlations.</p>
-                        <a href="spl-fundamentals.html" style="color: #3fb950;">SPL Guide →</a>
+                </div>
+
+                <div id="admin" class="cert-tab-content">
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-card-title">
+                                <div class="cert-card-icon admin"><i class="fas fa-user-cog"></i></div>
+                                <div><h2>Splunk Enterprise Certified Admin</h2><span class="exam-code">SPLK-1003</span></div>
+                            </div>
+                            <div class="cert-card-stats">
+                                <div class="cert-stat"><div class="value">57</div><div class="label">Minutes</div></div>
+                                <div class="cert-stat"><div class="value">65</div><div class="label">Questions</div></div>
+                                <div class="cert-stat"><div class="value">70%</div><div class="label">Passing</div></div>
+                            </div>
+                        </div>
+                        <div class="cert-domains">
+                            <div class="domain-item"><i class="fas fa-database"></i> Indexes <span class="weight">15%</span></div>
+                            <div class="domain-item"><i class="fas fa-users"></i> User Auth <span class="weight">10%</span></div>
+                            <div class="domain-item"><i class="fas fa-share-alt"></i> Forwarders <span class="weight">10%</span></div>
+                            <div class="domain-item"><i class="fas fa-file-code"></i> Config Files <span class="weight">10%</span></div>
+                        </div>
+                        <div class="cert-actions">
+                            <a href="admin-certification.html" class="btn btn-primary" style="background:linear-gradient(135deg,#f0883e,#da3633)"><i class="fas fa-book-open"></i> Study Guide</a>
+                            <a href="spl-advanced-mcqs.html" class="btn btn-secondary"><i class="fas fa-brain"></i> Admin MCQs</a>
+                        </div>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                        <h3>Enterprise Security</h3>
-                        <p style="color: #8b949e;">Premium SIEM with 100+ correlation searches, notable events, risk-based alerting, and security dashboards.</p>
-                        <a href="es-overview.html" style="color: #3fb950;">ES Overview →</a>
+                </div>
+
+                <div id="es-admin" class="cert-tab-content">
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-card-title">
+                                <div class="cert-card-icon es-admin"><i class="fas fa-shield-alt"></i></div>
+                                <div><h2>Splunk ES Certified Admin</h2><span class="exam-code">SPLK-3001</span></div>
+                            </div>
+                            <div class="cert-card-stats">
+                                <div class="cert-stat"><div class="value">60</div><div class="label">Minutes</div></div>
+                                <div class="cert-stat"><div class="value">60</div><div class="label">Questions</div></div>
+                                <div class="cert-stat"><div class="value">70%</div><div class="label">Passing</div></div>
+                            </div>
+                        </div>
+                        <div class="cert-domains">
+                            <div class="domain-item"><i class="fas fa-search-plus"></i> Correlation Searches <span class="weight">20%</span></div>
+                            <div class="domain-item"><i class="fas fa-cubes"></i> Data Models <span class="weight">20%</span></div>
+                            <div class="domain-item"><i class="fas fa-chart-line"></i> Risk-Based Alerting <span class="weight">15%</span></div>
+                            <div class="domain-item"><i class="fas fa-crosshairs"></i> Threat Intelligence <span class="weight">15%</span></div>
+                        </div>
+                        <div class="cert-actions">
+                            <a href="es-admin-certification.html" class="btn btn-primary" style="background:linear-gradient(135deg,#8957e5,#a371f7)"><i class="fas fa-book-open"></i> Study Guide</a>
+                            <a href="es-overview.html" class="btn btn-secondary"><i class="fas fa-shield-alt"></i> ES Deep Dive</a>
+                        </div>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-project-diagram"></i></div>
+                </div>
+
+                <div id="cloud" class="cert-tab-content">
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-card-title">
+                                <div class="cert-card-icon cloud"><i class="fas fa-cloud"></i></div>
+                                <div><h2>Splunk Cloud Certified Admin</h2><span class="exam-code">SPLK-1004</span></div>
+                            </div>
+                            <div class="cert-card-stats">
+                                <div class="cert-stat"><div class="value">57</div><div class="label">Minutes</div></div>
+                                <div class="cert-stat"><div class="value">60</div><div class="label">Questions</div></div>
+                                <div class="cert-stat"><div class="value">70%</div><div class="label">Passing</div></div>
+                            </div>
+                        </div>
+                        <div class="cert-domains">
+                            <div class="domain-item"><i class="fas fa-upload"></i> Data Onboarding <span class="weight">25%</span></div>
+                            <div class="domain-item"><i class="fas fa-cloud"></i> Cloud Architecture <span class="weight">20%</span></div>
+                            <div class="domain-item"><i class="fas fa-cog"></i> Admin Console <span class="weight">20%</span></div>
+                            <div class="domain-item"><i class="fas fa-users"></i> User Management <span class="weight">15%</span></div>
+                        </div>
+                        <div class="cert-actions">
+                            <a href="cloud-admin-certification.html" class="btn btn-primary" style="background:linear-gradient(135deg,#39c5cf,#58a6ff)"><i class="fas fa-book-open"></i> Study Guide</a>
+                            <a href="splunk-cloud.html" class="btn btn-secondary"><i class="fas fa-cloud"></i> Cloud Deep Dive</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <h2 class="section-title"><i class="fas fa-bolt"></i> Quick Start Topics</h2>
+                <div class="topics-grid">
+                    <a href="spl-fundamentals.html" class="topic-card">
+                        <div class="topic-card-icon blue"><i class="fas fa-code"></i></div>
+                        <h3>SPL Fundamentals</h3>
+                        <p>Master search commands, time modifiers, Boolean operators, and basic SPL syntax.</p>
+                        <div class="topic-card-footer"><span class="topic-card-tag">Essential</span><i class="fas fa-arrow-right" style="color:var(--accent-blue)"></i></div>
+                    </a>
+                    <a href="architecture.html" class="topic-card">
+                        <div class="topic-card-icon green"><i class="fas fa-sitemap"></i></div>
+                        <h3>Splunk Architecture</h3>
+                        <p>Understand indexers, search heads, forwarders, and distributed deployment topologies.</p>
+                        <div class="topic-card-footer"><span class="topic-card-tag">Admin</span><i class="fas fa-arrow-right" style="color:var(--accent-blue)"></i></div>
+                    </a>
+                    <a href="correlation-searches.html" class="topic-card">
+                        <div class="topic-card-icon purple"><i class="fas fa-search-plus"></i></div>
                         <h3>Correlation Searches</h3>
-                        <p style="color: #8b949e;">Scheduled searches that detect security threats and generate notable events for SOC investigation.</p>
-                        <a href="correlation-searches.html" style="color: #3fb950;">Correlation Searches →</a>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-                        <h3>Risk-Based Alerting</h3>
-                        <p style="color: #8b949e;">Aggregate risk scores across multiple detections to surface truly high-priority threats.</p>
-                        <a href="risk-based-alerting.html" style="color: #3fb950;">RBA Guide →</a>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-robot"></i></div>
-                        <h3>SOAR Integration</h3>
-                        <p style="color: #8b949e;">Splunk SOAR for automated playbooks, enrichment, and response actions.</p>
-                        <a href="soar.html" style="color: #3fb950;">SOAR Guide →</a>
-                    </div>
+                        <p>Build detection rules, create risk scores, and generate notable events in ES.</p>
+                        <div class="topic-card-footer"><span class="topic-card-tag">Security</span><i class="fas fa-arrow-right" style="color:var(--accent-blue)"></i></div>
+                    </a>
+                    <a href="lab-exercises.html" class="topic-card">
+                        <div class="topic-card-icon cyan"><i class="fas fa-flask"></i></div>
+                        <h3>Lab Exercises</h3>
+                        <p>Hands-on practice scenarios for all certification levels and real-world use cases.</p>
+                        <div class="topic-card-footer"><span class="topic-card-tag">Practice</span><i class="fas fa-arrow-right" style="color:var(--accent-blue)"></i></div>
+                    </a>
                 </div>
 
-                <!-- Architecture Overview -->
-                <h2><i class="fas fa-sitemap"></i> Architecture Overview</h2>
-                <div class="config-section">
-                    <div class="arch-diagram">
-<span style="color: #8b949e;">┌─────────────────────────────────────────────────────────────────────────────┐</span>
-<span style="color: #8b949e;">│</span>                           <span style="color: #3fb950;">DATA SOURCES</span>                                    <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">│</span>    Servers    Firewalls    Endpoints    Cloud    Applications    Network   <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">└──────────┬─────────┬──────────┬───────────┬──────────┬──────────┬──────────┘</span>
-           │         │          │           │          │          │
-           ▼         ▼          ▼           ▼          ▼          ▼
-<span style="color: #8b949e;">┌─────────────────────────────────────────────────────────────────────────────┐</span>
-<span style="color: #8b949e;">│</span>                        <span style="color: #d29922;">COLLECTION TIER</span>                                   <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">│</span>   Universal Forwarder  │  Heavy Forwarder  │  HEC  │  Scripted Inputs    <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">└──────────────────────────────────┬──────────────────────────────────────────┘</span>
-                                   │
-                                   ▼
-<span style="color: #8b949e;">┌─────────────────────────────────────────────────────────────────────────────┐</span>
-<span style="color: #8b949e;">│</span>                         <span style="color: #58a6ff;">INDEXING TIER</span>                                    <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">│</span>      Indexer Cluster (parsing, indexing, replication, search)              <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">│</span>      Hot → Warm → Cold → Frozen (SmartStore for remote storage)            <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">└──────────────────────────────────┬──────────────────────────────────────────┘</span>
-                                   │
-                                   ▼
-<span style="color: #8b949e;">┌─────────────────────────────────────────────────────────────────────────────┐</span>
-<span style="color: #8b949e;">│</span>                          <span style="color: #a371f7;">SEARCH TIER</span>                                     <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">│</span>   Search Head Cluster  │  Enterprise Security  │  Dashboards  │  Alerts   <span style="color: #8b949e;">│</span>
-<span style="color: #8b949e;">└─────────────────────────────────────────────────────────────────────────────┘</span>
-                    </div>
-                    <p style="margin-top: 16px;"><a href="architecture.html" style="color: #3fb950;">View detailed architecture guide →</a></p>
-                </div>
-
-                <!-- Learning Path -->
-                <h2><i class="fas fa-road"></i> Learning Path</h2>
-                <div class="config-section">
-                    <p>Recommended order for learning Splunk and ES:</p>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">1</div>
-                        <div>
-                            <strong>Architecture & Data Flow</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Understand how data moves through Splunk</p>
-                        </div>
-                        <a href="architecture.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">2</div>
-                        <div>
-                            <strong>SPL Fundamentals</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Master the Search Processing Language</p>
-                        </div>
-                        <a href="spl-fundamentals.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">3</div>
-                        <div>
-                            <strong>Data Ingestion & Forwarders</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Configure data collection from sources</p>
-                        </div>
-                        <a href="data-ingestion.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">4</div>
-                        <div>
-                            <strong>Enterprise Security Overview</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Learn ES components and workflows</p>
-                        </div>
-                        <a href="es-overview.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">5</div>
-                        <div>
-                            <strong>Correlation Searches & Detection</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Build and tune detection rules</p>
-                        </div>
-                        <a href="correlation-searches.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                    
-                    <div class="learning-path">
-                        <div class="path-number">6</div>
-                        <div>
-                            <strong>Risk-Based Alerting</strong>
-                            <p style="color: #8b949e; margin: 0; font-size: 0.9rem;">Advanced detection with risk aggregation</p>
-                        </div>
-                        <a href="risk-based-alerting.html" style="color: #3fb950; margin-left: auto;">Start →</a>
-                    </div>
-                </div>
-
-                <!-- Splunk vs Competitors -->
-                <h2><i class="fas fa-balance-scale"></i> Splunk vs Other SIEMs</h2>
-                <div class="config-section">
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Capability</th><th>Splunk ES</th><th>Sentinel</th><th>XSIAM</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Deployment</strong></td>
-                                <td>On-prem, Cloud, Hybrid</td>
-                                <td>Cloud-native (Azure)</td>
-                                <td>Cloud-native</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Query Language</strong></td>
-                                <td>SPL</td>
-                                <td>KQL</td>
-                                <td>XQL</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Data Model</strong></td>
-                                <td>CIM (Common Information Model)</td>
-                                <td>ASIM (Schema normalization)</td>
-                                <td>XDM (Experience Data Model)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>SOAR</strong></td>
-                                <td>Splunk SOAR (separate)</td>
-                                <td>Logic Apps (built-in)</td>
-                                <td>XSOAR (integrated)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Licensing</strong></td>
-                                <td>GB/day ingestion</td>
-                                <td>GB/day ingestion</td>
-                                <td>Endpoint + GB</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Strength</strong></td>
-                                <td>Flexibility, maturity, ecosystem</td>
-                                <td>Microsoft integration, cost</td>
-                                <td>XDR convergence</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Quick Reference -->
-                <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
-                <div class="config-section">
-                    <h4>Essential SPL Commands</h4>
-                    <table class="styled-table">
-                        <tbody>
-                            <tr><td><code>index=</code></td><td>Specify data source</td></tr>
-                            <tr><td><code>| stats count by field</code></td><td>Aggregate and count</td></tr>
-                            <tr><td><code>| where condition</code></td><td>Filter results</td></tr>
-                            <tr><td><code>| table field1, field2</code></td><td>Display specific fields</td></tr>
-                            <tr><td><code>| eval newfield = expression</code></td><td>Calculate new fields</td></tr>
-                            <tr><td><code>| lookup table field</code></td><td>Enrich with lookup</td></tr>
-                            <tr><td><code>| tstats</code></td><td>Fast data model search</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Key ES Dashboards</h4>
-                    <ul style="color: #8b949e;">
-                        <li><strong>Security Posture:</strong> Overall security health</li>
-                        <li><strong>Incident Review:</strong> Notable event investigation</li>
-                        <li><strong>Risk Analysis:</strong> Risk scores by entity</li>
-                        <li><strong>Threat Intelligence:</strong> IOC matches</li>
-                        <li><strong>Access Center:</strong> Authentication monitoring</li>
-                    </ul>
-                </div>
-
-                <!-- Interview Q&A -->
-                <h2><i class="fas fa-comments"></i> Interview Questions</h2>
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What is Splunk Enterprise Security and how does it differ from base Splunk?</button>
-                        <div class="qa-answer">
-                            <p><strong>Base Splunk:</strong> Data platform for collecting, indexing, and searching machine data. General-purpose analytics.</p>
-                            <p><strong>Enterprise Security (ES):</strong> Premium SIEM application built on Splunk that adds:</p>
-                            <ul>
-                                <li>100+ pre-built correlation searches (detection rules)</li>
-                                <li>Notable events and incident workflow</li>
-                                <li>Security-specific dashboards (Incident Review, Risk Analysis, Access Center)</li>
-                                <li>Risk-Based Alerting framework</li>
-                                <li>Threat Intelligence framework</li>
-                                <li>Asset and Identity correlation</li>
-                                <li>CIM data model for normalization</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What are the main components of Splunk architecture?</button>
-                        <div class="qa-answer">
-                            <ol>
-                                <li><strong>Forwarders:</strong> Collect data from sources (Universal Forwarder for lightweight, Heavy Forwarder for parsing)</li>
-                                <li><strong>Indexers:</strong> Parse, index, and store data. Organized in clusters for HA.</li>
-                                <li><strong>Search Heads:</strong> Run searches, host dashboards, serve users. Can be clustered.</li>
-                                <li><strong>Deployment Server:</strong> Centrally manage forwarder configurations</li>
-                                <li><strong>License Manager:</strong> Track and enforce licensing</li>
-                                <li><strong>Cluster Manager:</strong> Coordinate indexer cluster replication</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Full Navigation -->
-                <h2><i class="fas fa-compass"></i> Full Documentation</h2>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h4><i class="fas fa-sitemap" style="color: #3fb950;"></i> Platform</h4>
-                        <ul style="color: #8b949e; font-size: 0.9rem;">
-                            <li><a href="architecture.html">Architecture</a></li>
-                            <li><a href="es-overview.html">Enterprise Security</a></li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4><i class="fas fa-database" style="color: #3fb950;"></i> Data Collection</h4>
-                        <ul style="color: #8b949e; font-size: 0.9rem;">
-                            <li><a href="data-ingestion.html">Data Ingestion</a></li>
-                            <li><a href="custom-log-onboarding.html">Custom Log Onboarding</a></li>
-                            <li><a href="forwarders.html">Forwarders</a></li>
-                            <li><a href="parsing-flows.html">Parsing & Indexing</a></li>
-                            <li><a href="apps-tas.html">Apps & TAs</a></li>
-                            <li><a href="data-models.html">Data Models (CIM)</a></li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4><i class="fas fa-terminal" style="color: #3fb950;"></i> SPL Query Language</h4>
-                        <ul style="color: #8b949e; font-size: 0.9rem;">
-                            <li><a href="spl-fundamentals.html">SPL Fundamentals</a></li>
-                            <li><a href="spl-intermediate.html">SPL Intermediate</a></li>
-                            <li><a href="spl-advanced.html">SPL Advanced</a></li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4><i class="fas fa-shield-alt" style="color: #3fb950;"></i> ES Detection</h4>
-                        <ul style="color: #8b949e; font-size: 0.9rem;">
-                            <li><a href="correlation-searches.html">Correlation Searches</a></li>
-                            <li><a href="notable-events.html">Notable Events</a></li>
-                            <li><a href="risk-based-alerting.html">Risk-Based Alerting</a></li>
-                            <li><a href="threat-intel.html">Threat Intelligence</a></li>
-                            <li><a href="soar.html">SOAR Integration</a></li>
-                        </ul>
-                    </div>
-                    <div class="feature-card">
-                        <h4><i class="fas fa-cogs" style="color: #3fb950;"></i> Operations</h4>
-                        <ul style="color: #8b949e; font-size: 0.9rem;">
-                            <li><a href="dashboards.html">Dashboards</a></li>
-                            <li><a href="retention-tiers.html">Retention & Storage</a></li>
-                            <li><a href="troubleshooting.html">Troubleshooting</a></li>
-                            <li><a href="enterprise-scenarios.html">Enterprise Scenarios</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Extended Interview Questions -->
-                <h2><i class="fas fa-question-circle"></i> Additional Interview Questions</h2>
-                <div class="qa-section">
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you approach troubleshooting in this area?</button>
-                        <div class="qa-answer">
-                            <p><strong>Systematic troubleshooting approach:</strong></p>
-                            <ol>
-                                <li><strong>Identify the symptom:</strong> What exactly is not working as expected?</li>
-                                <li><strong>Check connectivity:</strong> Verify network paths and authentication</li>
-                                <li><strong>Review logs:</strong> Check internal/audit logs for errors</li>
-                                <li><strong>Validate configuration:</strong> Compare against documented standards</li>
-                                <li><strong>Test incrementally:</strong> Isolate the problem component</li>
-                                <li><strong>Document findings:</strong> Record what worked and what didn't</li>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: What metrics would you track for this area?</button>
-                        <div class="qa-answer">
-                            <p><strong>Key performance indicators:</strong></p>
-                            <ul>
-                                <li><strong>Availability:</strong> Uptime percentage, service availability</li>
-                                <li><strong>Performance:</strong> Query response time, processing latency</li>
-                                <li><strong>Volume:</strong> Events per second, data ingestion rate</li>
-                                <li><strong>Quality:</strong> Parse success rate, enrichment coverage</li>
-                                <li><strong>Efficiency:</strong> Resource utilization, cost per GB</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="qa-item">
-                        <button class="qa-question"><i class="fas fa-lightbulb" style="color: #d29922;"></i> Q: How do you ensure high availability?</button>
-                        <div class="qa-answer">
-                            <p><strong>High availability strategies:</strong></p>
-                            <ul>
-                                <li><strong>Redundancy:</strong> Multiple instances of critical components</li>
-                                <li><strong>Load balancing:</strong> Distribute traffic across instances</li>
-                                <li><strong>Failover:</strong> Automatic switchover on failure</li>
-                                <li><strong>Monitoring:</strong> Health checks and alerting</li>
-                                <li><strong>DR Planning:</strong> Documented recovery procedures</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Best Practices -->
-                <h2><i class="fas fa-star"></i> Best Practices</h2>
-                <div class="config-section">
-                    <!-- Troubleshooting Guide -->
-                <h2><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
-                <div class="config-section">
-                    <h4>Common Issues and Solutions</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Issue</th><th>Possible Cause</th><th>Solution</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Data not appearing</td>
-                                <td>Collection or parsing issue</td>
-                                <td>Check collector status, verify parser configuration</td>
-                            </tr>
-                            <tr>
-                                <td>Slow performance</td>
-                                <td>Resource constraints or inefficient queries</td>
-                                <td>Review resource utilization, optimize queries</td>
-                            </tr>
-                            <tr>
-                                <td>Authentication failures</td>
-                                <td>Credential or permission issues</td>
-                                <td>Verify credentials, check RBAC configuration</td>
-                            </tr>
-                            <tr>
-                                <td>Missing fields</td>
-                                <td>Parser not extracting fields</td>
-                                <td>Review parsing rules, update field extraction</td>
-                            </tr>
-                            <tr>
-                                <td>Duplicate events</td>
-                                <td>Multiple collection paths</td>
-                                <td>Audit data sources, implement deduplication</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Diagnostic Steps</h4>
-                    <ol style="color: #8b949e;">
-                        <li><strong>Check Status:</strong> Verify component health in console</li>
-                        <li><strong>Review Logs:</strong> Examine internal logs for errors</li>
-                        <li><strong>Test Connectivity:</strong> Verify network paths and authentication</li>
-                        <li><strong>Validate Config:</strong> Compare configuration against documentation</li>
-                        <li><strong>Isolate Issue:</strong> Narrow down to specific component</li>
-                        <li><strong>Escalate:</strong> Contact support if needed with diagnostics</li>
-                    </ol>
-                </div>
-
-                <!-- Use Cases -->
-                <h2><i class="fas fa-briefcase"></i> Real-World Use Cases</h2>
-                <div class="config-section">
-                    <h4>Use Case 1: Enterprise SOC</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Large enterprise with 20,000 endpoints, multiple cloud environments</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Centralized collection from all security data sources</li>
-                            <li>Custom detection rules aligned to threat model</li>
-                            <li>Automated response playbooks for common scenarios</li>
-                            <li>Integration with ticketing and CMDB systems</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> 60% reduction in MTTR, improved threat visibility</p>
-                    </div>
-
-                    <h4>Use Case 2: MSSP Operations</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Managed security provider serving 50 customers</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Multi-tenant architecture with customer isolation</li>
-                            <li>Standardized detection content across customers</li>
-                            <li>Centralized analyst workflow and reporting</li>
-                            <li>SLA-driven prioritization and escalation</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> Efficient operations at scale, consistent service delivery</p>
-                    </div>
-
-                    <h4>Use Case 3: Compliance-Focused</h4>
-                    <div style="background: #21262d; padding: 16px; border-radius: 8px; margin: 12px 0;">
-                        <p><strong>Scenario:</strong> Healthcare organization with HIPAA requirements</p>
-                        <p style="color: #8b949e;"><strong>Implementation:</strong></p>
-                        <ul style="color: #8b949e;">
-                            <li>Comprehensive audit logging for PHI access</li>
-                            <li>Long-term retention for compliance evidence</li>
-                            <li>Pre-built compliance dashboards and reports</li>
-                            <li>Automated compliance violation detection</li>
-                        </ul>
-                        <p style="color: #8b949e;"><strong>Outcome:</strong> Audit-ready documentation, reduced compliance risk</p>
-                    </div>
-                </div>
-
-                <!-- Quick Reference -->
-                <h2><i class="fas fa-bookmark"></i> Quick Reference</h2>
-                <div class="config-section">
-                    <h4>Common Commands/Queries</h4>
-                    <div class="arch-diagram"># Basic health check query
-# Adjust syntax for your platform (XQL/SPL/KQL)
-
-# Check data ingestion rate
-| stats count by _time span=1h
-
-# Find recent errors
-| filter severity = "error" 
-| sort _time desc 
-| limit 100
-
-# Top sources by volume
-| stats sum(bytes) as total_bytes by source
-| sort total_bytes desc
-| limit 10
-
-# Detection rule effectiveness
-| filter alert_type = "detection"
-| stats count by rule_name, disposition
-| sort count desc</div>
-
-                    <h4>Key Configuration Files/Paths</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Purpose</th><th>Location/Path</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Main Configuration</td><td>Settings → Configuration</td></tr>
-                            <tr><td>Data Sources</td><td>Settings → Data Sources</td></tr>
-                            <tr><td>Detection Rules</td><td>Detection → Rules</td></tr>
-                            <tr><td>User Management</td><td>Settings → Access Management</td></tr>
-                            <tr><td>Audit Logs</td><td>Settings → Audit Trail</td></tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Important Thresholds</h4>
-                    <table class="styled-table">
-                        <thead>
-                            <tr><th>Metric</th><th>Warning</th><th>Critical</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Query Response Time</td><td>> 30 seconds</td><td>> 120 seconds</td></tr>
-                            <tr><td>Ingestion Latency</td><td>> 5 minutes</td><td>> 15 minutes</td></tr>
-                            <tr><td>Storage Utilization</td><td>> 70%</td><td>> 85%</td></tr>
-                            <tr><td>Error Rate</td><td>> 1%</td><td>> 5%</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Related Topics -->
-                <h2><i class="fas fa-link"></i> Related Topics</h2>
-                <div class="config-section">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-book" style="color: #58a6ff;"></i> Documentation</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>Official vendor documentation</li>
-                                <li>API reference guides</li>
-                                <li>Release notes</li>
-                            </ul>
-                        </div>
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-users" style="color: #58a6ff;"></i> Community</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>User forums</li>
-                                <li>Community Slack/Discord</li>
-                                <li>Blog posts and articles</li>
-                            </ul>
-                        </div>
-                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
-                            <h4 style="margin-top: 0;"><i class="fas fa-graduation-cap" style="color: #58a6ff;"></i> Training</h4>
-                            <ul style="color: #8b949e; font-size: 0.9rem; padding-left: 20px;">
-                                <li>Vendor certifications</li>
-                                <li>Online courses</li>
-                                <li>Hands-on labs</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                
-                    </div>
-</main>
+            </main>
         </div>
     </div>
-    
+
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainWrapper = document.getElementById('mainWrapper');
-            const overlay = document.getElementById('sidebarOverlay');
-            
-            if (window.innerWidth <= 768) {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('active');
-            } else {
-                sidebar.classList.toggle('collapsed');
-                mainWrapper.classList.toggle('expanded');
-            }
+        function showCertTab(tabId) {
+            document.querySelectorAll('.cert-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.cert-tab-content').forEach(c => c.classList.remove('active'));
+            event.target.closest('.cert-tab').classList.add('active');
+            document.getElementById(tabId).classList.add('active');
         }
-        
-        // Q&A toggle
-        document.querySelectorAll('.qa-question').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const answer = btn.nextElementSibling;
-                const isOpen = answer.style.display === 'block';
-                document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-                if (!isOpen) answer.style.display = 'block';
-            });
-        });
-        
-        // Close sidebar on resize
-        window.addEventListener('resize', () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            }
-        });
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     </script>
 </body>
 </html>
